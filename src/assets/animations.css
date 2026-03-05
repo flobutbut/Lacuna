@@ -1,0 +1,163 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Animations
+   Keyframes et classes d'animation
+   ══════════════════════════════════════════════════════ */
+
+/* ── Pulse ring (anomalies stellaires) ── */
+@keyframes pulse-ring {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(2.5);
+        opacity: 0;
+    }
+}
+
+/* ── Glow pulse (éléments actifs, respiration) ── */
+@keyframes glow-pulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* ── Fade in ── */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ── Fade out ── */
+@keyframes fade-out {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+/* ── Fade in up (panels, notifications) ── */
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Scan sweep (balayage de scan) ── */
+@keyframes scan-sweep {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.4;
+    }
+
+    90% {
+        opacity: 0.4;
+    }
+
+    100% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+/* ── Drift (dérive lente, effet stellaire) ── */
+@keyframes drift {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 0 -400px;
+    }
+}
+
+/* ── Blink (clignotement subtil) ── */
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
+/* ── Scale in (apparition avec zoom) ── */
+@keyframes scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ══════════════════════════════════════════════════════
+   Classes d'animation réutilisables
+   ══════════════════════════════════════════════════════ */
+
+.animate-pulse-ring {
+    animation: pulse-ring 2.5s ease-out infinite;
+}
+
+.animate-glow {
+    animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s ease forwards;
+}
+
+.animate-fade-out {
+    animation: fade-out 0.3s ease forwards;
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.3s ease forwards;
+}
+
+.animate-scan {
+    animation: scan-sweep 3s linear infinite;
+}
+
+.animate-drift {
+    animation: drift 40s linear infinite;
+}
+
+.animate-blink {
+    animation: blink 2s ease-in-out infinite;
+}
+
+.animate-scale-in {
+    animation: scale-in 0.2s ease forwards;
+}

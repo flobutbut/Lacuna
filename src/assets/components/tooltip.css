@@ -1,0 +1,124 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Tooltip Component
+   Tooltips d'étoiles et réticule curseur
+   ══════════════════════════════════════════════════════ */
+
+/* ── Réticule (curseur sur le ciel) ── */
+.reticule {
+    position: absolute;
+    pointer-events: none;
+    z-index: var(--z-reticule);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.reticule.visible {
+    opacity: 1;
+}
+
+.reticule__ring {
+    width: 40px;
+    height: 40px;
+    border: var(--border-width) solid var(--color-cyan-dim);
+    border-radius: var(--border-radius-full);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.reticule__cross-h,
+.reticule__cross-v {
+    position: absolute;
+    background: var(--color-cyan-dim);
+}
+
+.reticule__cross-h {
+    width: 20px;
+    height: 1px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.reticule__cross-v {
+    width: 1px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* ── Tooltip étoile ── */
+.tooltip {
+    position: absolute;
+    z-index: var(--z-tooltip);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--transition-base);
+}
+
+.tooltip.visible {
+    opacity: 1;
+}
+
+.tooltip__inner {
+    background: var(--color-panel);
+    border: var(--border-width) solid var(--border-bright);
+    padding: var(--space-5) var(--space-7);
+    min-width: 160px;
+}
+
+.tooltip__name {
+    font-size: var(--text-md);
+    color: var(--color-white);
+    letter-spacing: var(--tracking-normal);
+    margin-bottom: var(--space-3);
+}
+
+.tooltip__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: var(--space-1);
+}
+
+.tooltip__key {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+}
+
+.tooltip__val {
+    font-size: var(--text-xs);
+    color: var(--color-cyan);
+}
+
+.tooltip__status {
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+    border-top: var(--border-width) solid var(--border-default);
+    font-size: var(--text-xs);
+    color: var(--color-amber);
+    letter-spacing: var(--tracking-tight);
+}
+
+.tooltip__action {
+    margin-top: var(--space-3);
+    font-size: var(--text-xs);
+    color: var(--color-cyan-dim);
+    letter-spacing: var(--tracking-tight);
+    text-align: right;
+}
+
+/* ── Anomaly pulse ring ── */
+.anomaly-pulse {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: var(--border-width) solid var(--color-amber);
+    border-radius: var(--border-radius-full);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: pulse-ring 2.5s ease-out infinite;
+}

@@ -1,0 +1,80 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Widget Component
+   Widgets latéraux (indicateurs gauche/droite)
+   ══════════════════════════════════════════════════════ */
+
+/* ── Conteneurs latéraux ── */
+.side-left {
+    position: absolute;
+    left: var(--sidebar-offset);
+    top: 60px;
+    bottom: 60px;
+    width: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    pointer-events: all;
+}
+
+.side-right {
+    position: absolute;
+    right: var(--sidebar-offset);
+    top: 60px;
+    bottom: 60px;
+    width: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-6);
+    pointer-events: all;
+}
+
+/* ── Widget box ── */
+.side-widget {
+    background: var(--color-panel);
+    border: var(--border-width) solid var(--border-default);
+    padding: var(--space-5) var(--space-6);
+    width: 100%;
+}
+
+/* ── Widget title ── */
+.sw-title {
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-muted);
+    text-transform: uppercase;
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: var(--border-width) solid var(--border-default);
+}
+
+/* ── Key-value rows ── */
+.sw-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.sw-key {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    letter-spacing: var(--tracking-tight);
+}
+
+.sw-val {
+    font-size: var(--text-base);
+    color: var(--color-white);
+}
+
+.sw-val.ok {
+    color: var(--color-green);
+}
+
+.sw-val.warn {
+    color: var(--color-amber);
+}
+
+.sw-val.crit {
+    color: var(--color-red);
+}

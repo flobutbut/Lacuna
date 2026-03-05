@@ -1,0 +1,86 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Panel Component
+   Overlay panels (Observatoire, Carte, Journal, etc.)
+   ══════════════════════════════════════════════════════ */
+
+/* ── Overlay container ── */
+.panel-overlay {
+    position: absolute;
+    z-index: var(--z-panel);
+    display: none;
+    pointer-events: all;
+}
+
+.panel-overlay.open {
+    display: block;
+}
+
+/* ── Panel box ── */
+.panel-box {
+    background: var(--color-panel);
+    border: var(--border-width) solid var(--border-bright);
+    width: var(--panel-width);
+    animation: fade-in-up 0.2s ease forwards;
+}
+
+.panel-box--lg {
+    width: var(--panel-width-lg);
+}
+
+/* ── Header ── */
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-5) var(--space-7);
+    border-bottom: var(--border-width) solid var(--border-default);
+}
+
+.panel-title {
+    font-size: var(--text-sm);
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-cyan);
+    text-transform: uppercase;
+}
+
+/* ── Close button ── */
+.panel-close {
+    background: none;
+    border: none;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-xl);
+    cursor: pointer;
+    line-height: var(--leading-none);
+    padding: 0 var(--space-2);
+    transition: color var(--transition-base);
+}
+
+.panel-close:hover {
+    color: var(--color-white);
+}
+
+/* ── Body ── */
+.panel-body {
+    padding: var(--space-7);
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* ── Separators within panels ── */
+.panel-separator {
+    border: none;
+    border-top: var(--border-width) solid var(--border-default);
+    margin: var(--space-6) 0;
+}
+
+/* ── Panel section title ── */
+.panel-section-title {
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-muted);
+    text-transform: uppercase;
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: var(--border-width) solid var(--border-default);
+}

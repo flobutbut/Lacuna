@@ -1,0 +1,67 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Layers
+   Couches visuelles d'arrière-plan
+   ══════════════════════════════════════════════════════ */
+
+/* ── Vignette (assombrissement radial des bords) ── */
+.vignette {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-vignette);
+    background: radial-gradient(ellipse at center,
+            transparent 40%,
+            rgba(3, 6, 13, 0.5) 70%,
+            rgba(3, 6, 13, 0.95) 100%);
+    pointer-events: none;
+}
+
+/* ── Scanlines (légère texture CRT) ── */
+.scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-scanlines);
+    background: repeating-linear-gradient(0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 0, 0, 0.03) 2px,
+            rgba(0, 0, 0, 0.03) 4px);
+    pointer-events: none;
+}
+
+/* ── Crosshair central ── */
+.center-cross {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0.15;
+}
+
+.center-cross__h {
+    position: absolute;
+    width: 8px;
+    height: 1px;
+    background: var(--color-cyan);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.center-cross__v {
+    position: absolute;
+    width: 1px;
+    height: 8px;
+    background: var(--color-cyan);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* ── UI Layer (conteneur principal des éléments d'interface) ── */
+.ui-layer {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-ui);
+    pointer-events: none;
+}

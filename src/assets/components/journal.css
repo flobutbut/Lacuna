@@ -1,0 +1,116 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Journal Component
+   Entrées du carnet de bord
+   ══════════════════════════════════════════════════════ */
+
+/* ── Journal entry ── */
+.journal-entry {
+    border-left: 2px solid var(--border-default);
+    padding: var(--space-4) var(--space-6);
+    margin-bottom: var(--space-5);
+    transition: border-color var(--transition-base);
+}
+
+.journal-entry:hover {
+    border-left-color: var(--color-cyan-dim);
+}
+
+/* Variante anomalie / événement notable */
+.journal-entry--anomaly {
+    border-left-color: var(--color-amber);
+}
+
+.journal-entry--anomaly:hover {
+    border-left-color: var(--color-amber);
+}
+
+/* Variante générationnelle */
+.journal-entry--generational {
+    border-left-color: var(--color-cyan);
+    background: var(--color-cyan-subtle);
+}
+
+/* ── Date ── */
+.journal-entry__date {
+    font-size: var(--text-2xs);
+    color: var(--color-muted);
+    letter-spacing: var(--tracking-normal);
+    margin-bottom: var(--space-2);
+    text-transform: uppercase;
+}
+
+/* ── Génération ── */
+.journal-entry__gen {
+    font-size: var(--text-2xs);
+    color: var(--color-amber);
+    margin-bottom: var(--space-3);
+    text-transform: uppercase;
+}
+
+/* ── Texte ── */
+.journal-entry__text {
+    font-size: var(--text-base);
+    color: var(--color-white);
+    line-height: var(--leading-relaxed);
+}
+
+/* ── Journal editor (zone de saisie) ── */
+.journal-editor {
+    margin-top: var(--space-6);
+    padding-top: var(--space-6);
+    border-top: var(--border-width) solid var(--border-default);
+}
+
+.journal-editor__textarea {
+    width: 100%;
+    min-height: 80px;
+    background: rgba(0, 0, 0, 0.3);
+    border: var(--border-width) solid var(--border-default);
+    color: var(--color-white);
+    padding: var(--space-5);
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    letter-spacing: var(--tracking-tight);
+    transition: border-color var(--transition-base);
+}
+
+.journal-editor__textarea::placeholder {
+    color: var(--color-muted);
+}
+
+.journal-editor__textarea:focus {
+    outline: none;
+    border-color: var(--color-cyan-dim);
+}
+
+/* ── Journal filters ── */
+.journal-filters {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+}
+
+.journal-filter-btn {
+    padding: var(--space-2) var(--space-4);
+    border: var(--border-width) solid var(--border-default);
+    background: transparent;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--tracking-tight);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.journal-filter-btn:hover {
+    color: var(--color-white);
+    border-color: var(--border-bright);
+}
+
+.journal-filter-btn.active {
+    color: var(--color-cyan);
+    border-color: var(--color-cyan-dim);
+    background: var(--color-cyan-hover);
+}

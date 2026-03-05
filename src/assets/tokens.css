@@ -1,0 +1,112 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Design Tokens
+   Variables CSS globales du design system
+   ══════════════════════════════════════════════════════ */
+
+:root {
+
+  /* ── Couleurs de base ── */
+  --color-bg:              #03060d;
+  --color-bg-alt:          #060c18;
+  --color-panel:           rgba(6, 14, 28, 0.92);
+  --color-panel-solid:     #060e1c;
+
+  /* ── Couleurs d'accent ── */
+  --color-cyan:            #00b4c8;
+  --color-cyan-dim:        rgba(0, 180, 200, 0.5);
+  --color-cyan-glow:       rgba(0, 180, 200, 0.15);
+  --color-cyan-subtle:     rgba(0, 180, 200, 0.05);
+  --color-cyan-hover:      rgba(0, 180, 200, 0.08);
+
+  --color-amber:           #e8a020;
+  --color-amber-dim:       rgba(232, 160, 32, 0.4);
+  --color-amber-glow:      rgba(232, 160, 32, 0.15);
+
+  /* ── Couleurs de statut ── */
+  --color-green:           #40a870;
+  --color-red:             #c84040;
+
+  /* ── Couleurs de texte ── */
+  --color-white:           #d0dde8;
+  --color-muted:           #4a6070;
+  --color-ghost:           rgba(255, 255, 255, 0.05);
+
+  /* ── Bordures ── */
+  --border-default:        rgba(0, 180, 200, 0.15);
+  --border-bright:         rgba(0, 180, 200, 0.4);
+  --border-width:          1px;
+  --border-radius-sm:      2px;
+  --border-radius-md:      4px;
+  --border-radius-full:    50%;
+
+  /* ── Typographie ── */
+  --font-mono:             'Share Tech Mono', monospace;
+  --font-sans:             'Syne', sans-serif;
+
+  --text-2xs:              8px;
+  --text-xs:               9px;
+  --text-sm:               10px;
+  --text-base:             11px;
+  --text-md:               12px;
+  --text-lg:               14px;
+  --text-xl:               15px;
+  --text-2xl:              19px;
+  --text-3xl:              21px;
+  --text-4xl:              33px;
+
+  --weight-regular:        400;
+  --weight-semibold:       600;
+  --weight-bold:           800;
+
+  --tracking-tight:        1px;
+  --tracking-normal:       2px;
+  --tracking-wide:         3px;
+  --tracking-wider:        4px;
+  --tracking-widest:       6px;
+
+  --leading-none:          1;
+  --leading-tight:         1.2;
+  --leading-normal:        1.5;
+  --leading-relaxed:       1.6;
+
+  /* ── Espacements ── */
+  --space-1:               2px;
+  --space-2:               4px;
+  --space-3:               6px;
+  --space-4:               8px;
+  --space-5:               10px;
+  --space-6:               12px;
+  --space-7:               14px;
+  --space-8:               18px;
+  --space-9:               20px;
+  --space-10:              24px;
+  --space-12:              32px;
+  --space-14:              48px;
+
+  /* ── Transitions ── */
+  --transition-fast:       0.15s ease;
+  --transition-base:       0.2s ease;
+  --transition-smooth:     0.3s ease;
+  --transition-slow:       0.4s ease;
+  --transition-bar:        1s ease;
+  --transition-bar-slow:   1.5s ease;
+
+  /* ── Z-index layers ── */
+  --z-sky:                 0;
+  --z-vignette:            1;
+  --z-scanlines:           2;
+  --z-ui:                  10;
+  --z-reticule:            20;
+  --z-tooltip:             30;
+  --z-panel:               40;
+  --z-notification:        50;
+  --z-modal:               60;
+
+  /* ── Layout ── */
+  --header-height:         48px;
+  --instruments-height:    52px;
+  --sidebar-width:         180px;
+  --sidebar-offset:        20px;
+  --panel-width:           360px;
+  --panel-width-lg:        400px;
+}

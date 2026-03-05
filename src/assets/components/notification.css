@@ -1,0 +1,92 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Notification Component
+   Notifications et widget de voyage
+   ══════════════════════════════════════════════════════ */
+
+/* ── Notification standard ── */
+.notif {
+    position: absolute;
+    top: 58px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-panel);
+    border: var(--border-width) solid var(--border-bright);
+    padding: var(--space-4) var(--space-8);
+    font-size: var(--text-sm);
+    letter-spacing: var(--tracking-normal);
+    color: var(--color-cyan);
+    opacity: 0;
+    transition: opacity var(--transition-smooth);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: var(--z-notification);
+}
+
+.notif.visible {
+    opacity: 1;
+}
+
+/* ── Variantes de notification ── */
+.notif--info {
+    color: var(--color-cyan);
+    border-color: var(--border-bright);
+}
+
+.notif--warn {
+    color: var(--color-amber);
+    border-color: var(--color-amber-dim);
+}
+
+.notif--error {
+    color: var(--color-red);
+    border-color: var(--color-red);
+}
+
+.notif--success {
+    color: var(--color-green);
+    border-color: var(--color-green);
+}
+
+/* ── Travel widget (voyage en cours) ── */
+.travel-widget {
+    position: absolute;
+    bottom: 62px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--transition-slow);
+    z-index: var(--z-notification);
+}
+
+.travel-widget.visible {
+    opacity: 1;
+}
+
+.travel-widget__inner {
+    background: var(--color-panel);
+    border: var(--border-width) solid var(--color-amber-dim);
+    padding: var(--space-4) var(--space-9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.travel-widget__label {
+    font-size: var(--text-2xs);
+    color: var(--color-amber);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+}
+
+.travel-widget__dest {
+    font-size: var(--text-md);
+    color: var(--color-white);
+    letter-spacing: var(--tracking-normal);
+}
+
+.travel-widget__time {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+}

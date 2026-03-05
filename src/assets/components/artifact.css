@@ -1,0 +1,136 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Artifact Component
+   Grille de collection d'artefacts
+   ══════════════════════════════════════════════════════ */
+
+/* ── Grille ── */
+.artifact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+}
+
+/* ── Slot ── */
+.artifact-slot {
+    aspect-ratio: 1;
+    border: var(--border-width) solid var(--border-default);
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    padding: var(--space-4);
+    position: relative;
+}
+
+.artifact-slot:hover {
+    border-color: var(--border-bright);
+    background: var(--color-cyan-subtle);
+}
+
+/* Empty slot */
+.artifact-slot--empty {
+    opacity: 0.2;
+    cursor: default;
+}
+
+.artifact-slot--empty:hover {
+    border-color: var(--border-default);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* Compat anciennes classes */
+.artifact-slot.empty {
+    opacity: 0.2;
+    cursor: default;
+}
+
+.artifact-slot.empty:hover {
+    border-color: var(--border-default);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* ── Icon ── */
+.artifact-slot__icon {
+    font-size: var(--text-3xl);
+}
+
+/* ── Name ── */
+.artifact-slot__name {
+    font-size: var(--text-2xs);
+    color: var(--color-muted);
+    letter-spacing: var(--tracking-tight);
+    text-align: center;
+}
+
+/* ── Notification dot (non interprété) ── */
+.artifact-slot__dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 5px;
+    height: 5px;
+    border-radius: var(--border-radius-full);
+    background: var(--color-amber);
+}
+
+/* Compat anciennes classes */
+.art-icon {
+    font-size: var(--text-3xl);
+}
+
+.art-name {
+    font-size: var(--text-2xs);
+    color: var(--color-muted);
+    letter-spacing: var(--tracking-tight);
+    text-align: center;
+}
+
+.art-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 5px;
+    height: 5px;
+    border-radius: var(--border-radius-full);
+    background: var(--color-amber);
+}
+
+/* ── Detail view ── */
+.artifact-detail {
+    padding: var(--space-7);
+}
+
+.artifact-detail__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    margin-bottom: var(--space-7);
+    padding-bottom: var(--space-6);
+    border-bottom: var(--border-width) solid var(--border-default);
+}
+
+.artifact-detail__icon {
+    font-size: 36px;
+}
+
+.artifact-detail__info {
+    flex: 1;
+}
+
+.artifact-detail__name {
+    font-size: var(--text-md);
+    color: var(--color-white);
+    letter-spacing: var(--tracking-normal);
+    margin-bottom: var(--space-1);
+}
+
+.artifact-detail__type {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-tight);
+}

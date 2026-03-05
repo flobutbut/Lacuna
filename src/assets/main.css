@@ -1,0 +1,21 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Design System
+   Point d'entrée principal
+   ══════════════════════════════════════════════════════ */
+
+/* ── Fondations ── */
+@import './tokens.css';
+@import './base.css';
+@import './animations.css';
+@import './layers.css';
+@import './utilities.css';
+
+/* ── Composants ── */
+@import './components/panel.css';
+@import './components/widget.css';
+@import './components/button.css';
+@import './components/tooltip.css';
+@import './components/notification.css';
+@import './components/bar.css';
+@import './components/journal.css';
+@import './components/artifact.css';

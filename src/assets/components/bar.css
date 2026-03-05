@@ -1,0 +1,199 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Bar Component
+   Barres de progression, Drake terms, status dots
+   ══════════════════════════════════════════════════════ */
+
+/* ── Barre de progression ── */
+.bar-wrap {
+    width: 100%;
+    height: 3px;
+    background: var(--color-ghost);
+    margin: var(--space-1) 0 7px;
+    position: relative;
+}
+
+.bar-fill {
+    height: 100%;
+    transition: width var(--transition-bar);
+}
+
+/* Variantes de couleur */
+.bar-fill--cyan {
+    background: var(--color-cyan);
+}
+
+.bar-fill--amber {
+    background: var(--color-amber);
+}
+
+.bar-fill--green {
+    background: var(--color-green);
+}
+
+.bar-fill--red {
+    background: var(--color-red);
+}
+
+/* Compat anciennes classes */
+.bar-cyan {
+    background: var(--color-cyan);
+}
+
+.bar-amber {
+    background: var(--color-amber);
+}
+
+.bar-green {
+    background: var(--color-green);
+}
+
+.bar-red {
+    background: var(--color-red);
+}
+
+/* ── Drake term row ── */
+.drake-term {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) 0;
+    border-bottom: var(--border-width) solid var(--border-default);
+}
+
+.drake-term:last-of-type {
+    border-bottom: none;
+}
+
+.drake-term__symbol {
+    font-size: var(--text-xl);
+    color: var(--color-cyan);
+    width: 30px;
+    flex-shrink: 0;
+}
+
+.drake-term__label {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    flex: 1;
+    padding: 0 var(--space-4);
+}
+
+.drake-term__val {
+    font-size: var(--text-base);
+    color: var(--color-white);
+    flex-shrink: 0;
+}
+
+.drake-term__bar {
+    width: 60px;
+    height: 2px;
+    background: var(--color-ghost);
+    margin-left: var(--space-4);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.drake-term__bar-fill {
+    height: 100%;
+    background: var(--color-cyan);
+    transition: width var(--transition-bar-slow);
+}
+
+/* ── Drake result (N=) ── */
+.drake-result {
+    margin-top: var(--space-7);
+    padding: var(--space-6);
+    border: var(--border-width) solid var(--color-cyan-dim);
+    background: var(--color-cyan-subtle);
+    text-align: center;
+}
+
+.drake-result__label {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    letter-spacing: var(--tracking-normal);
+    margin-bottom: var(--space-3);
+}
+
+.drake-result__value {
+    font-size: var(--text-4xl);
+    color: var(--color-cyan);
+}
+
+.drake-result__sub {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    margin-top: var(--space-2);
+    letter-spacing: var(--tracking-tight);
+}
+
+/* ── Status dots ── */
+.status-row {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    margin-bottom: var(--space-2);
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--border-radius-full);
+    flex-shrink: 0;
+}
+
+.status-dot--ok {
+    background: var(--color-green);
+}
+
+.status-dot--warn {
+    background: var(--color-amber);
+    box-shadow: 0 0 4px var(--color-amber);
+}
+
+.status-dot--crit {
+    background: var(--color-red);
+    box-shadow: 0 0 6px var(--color-red);
+}
+
+/* Compat anciennes classes */
+.status-dot.ok {
+    background: var(--color-green);
+}
+
+.status-dot.warn {
+    background: var(--color-amber);
+    box-shadow: 0 0 4px var(--color-amber);
+}
+
+.status-dot.crit {
+    background: var(--color-red);
+    box-shadow: 0 0 6px var(--color-red);
+}
+
+.status-label {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+}
+
+/* ── Population bar (barres larges) ── */
+.pop-bar-row {
+    margin-bottom: var(--space-5);
+}
+
+.pop-bar-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--space-2);
+}
+
+.pop-bar-label {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    letter-spacing: var(--tracking-tight);
+}
+
+.pop-bar-val {
+    font-size: var(--text-xs);
+    color: var(--color-white);
+}

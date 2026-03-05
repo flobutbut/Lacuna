@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LACUNA</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #03060d;
+    --bg2: #060c18;
+    --panel: rgba(6, 14, 28, 0.92);
+    --border: rgba(0, 180, 200, 0.15);
+    --border-bright: rgba(0, 180, 200, 0.4);
+    --cyan: #00b4c8;
+    --cyan-dim: rgba(0, 180, 200, 0.5);
+    --amber: #e8a020;
+    --amber-dim: rgba(232, 160, 32, 0.4);
+    --white: #d0dde8;
+    --muted: #4a6070;
+    --red: #c84040;
+    --green: #40a870;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: var(--mono);
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+
+  /* ── CANVAS CIEL ── */
+  #sky {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+
+  /* ── VIGNETTE ── */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background: radial-gradient(ellipse at center,
+      transparent 40%,
+      rgba(3,6,13,0.5) 70%,
+      rgba(3,6,13,0.95) 100%);
+    pointer-events: none;
+  }
+
+  /* ── SCAN LINE ── */
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+  }
+
+  /* ── UI LAYER ── */
+  #ui {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(3,6,13,0.9) 0%, transparent 100%);
+    pointer-events: all;
+  }
+
+  .logo {
+    font-family: var(--sans);
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: 6px;
+    color: var(--white);
+  }
+
+  .logo span { color: var(--cyan); }
+
+  .header-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .ship-name {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .coords {
+    font-size: 10px;
+    color: var(--cyan-dim);
+    letter-spacing: 1px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .gen-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+  }
+
+  .gen-label { font-size: 9px; color: var(--muted); letter-spacing: 2px; }
+  .gen-value { font-size: 14px; color: var(--amber); letter-spacing: 1px; }
+
+  /* ── DRAKE INDICATOR ── */
+  .drake-widget {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    background: rgba(3,6,13,0.6);
+  }
+
+  .drake-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .drake-value {
+    font-size: 21px;
+    font-weight: 400;
+    color: var(--cyan);
+    font-family: var(--mono);
+    line-height: 1;
+  }
+
+  .drake-sub {
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .drake-delta {
+    font-size: 10px;
+    color: var(--green);
+  }
+
+  /* ── INSTRUMENTS BARRE BAS ── */
+  .instruments {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 24px;
+    border-top: 1px solid var(--border);
+    background: linear-gradient(0deg, rgba(3,6,13,0.95) 0%, transparent 100%);
+    pointer-events: all;
+  }
+
+  .inst-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .inst-btn::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: var(--cyan);
+    transform: scaleX(0);
+    transition: transform 0.2s;
+  }
+
+  .inst-btn:hover {
+    color: var(--white);
+    border-color: var(--border-bright);
+    background: rgba(0, 180, 200, 0.05);
+  }
+
+  .inst-btn:hover::before { transform: scaleX(1); }
+
+  .inst-btn.active {
+    color: var(--cyan);
+    border-color: var(--cyan-dim);
+    background: rgba(0, 180, 200, 0.08);
+  }
+
+  .inst-btn.active::before { transform: scaleX(1); }
+
+  .inst-icon {
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .inst-badge {
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+  }
+
+  /* ── INDICATEURS LATÉRAUX ── */
+  .side-left {
+    position: absolute;
+    left: 20px;
+    top: 60px;
+    bottom: 60px;
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: all;
+  }
+
+  .side-right {
+    position: absolute;
+    right: 20px;
+    top: 60px;
+    bottom: 60px;
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    pointer-events: all;
+  }
+
+  .side-widget {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    width: 100%;
+  }
+
+  .sw-title {
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sw-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+
+  .sw-key { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+  .sw-val { font-size: 11px; color: var(--white); }
+  .sw-val.ok { color: var(--green); }
+  .sw-val.warn { color: var(--amber); }
+  .sw-val.crit { color: var(--red); }
+
+  /* bar */
+  .bar-wrap {
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.05);
+    margin: 3px 0 7px;
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    transition: width 1s ease;
+  }
+
+  .bar-cyan { background: var(--cyan); }
+  .bar-amber { background: var(--amber); }
+  .bar-green { background: var(--green); }
+  .bar-red { background: var(--red); }
+
+  /* ── RETICULE ── */
+  .reticule {
+    position: absolute;
+    pointer-events: none;
+    z-index: 20;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .reticule.visible { opacity: 1; }
+
+  .ret-ring {
+    width: 40px; height: 40px;
+    border: 1px solid var(--cyan-dim);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .ret-cross-h, .ret-cross-v {
+    position: absolute;
+    background: var(--cyan-dim);
+  }
+
+  .ret-cross-h {
+    width: 20px; height: 1px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .ret-cross-v {
+    width: 1px; height: 20px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* ── TOOLTIP ÉTOILE ── */
+  .star-tooltip {
+    position: absolute;
+    z-index: 30;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    transform: translate(16px, -50%);
+  }
+
+  .star-tooltip.visible { opacity: 1; }
+
+  .st-inner {
+    background: var(--panel);
+    border: 1px solid var(--border-bright);
+    padding: 10px 14px;
+    min-width: 160px;
+  }
+
+  .st-name {
+    font-size: 12px;
+    color: var(--white);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+  .st-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 3px;
+  }
+
+  .st-key { font-size: 9px; color: var(--muted); }
+  .st-val { font-size: 9px; color: var(--cyan); }
+
+  .st-status {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+    font-size: 9px;
+    color: var(--amber);
+    letter-spacing: 1px;
+  }
+
+  .st-action {
+    margin-top: 6px;
+    font-size: 9px;
+    color: var(--cyan-dim);
+    letter-spacing: 1px;
+    text-align: right;
+  }
+
+  /* ── PANEL OVERLAY ── */
+  .panel-overlay {
+    position: absolute;
+    z-index: 40;
+    display: none;
+    pointer-events: all;
+  }
+
+  .panel-overlay.open { display: block; }
+
+  .panel-box {
+    background: var(--panel);
+    border: 1px solid var(--border-bright);
+    width: 360px;
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-title {
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--cyan);
+    text-transform: uppercase;
+  }
+
+  .panel-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 15px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+    transition: color 0.2s;
+  }
+
+  .panel-close:hover { color: var(--white); }
+
+  .panel-body { padding: 14px; }
+
+  /* ── JOURNAL ── */
+  .journal-entry {
+    border-left: 2px solid var(--border);
+    padding: 8px 12px;
+    margin-bottom: 10px;
+  }
+
+  .je-date { font-size: 8px; color: var(--muted); letter-spacing: 2px; margin-bottom: 4px; }
+  .je-gen { font-size: 8px; color: var(--amber); margin-bottom: 6px; }
+  .je-text { font-size: 11px; color: var(--white); line-height: 1.6; }
+
+  /* ── ARTEFACTS ── */
+  .artifact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .artifact-slot {
+    aspect-ratio: 1;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 8px;
+    position: relative;
+  }
+
+  .artifact-slot:hover {
+    border-color: var(--border-bright);
+    background: rgba(0, 180, 200, 0.05);
+  }
+
+  .artifact-slot.empty {
+    opacity: 0.2;
+    cursor: default;
+  }
+
+  .artifact-slot.empty:hover {
+    border-color: var(--border);
+    background: rgba(0,0,0,0.3);
+  }
+
+  .art-icon { font-size: 21px; }
+  .art-name { font-size: 8px; color: var(--muted); letter-spacing: 1px; text-align: center; }
+  .art-dot {
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--amber);
+  }
+
+  /* ── DRAKE DETAIL ── */
+  .drake-term {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dt-symbol {
+    font-size: 15px;
+    color: var(--cyan);
+    width: 30px;
+  }
+
+  .dt-label { font-size: 9px; color: var(--muted); flex: 1; padding: 0 8px; }
+
+  .dt-val { font-size: 11px; color: var(--white); }
+
+  .dt-bar {
+    width: 60px; height: 2px;
+    background: rgba(255,255,255,0.05);
+    margin-left: 8px;
+    position: relative;
+  }
+
+  .dt-bar-fill {
+    height: 100%;
+    background: var(--cyan);
+    transition: width 1.5s ease;
+  }
+
+  .drake-result {
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid var(--cyan-dim);
+    background: rgba(0, 180, 200, 0.04);
+    text-align: center;
+  }
+
+  .dr-label { font-size: 9px; color: var(--muted); letter-spacing: 2px; margin-bottom: 6px; }
+  .dr-value { font-size: 33px; color: var(--cyan); }
+  .dr-sub { font-size: 9px; color: var(--muted); margin-top: 4px; letter-spacing: 1px; }
+
+  /* ── POPULATION ── */
+  .pop-bar-row {
+    margin-bottom: 10px;
+  }
+
+  .pop-bar-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .pop-bar-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+  .pop-bar-val { font-size: 9px; color: var(--white); }
+
+  /* ── STATUS DOTS ── */
+  .status-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  .status-dot.ok { background: var(--green); }
+  .status-dot.warn { background: var(--amber); box-shadow: 0 0 4px var(--amber); }
+  .status-dot.crit { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+  .status-label { font-size: 9px; color: var(--muted); }
+
+  /* ── TRAVEL INDICATOR ── */
+  .travel-widget {
+    position: absolute;
+    bottom: 62px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .travel-widget.visible { opacity: 1; }
+
+  .tw-inner {
+    background: var(--panel);
+    border: 1px solid var(--amber-dim);
+    padding: 8px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .tw-label { font-size: 8px; color: var(--amber); letter-spacing: 3px; }
+  .tw-dest { font-size: 12px; color: var(--white); letter-spacing: 2px; }
+  .tw-time { font-size: 10px; color: var(--muted); }
+
+  /* ── NOTIFICATION ── */
+  .notif {
+    position: absolute;
+    top: 58px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel);
+    border: 1px solid var(--border-bright);
+    padding: 8px 18px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .notif.visible { opacity: 1; }
+
+  /* ── CROSSHAIR CENTRAL ── */
+  .center-cross {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0.15;
+  }
+
+  .cc-h {
+    position: absolute;
+    width: 8px; height: 1px;
+    background: var(--cyan);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .cc-v {
+    position: absolute;
+    width: 1px; height: 8px;
+    background: var(--cyan);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* ── ANOMALY PULSE ── */
+  @keyframes pulse-ring {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+    100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+  }
+
+  .anomaly-pulse {
+    position: absolute;
+    width: 14px; height: 14px;
+    border: 1px solid var(--amber);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: pulse-ring 2.5s ease-out infinite;
+  }
+
+  /* ── SCROLL GÉNÉRATIONNEL ── */
+  @keyframes drift {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 -400px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="sky"></canvas>
+<div class="vignette"></div>
+<div class="scanlines"></div>
+
+<div id="ui">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">LAC<span>U</span>NA</div>
+
+    <div class="header-center">
+      <div class="ship-name">ARK TESSERA — VOYAGE 1</div>
+      <div class="coords" id="coords">α 04h 22m 14s  δ −14° 08′  d 0.00 al</div>
+    </div>
+
+    <div class="header-right">
+      <div class="gen-indicator">
+        <div class="gen-label">Génération</div>
+        <div class="gen-value" id="gen-val">I</div>
+      </div>
+      <div class="drake-widget">
+        <div>
+          <div class="drake-label">N =</div>
+          <div class="drake-sub">civilisations actives</div>
+        </div>
+        <div>
+          <div class="drake-value" id="drake-n">12.4</div>
+          <div class="drake-delta" id="drake-delta">▲ +0.3</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INDICATEURS GAUCHE -->
+  <div class="side-left">
+
+    <div class="side-widget">
+      <div class="sw-title">Systèmes vaisseau</div>
+
+      <div class="sw-row">
+        <div class="sw-key">Propulsion</div>
+        <div class="sw-val ok">NOMINAL</div>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill bar-green" style="width:88%"></div></div>
+
+      <div class="sw-row">
+        <div class="sw-key">Carburant He³</div>
+        <div class="sw-val warn">74.2%</div>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill bar-amber" style="width:74%"></div></div>
+
+      <div class="sw-row">
+        <div class="sw-key">Intégrité coque</div>
+        <div class="sw-val ok">97.1%</div>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill bar-green" style="width:97%"></div></div>
+
+      <div class="sw-row">
+        <div class="sw-key">Bouclier plasma</div>
+        <div class="sw-val ok">ACTIF</div>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill bar-cyan" style="width:100%"></div></div>
+    </div>
+
+    <div class="side-widget">
+      <div class="sw-title">Observatoire</div>
+      <div class="sw-row">
+        <div class="sw-key">Systèmes résolus</div>
+        <div class="sw-val">3</div>
+      </div>
+      <div class="sw-row">
+        <div class="sw-key">Anomalies détectées</div>
+        <div class="sw-val warn">2</div>
+      </div>
+      <div class="sw-row">
+        <div class="sw-key">Scan en cours</div>
+        <div class="sw-val ok">ACTIF</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- INDICATEURS DROITE -->
+  <div class="side-right">
+
+    <div class="side-widget">
+      <div class="sw-title">Population</div>
+      <div class="sw-row">
+        <div class="sw-key">Effectif</div>
+        <div class="sw-val">10 247</div>
+      </div>
+      <div class="sw-row">
+        <div class="sw-key">Natalité</div>
+        <div class="sw-val ok">+1.2%</div>
+      </div>
+      <div class="sw-row">
+        <div class="sw-key">Volonté</div>
+        <div class="sw-val ok">HAUTE</div>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill bar-green" style="width:82%"></div></div>
+      <div class="sw-row">
+        <div class="sw-key">Âge moyen</div>
+        <div class="sw-val">34.2 ans</div>
+      </div>
+    </div>
+
+    <div class="side-widget">
+      <div class="sw-title">Dernière trace</div>
+      <div class="sw-row">
+        <div class="sw-key">Désignation</div>
+        <div class="sw-val warn">WOW-1977-A</div>
+      </div>
+      <div class="sw-row">
+        <div class="sw-key">Type</div>
+        <div class="sw-val">Signal radio</div>
+      </div>
+      <div class="sw-row">
+        <div class="sw-key">Interprétations</div>
+        <div class="sw-val">847</div>
+      </div>
+      <div class="sw-row">
+        <div class="sw-key">Statut</div>
+        <div class="sw-val warn">NON RÉSOLU</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RÉTICULE CURSEUR -->
+  <div class="reticule" id="reticule">
+    <div class="ret-ring"></div>
+    <div class="ret-cross-h"></div>
+    <div class="ret-cross-v"></div>
+  </div>
+
+  <!-- TOOLTIP ÉTOILE -->
+  <div class="star-tooltip" id="star-tooltip">
+    <div class="st-inner">
+      <div class="st-name" id="tt-name">—</div>
+      <div class="st-row">
+        <span class="st-key">Distance</span>
+        <span class="st-val" id="tt-dist">—</span>
+      </div>
+      <div class="st-row">
+        <span class="st-key">Type spectral</span>
+        <span class="st-val" id="tt-type">—</span>
+      </div>
+      <div class="st-row">
+        <span class="st-key">Voyage estimé</span>
+        <span class="st-val" id="tt-travel">—</span>
+      </div>
+      <div class="st-status" id="tt-status">—</div>
+      <div class="st-action">[ CLIC POUR OBSERVER ]</div>
+    </div>
+  </div>
+
+  <!-- CROSSHAIR CENTRAL -->
+  <div class="center-cross">
+    <div class="cc-h"></div>
+    <div class="cc-v"></div>
+  </div>
+
+  <!-- NOTIFICATION -->
+  <div class="notif" id="notif"></div>
+
+  <!-- TRAVEL WIDGET -->
+  <div class="travel-widget" id="travel-widget">
+    <div class="tw-inner">
+      <div class="tw-label">VOYAGE EN COURS</div>
+      <div class="tw-dest" id="tw-dest">—</div>
+      <div class="tw-time" id="tw-time">—</div>
+    </div>
+  </div>
+
+  <!-- INSTRUMENTS BAR -->
+  <div class="instruments">
+    <button class="inst-btn active" id="btn-obs" onclick="openPanel('obs')">
+      <div class="inst-icon">◎</div>
+      <div>Observatoire</div>
+    </button>
+    <button class="inst-btn" id="btn-map" onclick="openPanel('map')">
+      <div class="inst-icon">⊹</div>
+      <div>Carte</div>
+    </button>
+    <button class="inst-btn" id="btn-art" onclick="openPanel('art')">
+      <div class="inst-icon">◈</div>
+      <div>Artefacts</div>
+      <div class="inst-badge"></div>
+    </button>
+    <button class="inst-btn" id="btn-lab" onclick="openPanel('lab')">
+      <div class="inst-icon">⌬</div>
+      <div>Laboratoire</div>
+    </button>
+    <button class="inst-btn" id="btn-log" onclick="openPanel('log')">
+      <div class="inst-icon">≡</div>
+      <div>Journal</div>
+    </button>
+    <button class="inst-btn" id="btn-drake" onclick="openPanel('drake')">
+      <div class="inst-icon">N</div>
+      <div>Drake</div>
+    </button>
+    <button class="inst-btn" id="btn-pop" onclick="openPanel('pop')">
+      <div class="inst-icon">⊕</div>
+      <div>Population</div>
+    </button>
+    <button class="inst-btn" id="btn-sys" onclick="openPanel('sys')">
+      <div class="inst-icon">⚙</div>
+      <div>Systèmes</div>
+    </button>
+  </div>
+
+  <!-- PANELS -->
+
+  <!-- Journal -->
+  <div class="panel-overlay" id="panel-log" style="top:60px; left:220px;">
+    <div class="panel-box">
+      <div class="panel-header">
+        <div class="panel-title">Journal de Bord</div>
+        <button class="panel-close" onclick="closePanel('log')">✕</button>
+      </div>
+      <div class="panel-body">
+        <div class="journal-entry">
+          <div class="je-date">JOUR 1 — AN 2187.042</div>
+          <div class="je-gen">GÉNÉRATION I — FONDATEURS</div>
+          <div class="je-text">Départ confirmé. 10 247 âmes embarquées. Les réservoirs sont pleins. Le bouclier plasma est actif. On a regardé la Terre disparaître dans l'observatoire pendant 4 heures. Personne n'a dit grand chose.</div>
+        </div>
+        <div class="journal-entry">
+          <div class="je-date">JOUR 47 — AN 2187.089</div>
+          <div class="je-gen">GÉNÉRATION I — FONDATEURS</div>
+          <div class="je-text">Premier scan approfondi du signal WOW-1977-A. La fréquence 1420 MHz correspond exactement à la raie de l'hydrogène. Ce n'est pas une coïncidence naturelle. Tout le monde le sait. Personne ne le dit encore.</div>
+        </div>
+        <div class="journal-entry" style="border-left-color: var(--amber);">
+          <div class="je-date">JOUR 91 — AN 2187.133</div>
+          <div class="je-gen">GÉNÉRATION I — FONDATEURS</div>
+          <div class="je-text">Anomalie détectée dans le système Tau Ceti. Géométrie orbitale irrégulière. Le laboratoire demande 72h d'analyse. On attend.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Artefacts -->
+  <div class="panel-overlay" id="panel-art" style="top:60px; right:220px;">
+    <div class="panel-box">
+      <div class="panel-header">
+        <div class="panel-title">Collection d'Artefacts</div>
+        <button class="panel-close" onclick="closePanel('art')">✕</button>
+      </div>
+      <div class="panel-body">
+        <div style="font-size: 10px; color:var(--muted); letter-spacing:1px; margin-bottom:12px;">3 artefacts collectés — 2 non interprétés</div>
+        <div class="artifact-grid">
+          <div class="artifact-slot" onclick="showNotif('WOW-1977-A — Signal radio 1420 MHz — 72s durée')">
+            <div class="art-icon">📡</div>
+            <div class="art-name">WOW-1977</div>
+            <div class="art-dot"></div>
+          </div>
+          <div class="artifact-slot" onclick="showNotif('OUMUAMUA — Objet interstellaire — Accélération non-gravitationnelle')">
+            <div class="art-icon">◇</div>
+            <div class="art-name">OUMUAMUA</div>
+            <div class="art-dot"></div>
+          </div>
+          <div class="artifact-slot" onclick="showNotif('BENNU-NB — Nucléobases ARN — Ryugu confirmé')">
+            <div class="art-icon">⬡</div>
+            <div class="art-name">BENNU-NB</div>
+          </div>
+          <div class="artifact-slot empty"><div class="art-icon" style="opacity:0.2">?</div></div>
+          <div class="artifact-slot empty"><div class="art-icon" style="opacity:0.2">?</div></div>
+          <div class="artifact-slot empty"><div class="art-icon" style="opacity:0.2">?</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drake -->
+  <div class="panel-overlay" id="panel-drake" style="top:60px; left:50%; transform:translateX(-50%);">
+    <div class="panel-box" style="width:400px;">
+      <div class="panel-header">
+        <div class="panel-title">Équation de Drake — État Galactique</div>
+        <button class="panel-close" onclick="closePanel('drake')">✕</button>
+      </div>
+      <div class="panel-body">
+        <div class="drake-term">
+          <div class="dt-symbol">R*</div>
+          <div class="dt-label">Taux de formation stellaire</div>
+          <div class="dt-val">3.0 /an</div>
+          <div class="dt-bar"><div class="dt-bar-fill" style="width:100%"></div></div>
+        </div>
+        <div class="drake-term">
+          <div class="dt-symbol">fp</div>
+          <div class="dt-label">Fraction étoiles avec planètes</div>
+          <div class="dt-val">1.00</div>
+          <div class="dt-bar"><div class="dt-bar-fill" style="width:100%"></div></div>
+        </div>
+        <div class="drake-term">
+          <div class="dt-symbol">ne</div>
+          <div class="dt-label">Planètes en zone habitable</div>
+          <div class="dt-val">0.40</div>
+          <div class="dt-bar"><div class="dt-bar-fill" style="width:40%"></div></div>
+        </div>
+        <div class="drake-term">
+          <div class="dt-symbol" style="color:var(--amber)">fl</div>
+          <div class="dt-label">Apparition de la vie</div>
+          <div class="dt-val" style="color:var(--amber)">0.31 ↑</div>
+          <div class="dt-bar"><div class="dt-bar-fill bar-amber" style="width:31%"></div></div>
+        </div>
+        <div class="drake-term">
+          <div class="dt-symbol">fi</div>
+          <div class="dt-label">Vie intelligente</div>
+          <div class="dt-val">0.10</div>
+          <div class="dt-bar"><div class="dt-bar-fill" style="width:10%"></div></div>
+        </div>
+        <div class="drake-term">
+          <div class="dt-symbol">fc</div>
+          <div class="dt-label">Technologie détectable</div>
+          <div class="dt-val">0.20</div>
+          <div class="dt-bar"><div class="dt-bar-fill" style="width:20%"></div></div>
+        </div>
+        <div class="drake-term" style="border:none">
+          <div class="dt-symbol">L</div>
+          <div class="dt-label">Durée de communication</div>
+          <div class="dt-val">10 000 ans</div>
+          <div class="dt-bar"><div class="dt-bar-fill" style="width:60%"></div></div>
+        </div>
+        <div class="drake-result">
+          <div class="dr-label">N — CIVILISATIONS ACTIVES ESTIMÉES</div>
+          <div class="dr-value">12.4</div>
+          <div class="dr-sub">mis à jour collectivement — dernière variation il y a 3h</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Population -->
+  <div class="panel-overlay" id="panel-pop" style="top:60px; right:220px;">
+    <div class="panel-box">
+      <div class="panel-header">
+        <div class="panel-title">Population — Génération I</div>
+        <button class="panel-close" onclick="closePanel('pop')">✕</button>
+      </div>
+      <div class="panel-body">
+        <div class="pop-bar-row">
+          <div class="pop-bar-header">
+            <span class="pop-bar-label">Effectif total</span>
+            <span class="pop-bar-val">10 247</span>
+          </div>
+        </div>
+        <div class="pop-bar-row">
+          <div class="pop-bar-header">
+            <span class="pop-bar-label">Volonté collective</span>
+            <span class="pop-bar-val" style="color:var(--green)">HAUTE — 82%</span>
+          </div>
+          <div class="bar-wrap"><div class="bar-fill bar-green" style="width:82%"></div></div>
+        </div>
+        <div class="pop-bar-row">
+          <div class="pop-bar-header">
+            <span class="pop-bar-label">Ressources alimentaires</span>
+            <span class="pop-bar-val" style="color:var(--green)">91%</span>
+          </div>
+          <div class="bar-wrap"><div class="bar-fill bar-green" style="width:91%"></div></div>
+        </div>
+        <div class="pop-bar-row">
+          <div class="pop-bar-header">
+            <span class="pop-bar-label">Cohésion sociale</span>
+            <span class="pop-bar-val" style="color:var(--amber)">67%</span>
+          </div>
+          <div class="bar-wrap"><div class="bar-fill bar-amber" style="width:67%"></div></div>
+        </div>
+        <div style="margin-top:12px; border-top:1px solid var(--border); padding-top:10px;">
+          <div class="sw-title" style="margin-bottom:8px;">État des systèmes sociaux</div>
+          <div class="status-row"><div class="status-dot ok"></div><div class="status-label">Éducation — fonctionnelle</div></div>
+          <div class="status-row"><div class="status-dot ok"></div><div class="status-label">Soins médicaux — nominal</div></div>
+          <div class="status-row"><div class="status-dot warn"></div><div class="status-label">Gouvernance — tension mineure</div></div>
+          <div class="status-row"><div class="status-dot ok"></div><div class="status-label">Culture — active</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── ÉTOILES ──
+const canvas = document.getElementById('sky');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const W = canvas.width, H = canvas.height;
+
+// Génération des étoiles
+const stars = [];
+const STAR_COUNT = 1800;
+
+for (let i = 0; i < STAR_COUNT; i++) {
+  const isBright = Math.random() < 0.04;
+  const isAnomaly = i < 4;
+  stars.push({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: isBright ? Math.random() * 1.8 + 0.8 : Math.random() * 0.9 + 0.2,
+    brightness: Math.random() * 0.6 + 0.3,
+    twinkle: Math.random() * Math.PI * 2,
+    twinkleSpeed: Math.random() * 0.02 + 0.005,
+    isAnomaly,
+    anomalyPhase: Math.random() * Math.PI * 2,
+    color: isBright
+      ? (Math.random() < 0.3 ? '#b0d0ff' : Math.random() < 0.3 ? '#ffe0b0' : '#ffffff')
+      : '#ffffff',
+    // Pour le hover
+    name: generateStarName(),
+    dist: (Math.random() * 200 + 2).toFixed(1),
+    spectral: ['G2V','K5V','M3V','F8V','A5V','M0V','G8V'][Math.floor(Math.random()*7)],
+    visited: i < 3,
+  });
+}
+
+function generateStarName() {
+  const prefixes = ['HD','HIP','TYC','BD','GJ','LHS','Wolf','Ross','Lalande','Gliese'];
+  const p = prefixes[Math.floor(Math.random() * prefixes.length)];
+  const n = Math.floor(Math.random() * 99999);
+  return `${p} ${n}`;
+}
+
+// Voie lactée subtile
+function drawMilkyWay() {
+  const grad = ctx.createLinearGradient(W * 0.1, H * 0.3, W * 0.9, H * 0.7);
+  grad.addColorStop(0, 'rgba(60,80,120,0)');
+  grad.addColorStop(0.3, 'rgba(60,80,120,0.06)');
+  grad.addColorStop(0.5, 'rgba(80,100,150,0.1)');
+  grad.addColorStop(0.7, 'rgba(60,80,120,0.06)');
+  grad.addColorStop(1, 'rgba(60,80,120,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.ellipse(W/2, H/2, W*0.45, H*0.18, Math.PI * 0.15, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+let animFrame = 0;
+let hoveredStar = null;
+
+function drawStars(t) {
+  ctx.clearRect(0, 0, W, H);
+  drawMilkyWay();
+
+  stars.forEach((s, i) => {
+    s.twinkle += s.twinkleSpeed;
+    const flicker = 0.85 + 0.15 * Math.sin(s.twinkle);
+    const alpha = s.brightness * flicker;
+
+    if (s.isAnomaly) {
+      // Pulse ambré pour anomalies
+      s.anomalyPhase += 0.03;
+      const pulse = 0.4 + 0.4 * Math.sin(s.anomalyPhase);
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r * 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(232,160,32,${pulse * 0.15})`;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r * 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(232,160,32,${pulse * 0.8})`;
+      ctx.fill();
+    } else {
+      // Halo pour étoiles brillantes
+      if (s.r > 1.2) {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${alpha * 0.08})`;
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = s.color.replace(')', `,${alpha})`).replace('rgb', 'rgba').replace('#ffffff', `rgba(255,255,255,${alpha})`).replace('#b0d0ff', `rgba(176,208,255,${alpha})`).replace('#ffe0b0', `rgba(255,224,176,${alpha})`);
+
+      // Simplifié
+      ctx.fillStyle = s.isAnomaly
+        ? `rgba(232,160,32,${alpha})`
+        : `rgba(255,255,255,${alpha})`;
+      ctx.fill();
+    }
+
+    // Marqueur étoiles visitées
+    if (s.visited) {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r + 3, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(0,180,200,0.3)`;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
+  });
+}
+
+// Animation
+function animate(t) {
+  animFrame = requestAnimationFrame(animate);
+  drawStars(t);
+}
+animate(0);
+
+// ── HOVER ÉTOILES ──
+const reticule = document.getElementById('reticule');
+const tooltip = document.getElementById('star-tooltip');
+
+canvas.addEventListener('mousemove', (e) => {
+  const mx = e.clientX, my = e.clientY;
+
+  // Déplacer réticule
+  reticule.style.left = mx + 'px';
+  reticule.style.top = my + 'px';
+  reticule.classList.add('visible');
+
+  // Chercher étoile proche
+  let closest = null, minDist = 18;
+  stars.forEach(s => {
+    const d = Math.hypot(s.x - mx, s.y - my);
+    if (d < minDist) { minDist = d; closest = s; }
+  });
+
+  if (closest) {
+    hoveredStar = closest;
+    const travelSec = (parseFloat(closest.dist) * 1000).toFixed(0);
+    const travelLabel = travelSec > 3600
+      ? `${(travelSec/3600).toFixed(1)}h`
+      : travelSec > 60
+        ? `${Math.floor(travelSec/60)}m ${travelSec%60}s`
+        : `${travelSec}s`;
+
+    document.getElementById('tt-name').textContent = closest.name;
+    document.getElementById('tt-dist').textContent = closest.dist + ' al';
+    document.getElementById('tt-type').textContent = closest.spectral;
+    document.getElementById('tt-travel').textContent = travelLabel;
+    document.getElementById('tt-status').textContent = closest.isAnomaly
+      ? '⚠ ANOMALIE DÉTECTÉE'
+      : closest.visited
+        ? '✓ SYSTÈME VISITÉ'
+        : '— NON EXPLORÉ';
+
+    // Position tooltip
+    const tx = mx + 18 > W - 200 ? mx - 190 : mx + 18;
+    tooltip.style.left = tx + 'px';
+    tooltip.style.top = (my - 60) + 'px';
+    tooltip.style.transform = 'none';
+    tooltip.classList.add('visible');
+  } else {
+    hoveredStar = null;
+    tooltip.classList.remove('visible');
+  }
+});
+
+canvas.addEventListener('mouseleave', () => {
+  reticule.classList.remove('visible');
+  tooltip.classList.remove('visible');
+});
+
+// ── CLIC ÉTOILE ──
+canvas.addEventListener('click', (e) => {
+  if (!hoveredStar) return;
+  const s = hoveredStar;
+
+  const dist = parseFloat(s.dist);
+  const travelSec = Math.round(dist * 1000);
+  const travelLabel = travelSec > 3600
+    ? `${(travelSec/3600).toFixed(1)}h réelles`
+    : `${Math.floor(travelSec/60)}m ${travelSec%60}s réelles`;
+
+  document.getElementById('tw-dest').textContent = s.name;
+  document.getElementById('tw-time').textContent = `${dist} al — ${travelLabel}`;
+  document.getElementById('travel-widget').classList.add('visible');
+
+  showNotif(`CAP FIXÉ — ${s.name} — ${dist} al`);
+
+  setTimeout(() => {
+    document.getElementById('travel-widget').classList.remove('visible');
+  }, 4000);
+});
+
+// ── PANELS ──
+function openPanel(id) {
+  // Fermer tous
+  document.querySelectorAll('.panel-overlay').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.inst-btn').forEach(b => b.classList.remove('active'));
+
+  const panel = document.getElementById('panel-' + id);
+  const btn = document.getElementById('btn-' + id);
+  if (panel) panel.classList.add('open');
+  if (btn) btn.classList.add('active');
+}
+
+function closePanel(id) {
+  const panel = document.getElementById('panel-' + id);
+  const btn = document.getElementById('btn-' + id);
+  if (panel) panel.classList.remove('open');
+  if (btn) btn.classList.remove('active');
+}
+
+// ── NOTIFICATIONS ──
+function showNotif(msg) {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.classList.add('visible');
+  setTimeout(() => n.classList.remove('visible'), 3000);
+}
+
+// ── DRAKE ANIMATION ──
+let drakeBase = 12.4;
+setInterval(() => {
+  const delta = (Math.random() - 0.48) * 0.3;
+  drakeBase = Math.max(0.1, drakeBase + delta);
+  const el = document.getElementById('drake-n');
+  const deltaEl = document.getElementById('drake-delta');
+  el.textContent = drakeBase.toFixed(1);
+  deltaEl.textContent = delta >= 0
+    ? `▲ +${delta.toFixed(1)}`
+    : `▼ ${delta.toFixed(1)}`;
+  deltaEl.style.color = delta >= 0 ? 'var(--green)' : 'var(--red)';
+}, 8000);
+
+// ── COORDONNÉES ──
+let coordAngle = 0;
+setInterval(() => {
+  coordAngle += 0.001;
+  const h = Math.floor(((coordAngle * 24) % 24));
+  const m = Math.floor(Math.random() * 60);
+  document.getElementById('coords').textContent =
+    `α ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m  δ −14° 08′  d 0.00 al`;
+}, 5000);
+
+// Resize
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+</body>
+</html>
