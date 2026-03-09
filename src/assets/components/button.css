@@ -106,6 +106,30 @@
     cursor: not-allowed;
 }
 
+/* ══ Bouton secondary ══ */
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-6);
+    border: var(--border-width) solid var(--border-default);
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    letter-spacing: var(--tracking-normal);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.btn-secondary:hover {
+    color: var(--color-white);
+    border-color: var(--border-bright);
+    background: var(--color-cyan-subtle);
+}
+
 /* ══ Bouton ghost ══ */
 .btn-ghost {
     display: inline-flex;

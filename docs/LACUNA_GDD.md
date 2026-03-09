@@ -1,5 +1,5 @@
 # LACUNA — Game Design Document
-*Version 0.3 — Mars 2026*
+*Version 0.4 — Mars 2026*
 
 ---
 
@@ -26,6 +26,7 @@
 | 0.1 | Mars 2026 | Document initial |
 | 0.2 | Mars 2026 | Physique du voyage — profil d'accélération réaliste, observation décalée dans le temps, détection en transit, mécanique de déroute |
 | 0.3 | Mars 2026 | Calibration temporelle — compression non-linéaire (fonction puissance), paramètres physiques ARCA définitifs, table de référence complète, analyse gameplay zones de jeu |
+| 0.4 | Mars 2026 | Mise en cohérence avec LACUNA_TRACES.md v0.7 et LACUNA_UI.md v0.5 — suppression des types de traces fixes, introduction des anomalies et instruments comme propriétés. Distinction formalisation/dépôt public. Origines PROCEDURALE remplace GENERÉE. DOCUMENT_TROUVE dans le logbook. tracesFound → tracesFormalized + anomaliesDetected dans la carte. Flux principal réécrit. Section 6 Interface allégée — renvoi vers LACUNA_UI.md. Section 9 Drake entièrement réécrite — mécanisme de convergence collective. |
 
 ---
 
@@ -316,57 +317,66 @@ Rares, imprévisibles, non annoncés à l'avance. Exemples :
 
 ### 3.3 Les Traces
 
-Objet fondamental du jeu. Tout ce que le joueur trouve, collecte, interprète et dépose.
+Une trace n'est pas un objet que le système désigne. C'est un **acte du joueur** : la décision de formaliser une anomalie détectée en entrée permanente de sa Collection. Sans ce geste volontaire, l'anomalie n'existe nulle part — elle ne laisse aucune trace dans les données du vaisseau.
+
+Le système génère des **anomalies** (écarts entre données observées et modèles attendus). Le joueur génère des **traces** (formalisations de ces anomalies après analyse).
 
 ```json
 {
   "id": "trace-wow-1977-a",
   "designation": "WOW-1977-A",
-  "type": "SIGNAL_RADIO",
   "origin": "IMMUABLE",
   "system": "Sagittarius",
   "coordinates": { "x": -2.4, "y": 0.1, "z": 0.8 },
-  "age": null,
+  "support": "signal_recu",
+  "instruments": ["recepteur_radio"],
   "difficulty": 1,
   "realReference": true,
-  "description": "Signal radio de 72 secondes détecté à 1420 MHz, correspondant exactement à la raie de l'hydrogène. Non reproduit depuis. Non expliqué.",
-  "visual": "waveform",
+  "anomalies": ["electromagnetique"],
+  "rawData": {
+    "frequence": "1420.4556 MHz",
+    "duree": "72s",
+    "structure": "asymétrique — montée progressive, pic, descente"
+  },
   "interpretations": [ ... ],
   "pointsTo": null,
-  "discovered": "2187-01-01",
-  "discoveredBy": null
+  "formalisedAt": "2187-01-01",
+  "playerName": null,
+  "drakeContribution": null
 }
 ```
 
-#### Types de traces
+**Il n'y a pas de champ `type`**. Une trace n'a pas de type assigné par le système. Elle a des anomalies détectées (familles physiques) et des instruments utilisés. La classe d'interprétation — biologique, intentionnel, artificiel, naturel inconnu — est posée par le joueur dans ses interprétations, jamais stockée comme propriété de l'objet.
 
-| Type | `type` | Description | Exemple réel |
-|------|--------|-------------|-------------|
-| Signal radio | `SIGNAL_RADIO` | Fréquence, durée, structure | Signal WOW! 1977 |
-| Objet interstellaire | `INTERSTELLAR_OBJECT` | Trajectoire, forme, accélération | Oumuamua |
-| Anomalie chimique | `CHEMICAL_ANOMALY` | Ratios isotopiques, molécules impossibles | Nucléobases Bennu/Ryugu |
-| Anomalie stellaire | `STELLAR_ANOMALY` | Variations de luminosité inexpliquées | Étoile de Tabby |
-| Anomalie orbitale | `ORBITAL_ANOMALY` | Géométrie trop régulière | — |
-| Séquence codée | `ENCODED_SEQUENCE` | Structure mathématique dans un signal | Code génétique |
-| Artefact physique | `PHYSICAL_ARTIFACT` | Objet à géométrie non naturelle | — |
-| Trace de joueur | `PLAYER_TRACE` | Déposée par un autre joueur | — |
+#### Deux gestes distincts
+
+| Geste | Description | Visibilité |
+|-------|-------------|------------|
+| **Formaliser une anomalie** | Créer une entrée dans sa propre Collection après analyse au Laboratoire | Privée — dans la Collection du joueur |
+| **Déposer une trace joueur** | Laisser un message visible par tous dans un système | Publique — dans le réseau partagé |
+
+Ces deux actions sont indépendantes. Un joueur peut formaliser une anomalie sans déposer de trace publique, et déposer une trace publique sans avoir formalisé d'anomalie.
 
 #### Niveaux de difficulté
 
-| Niveau | Description |
-|--------|-------------|
-| `1` — Évidente | Visible dès l'arrivée dans le système, interprétable sans contexte |
-| `2` — Discrète | Nécessite un scan approfondi ou une connaissance préalable |
-| `3` — Cachée | Nécessite d'avoir collecté une trace spécifique pour la détecter |
-| `4` — Secrète | Partie de la séquence secrète, conditions d'accès complexes |
+La difficulté d'une anomalie reflète le nombre d'instruments requis et le coût d'observation (distance, déplacement, contact).
 
-#### Origines
+| Niveau | Condition |
+|--------|-----------|
+| `1` | Détectable depuis la position courante — instruments passifs suffisants |
+| `2` | Nécessite une approche ou le croisement de deux instruments |
+| `3` | Nécessite orbite proche — plusieurs instruments combinés |
+| `4` | Nécessite contact physique, ou croisement inter-systèmes, ou conditions de la séquence secrète |
+
+#### Origines des anomalies
 
 | Origine | Description |
 |---------|-------------|
-| `IMMUABLE` | Créée par les développeurs, ancrée dans la vraie science, ne change pas |
-| `GENERÉE` | Créée procéduralement à la génération du système |
-| `JOUEUR` | Déposée par un autre joueur lors de son passage |
+| `IMMUABLE` | Définie par les développeurs — ancrée dans un système réel spécifique, fait partie d'un scénario ou d'une archive terrestre. Ne change pas. |
+| `PROCEDURALE` | Générée lors de la première visite d'un système, selon ses propriétés physiques (type spectral, âge, zone galactique). Peut être un faux positif — le silence ordinaire de l'univers est une donnée. |
+| `JOUEUR` | Trace publique déposée par un joueur dans un système. Toujours visible par les autres vaisseaux qui y passent. |
+
+Les anomalies `IMMUABLE` des scénarios sont hard-codées. Les anomalies `PROCEDURALE` sont générées par seed — déterministes, reproductibles, mais non narrativement significatives par design (elles peuvent l'être par accident, par convergence d'interprétations).
 
 ---
 
@@ -385,6 +395,7 @@ Chaque trace peut accumuler des interprétations de joueurs.
   "text": "La fréquence 1420 MHz n'est pas une coïncidence. C'est la raie de l'hydrogène — l'élément le plus abondant de l'univers. Quelqu'un a choisi cette fréquence parce qu'il savait qu'on l'écouterait. La durée de 72 secondes correspond à 6×12, soit le carré de 6, qui est lui-même 2×3. Structure mathématique intentionnelle.",
   "direction": "Sagittarius — axe galactique central",
   "confidence": "HYPOTHÈSE",
+  "interpretationClass": "intentionnel",
   "timestamp": "2187-02-17T14:32:00Z"
 }
 ```
@@ -399,6 +410,10 @@ Les joueurs sont **anonymes**. Pas de pseudo, pas d'identité. L'interprétation
 | `HYPOTHÈSE` | Je propose une interprétation possible |
 | `CONVICTION` | Je pense savoir ce que c'est |
 | `CERTITUDE` | Je suis certain — avec les données que j'ai |
+
+#### Classe d'interprétation
+
+Champ optionnel que le joueur peut renseigner : `naturel_connu` / `naturel_inconnu` / `biologique` / `intentionnel` / `artificiel`. Ce champ est utilisé par le moteur Drake (voir §9). Il n'est jamais imposé — le joueur peut laisser une interprétation sans classe.
 
 ---
 
@@ -425,8 +440,8 @@ Objet persistant, unique par vaisseau. Mélange de journal écrit par le joueur 
       "generation": 1,
       "date": "2187-03-15",
       "title": "Arrivée — HD 44594",
-      "text": "Système atteint après 12s. Scan initial : 3 planètes, zone habitable, anomalie de niveau 1 détectée.",
-      "linkedTraces": ["trace-hd44594-a"],
+      "text": "Système atteint après 12s. Scan passif initial : 3 planètes, zone habitable. Probabilité d'anomalie 61% sur HD 44594 b.",
+      "linkedTraces": [],
       "linkedSystems": ["HD-44594"]
     }
   ]
@@ -438,8 +453,9 @@ Objet persistant, unique par vaisseau. Mélange de journal écrit par le joueur 
 | Type | Auteur | Description |
 |------|--------|-------------|
 | `MANUEL` | Joueur | Texte libre, écrit dans l'interface Journal |
-| `AUTO` | Système | Arrivée, départ, événement notable, trace découverte |
-| `GENERATIONNEL` | Système | Passage de génération, résumé de l'héritage |
+| `AUTO` | Système | Arrivée, départ, événement notable, formalisation d'une trace, déviation |
+| `GENERATIONNEL` | Système | Passage de génération, résumé de l'héritage, mythification d'une entrée ancienne |
+| `DOCUMENT_TROUVE` | Exploration | Fragment narratif découvert dans un système — entrée de Yael ou autre document non-joueur. Lu, pas analysé. Ne figure pas dans la Collection. |
 
 ---
 
@@ -455,7 +471,8 @@ Construite progressivement par le joueur. Elle n'existe pas au départ.
       "name": "Sol",
       "visitedAt": "2187-01-01",
       "generation": 1,
-      "tracesFound": 2
+      "tracesFormalized": 2,
+      "anomaliesDetected": 3
     }
   ],
   "edges": [
@@ -510,19 +527,23 @@ OBSERVER LE CIEL
       ↓
 SÉLECTIONNER UN SYSTÈME
       ↓
-ANALYSER (optionnel — laboratoire, scan)
-      ↓
 DÉCIDER DE VOYAGER
       ↓
 VOYAGE (temps réel, vaisseau en transit)
+  → détection passive en chemin : "Probabilité d'anomalie X% — [Analyser]"
       ↓
-ARRIVÉE — SCAN AUTOMATIQUE
+ARRIVÉE — SCAN PASSIF AUTOMATIQUE
+  → probabilités d'anomalie affichées par corps, sans interprétation
       ↓
-TRACES DÉTECTÉES (selon niveau difficulté + contexte)
+ANALYSER (volontaire) — LABORATOIRE
+  → sélection des instruments, analyse en temps différé
+  → données brutes accumulées
       ↓
-INTERPRÉTER — ÉCRIRE DANS LE JOURNAL
+FORMALISER (volontaire) — COLLECTION
+  → si l'anomalie est jugée significative : nom + données + interprétation optionnelle
+  → sans ce geste, l'anomalie n'existe nulle part
       ↓
-DÉCIDER : repartir / laisser une trace / rester analyser
+DÉCIDER : repartir / approfondir / déposer une trace publique / suivre une piste
 ```
 
 ### 4.2 Le Voyage
@@ -761,8 +782,9 @@ Chaque détection génère une notification :
 TRANSIT — JOUR 3 — 14h22
 Système non référencé détecté à 8,3 AL — tribord
 Type spectral estimé : K2V
-Anomalie de niveau 2 suspectée
+Probabilité d'anomalie : 61%
 Déviation de trajectoire possible — coût carburant : 12%
+[ANALYSER]
 ```
 
 La détection en transit est le principal mécanisme de **découverte non planifiée** — le joueur ne sait pas ce qu'il va croiser avant de partir.
@@ -801,188 +823,32 @@ L'observatoire interactif (clic sur étoile, choix de cap) n'est disponible qu'�
 
 ## 6. Interface utilisateur
 
-### 5.1 Architecture générale
+> Spécification complète → `LACUNA_UI.md` (référence Antigravity)
 
-```
-┌─────────────────────────────────────────────────────┐
-│  HEADER — Logo / Nom vaisseau / Coords / Génération / N=  │
-├─────────────────────────────────────────────────────┤
-│  │              │                        │           │
-│  │  INDICATEURS │    CIEL INTERACTIF     │INDICATEURS│
-│  │  GAUCHE      │    (interface prin.)   │  DROITE   │
-│  │              │                        │           │
-│  │  - Systèmes  │    [étoiles, hover,    │- Population│
-│  │    vaisseau  │     clic, anomalies]   │- Dernière │
-│  │  - Observ.   │                        │  trace    │
-│  │              │                        │           │
-├─────────────────────────────────────────────────────┤
-│  INSTRUMENTS — 8 boutons d'accès aux modules        │
-└─────────────────────────────────────────────────────┘
-```
+Cette section ne reduplique pas le contenu de `LACUNA_UI.md`. Elle pose uniquement les **principes de design** qui gouvernent les choix d'interface.
 
-### 5.2 Le Ciel (interface principale)
+### Principes fondamentaux
 
-Le ciel est **toujours présent** derrière tous les panels. Il ne disparaît jamais complètement.
+| Principe | Formulation |
+|----------|-------------|
+| **Le ciel ne disparaît jamais** | Tous les panels s'ouvrent en overlay semi-transparent. L'espace est la constante — l'interface est l'outil. |
+| **Le système ne désigne rien** | Le vaisseau signale des probabilités d'anomalie. Il n'assigne pas de type, pas de nom, pas d'interprétation. |
+| **La trace est un acte** | Aucune trace n'existe sans geste volontaire du joueur. La Collection est toujours le résultat d'une décision. |
+| **L'urgence n'existe pas** | Aucune notification ne crée d'urgence. Le joueur répond quand il veut. La pile ne panique pas. |
+| **L'anonymat est structurel** | Aucune interprétation n'est signée. Datée par génération de voyage, jamais par identité. |
 
-#### Comportement des étoiles
+### 8 modules
 
-| État | Visuel |
-|------|--------|
-| Non explorée | Point blanc, taille proportionnelle à la magnitude |
-| Visitée | Anneau cyan fin autour de l'étoile |
-| Anomalie niveau 1 | Légère teinte ambre |
-| Anomalie niveau 2 | Pulse ambré lent |
-| Anomalie niveau 3 | Pulse ambré fort + halo |
-| En transit vers | Ligne de trajectoire fine |
-
-#### Interactions
-
-| Action | Effet |
-|--------|-------|
-| Hover | Réticule + tooltip (nom, distance, type spectral, durée voyage) |
-| Clic simple | Sélection + widget de voyage |
-| Double-clic | Ouvre le panel Observatoire centré sur ce système |
-
-### 5.3 Header permanent
-
-Toujours visible. Contient :
-
-| Élément | Donnée | Update |
-|---------|--------|--------|
-| Logo LACUNA | — | Statique |
-| Nom du vaisseau | `ship.name` + voyage | Statique |
-| Coordonnées | Position galactique courante | Temps réel |
-| Génération | `population.generation` | Sur événement |
-| **N =** | `drake.N` | Toutes les ~10 min (fluctuation globale) |
-
-### 5.4 Indicateurs latéraux
-
-Toujours visibles, non interactifs (lecture seule).
-
-**Gauche — Systèmes vaisseau**
-
-| Indicateur | Source | Seuils |
-|------------|--------|--------|
-| Propulsion | `systems.propulsion` | >0.7 vert / 0.4-0.7 ambré / <0.4 rouge |
-| Carburant He³ | `fuel.he3` | >0.5 vert / 0.2-0.5 ambré / <0.2 rouge |
-| Intégrité coque | `systems.hull` | >0.8 vert / 0.5-0.8 ambré / <0.5 rouge |
-| Bouclier plasma | `systems.plasmaShield` | Actif/Inactif |
-
-**Droite — Snapshot civilisation**
-
-| Indicateur | Source |
-|------------|--------|
-| Effectif | `population.total` |
-| Natalité | `population.birthRate` |
-| Volonté | `population.will` (barre + label) |
-| Dernière trace | Désignation + statut |
-
-### 5.5 Modules (panels overlay)
-
-Tous s'ouvrent en overlay sur le ciel. Le ciel reste visible en arrière-plan.
-
----
-
-#### MODULE — Observatoire
-
-Accès direct depuis la barre d'instruments ou double-clic sur une étoile.
-
-**Contenu :**
-- Vue détaillée du système sélectionné
-- Liste des corps célestes
-- Niveau d'anomalie + description brute
-- Traces détectées dans ce système (liste)
-- Bouton "Lancer scan approfondi" (consomme du temps simulé)
-- Bouton "Fixer cap" → déclenche le voyage
-
----
-
-#### MODULE — Carte
-
-Visualisation des systèmes visités et des routes parcourues. Construite progressivement.
-
-**Contenu :**
-- Graphe 2D des systèmes visités (nœuds) et routes (arêtes)
-- Couleur des nœuds selon l'ancienneté de la visite
-- Indicateur de traces trouvées par système
-- Statistiques : systèmes visités, distance totale, traces collectées
-
-**Pas de** carte globale de la galaxie. Uniquement ce que le vaisseau a vu.
-
----
-
-#### MODULE — Collection d'artefacts
-
-Grille des traces collectées.
-
-**Contenu :**
-- Grille N×N de slots (certains vides)
-- Chaque artefact : icône générée selon le type, désignation, badge si non interprété
-- Clic sur un artefact → détail complet + liste des interprétations d'autres joueurs + champ pour écrire la sienne
-- Filtre par type / niveau de difficulté / statut d'interprétation
-
----
-
-#### MODULE — Laboratoire
-
-Outil d'analyse scientifique. Permet d'examiner les données brutes d'une trace ou d'un système.
-
-**Contenu :**
-- Sélection d'une trace ou d'un système à analyser
-- Visualisation des données brutes (waveform, spectrogramme, carte orbitale, séquence…)
-- Outils de mesure : zoom, comparaison avec base de données, calcul de distance/fréquence
-- Rapport d'analyse généré après scan approfondi
-- Lien vers les interprétations existantes
-
----
-
-#### MODULE — Journal de bord
-
-Interface d'écriture et de lecture du carnet.
-
-**Contenu :**
-- Fil chronologique des entrées (manuelles + automatiques)
-- Éditeur texte simple pour nouvelle entrée manuelle
-- Filtre : tout / manuel / auto / générationnel
-- Mémoire générationnelle : onglet dédié aux entrées des générations précédentes
-- Entrées liables à des traces ou des systèmes
-
----
-
-#### MODULE — Équation de Drake
-
-Tableau de bord de l'état galactique collectif.
-
-**Contenu :**
-- Chaque terme de l'équation avec sa valeur courante et une barre visuelle
-- Historique des variations de N (graphe temporel simple)
-- Pour chaque variation notable : la trace responsable et le système d'origine
-- N affiché en grand, avec son dernier delta et horodatage
-
----
-
-#### MODULE — Population
-
-État de la civilisation embarquée.
-
-**Contenu :**
-- Effectif total + tendance (croissance/déclin)
-- Barres : Volonté, Cohésion sociale, Alimentation, Soins
-- Statuts des systèmes sociaux (éducation, gouvernance, culture, médecine)
-- Historique des événements populationnels passés
-- Génération courante + résumé de l'héritage reçu
-
----
-
-#### MODULE — Systèmes vaisseau
-
-État technique du vaisseau.
-
-**Contenu :**
-- État détaillé de chaque système (propulsion, coque, bouclier, observatoire, survie)
-- Niveaux de carburant He³ et deutérium avec estimation d'autonomie
-- Historique des pannes et réparations
-- Alertes actives
+| # | Module | Rôle |
+|---|--------|------|
+| 01 | Observatoire | Observer un système — probabilités d'anomalie par corps |
+| 02 | Carte | Cartographie subjective des systèmes visités |
+| 03 | Collection | Traces formalisées par le joueur |
+| 04 | Laboratoire | Analyse active — instruments, drag & drop, formalisation |
+| 05 | Journal de bord | Fil des entrées — MANUEL / AUTO / GENERATIONNEL / DOCUMENT_TROUVE |
+| 06 | Équation de Drake | État galactique collectif |
+| 07 | Population | État de la civilisation embarquée |
+| 08 | Systèmes vaisseau | État technique du vaisseau |
 
 ---
 
@@ -1047,6 +913,12 @@ Une ou plusieurs séquences de traces conçues à l'avance par les créateurs. I
 
 ## 9. Équation de Drake
 
+### Principe
+
+L'équation de Drake est l'instrument de mesure **collectif et mondial** de l'état de la connaissance galactique. Elle agrège les interprétations de tous les joueurs pour produire une estimation vivante du nombre de civilisations communicantes dans la galaxie.
+
+Elle ne se recalcule pas automatiquement à la détection d'une anomalie. Elle se recalcule quand suffisamment de joueurs **convergent indépendamment** vers la même classe d'interprétation sur les mêmes données.
+
 ### Termes fixes (données astronomiques actuelles)
 
 | Terme | Valeur | Source |
@@ -1055,14 +927,33 @@ Une ou plusieurs séquences de traces conçues à l'avance par les créateurs. I
 | fp | 1.0 | Missions Kepler/TESS |
 | ne | 0.40 | Données Kepler 2013 |
 
-### Termes variables (influencés par les joueurs)
+### Termes variables (alimentés par les joueurs)
 
-| Terme | Valeur initiale | Peut changer si… |
-|-------|----------------|------------------|
-| fl | 0.30 | Découverte de traces chimiques / biologiques |
-| fi | 0.10 | Découverte d'artefacts complexes / mathématiques |
-| fc | 0.20 | Découverte de signaux technologiques |
-| L | 10 000 ans | Découverte de civilisations disparues ou actives |
+| Terme | Valeur initiale | Classe d'interprétation déclenchante | Direction |
+|-------|----------------|--------------------------------------|-----------|
+| fl | 0.30 | `biologique` | Monte si vie confirmée, descend si absence répétée |
+| fi | 0.10 | `intentionnel` | Monte si structure intentionnelle, descend si naturel |
+| fc | 0.20 | `artificiel` | Monte si artefact technologique, descend si explication naturelle |
+| L | 10 000 ans | `biologique` + `intentionnel` combinés | Monte si civilisation durable inférée, descend si extinction |
+
+### Mécanisme de convergence
+
+Un terme ne varie pas sur l'interprétation d'un seul joueur. Il varie quand un **seuil de convergence** est atteint : plusieurs joueurs indépendants, sur plusieurs traces du même système ou de la même zone, formulent la même classe d'interprétation avec un niveau de confiance `CONVICTION` ou `CERTITUDE`.
+
+```
+Condition de variation d'un terme :
+  - Nombre d'interprétations convergentes ≥ seuil (valeur à calibrer en production)
+  - Traces concernées : au moins 2 systèmes distincts
+  - Niveau de confiance : CONVICTION ou CERTITUDE
+  - Classe d'interprétation : cohérente (même classe sur toutes les interprétations comptées)
+  → Le terme varie proportionnellement à la force de la convergence
+```
+
+### Ce que ça produit
+
+Drake peut rester parfaitement stable pendant des semaines — puis bouger brusquement quand dix joueurs indépendants arrivent à la même conclusion sur la même trace. Ce mouvement brutal est narrativement fort : c'est le moment où le consensus se forme, pas une dérive progressive.
+
+La variation est visible dans le header (`N= + delta`) sans explication immédiate. Le module Drake permet de remonter à la trace responsable et aux interprétations qui ont déclenché le mouvement.
 
 ### Recalcul
 
@@ -1070,7 +961,7 @@ Une ou plusieurs séquences de traces conçues à l'avance par les créateurs. I
 N = R* × fp × ne × fl × fi × fc × L
 ```
 
-Recalculé automatiquement lors de chaque variation d'un terme. Mis à jour pour tous les joueurs actifs. La variation est visible dans le header (N= + delta) sans explication immédiate.
+Recalculé à chaque variation confirmée d'un terme. Mis à jour pour tous les joueurs actifs simultanément.
 
 ---
 
@@ -1158,4 +1049,4 @@ seed(systemId) → propriétés du système reproductibles
 
 ---
 
-*LACUNA — GDD v0.3 — Mars 2026 — Confidentiel*
+*LACUNA — GDD v0.4 — Mars 2026 — Confidentiel*

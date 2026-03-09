@@ -1,0 +1,342 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Laboratoire
+   3 colonnes : observations | sélectionnée | instruments
+   ══════════════════════════════════════════════════════ */
+
+/* ── Layout 3 colonnes ── */
+.lab-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 280px) 1fr minmax(420px, 520px);
+  gap: 0;
+  min-height: 100%;
+}
+
+.lab-observations-col {
+  padding: var(--space-6) var(--space-6);
+  border-right: var(--border-width) solid var(--border-default);
+  overflow-y: auto;
+}
+
+.lab-selected-col {
+  padding: var(--space-6) var(--space-8);
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.lab-instruments-col {
+  padding: var(--space-6) var(--space-6);
+  border-left: var(--border-width) solid var(--border-default);
+  overflow-y: auto;
+  min-width: 420px;
+}
+
+/* ── Colonne gauche : file d'observations ── */
+.lab-observations__title {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-4);
+}
+
+.lab-observation-item {
+  position: relative;
+  padding: var(--space-3) var(--space-4);
+  padding-right: 28px;
+  border: var(--border-width) solid var(--border-default);
+  background: rgba(0, 0, 0, 0.3);
+  margin-bottom: var(--space-2);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.lab-observation-item__dismiss {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font-size: var(--text-lg);
+  cursor: pointer;
+  line-height: 1;
+  border-radius: var(--border-radius-sm);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lab-observation-item__dismiss:hover {
+  color: var(--color-white);
+  background: rgba(200, 64, 64, 0.2);
+}
+
+.lab-observation-item:hover {
+  border-color: var(--border-bright);
+  background: var(--color-cyan-subtle);
+}
+
+.lab-observation-item.selected {
+  border-color: var(--color-cyan);
+  background: var(--color-cyan-subtle);
+}
+
+.lab-observation-item__name {
+  font-size: var(--text-base);
+  color: var(--color-white);
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-tight);
+}
+
+.lab-observation-item--signal .lab-observation-item__name {
+  color: var(--color-signal);
+}
+
+.lab-observation-item__meta {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-top: var(--space-1);
+}
+
+.lab-observation-item__state {
+  font-size: var(--text-xs);
+  color: var(--color-amber);
+  margin-top: var(--space-1);
+}
+
+.lab-observation-item__state.analysed {
+  color: var(--color-green);
+}
+
+.lab-empty-observations {
+  padding: var(--space-6);
+  color: var(--color-muted);
+  font-size: var(--text-base);
+  text-align: center;
+}
+
+/* ── Colonne centrale : observation sélectionnée ── */
+.lab-selected-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--color-muted);
+  font-size: var(--text-base);
+}
+
+.lab-selected__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-6);
+  border-bottom: var(--border-width) solid var(--border-default);
+}
+
+.lab-selected__header-info {
+  flex: 1;
+  min-width: 260px;
+}
+
+.lab-selected__header-action {
+  flex-shrink: 0;
+}
+
+.lab-selected__name {
+  font-size: var(--text-md);
+  color: var(--color-cyan);
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-normal);
+  margin-bottom: var(--space-2);
+}
+
+.lab-selected__name--signal {
+  color: var(--color-signal);
+}
+
+.lab-selected__meta {
+  font-size: var(--text-base);
+  color: var(--color-muted);
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: var(--space-1);
+}
+
+.lab-selected__section {
+  margin-bottom: var(--space-8);
+}
+
+.lab-selected__section-title {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-4);
+}
+
+.lab-raw-data {
+  padding: var(--space-4);
+  background: rgba(0, 0, 0, 0.4);
+  border: var(--border-width) solid var(--border-default);
+  font-size: var(--text-base);
+  font-family: var(--font-mono);
+  color: var(--color-white);
+  line-height: var(--leading-relaxed);
+  white-space: pre-wrap;
+}
+
+.lab-report {
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--border-default);
+  background: rgba(0, 0, 0, 0.3);
+  margin-bottom: var(--space-4);
+}
+
+.lab-report__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.lab-report__instrument {
+  font-size: var(--text-base);
+  color: var(--color-white);
+}
+
+.lab-report__fiability {
+  font-size: var(--text-base);
+  color: var(--color-green);
+}
+
+.lab-report__meta {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-bottom: var(--space-2);
+}
+
+.lab-report__results {
+  font-size: var(--text-base);
+  color: var(--color-white);
+  font-family: var(--font-mono);
+  line-height: var(--leading-relaxed);
+}
+
+/* ── Colonne droite : instruments ── */
+.lab-instruments__title {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-4);
+}
+
+.lab-instruments-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
+/* Responsive : 3→2 colonnes instruments */
+@media (max-width: 1200px) {
+  .lab-instruments-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .lab-instruments-col {
+    min-width: 280px;
+  }
+  .lab-layout {
+    grid-template-columns: minmax(220px, 260px) 1fr minmax(280px, 380px);
+  }
+}
+
+/* Responsive : 2→1 colonne instruments, priorité à la colonne centrale */
+@media (max-width: 900px) {
+  .lab-instruments-grid {
+    grid-template-columns: 1fr;
+  }
+  .lab-instruments-col {
+    min-width: 200px;
+  }
+  .lab-layout {
+    grid-template-columns: minmax(180px, 220px) 1fr minmax(200px, 280px);
+  }
+}
+
+.lab-instrument {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-3);
+  border: var(--border-width) solid var(--border-default);
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.lab-instrument:hover:not(.lab-instrument--disabled):not(.lab-instrument--running) {
+  border-color: var(--border-bright);
+  background: var(--color-cyan-subtle);
+}
+
+.lab-instrument--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lab-instrument--running {
+  border-color: var(--color-cyan-dim);
+  background: var(--color-cyan-subtle);
+}
+
+.lab-instrument--done {
+  border-color: var(--color-green);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.lab-instrument__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.lab-instrument__name {
+  font-size: var(--text-base);
+  color: var(--color-white);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-snug);
+  word-break: break-word;
+}
+
+.lab-instrument__icon {
+  font-size: var(--text-base);
+  flex-shrink: 0;
+}
+
+.lab-instrument__status {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+
+.lab-instrument--done .lab-instrument__status {
+  color: var(--color-green);
+}
+
+.lab-instrument .bar-wrap {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.lab-no-selection {
+  padding: var(--space-6);
+  color: var(--color-muted);
+  font-size: var(--text-base);
+  text-align: center;
+}

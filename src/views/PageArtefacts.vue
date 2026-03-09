@@ -1,10 +1,14 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
+import { useTracesStore } from '@/stores/traces'
 import { useUIStore } from '@/stores/ui'
 
 const supabaseStore = useSupabaseStore()
+const tracesStore = useTracesStore()
+const { playerTraces } = storeToRefs(tracesStore)
 const ui = useUIStore()
 
 const TRACE_ICONS = {
@@ -25,9 +29,9 @@ const FALLBACK_TRACES = [
   { id: '3', designation: 'BENNU-NB-2023', type: 'CHEMICAL_ANOMALY', system_id: 'SOL', difficulty: '2', description: 'Nucléobases (uracile, niacine) découvertes dans les échantillons de Bennu et Ryugu. Composition suggérant une origine prébiotique.', discovered: '2023-03-21', unread: false },
 ]
 
-const artefacts = ref([])
 const selectedTrace = ref(null)
 const interpretations = ref([])
+const playerInterpretations = ref({}) // { traceId: [{ text, ... }] }
 const newInterpretation = ref('')
 const loadingInterpretations = ref(false)
 const submittingInterpretation = ref(false)
@@ -39,9 +43,11 @@ function getTraceIcon(type) {
   return TRACE_ICONS[type] ?? '◈'
 }
 
+const immutableTraces = ref([])
+
 async function fetchTraces() {
   if (!supabaseStore.isConfigured()) {
-    artefacts.value = FALLBACK_TRACES
+    immutableTraces.value = FALLBACK_TRACES
     return
   }
   try {
@@ -52,19 +58,23 @@ async function fetchTraces() {
       .order('discovered', { ascending: true })
 
     if (error) throw error
-    artefacts.value = (data || []).map(t => ({ ...t, unread: false }))
+    immutableTraces.value = (data || []).map(t => ({ ...t, unread: false }))
   } catch (err) {
     console.warn('[Artefacts] Erreur fetch traces:', err)
-    artefacts.value = FALLBACK_TRACES
+    immutableTraces.value = FALLBACK_TRACES
   }
 }
+
+const artefacts = computed(() => [...playerTraces.value, ...immutableTraces.value])
 
 async function fetchInterpretations(traceId) {
   if (!traceId) return
   loadingInterpretations.value = true
   interpretations.value = []
   try {
-    if (supabaseStore.isConfigured()) {
+    if (traceId.startsWith('player-')) {
+      interpretations.value = playerInterpretations.value[traceId] || []
+    } else if (supabaseStore.isConfigured()) {
       const { data, error } = await supabase
         .from('interpretations')
         .select('id, text, confidence, generation, galactic_date, created_at')
@@ -83,8 +93,12 @@ async function fetchInterpretations(traceId) {
 async function submitInterpretation() {
   const text = newInterpretation.value?.trim()
   if (!text || !selectedTrace.value) return
-  if (!supabaseStore.isConfigured()) {
-    interpretations.value = [...interpretations.value, { id: 'local-' + Date.now(), text, confidence: 'HYPOTHÈSE', generation: null, galactic_date: null, created_at: new Date().toISOString() }]
+  const traceId = selectedTrace.value.id
+  if (traceId.startsWith('player-') || !supabaseStore.isConfigured()) {
+    const interp = { id: 'local-' + Date.now(), text, confidence: 'HYPOTHÈSE', generation: null, galactic_date: null, created_at: new Date().toISOString() }
+    const list = playerInterpretations.value[traceId] || []
+    playerInterpretations.value = { ...playerInterpretations.value, [traceId]: [...list, interp] }
+    interpretations.value = [...interpretations.value, interp]
     newInterpretation.value = ''
     return
   }
@@ -114,13 +128,21 @@ async function submitInterpretation() {
 
 async function deleteInterpretation(interp) {
   if (!interp?.id) return
+  const traceId = selectedTrace.value?.id
+  const isPlayerTrace = traceId?.startsWith('player-')
   deletingId.value = interp.id
   try {
-    if (supabaseStore.isConfigured()) {
+    if (isPlayerTrace) {
+      const list = (playerInterpretations.value[traceId] || []).filter(i => i.id !== interp.id)
+      playerInterpretations.value = { ...playerInterpretations.value, [traceId]: list }
+      interpretations.value = interpretations.value.filter(i => i.id !== interp.id)
+    } else if (supabaseStore.isConfigured()) {
       const { error } = await supabase.from('interpretations').delete().eq('id', interp.id)
       if (error) throw error
+      interpretations.value = interpretations.value.filter(i => i.id !== interp.id)
+    } else {
+      interpretations.value = interpretations.value.filter(i => i.id !== interp.id)
     }
-    interpretations.value = interpretations.value.filter(i => i.id !== interp.id)
   } catch (err) {
     console.warn('[Artefacts] Erreur suppression interprétation:', err)
     ui.showNotification('Suppression impossible — migration RLS peut-être non appliquée', 5000)
@@ -137,6 +159,9 @@ function formatInterpretationDate(iso) {
 
 function selectTrace(trace) {
   selectedTrace.value = trace
+  if (trace?.id?.startsWith('player-')) {
+    tracesStore.markAsRead(trace.id)
+  }
 }
 
 watch(selectedTrace, (trace) => {
@@ -145,11 +170,16 @@ watch(selectedTrace, (trace) => {
 
 async function init() {
   await fetchTraces()
+}
+
+function ensureSelection() {
   if (artefacts.value.length > 0 && !selectedTrace.value) {
     selectTrace(artefacts.value[0])
   }
 }
+
 init()
+watch(artefacts, ensureSelection, { immediate: true })
 </script>
 
 <template>

@@ -1,0 +1,210 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Observatoire Panel
+   Overlay détail système, corps, Analyser, Ajouter au lab
+   ══════════════════════════════════════════════════════ */
+
+.observatoire-panel {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+}
+
+.observatoire-panel__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+}
+
+.observatoire-panel__box {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow: hidden;
+  background: var(--color-panel);
+  border: var(--border-width) solid var(--border-bright);
+  display: flex;
+  flex-direction: column;
+}
+
+.observatoire-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-7);
+  border-bottom: var(--border-width) solid var(--border-default);
+}
+
+.observatoire-panel__title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-cyan);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.observatoire-panel__close {
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  font-size: var(--text-xl);
+  cursor: pointer;
+  padding: 0 var(--space-2);
+  transition: color var(--transition-base);
+}
+
+.observatoire-panel__close:hover {
+  color: var(--color-white);
+}
+
+.observatoire-panel__body {
+  padding: var(--space-6) var(--space-7);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.observatoire-panel__section {
+  margin-bottom: var(--space-6);
+}
+
+.observatoire-panel__section-title {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-4);
+}
+
+.observatoire-panel__bodies {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.observatoire-body {
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--border-default);
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.observatoire-body__info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.observatoire-body__name {
+  font-size: var(--text-base);
+  color: var(--color-white);
+  font-family: var(--font-mono);
+}
+
+.observatoire-body__type {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.observatoire-body__anomaly {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.observatoire-body__anomaly.high {
+  color: var(--color-amber);
+}
+
+.observatoire-body__add-btn--animating {
+  animation: observatoire-add-pulse 0.35s ease-out;
+}
+
+.observatoire-body__add-btn--added {
+  color: var(--color-green);
+  border-color: var(--color-green);
+  background: rgba(64, 168, 112, 0.12);
+  cursor: default;
+}
+
+@keyframes observatoire-add-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.97); background: rgba(64, 168, 112, 0.15); }
+  100% { transform: scale(1); }
+}
+
+.observatoire-body__actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.observatoire-panel__footer {
+  padding: var(--space-5) var(--space-7);
+  border-top: var(--border-width) solid var(--border-default);
+}
+
+.observatoire-panel__footer .btn {
+  width: 100%;
+}
+
+/* ── Modale signal (clic card ou marqueur ciel) ── */
+.signal-modal .observatoire-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.signal-modal__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.signal-modal__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.signal-modal__key {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.signal-modal__val {
+  font-size: var(--text-base);
+  color: var(--color-white);
+  font-family: var(--font-mono);
+}
+
+.signal-modal__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.signal-modal__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-base);
+}
+
+.signal-modal__row .signal-modal__key {
+  font-size: var(--text-base);
+  text-transform: none;
+  color: var(--color-muted);
+}
+
+.signal-modal__row .signal-modal__val {
+  font-size: var(--text-base);
+}

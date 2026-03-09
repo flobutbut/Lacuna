@@ -39,26 +39,20 @@ onMounted(() => {
     </div>
 
     <div class="header__right">
-      <div class="gen-indicator">
-        <div class="gen-indicator__label">Génération</div>
-        <div class="gen-indicator__value">I</div>
+      <div class="header__stat-block">
+        <span class="header__stat-label">Gén.</span>
+        <span class="header__stat-val">I</span>
       </div>
-      <div class="drake-widget">
-        <div>
-          <div class="drake-widget__label">N =</div>
-          <div class="drake-widget__sub">civilisations actives</div>
-        </div>
-        <div>
-          <div class="drake-widget__value">{{ drakeN.toFixed(1) }}</div>
-          <div
-            class="drake-widget__delta"
-            :class="{ 'drake-widget__delta--negative': !drakeDeltaPositive }"
-          >
-            {{ drakeDeltaPositive ? '▲' : '▼' }}
-            {{ drakeDeltaPositive ? '+' : '' }}{{ drakeDelta.toFixed(1) }}
-          </div>
-        </div>
-      </div>
+      <RouterLink to="/drake" class="header__stat-block header__stat-block--drake">
+        <span class="header__stat-label">N =</span>
+        <span class="header__stat-val">{{ drakeN.toFixed(1) }}</span>
+        <span
+          class="header__stat-delta"
+          :class="{ 'header__stat-delta--neg': !drakeDeltaPositive }"
+        >
+          {{ drakeDeltaPositive ? '+' : '' }}{{ drakeDelta.toFixed(1) }}
+        </span>
+      </RouterLink>
     </div>
   </header>
 </template>

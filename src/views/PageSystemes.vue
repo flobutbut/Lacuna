@@ -1,8 +1,49 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 
-const activeSection = ref('identity')
+const activeSection = ref('plasma-shield')
 const overlayVisible = ref(true)
+const blueprintRef = ref(null)
+
+// Menu = 1 item par groupe SVG + Identité + Historique
+const MENU_ITEMS = [
+  { id: 'identity', label: 'Identité', icon: '◈', groupIds: [] },
+  { id: 'plasma-shield', label: 'Bouclier plasma', icon: '◎', groupIds: ['plasma-shield'] },
+  { id: 'bumper-shield', label: 'Pare-chocs ablatif', icon: '⬡', groupIds: ['bumper-shield'] },
+  { id: 'population-quarters', label: 'Anneaux habitat', icon: '⊕', groupIds: ['population-quarters'] },
+  { id: 'fission-reactors', label: 'Réacteurs & Cargaison', icon: '⌬', groupIds: ['fission-reactors'] },
+  { id: 'thermal-radiators', label: 'Radiateurs thermiques', icon: '☰', groupIds: ['thermal-radiators'] },
+  { id: 'fuel-tanks', label: 'Réservoirs cryogéniques', icon: '◉', groupIds: ['fuel-tanks'] },
+  { id: 'propulsion', label: 'Moteur fusion MTF', icon: '≋', groupIds: ['propulsion'] },
+  { id: 'comms', label: 'Laser comms', icon: '↕', groupIds: ['comms'] },
+  { id: 'navigation', label: 'Navigation pulsar', icon: '✧', groupIds: ['navigation'] },
+  { id: 'history', label: 'Historique', icon: '≡', groupIds: [] },
+]
+
+const ALL_GROUP_IDS = ['plasma-shield', 'bumper-shield', 'population-quarters', 'fission-reactors', 'thermal-radiators', 'fuel-tanks', 'propulsion', 'comms', 'navigation']
+
+function updateBlueprintHighlight() {
+  const obj = blueprintRef.value
+  if (!obj?.contentDocument) return
+  const doc = obj.contentDocument
+  const item = MENU_ITEMS.find((m) => m.id === activeSection.value)
+  const idsToHighlight = overlayVisible.value && item ? item.groupIds : []
+  ALL_GROUP_IDS.forEach((id) => {
+    const el = doc.getElementById(id)
+    if (el) {
+      el.classList.toggle('sys-highlight', idsToHighlight.includes(id))
+      el.classList.toggle('sys-dimmed', idsToHighlight.length > 0 && !idsToHighlight.includes(id))
+    }
+  })
+}
+
+function onBlueprintLoad() {
+  updateBlueprintHighlight()
+}
+
+watch([activeSection, overlayVisible], () => {
+  nextTick(updateBlueprintHighlight)
+})
 
 // Données vaisseau (mock — à connecter Supabase plus tard)
 const ship = ref({
@@ -57,44 +98,14 @@ function formatNum(n) {
           Tableau de bord ARCA
         </div>
         <div
+          v-for="item in MENU_ITEMS"
+          :key="item.id"
           class="sys-menu-item"
-          :class="{ selected: overlayVisible && activeSection === 'identity' }"
-          @click="activeSection = 'identity'; overlayVisible = true"
+          :class="{ selected: overlayVisible && activeSection === item.id }"
+          @click="activeSection = item.id; overlayVisible = true"
         >
-          <span class="sys-menu-item__icon">◈</span>
-          Identité
-        </div>
-        <div
-          class="sys-menu-item"
-          :class="{ selected: overlayVisible && activeSection === 'propulsion' }"
-          @click="activeSection = 'propulsion'; overlayVisible = true"
-        >
-          <span class="sys-menu-item__icon">≋</span>
-          Propulsion & Structure
-        </div>
-        <div
-          class="sys-menu-item"
-          :class="{ selected: overlayVisible && activeSection === 'fuel' }"
-          @click="activeSection = 'fuel'; overlayVisible = true"
-        >
-          <span class="sys-menu-item__icon">◉</span>
-          Carburant
-        </div>
-        <div
-          class="sys-menu-item"
-          :class="{ selected: overlayVisible && activeSection === 'survie' }"
-          @click="activeSection = 'survie'; overlayVisible = true"
-        >
-          <span class="sys-menu-item__icon">⊕</span>
-          Survie
-        </div>
-        <div
-          class="sys-menu-item"
-          :class="{ selected: overlayVisible && activeSection === 'history' }"
-          @click="activeSection = 'history'; overlayVisible = true"
-        >
-          <span class="sys-menu-item__icon">≡</span>
-          Historique
+          <span class="sys-menu-item__icon">{{ item.icon }}</span>
+          {{ item.label }}
         </div>
       </div>
 
@@ -102,7 +113,14 @@ function formatNum(n) {
       <div class="sys-ship-col">
         <!-- Plan SVG — pleine largeur, ratio conservé -->
         <div class="sys-blueprint-wrap">
-          <img src="/ARCA_blueprint_grouped.svg" alt="Plan du vaisseau ARCA" />
+          <object
+            ref="blueprintRef"
+            type="image/svg+xml"
+            data="/ARCA_blueprint_grouped.svg"
+            class="sys-blueprint-svg"
+            title="Plan du vaisseau ARCA"
+            @load="onBlueprintLoad"
+          />
         </div>
 
         <!-- Overlay infos de l'onglet sélectionné (fermable, hug content) -->
@@ -145,30 +163,9 @@ function formatNum(n) {
           </div>
         </div>
 
-        <!-- Propulsion & Structure -->
-        <div v-show="activeSection === 'propulsion'">
-          <div class="sys-section-title">Propulsion & Structure</div>
-          <div class="sys-indicator">
-            <div class="sys-indicator__name">PROPULSION</div>
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">{{ propulsion.value.toFixed(2) }}</span>
-            </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(propulsion.value) }" />
-            </div>
-            <div class="sys-indicator__desc">{{ propulsion.desc }}</div>
-            <div class="sys-indicator__desc">État actuel : {{ propulsion.state }}</div>
-          </div>
-          <div class="sys-indicator">
-            <div class="sys-indicator__name">COQUE</div>
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">{{ hull.value.toFixed(2) }}</span>
-            </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(hull.value) }" />
-            </div>
-            <div class="sys-indicator__desc">{{ hull.desc }}</div>
-          </div>
+        <!-- Bouclier plasma -->
+        <div v-show="activeSection === 'plasma-shield'">
+          <div class="sys-section-title">Bouclier plasma</div>
           <div class="sys-indicator">
             <div class="sys-indicator__name">BOUCLIER PLASMA</div>
             <div class="sys-indicator__row">
@@ -182,49 +179,26 @@ function formatNum(n) {
           </div>
         </div>
 
-        <!-- Carburant -->
-        <div v-show="activeSection === 'fuel'">
-          <div class="sys-section-title">Carburant</div>
-          <p class="sys-indicator__desc" style="margin-bottom: var(--space-5)">
-            He³ et deutérium ne sont pas en boucle fermée — consommation par voyage (Tsiolkovsky).
-          </p>
+        <!-- Pare-chocs ablatif -->
+        <div v-show="activeSection === 'bumper-shield'">
+          <div class="sys-section-title">Pare-chocs ablatif</div>
           <div class="sys-indicator">
-            <div class="sys-indicator__name">He³</div>
+            <div class="sys-indicator__name">COQUE</div>
             <div class="sys-indicator__row">
-              <span class="sys-indicator__label">{{ formatNum(he3.current) }} t / {{ formatNum(he3.max) }} t</span>
-              <span class="sys-indicator__val">{{ (he3.pct * 100).toFixed(1) }}%</span>
+              <span class="sys-indicator__label">{{ hull.value.toFixed(2) }}</span>
             </div>
             <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(he3.pct) }" />
+              <div class="bar-fill bar-cyan" :style="{ width: barWidth(hull.value) }" />
             </div>
-          </div>
-          <div class="sys-indicator">
-            <div class="sys-indicator__name">Deutérium</div>
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">{{ formatNum(deuterium.current) }} t / {{ formatNum(deuterium.max) }} t</span>
-              <span class="sys-indicator__val">{{ (deuterium.pct * 100).toFixed(1) }}%</span>
-            </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(deuterium.pct) }" />
-            </div>
-          </div>
-          <div class="sys-identity" style="margin-top: var(--space-6)">
-            <div class="sys-identity__row">
-              <span class="sys-identity__key">Vitesse actuelle</span>
-              <span class="sys-identity__val">{{ fuel.speed }}</span>
-            </div>
-            <div class="sys-identity__row">
-              <span class="sys-identity__key">Autonomie estimée</span>
-              <span class="sys-identity__val">{{ fuel.autonomy }}</span>
-            </div>
+            <div class="sys-indicator__desc">{{ hull.desc }}</div>
           </div>
         </div>
 
-        <!-- Survie -->
-        <div v-show="activeSection === 'survie'">
-          <div class="sys-section-title">Systèmes de survie</div>
+        <!-- Anneaux habitat -->
+        <div v-show="activeSection === 'population-quarters'">
+          <div class="sys-section-title">Anneaux habitat rotatifs</div>
           <p class="sys-indicator__desc" style="margin-bottom: var(--space-5)">
-            Efficacité des systèmes (boucle fermée) — pas un niveau de stock.
+            Efficacité des systèmes de survie (boucle fermée).
           </p>
           <div class="sys-indicator">
             <div class="sys-indicator__row">
@@ -266,6 +240,81 @@ function formatNum(n) {
             </div>
             <div class="sys-indicator__desc">{{ medical.desc }}</div>
           </div>
+        </div>
+
+        <!-- Réacteurs & Cargaison -->
+        <div v-show="activeSection === 'fission-reactors'">
+          <div class="sys-section-title">Réacteurs fission & Cargaison</div>
+          <div class="sys-indicator__desc">
+            SAFE-400 × 12 — 800 MW électriques — triple redondance. Banque génomique, embryons, semences.
+          </div>
+        </div>
+
+        <!-- Radiateurs thermiques -->
+        <div v-show="activeSection === 'thermal-radiators'">
+          <div class="sys-section-title">Radiateurs thermiques</div>
+          <div class="sys-indicator__desc">
+            Graphite pyrolytique — ~40 km² — perpendiculaires à l'axe de vol.
+          </div>
+        </div>
+
+        <!-- Réservoirs cryogéniques -->
+        <div v-show="activeSection === 'fuel-tanks'">
+          <div class="sys-section-title">Réservoirs cryogéniques</div>
+          <p class="sys-indicator__desc" style="margin-bottom: var(--space-5)">
+            He³ et deutérium ne sont pas en boucle fermée — consommation par voyage (Tsiolkovsky).
+          </p>
+          <div class="sys-indicator">
+            <div class="sys-indicator__name">He³</div>
+            <div class="sys-indicator__row">
+              <span class="sys-indicator__label">{{ formatNum(he3.current) }} t / {{ formatNum(he3.max) }} t</span>
+              <span class="sys-indicator__val">{{ (he3.pct * 100).toFixed(1) }}%</span>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar-fill bar-cyan" :style="{ width: barWidth(he3.pct) }" />
+            </div>
+          </div>
+          <div class="sys-indicator">
+            <div class="sys-indicator__name">Deutérium</div>
+            <div class="sys-indicator__row">
+              <span class="sys-indicator__label">{{ formatNum(deuterium.current) }} t / {{ formatNum(deuterium.max) }} t</span>
+              <span class="sys-indicator__val">{{ (deuterium.pct * 100).toFixed(1) }}%</span>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar-fill bar-cyan" :style="{ width: barWidth(deuterium.pct) }" />
+            </div>
+          </div>
+          <div class="sys-identity" style="margin-top: var(--space-6)">
+            <div class="sys-identity__row">
+              <span class="sys-identity__key">Vitesse actuelle</span>
+              <span class="sys-identity__val">{{ fuel.speed }}</span>
+            </div>
+            <div class="sys-identity__row">
+              <span class="sys-identity__key">Autonomie estimée</span>
+              <span class="sys-identity__val">{{ fuel.autonomy }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Moteur fusion MTF -->
+        <div v-show="activeSection === 'propulsion'">
+          <div class="sys-section-title">Moteur fusion MTF</div>
+          <div class="sys-indicator">
+            <div class="sys-indicator__name">PROPULSION</div>
+            <div class="sys-indicator__row">
+              <span class="sys-indicator__label">{{ propulsion.value.toFixed(2) }}</span>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar-fill bar-cyan" :style="{ width: barWidth(propulsion.value) }" />
+            </div>
+            <div class="sys-indicator__desc">{{ propulsion.desc }}</div>
+            <div class="sys-indicator__desc">État actuel : {{ propulsion.state }}</div>
+          </div>
+        </div>
+
+        <!-- Laser comms -->
+        <div v-show="activeSection === 'comms'">
+          <div class="sys-section-title">Laser comms</div>
           <div class="sys-indicator">
             <div class="sys-indicator__row">
               <span class="sys-indicator__label">OBSERVATOIRE</span>
@@ -275,6 +324,15 @@ function formatNum(n) {
               <div class="bar-fill bar-cyan" :style="{ width: barWidth(observatoire.value) }" />
             </div>
             <div class="sys-indicator__desc">{{ observatoire.desc }}</div>
+            <div class="sys-indicator__desc">1 Gbps — délai 4.24 ans</div>
+          </div>
+        </div>
+
+        <!-- Navigation pulsar -->
+        <div v-show="activeSection === 'navigation'">
+          <div class="sys-section-title">Navigation pulsar</div>
+          <div class="sys-indicator__desc">
+            Pulsar MSP pour localisation et orientation en transit interstellaire.
           </div>
         </div>
 

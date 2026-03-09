@@ -3,6 +3,9 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&amp;family=Orbitron:wght@400;700&amp;display=swap');
       text { font-family: 'Share Tech Mono', monospace; }
+      /* Highlight pour sélection menu PageSystèmes */
+      g[id].sys-highlight { filter: url(#glow-cyan); opacity: 1; transition: opacity 0.3s ease, filter 0.3s ease; }
+      g[id].sys-dimmed { opacity: 0.25; transition: opacity 0.3s ease; }
     </style>
 
     <!-- Grid pattern -->

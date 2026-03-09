@@ -13,6 +13,8 @@
     border-bottom: var(--border-width) solid var(--border-default);
     background: linear-gradient(180deg, rgba(3, 6, 13, 0.9) 0%, transparent 100%);
     pointer-events: all;
+    position: relative;
+    z-index: var(--z-ui);
 }
 
 .header__logo {
@@ -55,63 +57,53 @@
 .header__right {
     display: flex;
     align-items: center;
-    gap: var(--space-9);
+    gap: var(--space-4);
 }
 
-.gen-indicator {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--space-1);
-}
-
-.gen-indicator__label {
-    font-size: var(--text-base);
-    color: var(--color-muted);
-    letter-spacing: var(--tracking-normal);
-}
-
-.gen-indicator__value {
-    font-size: var(--text-lg);
-    color: var(--color-amber);
-    letter-spacing: var(--tracking-tight);
-}
-
-.drake-widget {
-    display: flex;
-    align-items: center;
-    gap: var(--space-5);
-    padding: var(--space-3) var(--space-7);
+.header__stat-block {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-5);
     border: var(--border-width) solid var(--border-default);
-    background: rgba(3, 6, 13, 0.6);
+    background: rgba(3, 6, 13, 0.5);
 }
 
-.drake-widget__label {
-    font-size: var(--text-base);
-    letter-spacing: var(--tracking-normal);
+a.header__stat-block {
+    text-decoration: none;
+    transition: border-color var(--transition-base), background var(--transition-base);
+}
+
+a.header__stat-block:hover {
+    border-color: var(--border-bright);
+    background: rgba(0, 180, 200, 0.04);
+}
+
+.header__stat-label {
+    font-size: var(--text-xs);
     color: var(--color-muted);
     text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
 }
 
-.drake-widget__sub {
-    font-size: var(--text-base);
-    color: var(--color-muted);
+.header__stat-val {
+    font-size: var(--text-md);
+    font-family: var(--font-mono);
+    color: var(--color-white);
     letter-spacing: var(--tracking-tight);
 }
 
-.drake-widget__value {
-    font-size: var(--text-3xl);
-    font-weight: var(--weight-regular);
+.header__stat-block--drake .header__stat-val {
     color: var(--color-cyan);
+}
+
+.header__stat-delta {
+    font-size: var(--text-md);
     font-family: var(--font-mono);
-    line-height: var(--leading-none);
-}
-
-.drake-widget__delta {
-    font-size: var(--text-base);
     color: var(--color-green);
+    margin-left: var(--space-2);
 }
 
-.drake-widget__delta--negative {
+.header__stat-delta--neg {
     color: var(--color-red);
 }

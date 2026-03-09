@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
+import { useSignauxStore } from '@/stores/signaux'
 
 const ui = useUIStore()
+const signauxStore = useSignauxStore()
 const canvasRef = ref(null)
 const stars = ref([])
 
@@ -54,6 +56,15 @@ function drawMilkyWay(ctx, w, h) {
   ctx.fill()
 }
 
+function signalPosition(azimuthDeg, w, h) {
+  const r = Math.min(w, h) * 0.45
+  const rad = (azimuthDeg * Math.PI) / 180
+  return {
+    x: w / 2 + r * Math.sin(rad),
+    y: h / 2 - r * Math.cos(rad),
+  }
+}
+
 function draw(canvas, starList) {
   if (!canvas || !ctx) return
   const w = canvas.width
@@ -61,6 +72,10 @@ function draw(canvas, starList) {
 
   ctx.clearRect(0, 0, w, h)
   drawMilkyWay(ctx, w, h)
+
+  const selected = ui.selectedStar
+  const now = Date.now()
+  const activeSignals = signauxStore.list.filter((s) => now - s.createdAt < s.lifetimeMs)
 
   starList.forEach((s) => {
     s.twinkle += s.twinkleSpeed
@@ -91,13 +106,44 @@ function draw(canvas, starList) {
       ctx.fill()
     }
 
-    if (s.visited) {
+    if (s === selected) {
+      ctx.beginPath()
+      ctx.arc(s.x, s.y, s.r + 8, 0, Math.PI * 2)
+      ctx.strokeStyle = 'rgba(0,180,200,0.9)'
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.arc(s.x, s.y, s.r + 6, 0, Math.PI * 2)
+      ctx.strokeStyle = 'rgba(0,180,200,0.25)'
+      ctx.lineWidth = 2
+      ctx.stroke()
+    } else if (s.visited) {
       ctx.beginPath()
       ctx.arc(s.x, s.y, s.r + 3, 0, Math.PI * 2)
       ctx.strokeStyle = 'rgba(0,180,200,0.3)'
       ctx.lineWidth = 0.5
       ctx.stroke()
     }
+  })
+
+  const t = Date.now() * (Math.PI * 2 / 6000)
+  activeSignals.forEach((sig) => {
+    const phase = (sig.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 100) / 100 * Math.PI * 2
+    const signalPulse = 0.5 + 0.5 * Math.sin(t + phase)
+    const pos = signalPosition(sig.azimuth, w, h)
+    const r = 14 + signalPulse * 6
+    const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, r)
+    grad.addColorStop(0, `rgba(168, 85, 247, ${0.35 + signalPulse * 0.25})`)
+    grad.addColorStop(0.25, `rgba(139, 92, 246, ${0.2 + signalPulse * 0.15})`)
+    grad.addColorStop(0.6, `rgba(124, 58, 237, ${0.08 + signalPulse * 0.06})`)
+    grad.addColorStop(1, 'rgba(124, 58, 237, 0)')
+    ctx.beginPath()
+    ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2)
+    ctx.fillStyle = grad
+    ctx.fill()
+    ctx.strokeStyle = `rgba(168, 85, 247, ${0.3 + signalPulse * 0.2})`
+    ctx.lineWidth = 1
+    ctx.stroke()
   })
 
   animId = requestAnimationFrame(() => draw(canvas, starList))
@@ -120,43 +166,79 @@ function handleMouseMove(e, starList, canvas) {
   const rect = canvas.getBoundingClientRect()
   const mx = e.clientX - rect.left
   const my = e.clientY - rect.top
+  const w = canvas.width
+  const h = canvas.height
   ui.setReticulePosition(e.clientX, e.clientY)
   ui.setReticuleVisible(true)
 
-  let closest = null
-  let minDist = 18
+  let closestStar = null
+  let minStarDist = 18
   starList.forEach((s) => {
     const d = Math.hypot(s.x - mx, s.y - my)
-    if (d < minDist) {
-      minDist = d
-      closest = s
+    if (d < minStarDist) {
+      minStarDist = d
+      closestStar = s
     }
   })
-  ui.hoveredStar = closest
+
+  const now = Date.now()
+  const activeSignals = signauxStore.list.filter((s) => now - s.createdAt < s.lifetimeMs)
+  let closestSignal = null
+  let minSignalDist = 16
+  activeSignals.forEach((sig) => {
+    const pos = signalPosition(sig.azimuth, w, h)
+    const d = Math.hypot(pos.x - mx, pos.y - my)
+    if (d < minSignalDist) {
+      minSignalDist = d
+      closestSignal = sig
+    }
+  })
+
+  if (closestSignal && (!closestStar || minSignalDist < minStarDist)) {
+    ui.hoveredStar = null
+    ui.setHoveredSignal(closestSignal)
+  } else {
+    ui.setHoveredSignal(null)
+    ui.hoveredStar = closestStar
+  }
 }
 
 function handleMouseLeave() {
   ui.hoveredStar = null
+  ui.setHoveredSignal(null)
   ui.setReticuleVisible(false)
 }
 
-function handleClick(starList) {
+function handleClick() {
+  if (ui.hoveredSignal) {
+    ui.selectSignal(ui.hoveredSignal)
+    return
+  }
   const s = ui.hoveredStar
-  if (!s) return
-  const dist = parseFloat(s.dist)
-  const travelSec = Math.round(dist * 1000)
-  const travelLabel =
-    travelSec > 3600
-      ? `${(travelSec / 3600).toFixed(1)}h réelles`
-      : `${Math.floor(travelSec / 60)}m ${travelSec % 60}s réelles`
-  ui.showTravelWidget(s.name, `${dist} al — ${travelLabel}`)
-  ui.showNotification(`CAP FIXÉ — ${s.name} — ${dist} al`)
+  if (s) {
+    ui.selectStar(s)
+  } else {
+    ui.selectStar(null)
+  }
+}
+
+function handleDblClick() {
+  if (ui.hoveredSignal) {
+    ui.selectSignal(ui.hoveredSignal)
+    return
+  }
+  const s = ui.hoveredStar
+  if (s) {
+    ui.selectStar(s)
+    ui.openObservatoire()
+  }
 }
 
 let canvasEl = null
 let onResize = null
 let onMove = null
 let onClick = null
+let onDblClick = null
 
 onMounted(() => {
   canvasEl = canvasRef.value
@@ -172,12 +254,14 @@ onMounted(() => {
 
   onResize = () => handleResize(canvasEl, stars.value)
   onMove = (e) => handleMouseMove(e, stars.value, canvasEl)
-  onClick = () => handleClick(stars.value)
+  onClick = handleClick
+  onDblClick = handleDblClick
 
   window.addEventListener('resize', onResize)
   canvasEl.addEventListener('mousemove', onMove)
   canvasEl.addEventListener('mouseleave', handleMouseLeave)
   canvasEl.addEventListener('click', onClick)
+  canvasEl.addEventListener('dblclick', onDblClick)
 })
 
 onUnmounted(() => {
@@ -187,6 +271,7 @@ onUnmounted(() => {
     if (onMove) canvasEl.removeEventListener('mousemove', onMove)
     canvasEl.removeEventListener('mouseleave', handleMouseLeave)
     if (onClick) canvasEl.removeEventListener('click', onClick)
+    if (onDblClick) canvasEl.removeEventListener('dblclick', onDblClick)
   }
 })
 </script>

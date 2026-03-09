@@ -34,13 +34,15 @@
   background: #04080f;
 }
 
-.sys-blueprint-wrap img {
+.sys-blueprint-wrap img,
+.sys-blueprint-wrap object.sys-blueprint-svg {
   max-width: 100%;
   max-height: 100%;
   width: auto;
   height: auto;
   object-fit: contain;
   object-position: center;
+  display: block;
 }
 
 /* Overlay infos — fermable, hug content */

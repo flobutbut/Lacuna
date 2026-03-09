@@ -11,9 +11,14 @@ export const useUIStore = defineStore('ui', () => {
   const travelWidgetVisible = ref(false)
   const travelDestination = ref('')
   const travelTime = ref('')
+  const selectedStar = ref(null)
+  const observatoireOpen = ref(false)
+  const labHasNewObservations = ref(false)
   const hoveredStar = ref(null)
   const reticulePosition = ref({ x: 0, y: 0 })
   const reticuleVisible = ref(false)
+  const selectedSignal = ref(null)
+  const hoveredSignal = ref(null)
 
   function openPanel(id) {
     activePanel.value = id
@@ -46,6 +51,28 @@ export const useUIStore = defineStore('ui', () => {
     }, duration)
   }
 
+  function selectStar(star) {
+    selectedStar.value = star
+    travelWidgetVisible.value = !!star
+    selectedSignal.value = null
+  }
+
+  function openObservatoire() {
+    observatoireOpen.value = true
+  }
+
+  function closeObservatoire() {
+    observatoireOpen.value = false
+  }
+
+  function setLabHasNew(value = true) {
+    labHasNewObservations.value = value
+  }
+
+  function clearLabHasNew() {
+    labHasNewObservations.value = false
+  }
+
   function setReticulePosition(x, y) {
     reticulePosition.value = { x, y }
     reticuleVisible.value = true
@@ -55,6 +82,21 @@ export const useUIStore = defineStore('ui', () => {
     reticuleVisible.value = visible
   }
 
+  function selectSignal(signal) {
+    selectedSignal.value = signal
+    observatoireOpen.value = false
+    selectedStar.value = null
+    travelWidgetVisible.value = false
+  }
+
+  function closeSignalModal() {
+    selectedSignal.value = null
+  }
+
+  function setHoveredSignal(signal) {
+    hoveredSignal.value = signal
+  }
+
   return {
     activePanel,
     notification,
@@ -62,6 +104,9 @@ export const useUIStore = defineStore('ui', () => {
     travelWidgetVisible,
     travelDestination,
     travelTime,
+    selectedStar,
+    observatoireOpen,
+    labHasNewObservations,
     hoveredStar,
     reticulePosition,
     openPanel,
@@ -69,8 +114,18 @@ export const useUIStore = defineStore('ui', () => {
     togglePanel,
     showNotification,
     showTravelWidget,
+    selectStar,
+    openObservatoire,
+    closeObservatoire,
+    setLabHasNew,
+    clearLabHasNew,
     setReticulePosition,
     setReticuleVisible,
     reticuleVisible,
+    selectedSignal,
+    hoveredSignal,
+    selectSignal,
+    closeSignalModal,
+    setHoveredSignal,
   }
 })

@@ -42,15 +42,17 @@
 
 ### Fonctionnalités
 - [ ] Onboarding (4 écrans GDD)
-- [ ] Ciel / Observatoire
+- [x] Ciel / Observatoire — clic étoile → TravelWidget (distance, durée, carburant, anomalie, [OUVRIR OBSERVATOIRE] [FIXER CAP]), double-clic → panel Observatoire (corps, probas, Analyser, Ajouter au lab)
+- [x] Signaux captés — store signaux (durée de vie temps joueur), bloc panel gauche (cards, tooltip, clic → modale, [×] ignorer), modale signal ([ANALYSER AU LABO →] → Laboratoire), marqueurs directionnels sur le ciel (hover + clic)
 - [ ] Sélection système, fixation cap
 - [ ] Voyage (logique temps réel)
 - [ ] Journal de bord
 - [x] Page Artefacts — grille, détail trace, interprétations, suppression (conformité LACUNA_UI)
+- [x] Page Laboratoire — 3 colonnes (file d'observations | observation sélectionnée | instruments), clic instrument, rapports + fiabilité, [GARDER UNE TRACE]
 - [ ] Carte
 - [ ] Équation de Drake (affichage temps réel)
 - [x] Page Population — 3 onglets (Générations, Génération actuelle, Registre des Raisons)
-- [x] Page Systèmes — plan ARCA SVG, overlay fermable (Identité, Propulsion, Carburant, Survie, Historique)
+- [x] Page Systèmes — plan ARCA SVG, menu 1:1 avec 9 groupes (plasma-shield, bumper-shield, population-quarters, fission-reactors, thermal-radiators, fuel-tanks, propulsion, comms, navigation), highlight sur le plan, overlays par groupe
 - [ ] Galaxie procédurale
 
 ---
@@ -72,3 +74,7 @@
 | Mars 2026 | Migration maquette → Vue (SkyCanvas, Header, Panels, Instruments, design system) |
 | Mars 2026 | Navigation par routes — panels convertis en pages pleines (plus d'overlay) |
 | Mars 2026 | Page Artefacts (grille + détail, interprétations Supabase, suppression) · Page Population (3 onglets, layout 2 colonnes) · Page Systèmes (plan ARCA, overlay fermable) · Doc LACUNA_UI · Migration interpretations DELETE |
+| Mars 2026 | Page Laboratoire — 3 colonnes (observations / sélectionnée / instruments), clic sur instrument, 4 états par instrument, rapports + fiabilité, [GARDER UNE TRACE] |
+| Mars 2026 | Observatoire — TravelWidget (clic étoile), panel détail (double-clic), corps + probas anomalie, Analyser → Laboratoire, Ajouter au laboratoire. Store observations partagé. |
+| Mars 2026 | Signaux — store signaux (listWithRemaining, add/remove, durée 2h temps joueur), SideLeft bloc Signaux captés (cards, tooltip, modale), SignalModal + [ANALYSER AU LABO →], marqueurs azimut sur SkyCanvas, SignalTooltip. |
+| Mars 2026 | Barre instruments — bordures alignées, tab actif avec border-top. Page Systèmes — menu par groupe SVG, highlight plan, overlays par système. |

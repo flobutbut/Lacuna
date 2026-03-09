@@ -17,6 +17,8 @@ import './assets/components/journal.css'
 import './assets/components/artifact.css'
 import './assets/components/population.css'
 import './assets/components/systems.css'
+import './assets/components/lab.css'
+import './assets/components/observatoire.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

@@ -1,13 +1,17 @@
 <script setup>
 import { useRoute } from 'vue-router'
+import { useUIStore } from '@/stores/ui'
+import { useObservationsStore } from '@/stores/observations'
 
 const route = useRoute()
+const ui = useUIStore()
+const obsStore = useObservationsStore()
 
 const instruments = [
-  { id: 'observatoire', path: '/', icon: '◎', label: 'Observatoire' },
+  { id: 'observatoire', path: '/', icon: '◎', label: 'Observatoire', badgeFn: () => obsStore.hasUnanalyzed() },
   { id: 'carte', path: '/carte', icon: '⊹', label: 'Carte' },
+  { id: 'laboratoire', path: '/laboratoire', icon: '⌬', label: 'Laboratoire', badgeKey: 'labHasNewObservations' },
   { id: 'artefacts', path: '/artefacts', icon: '◈', label: 'Artefacts', badge: true },
-  { id: 'laboratoire', path: '/laboratoire', icon: '⌬', label: 'Laboratoire' },
   { id: 'journal', path: '/journal', icon: '≡', label: 'Journal' },
   { id: 'drake', path: '/drake', icon: 'N', label: 'Drake' },
   { id: 'population', path: '/population', icon: '⊕', label: 'Population' },
@@ -31,7 +35,7 @@ function isActive(inst) {
     >
       <span class="inst-icon">{{ inst.icon }}</span>
       <span>{{ inst.label }}</span>
-      <span v-if="inst.badge" class="inst-badge" />
+      <span v-if="inst.badge || (inst.badgeKey && ui[inst.badgeKey]) || (inst.badgeFn && inst.badgeFn())" class="inst-badge" />
     </RouterLink>
   </nav>
 </template>
