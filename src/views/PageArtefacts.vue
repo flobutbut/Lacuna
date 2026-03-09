@@ -1,0 +1,279 @@
+<script setup>
+import { ref, computed, watch } from 'vue'
+import { supabase } from '@/lib/supabase'
+import { useSupabaseStore } from '@/stores/supabase'
+import { useUIStore } from '@/stores/ui'
+
+const supabaseStore = useSupabaseStore()
+const ui = useUIStore()
+
+const TRACE_ICONS = {
+  SIGNAL_RADIO: '≋',
+  INTERSTELLAR_OBJECT: '◇',
+  CHEMICAL_ANOMALY: '⌬',
+  STELLAR_ANOMALY: '◉',
+  ORBITAL_ANOMALY: '⊚',
+  ENCODED_SEQUENCE: '⌇',
+  PHYSICAL_ARTIFACT: '◈',
+  PLAYER_TRACE: '✦',
+}
+
+// Données de repli si Supabase non configuré
+const FALLBACK_TRACES = [
+  { id: '1', designation: 'WOW-1977-A', type: 'SIGNAL_RADIO', system_id: 'SOL', difficulty: '1', description: 'Signal radio de 72 secondes détecté à 1420 MHz, correspondant exactement à la raie de l\'hydrogène. Non reproduit depuis. Non expliqué.', discovered: '1977-08-15', unread: true },
+  { id: '2', designation: 'OUMUAMUA-2017', type: 'INTERSTELLAR_OBJECT', system_id: 'SOL', difficulty: '1', description: 'Objet interstellaire détecté en 2017. Trajectoire hyperbolique. Accélération non-gravitationnelle observée. Forme allongée suggérée. Origine inconnue.', discovered: '2017-10-19', unread: true },
+  { id: '3', designation: 'BENNU-NB-2023', type: 'CHEMICAL_ANOMALY', system_id: 'SOL', difficulty: '2', description: 'Nucléobases (uracile, niacine) découvertes dans les échantillons de Bennu et Ryugu. Composition suggérant une origine prébiotique.', discovered: '2023-03-21', unread: false },
+]
+
+const artefacts = ref([])
+const selectedTrace = ref(null)
+const interpretations = ref([])
+const newInterpretation = ref('')
+const loadingInterpretations = ref(false)
+const submittingInterpretation = ref(false)
+const deletingId = ref(null)
+
+const selectedId = computed(() => selectedTrace.value?.id)
+
+function getTraceIcon(type) {
+  return TRACE_ICONS[type] ?? '◈'
+}
+
+async function fetchTraces() {
+  if (!supabaseStore.isConfigured()) {
+    artefacts.value = FALLBACK_TRACES
+    return
+  }
+  try {
+    const { data, error } = await supabase
+      .from('traces')
+      .select('id, designation, type, system_id, difficulty, description, discovered')
+      .eq('origin', 'IMMUABLE')
+      .order('discovered', { ascending: true })
+
+    if (error) throw error
+    artefacts.value = (data || []).map(t => ({ ...t, unread: false }))
+  } catch (err) {
+    console.warn('[Artefacts] Erreur fetch traces:', err)
+    artefacts.value = FALLBACK_TRACES
+  }
+}
+
+async function fetchInterpretations(traceId) {
+  if (!traceId) return
+  loadingInterpretations.value = true
+  interpretations.value = []
+  try {
+    if (supabaseStore.isConfigured()) {
+      const { data, error } = await supabase
+        .from('interpretations')
+        .select('id, text, confidence, generation, galactic_date, created_at')
+        .eq('trace_id', traceId)
+        .order('created_at', { ascending: true })
+
+      if (!error) interpretations.value = data || []
+    }
+  } catch (err) {
+    console.warn('[Artefacts] Erreur fetch interpretations:', err)
+  } finally {
+    loadingInterpretations.value = false
+  }
+}
+
+async function submitInterpretation() {
+  const text = newInterpretation.value?.trim()
+  if (!text || !selectedTrace.value) return
+  if (!supabaseStore.isConfigured()) {
+    interpretations.value = [...interpretations.value, { id: 'local-' + Date.now(), text, confidence: 'HYPOTHÈSE', generation: null, galactic_date: null, created_at: new Date().toISOString() }]
+    newInterpretation.value = ''
+    return
+  }
+  submittingInterpretation.value = true
+  try {
+    const { data, error } = await supabase
+      .from('interpretations')
+      .insert({
+        trace_id: selectedTrace.value.id,
+        text,
+        confidence: 'HYPOTHÈSE',
+        ship_id: null,
+        generation: null,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    if (data) interpretations.value = [...interpretations.value, data]
+    newInterpretation.value = ''
+  } catch (err) {
+    console.warn('[Artefacts] Erreur ajout interprétation:', err)
+  } finally {
+    submittingInterpretation.value = false
+  }
+}
+
+async function deleteInterpretation(interp) {
+  if (!interp?.id) return
+  deletingId.value = interp.id
+  try {
+    if (supabaseStore.isConfigured()) {
+      const { error } = await supabase.from('interpretations').delete().eq('id', interp.id)
+      if (error) throw error
+    }
+    interpretations.value = interpretations.value.filter(i => i.id !== interp.id)
+  } catch (err) {
+    console.warn('[Artefacts] Erreur suppression interprétation:', err)
+    ui.showNotification('Suppression impossible — migration RLS peut-être non appliquée', 5000)
+  } finally {
+    deletingId.value = null
+  }
+}
+
+function formatInterpretationDate(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function selectTrace(trace) {
+  selectedTrace.value = trace
+}
+
+watch(selectedTrace, (trace) => {
+  if (trace) fetchInterpretations(trace.id)
+}, { immediate: true })
+
+async function init() {
+  await fetchTraces()
+  if (artefacts.value.length > 0 && !selectedTrace.value) {
+    selectTrace(artefacts.value[0])
+  }
+}
+init()
+</script>
+
+<template>
+  <div class="page-full page-full--spread">
+    <div class="artifacts-layout">
+      <!-- Colonne gauche : grille -->
+      <div class="artifacts-grid-col">
+        <h1 class="page-title">Artefacts</h1>
+        <div class="panel-section-title" style="margin-bottom: var(--space-6)">
+          {{ artefacts.length }} trace{{ artefacts.length > 1 ? 's' : '' }} collectée{{ artefacts.length > 1 ? 's' : '' }}
+        </div>
+        <div class="artifact-grid">
+          <div
+            v-for="art in artefacts"
+            :key="art.id"
+            class="artifact-slot"
+            :class="{ selected: selectedId === art.id }"
+            @click="selectTrace(art)"
+          >
+            <div class="art-icon">{{ getTraceIcon(art.type) }}</div>
+            <div class="art-name">{{ art.designation }}</div>
+            <div v-if="art.unread" class="art-dot" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne droite : détail -->
+      <div class="artifacts-detail-col">
+        <div v-if="selectedTrace" class="artifact-detail">
+          <div class="artifact-detail__header">
+            <div class="artifact-detail__icon">{{ getTraceIcon(selectedTrace.type) }}</div>
+            <div class="artifact-detail__info">
+              <div class="artifact-detail__name">{{ selectedTrace.designation }}</div>
+              <div class="artifact-detail__type">{{ selectedTrace.type }} · {{ selectedTrace.system_id }}</div>
+            </div>
+          </div>
+
+          <p class="artifact-detail__description">{{ selectedTrace.description }}</p>
+          <p v-if="selectedTrace.discovered" class="artifact-detail__meta">
+            Découvert le {{ selectedTrace.discovered }}
+          </p>
+
+          <div class="artifact-interpretations">
+            <div class="artifact-interpretations__title">Interprétations</div>
+            <div v-if="loadingInterpretations" class="artifact-interpretation" style="color: var(--color-muted)">
+              Chargement…
+            </div>
+            <div
+              v-for="interp in interpretations"
+              :key="interp.id"
+              class="artifact-interpretation"
+            >
+              <div class="artifact-interpretation__row">
+                <div class="artifact-interpretation__content">
+                  <div class="artifact-interpretation__meta">
+                    {{ interp.generation ? `Génération ${interp.generation}` : 'Vaisseau inconnu' }}
+                    {{ interp.galactic_date ? ` · ${interp.galactic_date}` : '' }}
+                    {{ interp.confidence ? ` · ${interp.confidence}` : '' }}
+                    · {{ formatInterpretationDate(interp.created_at) }}
+                  </div>
+                  <div class="artifact-interpretation__text">{{ interp.text }}</div>
+                </div>
+                <button
+                  type="button"
+                  class="artifact-interpretation__delete"
+                  title="Supprimer"
+                  :disabled="deletingId === interp.id"
+                  @click="deleteInterpretation(interp)"
+                >
+                  {{ deletingId === interp.id ? '…' : '×' }}
+                </button>
+              </div>
+            </div>
+            <div v-if="!loadingInterpretations && interpretations.length === 0" class="artifact-interpretation" style="color: var(--color-muted)">
+              Aucune interprétation pour l’instant.
+            </div>
+
+            <div class="artifact-interpret-form">
+              <textarea
+                v-model="newInterpretation"
+                placeholder="Écrire une interprétation…"
+                :disabled="submittingInterpretation"
+              />
+              <button
+                type="button"
+                class="btn btn-primary"
+                :disabled="!newInterpretation?.trim() || submittingInterpretation"
+                @click="submitInterpretation"
+              >
+                {{ submittingInterpretation ? 'Envoi…' : 'Déposer' }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div v-else class="artifact-detail artifact-detail--empty">
+          <p class="artifact-detail__placeholder">Sélectionnez une trace</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.artifact-detail__description {
+  font-size: var(--text-base);
+  color: var(--color-white);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-4);
+}
+
+.artifact-detail__meta {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+
+.artifact-detail--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.artifact-detail__placeholder {
+  color: var(--color-muted);
+  font-size: var(--text-base);
+}
+</style>

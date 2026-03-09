@@ -1,0 +1,168 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Population Module
+   3 onglets : Générations, Génération actuelle, Registre
+   Même layout 2 colonnes que Artefacts
+   ══════════════════════════════════════════════════════ */
+
+/* ── Layout 2 colonnes (menu gauche, contenu droite) ── */
+.pop-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 0;
+  min-height: 100%;
+}
+
+.pop-menu-col {
+  padding: var(--space-8) var(--space-10);
+  border-right: var(--border-width) solid var(--border-default);
+}
+
+.pop-content-col {
+  padding: var(--space-8) var(--space-10);
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.15);
+  max-width: 800px;
+}
+
+/* ── Menu gauche (style slot comme Artefacts) ── */
+.pop-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-4);
+  border: var(--border-width) solid var(--border-default);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  letter-spacing: var(--tracking-tight);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  margin-bottom: var(--space-4);
+  position: relative;
+}
+
+.pop-menu-item:hover {
+  border-color: var(--border-bright);
+  background: var(--color-cyan-subtle);
+  color: var(--color-white);
+}
+
+.pop-menu-item.selected {
+  border-color: var(--color-cyan);
+  background: var(--color-cyan-subtle);
+  color: var(--color-cyan);
+  box-shadow: 0 0 0 1px var(--color-cyan-dim);
+}
+
+.pop-menu-item__icon {
+  font-size: var(--text-xl);
+  flex-shrink: 0;
+}
+
+/* ── Génération actuelle ── */
+.pop-current__header {
+  font-size: var(--text-md);
+  color: var(--color-cyan);
+  letter-spacing: var(--tracking-wider);
+  margin-bottom: var(--space-6);
+}
+
+.pop-indicator {
+  margin-bottom: var(--space-6);
+}
+
+.pop-indicator__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.pop-indicator__label {
+  font-size: var(--text-base);
+  color: var(--color-muted);
+}
+
+.pop-indicator__val {
+  font-size: var(--text-base);
+  color: var(--color-white);
+  font-variant-numeric: tabular-nums;
+}
+
+.pop-indicator__bar {
+  margin-bottom: var(--space-5);
+}
+
+.pop-current__heritage {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: var(--border-width) solid var(--border-default);
+  font-size: var(--text-base);
+  color: var(--color-muted);
+  line-height: var(--leading-relaxed);
+}
+
+/* ── Générations (historique) ── */
+.pop-generation {
+  padding: var(--space-5) 0;
+  border-bottom: var(--border-width) solid var(--border-default);
+}
+
+.pop-generation:last-child {
+  border-bottom: none;
+}
+
+.pop-generation__meta {
+  font-size: var(--text-sm);
+  color: var(--color-cyan);
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-2);
+}
+
+.pop-generation__range {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-bottom: var(--space-3);
+}
+
+.pop-generation__events {
+  font-size: var(--text-base);
+  color: var(--color-white);
+  line-height: var(--leading-relaxed);
+}
+
+.pop-generation__events ul {
+  margin: var(--space-2) 0 0 var(--space-6);
+  padding: 0;
+}
+
+/* ── Registre des Raisons ── */
+.pop-reason {
+  padding: var(--space-5) 0;
+  border-bottom: var(--border-width) solid var(--border-default);
+}
+
+.pop-reason:last-child {
+  border-bottom: none;
+}
+
+.pop-reason__meta {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-bottom: var(--space-3);
+}
+
+.pop-reason__text {
+  font-size: var(--text-base);
+  color: var(--color-white);
+  line-height: var(--leading-relaxed);
+  white-space: pre-wrap;
+}
+
+.pop-reason__count {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  font-style: italic;
+  margin-top: var(--space-2);
+}

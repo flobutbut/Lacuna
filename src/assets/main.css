@@ -1,21 +1,11 @@
 /* ══════════════════════════════════════════════════════
    LACUNA — Design System
-   Point d'entrée principal
+
+   ⚠️  NE PAS UTILISER @import ICI
+   Vite ne détecte pas les changements dans les fichiers importés via @import.
+   Tous les CSS sont importés directement dans main.js.
+
+   Fichiers du design system :
+   - tokens.css, base.css, animations.css, layers.css, utilities.css
+   - components/*.css (header, instruments, panel, widget, button, etc.)
    ══════════════════════════════════════════════════════ */
-
-/* ── Fondations ── */
-@import './tokens.css';
-@import './base.css';
-@import './animations.css';
-@import './layers.css';
-@import './utilities.css';
-
-/* ── Composants ── */
-@import './components/panel.css';
-@import './components/widget.css';
-@import './components/button.css';
-@import './components/tooltip.css';
-@import './components/notification.css';
-@import './components/bar.css';
-@import './components/journal.css';
-@import './components/artifact.css';

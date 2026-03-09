@@ -7,8 +7,8 @@
 .side-left {
     position: absolute;
     left: var(--sidebar-offset);
-    top: 60px;
-    bottom: 60px;
+    top: 0;
+    bottom: 0;
     width: var(--sidebar-width);
     display: flex;
     flex-direction: column;
@@ -19,8 +19,8 @@
 .side-right {
     position: absolute;
     right: var(--sidebar-offset);
-    top: 60px;
-    bottom: 60px;
+    top: 0;
+    bottom: 0;
     width: var(--sidebar-width);
     display: flex;
     flex-direction: column;
@@ -39,7 +39,7 @@
 
 /* ── Widget title ── */
 .sw-title {
-    font-size: var(--text-2xs);
+    font-size: var(--text-md);
     letter-spacing: var(--tracking-wide);
     color: var(--color-muted);
     text-transform: uppercase;
@@ -57,13 +57,13 @@
 }
 
 .sw-key {
-    font-size: var(--text-xs);
+    font-size: var(--text-md);
     color: var(--color-muted);
     letter-spacing: var(--tracking-tight);
 }
 
 .sw-val {
-    font-size: var(--text-base);
+    font-size: var(--text-sm);
     color: var(--color-white);
 }
 

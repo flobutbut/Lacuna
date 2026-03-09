@@ -72,14 +72,14 @@
 }
 
 .drake-term__label {
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--color-muted);
     flex: 1;
     padding: 0 var(--space-4);
 }
 
 .drake-term__val {
-    font-size: var(--text-base);
+    font-size: var(--text-md);
     color: var(--color-white);
     flex-shrink: 0;
 }
@@ -99,6 +99,59 @@
     transition: width var(--transition-bar-slow);
 }
 
+/* Aliases maquette (dt-*) ── */
+.dt-symbol {
+    font-size: var(--text-xl);
+    color: var(--color-cyan);
+    width: 30px;
+    flex-shrink: 0;
+}
+
+.dt-label {
+    font-size: var(--text-base);
+    color: var(--color-muted);
+    flex: 1;
+    padding: 0 var(--space-4);
+}
+
+.dt-val {
+    font-size: var(--text-md);
+    color: var(--color-white);
+}
+
+.dt-bar {
+    width: 60px;
+    height: 2px;
+    background: var(--color-ghost);
+    margin-left: var(--space-4);
+    position: relative;
+}
+
+.dt-bar-fill {
+    height: 100%;
+    background: var(--color-cyan);
+    transition: width var(--transition-bar-slow);
+}
+
+.dr-label {
+    font-size: var(--text-base);
+    color: var(--color-muted);
+    letter-spacing: var(--tracking-normal);
+    margin-bottom: var(--space-3);
+}
+
+.dr-value {
+    font-size: var(--text-4xl);
+    color: var(--color-cyan);
+}
+
+.dr-sub {
+    font-size: var(--text-base);
+    color: var(--color-muted);
+    margin-top: var(--space-2);
+    letter-spacing: var(--tracking-tight);
+}
+
 /* ── Drake result (N=) ── */
 .drake-result {
     margin-top: var(--space-7);
@@ -109,7 +162,7 @@
 }
 
 .drake-result__label {
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--color-muted);
     letter-spacing: var(--tracking-normal);
     margin-bottom: var(--space-3);
@@ -121,7 +174,7 @@
 }
 
 .drake-result__sub {
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--color-muted);
     margin-top: var(--space-2);
     letter-spacing: var(--tracking-tight);
@@ -172,7 +225,7 @@
 }
 
 .status-label {
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--color-muted);
 }
 
@@ -188,12 +241,12 @@
 }
 
 .pop-bar-label {
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--color-muted);
     letter-spacing: var(--tracking-tight);
 }
 
 .pop-bar-val {
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--color-white);
 }

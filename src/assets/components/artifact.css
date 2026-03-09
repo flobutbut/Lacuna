@@ -60,7 +60,7 @@
 
 /* ── Name ── */
 .artifact-slot__name {
-    font-size: var(--text-2xs);
+    font-size: var(--text-base);
     color: var(--color-muted);
     letter-spacing: var(--tracking-tight);
     text-align: center;
@@ -83,7 +83,7 @@
 }
 
 .art-name {
-    font-size: var(--text-2xs);
+    font-size: var(--text-base);
     color: var(--color-muted);
     letter-spacing: var(--tracking-tight);
     text-align: center;
@@ -129,8 +129,126 @@
 }
 
 .artifact-detail__type {
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--color-muted);
     text-transform: uppercase;
     letter-spacing: var(--tracking-tight);
+}
+
+/* ── Layout 2 colonnes (grille gauche, détail droite) ── */
+.artifacts-layout {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) 1fr;
+    gap: 0;
+    min-height: 100%;
+}
+
+.artifacts-grid-col {
+    padding: var(--space-8) var(--space-10);
+    border-right: var(--border-width) solid var(--border-default);
+}
+
+.artifacts-detail-col {
+    padding: var(--space-8) var(--space-10);
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.15);
+    max-width: 800px;
+}
+
+.artifact-slot.selected {
+    border-color: var(--color-cyan);
+    background: var(--color-cyan-subtle);
+    box-shadow: 0 0 0 1px var(--color-cyan-dim);
+}
+
+/* Interprétations */
+.artifact-interpretations {
+    margin-top: var(--space-8);
+}
+
+.artifact-interpretations__title {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    margin-bottom: var(--space-4);
+}
+
+.artifact-interpretation {
+    padding: var(--space-4) 0;
+    border-bottom: var(--border-width) solid var(--border-default);
+    font-size: var(--text-base);
+    color: var(--color-white);
+    line-height: var(--leading-relaxed);
+}
+
+.artifact-interpretation__row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+}
+
+.artifact-interpretation__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.artifact-interpretation__delete {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: var(--border-width) solid transparent;
+    background: none;
+    color: var(--color-muted);
+    font-size: var(--text-lg);
+    line-height: 1;
+    cursor: pointer;
+    transition: color var(--transition-base), border-color var(--transition-base);
+}
+
+.artifact-interpretation__delete:hover {
+    color: var(--color-red);
+}
+
+.artifact-interpretation__delete:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.artifact-interpretation__meta {
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+    margin-bottom: var(--space-2);
+}
+
+.artifact-interpretation__text {
+    white-space: pre-wrap;
+}
+
+.artifact-interpret-form {
+    margin-top: var(--space-6);
+    padding-top: var(--space-6);
+}
+
+.artifact-interpret-form textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+    background: rgba(0, 0, 0, 0.4);
+    border: var(--border-width) solid var(--border-default);
+    color: var(--color-white);
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    resize: vertical;
+}
+
+.artifact-interpret-form textarea::placeholder {
+    color: var(--color-muted);
+}
+
+.artifact-interpret-form textarea:focus {
+    outline: none;
+    border-color: var(--border-bright);
 }

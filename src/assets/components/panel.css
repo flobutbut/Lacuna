@@ -37,7 +37,7 @@
 }
 
 .panel-title {
-    font-size: var(--text-sm);
+    font-size: var(--text-md);
     letter-spacing: var(--tracking-wider);
     color: var(--color-cyan);
     text-transform: uppercase;
@@ -76,7 +76,7 @@
 
 /* ── Panel section title ── */
 .panel-section-title {
-    font-size: var(--text-2xs);
+    font-size: var(--text-base);
     letter-spacing: var(--tracking-wide);
     color: var(--color-muted);
     text-transform: uppercase;

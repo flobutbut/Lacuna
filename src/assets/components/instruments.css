@@ -1,0 +1,87 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Instruments Bar Component
+   Barre des 8 modules en bas
+   ══════════════════════════════════════════════════════ */
+
+.instruments {
+    flex-shrink: 0;
+    height: var(--instruments-height);
+    position: relative;
+    z-index: var(--z-ui);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    padding: 0 var(--space-10);
+    border-top: var(--border-width) solid var(--border-default);
+    background: linear-gradient(0deg, rgba(3, 6, 13, 0.95) 0%, transparent 100%);
+    pointer-events: all;
+}
+
+/* Alias pour compat maquette */
+.inst-btn {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-4) var(--space-8);
+    border: var(--border-width) solid var(--border-default);
+    background: transparent;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    letter-spacing: var(--tracking-normal);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.inst-btn::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--color-cyan);
+    transform: scaleX(0);
+    transition: transform var(--transition-base);
+}
+
+.inst-btn:hover {
+    color: var(--color-white);
+    border-color: var(--border-bright);
+    background: var(--color-cyan-subtle);
+}
+
+.inst-btn:hover::before {
+    transform: scaleX(1);
+}
+
+.inst-btn.active {
+    color: var(--color-cyan);
+    border-color: var(--color-cyan-dim);
+    background: var(--color-cyan-hover);
+}
+
+.inst-btn.active::before {
+    transform: scaleX(1);
+}
+
+.inst-icon {
+    font-size: var(--text-xl);
+    line-height: var(--leading-none);
+}
+
+.inst-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    border-radius: var(--border-radius-full);
+    background: var(--color-amber);
+}

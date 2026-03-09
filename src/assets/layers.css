@@ -58,6 +58,27 @@
     transform: translate(-50%, -50%);
 }
 
+/* Alias maquette */
+.cc-h {
+    position: absolute;
+    width: 8px;
+    height: 1px;
+    background: var(--color-cyan);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.cc-v {
+    position: absolute;
+    width: 1px;
+    height: 8px;
+    background: var(--color-cyan);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
 /* ── UI Layer (conteneur principal des éléments d'interface) ── */
 .ui-layer {
     position: fixed;

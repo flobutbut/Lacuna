@@ -1,0 +1,117 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Header Component
+   Barre supérieure, logo, infos vaisseau, Drake
+   ══════════════════════════════════════════════════════ */
+
+.header {
+    flex-shrink: 0;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-10);
+    border-bottom: var(--border-width) solid var(--border-default);
+    background: linear-gradient(180deg, rgba(3, 6, 13, 0.9) 0%, transparent 100%);
+    pointer-events: all;
+}
+
+.header__logo {
+    font-family: var(--font-sans);
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-widest);
+    color: var(--color-white);
+    text-decoration: none;
+    transition: color var(--transition-base);
+}
+.header__logo:hover {
+    color: var(--color-cyan-dim);
+}
+
+.header__logo-accent {
+    color: var(--color-cyan);
+}
+
+.header__center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.header__ship-name {
+    font-size: var(--text-base);
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-muted);
+    text-transform: uppercase;
+}
+
+.header__coords {
+    font-size: var(--text-base);
+    color: var(--color-cyan-dim);
+    letter-spacing: var(--tracking-tight);
+}
+
+.header__right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-9);
+}
+
+.gen-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-1);
+}
+
+.gen-indicator__label {
+    font-size: var(--text-base);
+    color: var(--color-muted);
+    letter-spacing: var(--tracking-normal);
+}
+
+.gen-indicator__value {
+    font-size: var(--text-lg);
+    color: var(--color-amber);
+    letter-spacing: var(--tracking-tight);
+}
+
+.drake-widget {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    padding: var(--space-3) var(--space-7);
+    border: var(--border-width) solid var(--border-default);
+    background: rgba(3, 6, 13, 0.6);
+}
+
+.drake-widget__label {
+    font-size: var(--text-base);
+    letter-spacing: var(--tracking-normal);
+    color: var(--color-muted);
+    text-transform: uppercase;
+}
+
+.drake-widget__sub {
+    font-size: var(--text-base);
+    color: var(--color-muted);
+    letter-spacing: var(--tracking-tight);
+}
+
+.drake-widget__value {
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-regular);
+    color: var(--color-cyan);
+    font-family: var(--font-mono);
+    line-height: var(--leading-none);
+}
+
+.drake-widget__delta {
+    font-size: var(--text-base);
+    color: var(--color-green);
+}
+
+.drake-widget__delta--negative {
+    color: var(--color-red);
+}

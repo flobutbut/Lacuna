@@ -1,0 +1,59 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Page Layout
+   Pages pleines (Carte, Artefacts, Journal, etc.)
+   ══════════════════════════════════════════════════════ */
+
+/* Conteneur scrollable de la page */
+.page-full {
+  flex: 1;
+  overflow: auto;
+}
+
+/**
+ * Conteneur du contenu — LARGEUR GÉRÉE ICI
+ * max-width utilise --panel-width-lg (tokens.css)
+ * Pour modifier la largeur : changer --panel-width-lg dans tokens.css
+ * ou override max-width sur .page-content
+ */
+.page-content {
+  padding: var(--space-8) var(--space-10);
+  max-width: var(--panel-width-lg);
+  margin: 0;
+}
+
+.page-content--wide {
+  max-width: 420px;
+}
+
+/* Page pleine large (Artefacts, etc.) */
+.page-full--spread {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-full--spread .artifacts-layout,
+.page-full--spread .pop-layout,
+.page-full--spread .sys-layout {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Systèmes : hauteur viewport pour centrage vertical du plan */
+.page-full--systems {
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.page-full--systems .sys-layout {
+  height: 100%;
+}
+
+.page-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-cyan);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  margin-bottom: var(--space-6);
+}

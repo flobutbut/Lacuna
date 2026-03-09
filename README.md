@@ -1,6 +1,34 @@
-# ./
+# LACUNA
 
-This template should help get you started developing with Vue 3 in Vite.
+Simulation d'exploration galactique persistante et asynchrone — Vue 3 + Vite + Supabase.
+
+## Configuration Supabase
+
+1. Créer un projet sur [supabase.com](https://supabase.com)
+2. Copier `.env.example` vers `.env`
+3. Récupérer l'URL et la clé anon dans **Settings > API**
+4. Appliquer le schéma SQL :
+   - Ouvrir **SQL Editor** dans le dashboard Supabase
+   - Exécuter le contenu de `supabase/migrations/00001_initial_schema.sql`
+   - Exécuter `supabase/seed.sql` pour les traces immuables (WOW, Oumuamua, Bennu)
+
+## Project Setup
+
+```sh
+yarn install
+```
+
+### Development
+
+```sh
+yarn dev
+```
+
+### Build
+
+```sh
+yarn build
+```
 
 ## Recommended IDE Setup
 
@@ -19,20 +47,3 @@ This template should help get you started developing with Vue 3 in Vite.
 
 See [Vite Configuration Reference](https://vite.dev/config/).
 
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
