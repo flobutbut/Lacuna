@@ -36,6 +36,8 @@ Lacuna/
 │   ├── stores/
 │   │   ├── supabase.js      # Store Supabase
 │   │   ├── stellarSystems.js # Systèmes stellaires (ciel Observatoire)
+│   │   ├── systemObjects.js  # Objets des systèmes (étoiles, planètes, disques)
+│   │   ├── ship.js           # Vaisseau (ARCA, current_system_id, systems, fuel)
 │   │   └── counter.js       # Store exemple
 │   ├── components/          # Composants Vue
 │   │   ├── AppHeader.vue
@@ -68,6 +70,7 @@ Lacuna/
 │   └── seed.sql             # Données initiales (traces immuables + systèmes prototype)
 ├── docs/
 │   ├── Documentation-technique.md
+│   ├── Documentation-backend.md   # Schéma DB, migrations, RLS, seed
 │   ├── Documentation-status.md
 │   ├── Documentation-fonctionnelle.md
 │   ├── LACUNA_GDD.md        # Game Design Document
@@ -79,36 +82,11 @@ Lacuna/
 └── package.json
 ```
 
-## Base de données (Supabase)
+## Base de données
 
-### Tables principales
+**Documentation complète** : `docs/Documentation-backend.md` — schéma détaillé, migrations, RLS, seed, mapping stores.
 
-| Table | Description |
-|-------|-------------|
-| `stellar_systems` | Systèmes stellaires. Colonne `coordinates` (JSONB) : `{ra, dec}` en degrés pour projection 2D ciel. Seed prototype : 8 systèmes (Sol, Proxima, Barnard, Ross 128, etc.). |
-| `observations` | File d'observations Laboratoire. `session_id` (localStorage) pour prototype sans auth. Types : SIGNAL, PLANETE, ATMOSPHERE, ETOILE, MINEUR, OBJET. États : PENDING, RUNNING, DONE. |
-| `traces` | Traces collectables (signaux, artefacts, anomalies) |
-| `ships` | Vaisseaux joueurs (1 par user) |
-| `populations` | Population par vaisseau |
-| `ship_traces` | Traces collectées par vaisseau |
-| `interpretations` | Interprétations anonymes des traces |
-| `logbook_entries` | Carnet de bord |
-| `map_nodes` / `map_edges` | Carte explorée |
-| `drake_equation` / `drake_history` | Équation de Drake globale |
-
-### RLS (Row Level Security)
-
-- **Vaisseaux, population, logbook, carte** : accès restreint au propriétaire (`auth.uid()`)
-- **Traces, systèmes stellaires, Drake** : lecture publique
-- **Observations** : lecture/écriture ouverte (filtrage par `session_id` côté client pour prototype)
-- **Interprétations** : insertion ouverte, lecture publique
-
-### Variables d'environnement
-
-| Variable | Description |
-|----------|-------------|
-| `VITE_SUPABASE_URL` | URL du projet Supabase |
-| `VITE_SUPABASE_ANON_KEY` | Clé anon publique |
+Résumé : Supabase (PostgreSQL). Tables principales : `stellar_systems`, `system_objects`, `traces`, `observations`, `ships`, `populations`, `interpretations`, `map_nodes`/`map_edges`, `drake_equation`.
 
 ## Design system et CSS
 

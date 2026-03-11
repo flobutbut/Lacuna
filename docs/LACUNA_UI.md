@@ -101,8 +101,8 @@ Les deux effets s'estompent progressivement en quelques secondes. Ils ne se rép
 | Clic simple étoile | Modale système flottante |
 | Hover marqueur signal | Tooltip signal (fréquence, direction, distance, date) |
 | Clic marqueur signal | Modale signal flottante |
-| Scroll / pinch | Zoom sur la zone |
-| Drag | Pan dans le ciel |
+| Drag | Pan — rotation de la vue (direction ra/dec) |
+| Flèches clavier | Pan — même effet, interpolé |
 | Clic pendant transit | Sélection uniquement — modale sans bouton cap |
 
 ### Tooltip (exemple)
@@ -123,6 +123,81 @@ Anomalie        Probabilité 61%
 ## 3. L'Observatoire — tableau de bord permanent
 
 L'Observatoire n'est pas un module overlay. C'est l'état de base de l'interface : le ciel interactif encadré par les deux panels permanents. Tout ce que le joueur voit sans ouvrir aucun module.
+
+### Ciel interactif — spécifications techniques
+
+#### FOV et projection
+
+| Paramètre | Valeur | Description |
+|-----------|--------|-------------|
+| **FOV** | 120° | Champ de vision en cône — seuls les systèmes dans ce cône sont affichés |
+| **Projection** | Stéréographique | Systèmes projetés sur un plan tangent au centre de la vue |
+| **Direction de vue** | `{ ra, dec }` | Ascension droite (0–360°) et déclinaison (-89° à 89°) — définit le centre du champ |
+
+Les systèmes hors du FOV ne sont pas visibles ; le joueur doit pan pour les découvrir.
+
+#### Filtre de visibilité (backend)
+
+Les systèmes affichés sont pré-filtrés par magnitude apparente depuis la position du vaisseau (`current_system_id`). RPC `get_visible_systems` : estimation M_abs depuis `spectral_type`, distance 3D, m_app ≤ 12. Systèmes trop faibles ou trop lointains exclus.
+
+#### Pan — déplacement de la vue
+
+| Contrôle | Action |
+|----------|--------|
+| **Drag souris** | Modifie la direction de vue (ra, dec). Seuil 5 px pour distinguer clic et pan. |
+| **Flèches clavier** | ↑ ↓ ← → déplacent la vue (8° par appui). Pas de capture si un input a le focus. |
+
+Le pan au clavier est **interpolé** : la vue converge vers une cible avec un lerp (~5 % par frame). Le drag met à jour instantanément.
+
+#### Éléments fixes vs mobiles
+
+| Élément | Comportement |
+|---------|--------------|
+| **Grille courbe** | Fixe — lignes horizontales courbes (effet dôme céleste) |
+| **Flare / Voie lactée** | Fixe — flou gaussien, centre de l'écran |
+| **Signaux (marqueurs)** | Fixes — direction azimuth |
+| **Systèmes stellaires** | Mobiles — seuls éléments qui bougent avec le pan |
+
+#### Grille et flare
+
+- **Grille** : 6 lignes horizontales en `quadraticCurveTo`. Opacité réduite progressivement vers le centre (alpha 0,02 au centre, ~0,22 en haut/bas). Couleur `rgba(100, 130, 180)`.
+- **Flare** : ellipse avec dégradé linéaire, `blur(35px)`, suggère la Voie lactée.
+
+#### Interactions
+
+| Action | Résultat |
+|--------|----------|
+| Hover étoile | Tooltip (nom, distance, type spectral, anomalie) |
+| Clic simple | Modale système (TravelWidget) |
+| Double-clic | Panel Observatoire (corps détectables) |
+| Pan (drag / flèches) | Rotation de la vue — découvrir d'autres régions du ciel |
+
+#### Indicateur d'azimut (direction de vue)
+
+Un indicateur en **bas au centre** du ciel affiche la direction du centre du FOV au format **α HHh MMm SSs  δ ±DD° MM′** (ascension droite, déclinaison). Référence ICRS.
+
+| Élément | Détail |
+|---------|--------|
+| **Position** | Centré en bas, au-dessus des contrôles |
+| **Clic** | Ramène la vue à l'origine (α 12h, δ +0°) avec interpolation fluide |
+| **Tooltip** | *Direction de vue · Clic : revenir à la vue d'origine* |
+
+**Origine et référence** — En espace interstellaire, il n'y a pas d'origine physique fixe. L'Observatoire utilise la convention **ICRS** (International Celestial Reference System) : l'ascension droite 0h correspond à la direction du point vernal (équinoxe de mars), définie par l'orbite terrestre et calibrée sur des quasars lointains. Le vaisseau embarque des catalogues stellaires établis avant le départ ; le cadre de référence est conventionnel mais stable — les directions (α, δ) restent cohérentes où que soit le vaisseau.
+
+#### Filtres spectraux (implémenté)
+
+Boutons flottants **au centre sous le header**, sur le ciel. Quatre modes : **Visuel**, **IR**, **UV**, **R**.
+
+| Filtre | Effet visuel | Filtrage astres |
+|--------|--------------|-----------------|
+| **Visuel** | Blanc/gris (défaut) | Tous (m_V ≤ 12) |
+| **IR** | Teinte orangée | m_I ≤ 12 — naines M/K plus brillantes, O/B masquées |
+| **UV** | Teinte bleue | m_U ≤ 12 — étoiles O/B/A favorisées, M masquées |
+| **R** | Teinte rouge légère | m_R ≤ 12 — intermédiaire |
+
+**Implémentation** : `src/lib/spectralBands.js` — indices V-I et U-V par type spectral (Johnson-Cousins) ; post-filtrage front sur les systèmes retournés par `get_visible_systems` (limite 14 pour pool) ; teinte via `ctx.globalCompositeOperation = 'overlay'`. Store UI : `spectralFilter`, `setSpectralFilter`.
+
+---
 
 ### Panel gauche — Vaisseau & Signaux
 

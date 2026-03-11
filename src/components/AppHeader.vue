@@ -1,31 +1,22 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useShipStore } from '@/stores/ship'
+import { useDrakeStore } from '@/stores/drake'
+import { useStellarSystemsStore } from '@/stores/stellarSystems'
 
-const coords = ref('α 04h 22m 14s  δ −14° 08′  d 0.00 al')
-const drakeN = ref(12.4)
-const drakeDelta = ref(0.3)
-const drakeDeltaPositive = ref(true)
+const shipStore = useShipStore()
+const drakeStore = useDrakeStore()
+const stellarStore = useStellarSystemsStore()
 
-onMounted(() => {
-  // Animation Drake
-  const interval = setInterval(() => {
-    const delta = (Math.random() - 0.48) * 0.3
-    drakeN.value = Math.max(0.1, drakeN.value + delta)
-    drakeDelta.value = Math.abs(delta)
-    drakeDeltaPositive.value = delta >= 0
-  }, 8000)
+const currentSystemName = computed(() => {
+  const sys = stellarStore.list.find((s) => s.id === shipStore.currentSystemId)
+  return sys?.name ?? '—'
+})
 
-  // Coordonnées (placeholder)
-  const coordInterval = setInterval(() => {
-    const h = String(Math.floor(Math.random() * 24)).padStart(2, '0')
-    const m = String(Math.floor(Math.random() * 60)).padStart(2, '0')
-    coords.value = `α ${h}h ${m}m  δ −14° 08′  d 0.00 al`
-  }, 5000)
-
-  return () => {
-    clearInterval(interval)
-    clearInterval(coordInterval)
-  }
+onMounted(async () => {
+  if (!shipStore.loaded) await shipStore.fetch()
+  if (!stellarStore.loaded) await stellarStore.fetch()
+  if (!drakeStore.loaded) await drakeStore.fetch()
 })
 </script>
 
@@ -34,23 +25,24 @@ onMounted(() => {
     <RouterLink to="/" class="header__logo">LAC<span class="header__logo-accent">U</span>NA</RouterLink>
 
     <div class="header__center">
-      <div class="header__ship-name">ARK TESSERA — VOYAGE 1</div>
-      <div class="header__coords">{{ coords }}</div>
+      <div class="header__ship-name">{{ shipStore.name }} — VOYAGE {{ shipStore.voyage }}</div>
+      <div class="header__system-name">{{ currentSystemName }}</div>
     </div>
 
     <div class="header__right">
       <div class="header__stat-block">
         <span class="header__stat-label">Gén.</span>
-        <span class="header__stat-val">I</span>
+        <span class="header__stat-val">{{ shipStore.generation }}</span>
       </div>
       <RouterLink to="/drake" class="header__stat-block header__stat-block--drake">
         <span class="header__stat-label">N =</span>
-        <span class="header__stat-val">{{ drakeN.toFixed(1) }}</span>
+        <span class="header__stat-val">{{ Number(drakeStore.n).toFixed(1) }}</span>
         <span
+          v-if="drakeStore.lastDelta"
           class="header__stat-delta"
-          :class="{ 'header__stat-delta--neg': !drakeDeltaPositive }"
+          :class="{ 'header__stat-delta--neg': drakeStore.lastDelta < 0 }"
         >
-          {{ drakeDeltaPositive ? '+' : '' }}{{ drakeDelta.toFixed(1) }}
+          {{ drakeStore.lastDelta >= 0 ? '+' : '' }}{{ Number(drakeStore.lastDelta).toFixed(1) }}
         </span>
       </RouterLink>
     </div>

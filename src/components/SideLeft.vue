@@ -1,10 +1,28 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, computed } from 'vue'
 import { useSignauxStore } from '@/stores/signaux'
 import { useUIStore } from '@/stores/ui'
+import { useShipStore } from '@/stores/ship'
 
 const signauxStore = useSignauxStore()
 const ui = useUIStore()
+const shipStore = useShipStore()
+
+const propulsion = computed(() => (shipStore.systems?.propulsion ?? 0.88) * 100)
+const he3 = computed(() => (shipStore.fuel?.he3 ?? 0.742) * 100)
+const hull = computed(() => (shipStore.systems?.hull ?? 0.971) * 100)
+const plasmaShield = computed(() => (shipStore.systems?.plasma_shield ?? 1) * 100)
+
+function barClass(pct) {
+  if (pct >= 0.8) return 'bar-green'
+  if (pct >= 0.5) return 'bar-amber'
+  return 'bar-red'
+}
+function valClass(pct) {
+  if (pct >= 0.8) return 'ok'
+  if (pct >= 0.5) return 'warn'
+  return 'err'
+}
 
 function receivedAgo(createdAt) {
   const min = Math.floor((Date.now() - createdAt) / 60000)
@@ -25,7 +43,8 @@ function onIgnore(e, id) {
 }
 
 let expiryInterval = null
-onMounted(() => {
+onMounted(async () => {
+  if (!shipStore.loaded) await shipStore.fetch()
   signauxStore.removeExpired()
   expiryInterval = setInterval(() => signauxStore.removeExpired(), 60000)
 })
@@ -40,36 +59,36 @@ onUnmounted(() => {
       <div class="sw-title">Systèmes vaisseau</div>
       <div class="sw-row">
         <div class="sw-key">Propulsion</div>
-        <div class="sw-val ok">NOMINAL</div>
+        <div class="sw-val" :class="valClass(propulsion/100)">{{ propulsion >= 80 ? 'NOMINAL' : (propulsion.toFixed(1) + '%') }}</div>
       </div>
       <div class="bar-wrap">
-        <div class="bar-fill bar-green" style="width: 88%"></div>
+        <div class="bar-fill" :class="barClass(propulsion/100)" :style="{ width: propulsion + '%' }"></div>
       </div>
       <div class="sw-row">
         <div class="sw-key">Carburant He³</div>
-        <div class="sw-val warn">74.2%</div>
+        <div class="sw-val" :class="valClass(he3/100)">{{ he3.toFixed(1) }}%</div>
       </div>
       <div class="bar-wrap">
-        <div class="bar-fill bar-amber" style="width: 74%"></div>
+        <div class="bar-fill" :class="barClass(he3/100)" :style="{ width: he3 + '%' }"></div>
       </div>
       <div class="sw-row">
         <div class="sw-key">Intégrité coque</div>
-        <div class="sw-val ok">97.1%</div>
+        <div class="sw-val" :class="valClass(hull/100)">{{ hull.toFixed(1) }}%</div>
       </div>
       <div class="bar-wrap">
-        <div class="bar-fill bar-green" style="width: 97%"></div>
+        <div class="bar-fill" :class="barClass(hull/100)" :style="{ width: hull + '%' }"></div>
       </div>
       <div class="sw-row">
         <div class="sw-key">Bouclier plasma</div>
-        <div class="sw-val ok">ACTIF</div>
+        <div class="sw-val" :class="valClass(plasmaShield/100)">{{ plasmaShield >= 80 ? 'ACTIF' : (plasmaShield.toFixed(1) + '%') }}</div>
       </div>
       <div class="bar-wrap">
-        <div class="bar-fill bar-cyan" style="width: 100%"></div>
+        <div class="bar-fill bar-cyan" :style="{ width: plasmaShield + '%' }"></div>
       </div>
     </div>
 
     <div class="side-widget side-widget--signaux">
-      <div class="sw-title">Signaux captés</div>
+      <div class="sw-title" :class="{ 'sw-title--no-divider': signauxStore.listWithRemaining.length > 0 }">Signaux captés</div>
       <div v-if="signauxStore.listWithRemaining.length === 0" class="signal-empty">
         Aucun signal.
       </div>
@@ -88,13 +107,6 @@ onUnmounted(() => {
         <div class="signal-card__meta">{{ receivedAgo(s.createdAt) }}</div>
         <div class="bar-wrap signal-card__bar">
           <div class="bar-fill bar-amber" :style="{ width: s.lifetimePct + '%' }" />
-        </div>
-        <div class="signal-card__tooltip">
-          <div class="signal-card__tooltip-title">Signal capté</div>
-          <div class="signal-card__tooltip-row"><span>Fréquence</span><span>{{ s.frequency }}</span></div>
-          <div class="signal-card__tooltip-row"><span>Direction</span><span>azimut {{ s.azimuth }}° · plan {{ s.elevation >= 0 ? '+' : '' }}{{ s.elevation }}°</span></div>
-          <div class="signal-card__tooltip-row"><span>Distance est.</span><span>{{ s.distanceEst ?? '—' }}</span></div>
-          <div class="signal-card__tooltip-row"><span>Reçu le</span><span>{{ s.receivedAt }}</span></div>
         </div>
       </div>
     </div>

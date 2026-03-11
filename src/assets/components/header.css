@@ -38,7 +38,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-1);
+    gap: 1px;
 }
 
 .header__ship-name {
@@ -50,8 +50,14 @@
 
 .header__coords {
     font-size: var(--text-base);
-    color: var(--color-cyan-dim);
+    color: var(--color-cyan-muted);
     letter-spacing: var(--tracking-tight);
+}
+
+.header__system-name {
+    font-size: var(--text-sm);
+    color: var(--color-cyan-muted);
+    letter-spacing: var(--tracking-wide);
 }
 
 .header__right {

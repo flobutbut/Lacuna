@@ -1,10 +1,12 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { useObservationsStore } from '@/stores/observations'
+import { useSystemObjectsStore } from '@/stores/systemObjects'
 
 const ui = useUIStore()
 const obsStore = useObservationsStore()
+const systemObjectsStore = useSystemObjectsStore()
 const addedBodyIds = ref(new Set())
 
 const OBJECT_TYPES = {
@@ -15,8 +17,7 @@ const OBJECT_TYPES = {
   ETOILE: 'Étoile',
 }
 
-const bodies = computed(() => {
-  const star = ui.selectedStar
+function getFallbackBodies(star) {
   if (!star) return []
   return [
     { id: 'a', name: `${star.name}-a`, type: 'ETOILE', anomaly: star.isAnomaly ? 78 : 8 },
@@ -24,7 +25,28 @@ const bodies = computed(() => {
     { id: 'c', name: `${star.name}-c`, type: 'ATMOSPHERE', anomaly: star.isAnomaly ? 72 : 22 },
     { id: 'd', name: `${star.name}-d`, type: 'MINEUR', anomaly: 12 },
   ]
+}
+
+const bodies = computed(() => {
+  const star = ui.selectedStar
+  if (!star) return []
+  const systemId = star.id
+  const dbObjects = systemId ? systemObjectsStore.getForSystem(systemId) : []
+  if (dbObjects.length > 0) {
+    return dbObjects.map((obj) => systemObjectsStore.toBodyFormat(obj, star.name))
+  }
+  return getFallbackBodies(star)
 })
+
+watch(
+  () => ui.selectedStar?.id,
+  async (systemId) => {
+    if (systemId && !systemObjectsStore.getForSystem(systemId)?.length) {
+      await systemObjectsStore.fetchForSystem(systemId)
+    }
+  },
+  { immediate: true }
+)
 
 function addObservation(body) {
   const name = `${body.name} · ${OBJECT_TYPES[body.type]}`

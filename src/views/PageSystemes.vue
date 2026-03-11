@@ -1,6 +1,8 @@
 <script setup>
-import { ref, watch, nextTick, onBeforeUnmount } from 'vue'
+import { ref, watch, nextTick, onBeforeUnmount, onMounted, computed } from 'vue'
+import { useShipStore } from '@/stores/ship'
 
+const shipStore = useShipStore()
 const activeSection = ref(null)
 const overlayVisible = ref(false)
 const blueprintRef = ref(null)
@@ -101,20 +103,24 @@ watch([activeSection, overlayVisible], () => {
   nextTick(updateBlueprintHighlight)
 })
 
-// Données vaisseau (mock — à connecter Supabase plus tard)
-const ship = ref({
-  name: 'ARCA',
+// Données vaisseau (store Supabase + placeholders âge relatif/réel/écart)
+const ship = computed(() => ({
+  name: shipStore.name,
   fullName: 'A R C A — AUTONOMOUS RELATIVISTIC COLONY ARK',
   planDesc: 'VUE LATÉRALE — ÉCHELLE 1:8000 — LONGUEUR ~20 KM',
-  class: 'Vaisseau générationnel de classe I',
-  builtYear: 2187,
-  ageRelative: 47,
-  ageReal: 53,
-  ageGap: 6,
-  dryMass: 800000,
-  capacity: 12000,
-  population: 10247,
-  generation: 1,
+  class: shipStore.classe,
+  builtYear: shipStore.builtYear ?? 2187,
+  ageRelative: 47,   // TODO: calculé depuis voyages (stationnement étoiles massives)
+  ageReal: 53,       // TODO: temps simulé joueur
+  ageGap: 6,         // TODO: ageReal - ageRelative
+  dryMass: shipStore.dryMass,
+  capacity: shipStore.capacity,
+  population: shipStore.population?.total ?? 10247,
+  generation: shipStore.generation,
+}))
+
+onMounted(async () => {
+  if (!shipStore.loaded) await shipStore.fetch()
 })
 
 // Légende du plan (extrait du SVG)
@@ -137,19 +143,29 @@ const blueprintLegend = ref({
   ],
 })
 
-const propulsion = ref({ value: 0.88, desc: 'Moteur MTF — poussée nominale 0,12g', state: 'accélération max 0,106g', consequence: 'vitesse croisière atteinte plus lentement' })
-const hull = ref({ value: 0.97, desc: 'Résistance aux impacts et contraintes structurelles', state: 'nominal', consequence: '' })
-const plasmaShield = ref({ value: 1, desc: 'Protection contre poussière interstellaire à haute vitesse', state: 'vitesse safe 4,8%c (nominal)', consequence: 'Si dégradé : vitesse safe réduite' })
+const propulsion = computed(() => ({ value: shipStore.systems.propulsion ?? 0.88, desc: 'Moteur MTF — poussée nominale 0,12g', state: 'accélération max 0,106g', consequence: 'vitesse croisière atteinte plus lentement' }))
+const hull = computed(() => ({ value: shipStore.systems.hull ?? 0.97, desc: 'Résistance aux impacts et contraintes structurelles', state: 'nominal', consequence: '' }))
+const plasmaShield = computed(() => ({ value: shipStore.systems.plasmaShield ?? 1, desc: 'Protection contre poussière interstellaire à haute vitesse', state: 'vitesse safe 4,8%c (nominal)', consequence: 'Si dégradé : vitesse safe réduite' }))
 
-const he3 = ref({ current: 1484000, max: 2000000, pct: 0.742 })
-const deuterium = ref({ current: 972000, max: 1200000, pct: 0.81 })
+const he3 = computed(() => {
+  const s = shipStore.shipSystems
+  const curr = s?.he3_current ?? 1484000
+  const max = s?.he3_max ?? 2000000
+  return { current: curr, max, pct: max ? Number(curr) / Number(max) : 0.742 }
+})
+const deuterium = computed(() => {
+  const s = shipStore.shipSystems
+  const curr = s?.deuterium_current ?? 972000
+  const max = s?.deuterium_max ?? 1200000
+  return { current: curr, max, pct: max ? Number(curr) / Number(max) : 0.81 }
+})
 const fuel = ref({ speed: '4,8%c', consumption: '~61,7% masse actuelle', autonomy: '1 voyage pleine vitesse · 4 voyages à 2,0%c' })
 
-const reservoir = ref({ value: 0.84, desc: 'recyclage eau et matières premières' })
-const alimentation = ref({ value: 0.71, desc: 'production et distribution alimentaire' })
-const atmosphere = ref({ value: 0.96, desc: 'O₂, CO₂, pression, température' })
-const medical = ref({ value: 0.95, desc: 'soins, épidémiologie, pharmacopée' })
-const observatoire = ref({ value: 1, desc: 'instruments de détection et d\'analyse' })
+const reservoir = computed(() => ({ value: shipStore.systems.reservoir ?? 0.84, desc: 'recyclage eau et matières premières' }))
+const alimentation = computed(() => ({ value: shipStore.systems.alimentation ?? 0.71, desc: 'production et distribution alimentaire' }))
+const atmosphere = computed(() => ({ value: shipStore.systems.atmosphere ?? 0.96, desc: 'O₂, CO₂, pression, température' }))
+const medical = computed(() => ({ value: shipStore.systems.medical ?? 0.95, desc: 'soins, épidémiologie, pharmacopée' }))
+const observatoire = computed(() => ({ value: shipStore.systems.observatory ?? 1, desc: 'instruments de détection et d\'analyse' }))
 
 const history = ref([
   { gen: 1, date: '2189-03-14', event: 'Micro-impact coque — secteur 7', delta: -0.03, system: 'hull' },

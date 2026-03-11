@@ -49,6 +49,11 @@
     border-bottom: var(--border-width) solid var(--border-default);
 }
 
+.sw-title--no-divider {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
 /* ── Key-value rows ── */
 .sw-row {
     display: flex;
@@ -84,6 +89,10 @@
 .side-widget--signaux {
     max-height: 240px;
     overflow-y: auto;
+    scrollbar-width: none;
+}
+.side-widget--signaux::-webkit-scrollbar {
+    display: none;
 }
 
 .signal-empty {
@@ -149,47 +158,4 @@
 
 .signal-card__bar {
     margin-top: var(--space-2);
-}
-
-.signal-card__tooltip {
-    position: absolute;
-    left: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-left: var(--space-2);
-    padding: var(--space-4);
-    min-width: 200px;
-    background: var(--color-panel-solid);
-    border: var(--border-width) solid var(--border-bright);
-    font-size: var(--text-sm);
-    z-index: 10;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--transition-base);
-}
-
-.signal-card:hover .signal-card__tooltip {
-    opacity: 1;
-}
-
-.signal-card__tooltip-title {
-    font-size: var(--text-sm);
-    color: var(--color-cyan);
-    margin-bottom: var(--space-2);
-    text-transform: uppercase;
-}
-
-.signal-card__tooltip-row {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-3);
-    margin-bottom: var(--space-1);
-}
-
-.signal-card__tooltip-row span:first-child {
-    color: var(--color-muted);
-}
-
-.signal-card__tooltip-row span:last-child {
-    color: var(--color-white);
 }

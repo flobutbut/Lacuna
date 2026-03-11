@@ -14,6 +14,7 @@
   /* ── Couleurs d'accent ── */
   --color-cyan:            #00b4c8;
   --color-cyan-dim:        rgba(0, 180, 200, 0.5);
+  --color-cyan-muted:      #5eb8c4;
   --color-cyan-glow:       rgba(0, 180, 200, 0.15);
   --color-cyan-subtle:     rgba(0, 180, 200, 0.05);
   --color-cyan-hover:      rgba(0, 180, 200, 0.08);
@@ -28,8 +29,8 @@
   --color-signal:          #a855f7;
 
   /* ── Couleurs de texte ── */
-  --color-white:           #d0dde8;
-  --color-muted:           #4a6070;
+  --color-white:           #e2eaef;
+  --color-muted:           #7d92a3;
   --color-ghost:           rgba(255, 255, 255, 0.05);
 
   /* ── Bordures ── */

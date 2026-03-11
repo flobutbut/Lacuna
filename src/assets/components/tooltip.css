@@ -106,7 +106,7 @@
 .tooltip__action {
     margin-top: var(--space-3);
     font-size: var(--text-base);
-    color: var(--color-cyan-dim);
+    color: var(--color-cyan-muted);
     letter-spacing: var(--tracking-tight);
     text-align: right;
 }
@@ -167,7 +167,7 @@
 .st-action {
     margin-top: var(--space-3);
     font-size: var(--text-base);
-    color: var(--color-cyan-dim);
+    color: var(--color-cyan-muted);
     letter-spacing: var(--tracking-tight);
     text-align: right;
 }

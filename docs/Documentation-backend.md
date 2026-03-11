@@ -1,0 +1,440 @@
+# LACUNA — Documentation Backend
+
+*Schéma base de données, migrations, RLS, seed — Mars 2026*
+
+---
+
+## Table des matières
+
+1. [Vue d'ensemble](#1-vue-densemble)
+2. [Structure Supabase](#2-structure-supabase)
+3. [Schéma — tables et relations](#3-schéma--tables-et-relations)
+4. [Types ENUM](#4-types-enum)
+5. [Migrations](#5-migrations)
+6. [RLS (Row Level Security)](#6-rls-row-level-security)
+7. [Seed et données prototype](#7-seed-et-données-prototype)
+8. [Mapping Store ↔ Table](#8-mapping-store--table)
+9. [Configuration](#9-configuration)
+10. [Références design](#10-références-design)
+
+---
+
+## 1. Vue d'ensemble
+
+| Composant | Technologie |
+|-----------|-------------|
+| **Base de données** | PostgreSQL (Supabase) |
+| **Auth** | Supabase Auth (à intégrer) |
+| **Client frontend** | `@supabase/supabase-js` |
+| **MCP** | user-supabase (list_tables, execute_sql, apply_migration) |
+
+Le backend LACUNA centralise les données de jeu dans Supabase : systèmes stellaires, objets des systèmes, traces, observations, vaisseaux, population, carte, équation de Drake.
+
+---
+
+## 2. Structure Supabase
+
+```
+supabase/
+├── config.toml          # Config Supabase CLI
+├── migrations/
+│   ├── 00001_initial_schema.sql    # Schéma initial (ships, traces, map, drake...)
+│   ├── 00002_interpretations_delete_policy.sql
+│   ├── 00003_observations_table.sql
+│   ├── 00004_system_objects.sql
+│   ├── ... (00005–00008)
+│   └── 00009_visible_systems_rpc.sql  # RPC filtre systèmes visibles
+└── seed.sql             # Données initiales (systèmes, traces, objets, system_objects)
+```
+
+---
+
+## 3. Schéma — tables et relations
+
+### Diagramme des dépendances
+
+```
+stellar_systems
+    ├── traces (system_id)
+    ├── system_objects (system_id)
+    ├── ships (travel_destination)
+    └── map_nodes (system_id)
+
+ships
+    ├── populations
+    ├── ship_traces
+    ├── interpretations (ship_id, anonyme)
+    ├── logbook_entries
+    ├── map_nodes / map_edges
+    └── observations (ship_id, nullable)
+
+traces
+    ├── ship_traces
+    └── interpretations
+
+signal_events (événements transients)
+    └── signals (source_event_id)
+
+system_objects (objets émetteurs : PULSAR, NEUTRON_STAR, MAGNETAR)
+    └── signals (source_object_id)
+```
+
+### Tables détaillées
+
+#### `stellar_systems`
+Systèmes stellaires (ciel Observatoire).
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | TEXT PK | Identifiant (SOL, PROXIMA, ROSS128...) |
+| name | TEXT | Nom affiché |
+| spectral_type | TEXT | G2V, M5.5V, K2V... |
+| distance | DECIMAL | Distance en al depuis Sol |
+| age | DECIMAL | Âge en Ga |
+| planets | INT | Nombre de planètes (agrégat) |
+| habitable_zone | BOOLEAN | Présence zone habitable |
+| anomaly_level | INT | 0–3 |
+| coordinates | JSONB | `{ra, dec}` degrés pour projection ciel |
+| created_at | TIMESTAMPTZ | |
+
+#### `system_objects`
+Objets composant un système (étoiles, planètes, disques).
+
+| Colonne | Type | Applicable à | Description |
+|---------|------|--------------|-------------|
+| id | UUID PK | tous | |
+| system_id | TEXT FK | tous | → stellar_systems |
+| parent_id | UUID FK | MOON | → system_objects (lune) |
+| type | ENUM | tous | STAR, PLANET, MOON, MINOR_BODY, DEBRIS_DISK, PULSAR, NEUTRON_STAR, MAGNETAR |
+| designation | TEXT | | Lettre (a, b, c) |
+| name | TEXT | | Proxima b, Disque interne |
+| sort_order | INT | | Ordre d'affichage |
+| orbital_semi_major_axis_au | DECIMAL | PLANET, MOON, MINOR | |
+| orbital_period_days | DECIMAL | | |
+| orbital_eccentricity | DECIMAL | | |
+| orbital_inclination_deg | DECIMAL | | |
+| mass_earth | DECIMAL | PLANET, MOON | |
+| mass_stellar | DECIMAL | STAR | Masse solaire |
+| radius_earth | DECIMAL | | |
+| spectral_type | TEXT | STAR | |
+| stellar_activity | TEXT | STAR | ACTIVE, CALM |
+| in_habitable_zone | BOOLEAN | PLANET, MOON | |
+| habitable_zone_type | TEXT | | INTERNAL, EXTERNAL, TEMPERATE |
+| has_atmosphere | BOOLEAN | PLANET, MOON | |
+| atmosphere_detected | BOOLEAN | | |
+| atmosphere_notes | TEXT | | |
+| disk_inner_radius_au | DECIMAL | DEBRIS_DISK | |
+| disk_outer_radius_au | DECIMAL | | |
+| disk_structure | TEXT | | RINGS, DEPLETION_ZONES, ASYMMETRIC, DENSE |
+| disk_density_factor | DECIMAL | | Ex. 10× Tau Ceti |
+| confirmation_status | ENUM | | CONFIRMED, DEBATED, UNCONFIRMED |
+| emits_signals | BOOLEAN | PULSAR, NEUTRON_STAR, MAGNETAR | Émet des signaux captables |
+| emission_support | signal_support | émetteurs | EM_RADIO, GAMMA_X, GRAVITATIONNEL |
+| emission_pattern | TEXT | émetteurs | CONTINUOUS, PERIODIC, BURST |
+| emission_frequency_hz | DECIMAL | PULSAR | Fréquence période (ex. 1,3 Hz pour PSR B1919+21) |
+| emission_direction | TEXT | émetteurs | omni, beam (faisceau) |
+| attributes | JSONB | | Données extensibles |
+| created_at | TIMESTAMPTZ | | |
+
+#### `nebulas`
+Nuages de gaz, nébuleuses — objets étendus (formes), visibles en IR.
+
+| Colonne | Type | Description |
+|---------|------|--------------|
+| id | TEXT PK | Identifiant |
+| name | TEXT | Nom affiché |
+| designation | TEXT | Ex. Sh 2-276, M42 |
+| distance | DECIMAL | Distance en al |
+| coordinates | JSONB | `{ra, dec}` centre en degrés |
+| shape_type | TEXT | ELLIPSE ou POLYGON |
+| shape_params | JSONB | ELLIPSE: `{semi_major_arcmin, semi_minor_arcmin, position_angle_deg}` — POLYGON: `{vertices: [{dra_arcmin, ddec_arcmin}...]}` |
+| ir_only | BOOLEAN | Visible uniquement en infrarouge |
+
+#### `traces`
+Traces collectables (Artefacts, Collection).
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | UUID PK | |
+| designation | TEXT UNIQUE | WOW-1977-A, PROXIMA-001 |
+| type | trace_type | SIGNAL_RADIO, ORBITAL_ANOMALY... |
+| origin | trace_origin | IMMUABLE, GENERÉE, JOUEUR |
+| system_id | TEXT FK | → stellar_systems |
+| difficulty | trace_difficulty | 1–4 |
+| real_reference | BOOLEAN | Ancrage scientifique réel |
+| description | TEXT | |
+| visual | TEXT | waveform, orbital, spectrogram... |
+| points_to | UUID FK | → traces (lien narratif) |
+| discovered | DATE | |
+| discovered_by | UUID | ship_id, nullable pour IMMUABLE |
+
+#### `observations`
+File d'observations Laboratoire.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | UUID PK | |
+| session_id | TEXT | Identifiant localStorage (prototype sans auth) |
+| ship_id | UUID FK | Nullable, pour auth future |
+| type | observation_type | SIGNAL, PLANETE, ATMOSPHERE... |
+| system_id | TEXT FK | → stellar_systems |
+| name | TEXT | |
+| state | observation_state | PENDING, RUNNING, DONE |
+| niveau | observation_niveau | PASSIF, SYSTEME, ORBITE, CONTACT |
+| support | signal_support | EM_RADIO, GAMMA_X (pour SIGNAL) |
+| duration_sec | INT | Pour signaux |
+| system_display | TEXT | Nom affiché du système |
+| coords, distance, date | TEXT | Métadonnées |
+
+#### `signal_events`
+Événements transients (supernova, fusion, GRB). Pas utilisé pour émetteurs permanents.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | UUID PK | |
+| system_id | TEXT FK | → stellar_systems |
+| event_type | TEXT | SUPERNOVA, MERGER, GRB... |
+| observed_at | TIMESTAMPTZ | Date/heure observation |
+| duration_sec | INT | Durée estimée |
+| attributes | JSONB | Données extensibles |
+
+#### `signals` (captures)
+Signaux captés par les capteurs du vaisseau. Pointe vers la source (objet ou événement).
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | UUID PK | |
+| source_type | TEXT | OBJECT \| EVENT |
+| source_object_id | UUID FK | → system_objects (pulsar, magnétar...) |
+| source_event_id | UUID FK | → signal_events (supernova, GRB...) |
+| session_id | TEXT | Pour prototype sans auth |
+| ship_id | UUID FK | Nullable, pour auth future |
+| frequency_hz | DECIMAL | |
+| support | signal_support | EM_RADIO, GAMMA_X... |
+| duration_sec | INT | |
+| captured_at | TIMESTAMPTZ | |
+| attributes | JSONB | Forme d'onde, spectre... |
+
+*Flux de détection* : objet émetteur (PULSAR, etc.) → joueur en portée → capteurs actifs → création d'une entrée `signals` avec `source_object_id`. Événement transient → création d'une entrée avec `source_event_id`.
+
+#### `ships`
+Vaisseaux joueurs (1 par user). Nom personnalisable par l'utilisateur.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | UUID PK | |
+| user_id | UUID FK | → auth.users (nullable pour prototype) |
+| name | TEXT | Nom du vaisseau (ex. ARCA) |
+| classe | TEXT | Classe du vaisseau (ex. Vaisseau générationnel de classe I) |
+| built_year | INT | Année construction fiction = année(created_at) + 212 (trigger) |
+| voyage | INT | |
+| generation | INT | |
+| current_system_id | TEXT FK | Système actuel (IDLE/ARRIVED) → stellar_systems |
+| position | JSONB | Coordonnées (legacy) |
+| travel_state | ship_travel_state | IDLE, IN_TRANSIT, ARRIVED, DAMAGED |
+| travel_destination | TEXT FK | → stellar_systems |
+| systems, fuel | — | *Voir ship_systems* |
+
+#### `ship_systems`
+Aspect technique du vaisseau. 1:1 avec ships.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | UUID PK | |
+| ship_id | UUID FK UNIQUE | → ships |
+| propulsion, hull, plasma_shield, observatory | DECIMAL(4,3) | 0–1 |
+| reservoir, alimentation, atmosphere, medical | DECIMAL(4,3) | 0–1 |
+| he3_current, he3_max, deuterium_current, deuterium_max | DECIMAL | Tonnes |
+| dry_mass, capacity | INT | Masse sèche (t), capacité personnes |
+| attributes | JSONB | Extensible |
+
+#### `populations`
+Population par vaisseau.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| ship_id | UUID FK | 1:1 avec ships |
+| total | INT | Effectif |
+| generation | INT | |
+| will | DECIMAL | 0–1 |
+| social_cohesion | DECIMAL | |
+| food_supply | DECIMAL | |
+| medical_care | DECIMAL | |
+| culture | TEXT | ACTIVE... |
+| governance | TEXT | TENSION_MINEURE... |
+| history | JSONB | Événements |
+
+#### `interpretations`
+Interprétations anonymes des traces.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| trace_id | UUID FK | → traces |
+| ship_id | UUID FK | Anonyme, nullable |
+| text | TEXT | |
+| confidence | confidence_level | OBSERVATION, HYPOTHÈSE... |
+| generation | INT | |
+
+#### `ship_traces`
+Traces collectées par un vaisseau (PK ship_id, trace_id).
+
+#### `logbook_entries`
+Carnet de bord. `type`: MANUEL, AUTO, GENERATIONNEL. `linked_traces`, `linked_systems`: tableaux UUID/TEXT.
+
+#### `map_nodes` / `map_edges`
+Carte explorée par vaisseau. Nœuds = systèmes visités. Arêtes = trajets.
+
+#### `drake_equation` / `drake_history`
+Équation de Drake globale (singleton). Historique des variations de N.
+
+---
+
+### Sources de signaux (Option A — validé)
+
+**Objets émetteurs permanents** (pulsar, étoile à neutrons, magnétar) : modélisés comme `system_objects` avec `emits_signals`, `emission_support`, `emission_pattern`, etc. Le signal capté référence l'objet via `signals.source_object_id`.
+
+**Événements transients** (supernova, fusion, GRB) : modélisés dans `signal_events`. Le signal capté référence l'événement via `signals.source_event_id`.
+
+Le joueur reçoit un signal quand il est en portée et que ses capteurs sont actifs. La création de l'entrée `signals` est le moment de la *détection*, pas de l'émission (qui est une propriété persistante de l'objet).
+
+---
+
+## 4. Types ENUM
+
+| Type | Valeurs |
+|------|---------|
+| trace_type | SIGNAL_RADIO, INTERSTELLAR_OBJECT, CHEMICAL_ANOMALY, STELLAR_ANOMALY, ORBITAL_ANOMALY, ENCODED_SEQUENCE, PHYSICAL_ARTIFACT, PLAYER_TRACE |
+| trace_origin | IMMUABLE, GENERÉE, JOUEUR |
+| trace_difficulty | 1, 2, 3, 4 |
+| confidence_level | OBSERVATION, HYPOTHÈSE, CONVICTION, CERTITUDE |
+| log_entry_type | MANUEL, AUTO, GENERATIONNEL |
+| ship_travel_state | IDLE, IN_TRANSIT, ARRIVED, DAMAGED |
+| observation_type | SIGNAL, PLANETE, ATMOSPHERE, ETOILE, MINEUR, OBJET |
+| observation_state | PENDING, RUNNING, DONE |
+| observation_niveau | PASSIF, SYSTEME, ORBITE, CONTACT |
+| signal_support | EM_RADIO, GAMMA_X, GRAVITATIONNEL |
+| system_object_type | STAR, PLANET, MOON, MINOR_BODY, DEBRIS_DISK, PULSAR, NEUTRON_STAR, MAGNETAR |
+| confirmation_status | CONFIRMED, DEBATED, UNCONFIRMED |
+
+---
+
+## 5. Migrations
+
+| Fichier | Contenu |
+|---------|---------|
+| 00001 | Schéma initial (stellar_systems, traces, ships, populations, ship_traces, interpretations, logbook, map, drake) |
+| 00002 | Politique DELETE sur interpretations |
+| 00003 | Table observations + types observation_* |
+| 00004 | Table system_objects + types system_object_type, confirmation_status |
+| 00005 | Option A : extension system_objects (PULSAR, NEUTRON_STAR, MAGNETAR, colonnes émission), signal_events, signals |
+| 00006 | ships : current_system_id, systems étendus, fuel, policy Anon can read prototype |
+| 00007 | Table ship_systems (systèmes, carburant, capacités). Retrait systems/fuel de ships. |
+| 00008 | ships : classe, built_year (trigger = année(created_at) + 212) |
+| 00009 | RPC get_visible_systems : filtre magnitude apparente depuis un système (spectral_type→M_abs, radec→xyz) |
+| 00010 | Naines brunes L/T/Y (spectral_type_to_absolute_magnitude), table nebulas (formes ELLIPSE/POLYGON), seed nébuleuses |
+
+**Application** : `supabase db reset` (local) ou `apply_migration` (MCP).
+
+### RPC `get_visible_systems` (migration 00009)
+
+Systèmes stellaires visibles depuis un point (Observatoire). Filtre par magnitude apparente.
+
+```sql
+get_visible_systems(
+  p_viewer_system_id TEXT,    -- ex. 'SOL', 'PROXIMA'
+  p_magnitude_limit NUMERIC DEFAULT 8  -- œil nu ~6.5, instrument ~8–10
+)
+RETURNS TABLE(id, name, spectral_type, distance, age, planets, habitable_zone, anomaly_level, coordinates, apparent_magnitude)
+```
+
+- **spectral_type_to_absolute_magnitude** : estimation M_abs depuis type spectral (réf. Schmidt-Kaler, Pecaut & Mamajek). Pulsars/NULL → 24.
+- **ra_dec_distance_to_xyz** : coordonnées 3D (Sol à l'origine).
+- **m_app** = M_abs + 5 × log₁₀(d/10) avec d = distance 3D en al.
+
+---
+
+## 6. RLS (Row Level Security)
+
+| Table | Politique | Accès |
+|-------|-----------|-------|
+| ships | Users can manage own ship | auth.uid() = user_id |
+| ships | Anon can read prototype ship | user_id IS NULL (lecture anon sans auth) |
+| ship_systems | Users can read own ship_systems | Via ship (user ou prototype) |
+| populations | Users can manage own population | Via ship |
+| ship_traces | Users can manage own ship_traces | Via ship |
+| logbook_entries | Users can manage own logbook | Via ship |
+| map_nodes / map_edges | Users can manage own map | Via ship |
+| traces | Public read traces | SELECT pour tous |
+| stellar_systems | Public read stellar_systems | SELECT pour tous |
+| system_objects | Public read system_objects | SELECT pour tous |
+| signal_events | Public read signal_events | SELECT pour tous |
+| signals | Allow all for prototype | Tout ouvert (filtrage session_id côté client) |
+| interpretations | Users can insert / Anyone can read / Allow delete | INSERT ouvert, SELECT ouvert, DELETE ouvert |
+| observations | Allow all for prototype | Tout ouvert (filtrage session_id côté client) |
+| drake_equation / drake_history | Lecture publique | SELECT pour tous |
+| nebulas | Lecture publique | SELECT pour tous |
+
+---
+
+## 7. Seed et données prototype
+
+**Fichier** : `supabase/seed.sql`
+
+| Donnée | Contenu |
+|--------|---------|
+| stellar_systems | ~100 systèmes : 9 de base + ~90 étendus + naines brunes LUHMAN16 (L7.5), WISE0855 (Y4) |
+| system_objects | Étoiles, planètes, disques, pulsar PSR B1919+21. Données scientifiques (NASA Exoplanet Archive, Wikipedia). Génération : `yarn seed:generate` |
+| traces | WOW-1977-A, OUMUAMUA-2017, BENNU-NB-2023 + PROXIMA-001, BARNARD-001, ROSS128-001, EPSILON-001, TAU-CETI-001, GLIESE667-001 |
+| nebulas | Boucle de Barnard, Orion M42, Tête de Cheval, Rosette (formes ellipse, IR-only) |
+| drake_equation | Une ligne initiale |
+
+**Exécution** : `supabase db reset` exécute migrations + seed.
+
+---
+
+## 8. Mapping Store ↔ Table
+
+| Store Pinia | Table(s) | Opérations |
+|-------------|----------|------------|
+| stellarSystems | stellar_systems | SELECT (liste complète). RPC get_visible_systems. Fusion naines brunes L/T/Y pour filtre IR. |
+| nebulas | nebulas | SELECT (formes étendues, IR-only). SkyCanvas projection ellipse/polygone. |
+| systemObjects | system_objects | SELECT par system_id (corps Observatoire) |
+| observations | observations | SELECT, INSERT, UPDATE (state), DELETE. Filtre session_id |
+| traces (PageArtefacts) | traces, interpretations | SELECT traces, interpretations. INSERT interpretation. DELETE interpretation |
+| traces (tracesStore) | — | Mémoire (playerTraces, formalisation) — à brancher sur ship_traces |
+| signaux | — | Mémoire uniquement (éphémère) |
+| supabase | Client | isConfigured() |
+
+---
+
+## 9. Configuration
+
+### Variables d'environnement
+
+| Variable | Description |
+|----------|-------------|
+| VITE_SUPABASE_URL | URL du projet Supabase |
+| VITE_SUPABASE_ANON_KEY | Clé anon publique |
+
+### Commandes Supabase
+
+```sh
+supabase start        # Démarrer local
+supabase db reset     # Migrations + seed
+supabase stop         # Arrêter local
+```
+
+---
+
+## 10. Références design
+
+| Document | Section | Contenu lié |
+|----------|---------|-------------|
+| LACUNA_TRACES | §2, §3 | Traces immuables, propriétés signaux, PSR-001 |
+| LACUNA_LABORATOIRE_INSTRUMENTS | §7, §9 | Types d'objets, matrices instrument |
+| LACUNA_UI | §3, §4 | Modules, contenu Collection |
+| LACUNA_GDD | §5 | Système social, vaisseau |
+
+---
+
+*LACUNA — Documentation Backend v1 — Mars 2026*

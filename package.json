@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:generate": "node scripts/generateExtendedSeed.js > supabase/seed_extended_systems.sql"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",

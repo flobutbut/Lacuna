@@ -48,34 +48,45 @@ function close() {
         </div>
       </div>
       <div v-if="transit" class="travel-widget__transit">
-        <div class="travel-widget__transit-title">Transit estimé</div>
-        <div class="travel-widget__transit-row">
-          <span>Accélération (simulée)</span>
-          <span>{{ formatDureeSimulee(transit.tAccel) }}</span>
+        <div class="travel-widget__transit-block">
+          <div class="travel-widget__transit-title">Phases (durée simulée)</div>
+          <div class="travel-widget__transit-grid">
+            <div class="travel-widget__transit-phase">
+              <span>Accélération</span>
+              <span>{{ formatDureeSimulee(transit.tAccel) }}</span>
+            </div>
+            <div class="travel-widget__transit-phase">
+              <span>Inertie</span>
+              <span>{{ formatDureeSimulee(transit.tInertie) }}</span>
+            </div>
+            <div class="travel-widget__transit-phase">
+              <span>Freinage</span>
+              <span>{{ formatDureeSimulee(transit.tFreinage) }}</span>
+            </div>
+          </div>
+          <div class="travel-widget__transit-row travel-widget__transit-summary">
+            <span>Total simulé</span>
+            <span>{{ formatDureeSimulee(transit.tPhysTotal) }}</span>
+          </div>
+          <div class="travel-widget__transit-row travel-widget__transit-summary travel-widget__transit-summary--last">
+            <span>Durée joueur</span>
+            <span>{{ formatDuration(transit.tJoueurSec) }}</span>
+          </div>
         </div>
-        <div class="travel-widget__transit-row">
-          <span>Inertie (simulée)</span>
-          <span>{{ formatDureeSimulee(transit.tInertie) }}</span>
-        </div>
-        <div class="travel-widget__transit-row">
-          <span>Freinage (simulé)</span>
-          <span>{{ formatDureeSimulee(transit.tFreinage) }}</span>
-        </div>
-        <div class="travel-widget__transit-row">
-          <span>Carburant</span>
-          <span>−{{ transit.carburantPct }}%</span>
-        </div>
-        <div class="travel-widget__transit-row">
-          <span>Consommation (génération)</span>
-          <span>{{ transit.generations }}</span>
-        </div>
-        <div class="travel-widget__transit-row travel-widget__transit-total">
-          <span>Durée joueur totale</span>
-          <span>{{ formatDuration(transit.tJoueurSec) }}</span>
+        <div class="travel-widget__transit-block travel-widget__transit-block--compact">
+          <div class="travel-widget__transit-title">Ressources</div>
+          <div class="travel-widget__transit-row">
+            <span>Carburant</span>
+            <span>−{{ transit.carburantPct }}%</span>
+          </div>
+          <div class="travel-widget__transit-row travel-widget__transit-row--last">
+            <span>Consommation (générations)</span>
+            <span>{{ transit.generations }}</span>
+          </div>
         </div>
       </div>
       <div class="travel-widget__footer">
-        Observé il y a {{ ui.selectedStar.dist }} ans
+        Âge de la lumière d'observation : {{ ui.selectedStar.dist }} ans
       </div>
       <div class="travel-widget__footer">
         Probabilité d'anomalie : {{ ui.selectedStar.isAnomaly ? '61%' : '12%' }}

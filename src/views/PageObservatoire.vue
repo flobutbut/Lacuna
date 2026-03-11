@@ -1,5 +1,7 @@
 <script setup>
 import SkyCanvas from '@/components/SkyCanvas.vue'
+import ObservatoireAzimuth from '@/components/ObservatoireAzimuth.vue'
+import ObservatoireSpectralFilters from '@/components/ObservatoireSpectralFilters.vue'
 import SideLeft from '@/components/SideLeft.vue'
 import SideRight from '@/components/SideRight.vue'
 import Reticule from '@/components/Reticule.vue'
@@ -17,6 +19,7 @@ import NotificationToast from '@/components/NotificationToast.vue'
     <div class="vignette" />
     <div class="scanlines" />
     <div class="ui-layer">
+      <ObservatoireSpectralFilters />
       <SideLeft />
       <SideRight />
       <Reticule />
@@ -26,6 +29,7 @@ import NotificationToast from '@/components/NotificationToast.vue'
         <div class="cc-h" />
         <div class="cc-v" />
       </div>
+      <ObservatoireAzimuth />
       <NotificationToast />
       <TravelWidget />
       <ObservatoirePanel />

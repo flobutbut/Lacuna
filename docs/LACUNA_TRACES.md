@@ -1,5 +1,5 @@
 # LACUNA — Catalogue des Traces
-*Version 0.8 — Mars 2026*
+*Version 0.9 — Mars 2026*
 
 ---
 
@@ -26,6 +26,7 @@
 | 0.6 | Mars 2026 | Refonte §1 — grammaire reconstruite depuis les instruments. |
 | 0.7 | Mars 2026 | Refonte complète §1 — définition reconstruite depuis l'expérience joueur. Trace = écart entre modèle et données. Deux modes d'accès (signal passif / observation active). Propriétés d'un signal (support, fréquence, contenu, durée de vie). Niveaux d'observation par coût physique. Anomalies comme familles de domaines physiques. Interprétations comme classes séparées des anomalies. Suppression des anciens "types" comme catégories assignées. |
 | 0.8 | Mars 2026 | Distinction capteurs / instruments. Les capteurs (récepteur radio, détecteur énergétique, détecteur gravitationnel) capturent à bord ; les instruments du Laboratoire analysent. Ajout instruments d'analyse pour signaux : analyseur spectral, analyseur structure temporelle, analyseur polarisation, analyseur spectre énergétique, analyseur gravimétrique. Réf. LACUNA_LABORATOIRE_INSTRUMENTS.md. |
+| 0.9 | Mars 2026 | Modèle Option A — sources de signaux : objets émetteurs permanents (pulsar, étoile à neutrons, magnétar) vs événements transients. PSR-001 modélisé comme system_object PULSAR. Réf. Documentation-backend.md. |
 
 ---
 
@@ -525,7 +526,7 @@ La combinaison GLIESE667-001 + GLIESE667-002 est une clé d'accès à une trace 
 | TABBY-001 | Étoile de Tabby (KIC 8462852) | 1 280 al | ANOMALIE_STELLAIRE | 2 | Baisses de luminosité apériodiques jusqu'à 22% |
 | TABBY-002 | Étoile de Tabby | 1 280 al | SEQUENCE | 3 | Pattern des baisses — structure non aléatoire débattue |
 | OUMUAMUA-001 | Trajectoire interstellaire | Variable | OBJET | 2 | Accélération non-gravitationnelle, forme allongée |
-| PSR-001 | PSR B1919+21 | 2 283 al | SIGNAL | 3 | Premier pulsar — initialement nommé LGM-1 (Little Green Men) |
+| PSR-001 | PSR B1919+21 | 2 283 al | SIGNAL | 3 | Premier pulsar — initialement nommé LGM-1 (Little Green Men). *Modèle backend* : `system_object` PULSAR avec émission périodique (1,3 Hz). Voir Documentation-backend.md § Sources de signaux. |
 | HD40307-001 | HD 40307 | 41,8 al | ANOMALIE_GEOMETRIQUE | 2 | Super-Terre en zone habitable, 6 planètes en résonance |
 
 ---

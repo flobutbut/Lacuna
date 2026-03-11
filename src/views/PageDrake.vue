@@ -1,13 +1,35 @@
 <script setup>
-const terms = [
-  { symbol: 'R*', label: 'Taux de formation stellaire', val: '3.0 /an', width: 100 },
-  { symbol: 'fp', label: 'Fraction étoiles avec planètes', val: '1.00', width: 100 },
-  { symbol: 'ne', label: 'Planètes en zone habitable', val: '0.40', width: 40 },
-  { symbol: 'fl', label: 'Apparition de la vie', val: '0.31 ↑', width: 31, amber: true },
-  { symbol: 'fi', label: 'Vie intelligente', val: '0.10', width: 10 },
-  { symbol: 'fc', label: 'Technologie détectable', val: '0.20', width: 20 },
-  { symbol: 'L', label: 'Durée de communication', val: '10 000 ans', width: 60, noBorder: true },
-]
+import { onMounted, computed } from 'vue'
+import { useDrakeStore } from '@/stores/drake'
+
+const drakeStore = useDrakeStore()
+
+const terms = computed(() => {
+  const t = drakeStore.terms
+  if (!t) return []
+  return t.map((x) => ({
+    ...x,
+    width: x.symbol === 'L' ? 60 : Math.min(100, Number(x.raw) * 100),
+    noBorder: x.symbol === 'L',
+    amber: x.symbol === 'fl',
+  }))
+})
+
+function formatLastUpdated(ts) {
+  if (!ts) return '—'
+  const d = new Date(ts)
+  const now = new Date()
+  const diffMs = now - d
+  const h = Math.floor(diffMs / 3600000)
+  if (h < 1) return 'il y a < 1h'
+  if (h < 24) return `il y a ${h}h`
+  const j = Math.floor(h / 24)
+  return `il y a ${j}j`
+}
+
+onMounted(async () => {
+  if (!drakeStore.loaded) await drakeStore.fetch()
+})
 </script>
 
 <template>
@@ -37,8 +59,8 @@ const terms = [
       </div>
       <div class="drake-result">
         <div class="dr-label">N — CIVILISATIONS ACTIVES ESTIMÉES</div>
-        <div class="dr-value">12.4</div>
-        <div class="dr-sub">mis à jour collectivement — dernière variation il y a 3h</div>
+        <div class="dr-value">{{ drakeStore.n }}</div>
+        <div class="dr-sub">mis à jour collectivement — dernière variation {{ formatLastUpdated(drakeStore.lastUpdated) }}</div>
       </div>
     </div>
   </div>

@@ -19,6 +19,42 @@ export const useUIStore = defineStore('ui', () => {
   const reticuleVisible = ref(false)
   const selectedSignal = ref(null)
   const hoveredSignal = ref(null)
+  const viewDirection = ref({ ra: 180, dec: 0 })
+  const targetViewDirection = ref({ ra: 180, dec: 0 })
+  /** Filtre spectral Observatoire : 'visible' | 'ir' | 'uv' | 'r' */
+  const spectralFilter = ref('visible')
+  /** ID de l'étoile recherchée (centrée et highlightée) */
+  const searchedStarId = ref(null)
+
+  function setSearchedStarId(id) {
+    searchedStarId.value = id
+  }
+
+  function clearSearchedStarId() {
+    searchedStarId.value = null
+  }
+
+  function setViewDirection(ra, dec) {
+    viewDirection.value = { ra, dec }
+  }
+
+  function setTargetViewDirection(ra, dec) {
+    targetViewDirection.value = { ra, dec }
+  }
+
+  function setViewDirectionValue(obj) {
+    viewDirection.value = obj
+  }
+
+  function setTargetViewDirectionValue(obj) {
+    targetViewDirection.value = obj
+  }
+
+  function setSpectralFilter(band) {
+    if (['visible', 'ir', 'uv', 'r'].includes(band)) {
+      spectralFilter.value = band
+    }
+  }
 
   function openPanel(id) {
     activePanel.value = id
@@ -127,5 +163,16 @@ export const useUIStore = defineStore('ui', () => {
     selectSignal,
     closeSignalModal,
     setHoveredSignal,
+    viewDirection,
+    targetViewDirection,
+    setViewDirection,
+    setTargetViewDirection,
+    setViewDirectionValue,
+    setTargetViewDirectionValue,
+    spectralFilter,
+    setSpectralFilter,
+    searchedStarId,
+    setSearchedStarId,
+    clearSearchedStarId,
   }
 })
