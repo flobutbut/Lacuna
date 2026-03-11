@@ -6,6 +6,7 @@ import { useObservationsStore } from '@/stores/observations'
 import { useTracesStore } from '@/stores/traces'
 import { useUIStore } from '@/stores/ui'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
+import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import LabReportSpectrogram from '@/components/lab/LabReportSpectrogram.vue'
 import LabReportStructureTemporelle from '@/components/lab/LabReportStructureTemporelle.vue'
 
@@ -224,7 +225,7 @@ const runningForSelected = computed(() => {
 })
 
 onMounted(async () => {
-  if (!obsStore.loaded) await obsStore.fetch()
+  await ensureStoresLoaded(obsStore)
   ui.clearLabHasNew()
   const selectId = route.query.select
   if (selectId && typeof selectId === 'string') {

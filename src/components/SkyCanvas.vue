@@ -9,6 +9,7 @@ import { useNebulasStore } from '@/stores/nebulas'
 import { projectStarInFov, signalPosition } from '@/lib/stellarProjection'
 import { drawMilkyWay, drawCurvedGrid, drawNebulas, drawStars, drawSignals, drawSpectralBorder } from '@/lib/skyRenderers'
 import { useSkyStars } from '@/composables/useSkyStars'
+import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const ui = useUIStore()
 const nebulasStore = useNebulasStore()
@@ -235,9 +236,7 @@ onMounted(async () => {
   canvasEl.height = h
   ctx = canvasEl.getContext('2d')
 
-  await stellarSystemsStore.fetch()
-  await nebulasStore.fetch()
-  if (!shipStore.loaded) await shipStore.fetch()
+  await ensureStoresLoaded(shipStore, stellarSystemsStore, nebulasStore)
   await stellarSystemsStore.fetchVisibleForSky(shipStore.currentSystemId, 14)
   stars.value = buildStarsFromDb()
 

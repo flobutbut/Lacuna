@@ -108,3 +108,4 @@
 | Mars 2026 | Optimisation Observatoire — lib/stellarProjection.js, lib/skyRenderers.js, composables/useSkyStars.js. SkyCanvas refactorisé. views/observatoire/ créé. |
 | Mars 2026 | formatUtils.js — barWidth, formatDate, barClass, valClass, formatRaDec extraits. PageSystemes, PagePopulation, PageArtefacts, SideLeft, ObservatoireAzimuth mis à jour. |
 | Mars 2026 | formatRelativeTime ajouté à formatUtils. constants/objectTypes.js créé (OBJECT_TYPE_LABELS). SideLeft, PageDrake, ObservatoirePanel, PageLaboratoire, systemObjects mis à jour. |
+| Mars 2026 | composables/useStoreReady.js — ensureStoresLoaded() centralise le pattern "if (!store.loaded) await store.fetch()". AppHeader, SideLeft, PageDrake, PageLaboratoire, PageSystemes, SystemView, SkyCanvas mis à jour. |

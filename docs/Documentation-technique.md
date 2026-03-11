@@ -52,7 +52,8 @@ Lacuna/
 │   │   │   └── LabReportStructureTemporelle.vue  # Forme d'onde + autocorrélation (structure temporelle)
 │   │   └── panels/          # (legacy — contenu migré vers views/)
 │   ├── composables/         # Logique réutilisable (Vue)
-│   │   └── useSkyStars.js   # Construction liste étoiles (DB / fallback) — Observatoire
+│   │   ├── useSkyStars.js   # Construction liste étoiles (DB / fallback) — Observatoire
+│   │   └── useStoreReady.js # ensureStoresLoaded() — chargement stores au montage
 │   ├── constants/           # Constantes partagées
 │   │   └── objectTypes.js   # OBJECT_TYPE_LABELS (affichage Observatoire, Laboratoire)
 │   ├── lib/

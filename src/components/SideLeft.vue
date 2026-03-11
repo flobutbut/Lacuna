@@ -4,6 +4,7 @@ import { useSignauxStore } from '@/stores/signaux'
 import { useUIStore } from '@/stores/ui'
 import { useShipStore } from '@/stores/ship'
 import { barClass, valClass, formatRelativeTime } from '@/lib/formatUtils'
+import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const signauxStore = useSignauxStore()
 const ui = useUIStore()
@@ -25,7 +26,7 @@ function onIgnore(e, id) {
 
 let expiryInterval = null
 onMounted(async () => {
-  if (!shipStore.loaded) await shipStore.fetch()
+  await ensureStoresLoaded(shipStore)
   signauxStore.removeExpired()
   expiryInterval = setInterval(() => signauxStore.removeExpired(), 60000)
 })

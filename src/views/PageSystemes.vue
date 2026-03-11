@@ -2,6 +2,7 @@
 import { ref, watch, nextTick, onBeforeUnmount, onMounted, computed } from 'vue'
 import { useShipStore } from '@/stores/ship'
 import { barWidth } from '@/lib/formatUtils'
+import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const shipStore = useShipStore()
 const activeSection = ref(null)
@@ -121,7 +122,7 @@ const ship = computed(() => ({
 }))
 
 onMounted(async () => {
-  if (!shipStore.loaded) await shipStore.fetch()
+  await ensureStoresLoaded(shipStore)
 })
 
 // Légende du plan (extrait du SVG)

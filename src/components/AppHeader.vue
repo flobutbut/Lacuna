@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue'
 import { useShipStore } from '@/stores/ship'
 import { useDrakeStore } from '@/stores/drake'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
+import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const shipStore = useShipStore()
 const drakeStore = useDrakeStore()
@@ -14,9 +15,7 @@ const currentSystemName = computed(() => {
 })
 
 onMounted(async () => {
-  if (!shipStore.loaded) await shipStore.fetch()
-  if (!stellarStore.loaded) await stellarStore.fetch()
-  if (!drakeStore.loaded) await drakeStore.fetch()
+  await ensureStoresLoaded(shipStore, stellarStore, drakeStore)
 })
 </script>
 

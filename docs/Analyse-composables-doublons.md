@@ -14,7 +14,7 @@
 | **OBJECT_TYPES** | Haute | Moyenne | 4 | ✅ Fait |
 | **barClass/valClass** | Basse | Facile | 5 | ✅ Fait |
 | **formatRaDec** | Basse | Facile | 6 | ✅ Fait |
-| **Pattern store.fetch()** | Moyenne | Difficile | 7 | |
+| **Pattern store.fetch()** | Moyenne | Difficile | 7 | ✅ Fait |
 
 ### Légende
 

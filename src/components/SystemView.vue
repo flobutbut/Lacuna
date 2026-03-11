@@ -10,6 +10,7 @@ import {
   luminosityFromSpectralType,
 } from '@/lib/habitableZone'
 import { semiMajorAxisFromPeriod } from '@/lib/orbitalUtils'
+import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const shipStore = useShipStore()
 const stellarStore = useStellarSystemsStore()
@@ -68,7 +69,7 @@ watch(currentSystemId, (id) => {
 }, { immediate: true })
 
 onMounted(async () => {
-  if (!stellarStore.loaded) await stellarStore.fetch()
+  await ensureStoresLoaded(stellarStore)
   if (!systemObjectsStore.bySystem[currentSystemId.value]?.length) {
     await systemObjectsStore.fetchForSystem(currentSystemId.value)
   }

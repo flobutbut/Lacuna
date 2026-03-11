@@ -2,6 +2,7 @@
 import { onMounted, computed } from 'vue'
 import { useDrakeStore } from '@/stores/drake'
 import { formatRelativeTime } from '@/lib/formatUtils'
+import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const drakeStore = useDrakeStore()
 
@@ -17,7 +18,7 @@ const terms = computed(() => {
 })
 
 onMounted(async () => {
-  if (!drakeStore.loaded) await drakeStore.fetch()
+  await ensureStoresLoaded(drakeStore)
 })
 </script>
 
