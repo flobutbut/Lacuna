@@ -4,7 +4,48 @@
 
 ---
 
-## 1. Résumé
+## 1. Classement par criticité et facilité
+
+| Élément | Criticité | Facilité | Priorité | Statut |
+|---------|-----------|----------|----------|--------|
+| **barWidth** | Moyenne | Facile | 1 | ✅ Fait |
+| **formatDate** | Basse | Facile | 2 | ✅ Fait |
+| **formatRelativeTime** | Moyenne | Moyenne | 3 | ✅ Fait |
+| **OBJECT_TYPES** | Haute | Moyenne | 4 | ✅ Fait |
+| **barClass/valClass** | Basse | Facile | 5 | ✅ Fait |
+| **formatRaDec** | Basse | Facile | 6 | ✅ Fait |
+| **Pattern store.fetch()** | Moyenne | Difficile | 7 | |
+
+### Légende
+
+**Criticité**
+- **Haute** — Risque d’incohérence UX (labels différents selon la page), maintenance pénible, sources multiples à garder alignées
+- **Moyenne** — Duplication avérée, maintenance plus lourde, risque de divergence à moyen terme
+- **Basse** — Un seul usage ou impact limité, pas de doublon critique
+
+**Facilité**
+- **Facile** — 1 fichier à créer, 1–2 lignes à modifier par fichier, logique simple
+- **Moyenne** — Plusieurs fichiers, logique à unifier (variantes, options), mapping à comprendre
+- **Difficile** — Refactoring large, 6+ composants, APIs hétérogènes, risque de régression
+
+### Matrice visuelle
+
+```
+                    Facilité
+            Facile    Moyenne   Difficile
+         ┌──────────┬──────────┬──────────┐
+Haute    │          │ OBJECT_  │          │
+Criticité│          │ TYPES    │          │
+Moyenne  │ barWidth │ format   │ store.   │
+         │ formatDate│ Relative │ fetch()  │
+Basse    │ barClass │ Time     │          │
+         │ formatRaDec          │          │
+         └──────────┴──────────┴──────────┘
+```
+
+---
+
+## 2. Résumé des doublons
 
 | Élément | Fichiers concernés | Recommandation |
 |--------|--------------------|----------------|
@@ -18,9 +59,9 @@
 
 ---
 
-## 2. Détail des doublons
+## 3. Détail des doublons
 
-### 2.1 `barWidth(val)` — identique à deux endroits
+### 3.1 `barWidth(val)` — identique à deux endroits
 
 **Code actuel (identique) :**
 ```js
@@ -38,7 +79,7 @@ function barWidth(val) {
 
 ---
 
-### 2.2 `barClass(pct)` / `valClass(pct)` — seuils 0.8 / 0.5
+### 3.2 `barClass(pct)` / `valClass(pct)` — seuils 0.8 / 0.5
 
 **Code actuel (SideLeft.vue) :**
 ```js
@@ -58,7 +99,7 @@ Pour l’instant utilisé uniquement dans **SideLeft**. Si d’autres écrans (e
 
 ---
 
-### 2.3 Labels de types d’objets (OBJECT_TYPES)
+### 3.3 Labels de types d’objets (OBJECT_TYPES)
 
 **Trois sources actuelles :**
 
@@ -78,7 +119,7 @@ Les types “affichage” (ETOILE, PLANETE, etc.) sont le résultat du mapping `
 
 ---
 
-### 2.4 Format temps relatif (“il y a X”)
+### 3.4 Format temps relatif (“il y a X”)
 
 **SideLeft.vue — `receivedAgo(createdAt)` :**
 ```js
@@ -103,7 +144,7 @@ Logique très proche : durée écoulée → chaîne en français.
 
 ---
 
-### 2.5 Format date locale (fr-FR)
+### 3.5 Format date locale (fr-FR)
 
 **PageArtefacts.vue — `formatInterpretationDate(iso)` :**
 ```js
@@ -117,7 +158,7 @@ Un seul usage pour l’instant, mais pattern classique.
 
 ---
 
-### 2.6 `formatRaDec(ra, dec)` — ObservatoireAzimuth
+### 3.6 `formatRaDec(ra, dec)` — ObservatoireAzimuth
 
 Utilisé uniquement dans **ObservatoireAzimuth.vue** pour afficher α/δ en h m s et ° ′.
 
@@ -125,7 +166,7 @@ Pas de doublon actuel. Si un autre composant (tooltip, export, rapport) doit aff
 
 ---
 
-### 2.7 Pattern “fetch store si pas chargé”
+### 3.7 Pattern “fetch store si pas chargé”
 
 Répété dans plusieurs composants :
 ```js
@@ -140,7 +181,7 @@ if (!stellarStore.loaded) await stellarStore.fetch()
 
 ---
 
-## 3. Fichiers à créer / modifier (recommandations)
+## 4. Fichiers à créer / modifier (recommandations)
 
 | Action | Fichier | Contenu |
 |--------|---------|--------|
@@ -153,7 +194,7 @@ if (!stellarStore.loaded) await stellarStore.fetch()
 
 ---
 
-## 4. Non retenu comme doublon
+## 5. Non retenu comme doublon
 
 - **getFallbackBodies** (ObservatoirePanel) : logique métier spécifique au panel, pas réutilisée ailleurs.
 - **formatNum** (PageSystemes) : `Intl.NumberFormat('fr-FR')` — un seul usage ; peut rejoindre formatUtils si d’autres pages formatent des nombres de la même façon.
@@ -161,7 +202,7 @@ if (!stellarStore.loaded) await stellarStore.fetch()
 
 ---
 
-## 5. Ordre de priorité suggéré
+## 6. Ordre de priorité suggéré (aligné sur §1)
 
 1. **barWidth** — 2 fichiers, changement minimal, gain immédiat.
 2. **OBJECT_TYPES / objectTypes** — évite la divergence entre Observatoire, Labo et store.

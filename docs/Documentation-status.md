@@ -106,3 +106,5 @@
 | Mars 2026 | Branchements UI↔DB : SideLeft (propulsion, He³, hull, plasma depuis ship_systems), Page Drake + Header (drake_equation), Header coords (stellar_systems + current_system_id). Store drake.js. |
 | Mars 2026 | Naines brunes L/T/Y (LUHMAN16, WISE0855) + table nebulas (formes ellipse/polygone). Store nebulas, projection SkyCanvas. Filtre IR : objets IR-only. |
 | Mars 2026 | Optimisation Observatoire — lib/stellarProjection.js, lib/skyRenderers.js, composables/useSkyStars.js. SkyCanvas refactorisé. views/observatoire/ créé. |
+| Mars 2026 | formatUtils.js — barWidth, formatDate, barClass, valClass, formatRaDec extraits. PageSystemes, PagePopulation, PageArtefacts, SideLeft, ObservatoireAzimuth mis à jour. |
+| Mars 2026 | formatRelativeTime ajouté à formatUtils. constants/objectTypes.js créé (OBJECT_TYPE_LABELS). SideLeft, PageDrake, ObservatoirePanel, PageLaboratoire, systemObjects mis à jour. |

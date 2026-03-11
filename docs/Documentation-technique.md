@@ -53,8 +53,11 @@ Lacuna/
 │   │   └── panels/          # (legacy — contenu migré vers views/)
 │   ├── composables/         # Logique réutilisable (Vue)
 │   │   └── useSkyStars.js   # Construction liste étoiles (DB / fallback) — Observatoire
+│   ├── constants/           # Constantes partagées
+│   │   └── objectTypes.js   # OBJECT_TYPE_LABELS (affichage Observatoire, Laboratoire)
 │   ├── lib/
 │   │   ├── supabase.js      # Client Supabase
+│   │   ├── formatUtils.js   # Formatage (barWidth, formatDate, formatRelativeTime, barClass, valClass, formatRaDec)
 │   │   ├── stellarProjection.js  # Projection stéréographique FOV 120° (ra/dec ↔ écran)
 │   │   ├── skyRenderers.js  # Rendu canvas ciel (Milky Way, grille, nébuleuses, étoiles, signaux)
 │   │   └── spectrogramData.js  # Génération données synthétiques pour spectrogramme

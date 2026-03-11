@@ -3,19 +3,12 @@ import { computed, ref, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { useObservationsStore } from '@/stores/observations'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
+import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
 
 const ui = useUIStore()
 const obsStore = useObservationsStore()
 const systemObjectsStore = useSystemObjectsStore()
 const addedBodyIds = ref(new Set())
-
-const OBJECT_TYPES = {
-  SIGNAL: 'Signal reçu',
-  PLANETE: 'Corps planétaire',
-  MINEUR: 'Corps mineur',
-  ATMOSPHERE: 'Atmosphère',
-  ETOILE: 'Étoile',
-}
 
 function getFallbackBodies(star) {
   if (!star) return []
@@ -49,7 +42,7 @@ watch(
 )
 
 function addObservation(body) {
-  const name = `${body.name} · ${OBJECT_TYPES[body.type]}`
+  const name = `${body.name} · ${OBJECT_TYPE_LABELS[body.type]}`
   return obsStore.addObservation({
     name,
     type: body.type,
@@ -112,7 +105,7 @@ function isAnimating(body) {
             >
               <div class="observatoire-body__info">
                 <span class="observatoire-body__name">{{ b.name }}</span>
-                <span class="observatoire-body__type">{{ OBJECT_TYPES[b.type] }}</span>
+                <span class="observatoire-body__type">{{ OBJECT_TYPE_LABELS[b.type] }}</span>
                 <span class="observatoire-body__anomaly" :class="{ high: b.anomaly >= 40 }">
                   Anomalie {{ b.anomaly }}%
                 </span>

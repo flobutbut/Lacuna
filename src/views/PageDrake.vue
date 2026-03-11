@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, computed } from 'vue'
 import { useDrakeStore } from '@/stores/drake'
+import { formatRelativeTime } from '@/lib/formatUtils'
 
 const drakeStore = useDrakeStore()
 
@@ -14,18 +15,6 @@ const terms = computed(() => {
     amber: x.symbol === 'fl',
   }))
 })
-
-function formatLastUpdated(ts) {
-  if (!ts) return '—'
-  const d = new Date(ts)
-  const now = new Date()
-  const diffMs = now - d
-  const h = Math.floor(diffMs / 3600000)
-  if (h < 1) return 'il y a < 1h'
-  if (h < 24) return `il y a ${h}h`
-  const j = Math.floor(h / 24)
-  return `il y a ${j}j`
-}
 
 onMounted(async () => {
   if (!drakeStore.loaded) await drakeStore.fetch()
@@ -60,7 +49,7 @@ onMounted(async () => {
       <div class="drake-result">
         <div class="dr-label">N — CIVILISATIONS ACTIVES ESTIMÉES</div>
         <div class="dr-value">{{ drakeStore.n }}</div>
-        <div class="dr-sub">mis à jour collectivement — dernière variation {{ formatLastUpdated(drakeStore.lastUpdated) }}</div>
+        <div class="dr-sub">mis à jour collectivement — dernière variation {{ formatRelativeTime(drakeStore.lastUpdated) }}</div>
       </div>
     </div>
   </div>

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 import { useTracesStore } from '@/stores/traces'
 import { useUIStore } from '@/stores/ui'
+import { formatDate } from '@/lib/formatUtils'
 
 const supabaseStore = useSupabaseStore()
 const tracesStore = useTracesStore()
@@ -151,12 +152,6 @@ async function deleteInterpretation(interp) {
   }
 }
 
-function formatInterpretationDate(iso) {
-  if (!iso) return ''
-  const d = new Date(iso)
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
 function selectTrace(trace) {
   selectedTrace.value = trace
   if (trace?.id?.startsWith('player-')) {
@@ -238,7 +233,7 @@ watch(artefacts, ensureSelection, { immediate: true })
                     {{ interp.generation ? `Génération ${interp.generation}` : 'Vaisseau inconnu' }}
                     {{ interp.galactic_date ? ` · ${interp.galactic_date}` : '' }}
                     {{ interp.confidence ? ` · ${interp.confidence}` : '' }}
-                    · {{ formatInterpretationDate(interp.created_at) }}
+                    · {{ formatDate(interp.created_at) }}
                   </div>
                   <div class="artifact-interpretation__text">{{ interp.text }}</div>
                 </div>

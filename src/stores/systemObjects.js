@@ -7,14 +7,6 @@ import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 
-const OBJECT_TYPE_LABELS = {
-  STAR: 'Étoile',
-  PLANET: 'Corps planétaire',
-  MOON: 'Lune',
-  MINOR_BODY: 'Corps mineur',
-  DEBRIS_DISK: 'Disque de débris',
-}
-
 export const useSystemObjectsStore = defineStore('systemObjects', () => {
   const bySystem = ref({}) // { systemId: [obj, ...] }
   const loaded = ref(false)
@@ -93,6 +85,5 @@ export const useSystemObjectsStore = defineStore('systemObjects', () => {
     fetchForSystem,
     getForSystem,
     toBodyFormat,
-    OBJECT_TYPE_LABELS,
   }
 })

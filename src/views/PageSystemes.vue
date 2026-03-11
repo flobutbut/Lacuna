@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, nextTick, onBeforeUnmount, onMounted, computed } from 'vue'
 import { useShipStore } from '@/stores/ship'
+import { barWidth } from '@/lib/formatUtils'
 
 const shipStore = useShipStore()
 const activeSection = ref(null)
@@ -172,10 +173,6 @@ const history = ref([
   { gen: 1, date: '2191-07-02', event: 'Réparation partielle coque', delta: 0.01, system: 'hull' },
   { gen: 1, date: '2194-11-19', event: 'Dégradation propulsion — usure MTF', delta: -0.12, system: 'propulsion' },
 ])
-
-function barWidth(val) {
-  return Math.round((val || 0) * 100) + '%'
-}
 
 function formatNum(n) {
   return new Intl.NumberFormat('fr-FR').format(n)

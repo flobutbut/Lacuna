@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, computed } from 'vue'
 import { useSignauxStore } from '@/stores/signaux'
 import { useUIStore } from '@/stores/ui'
 import { useShipStore } from '@/stores/ship'
+import { barClass, valClass, formatRelativeTime } from '@/lib/formatUtils'
 
 const signauxStore = useSignauxStore()
 const ui = useUIStore()
@@ -12,26 +13,6 @@ const propulsion = computed(() => (shipStore.systems?.propulsion ?? 0.88) * 100)
 const he3 = computed(() => (shipStore.fuel?.he3 ?? 0.742) * 100)
 const hull = computed(() => (shipStore.systems?.hull ?? 0.971) * 100)
 const plasmaShield = computed(() => (shipStore.systems?.plasma_shield ?? 1) * 100)
-
-function barClass(pct) {
-  if (pct >= 0.8) return 'bar-green'
-  if (pct >= 0.5) return 'bar-amber'
-  return 'bar-red'
-}
-function valClass(pct) {
-  if (pct >= 0.8) return 'ok'
-  if (pct >= 0.5) return 'warn'
-  return 'err'
-}
-
-function receivedAgo(createdAt) {
-  const min = Math.floor((Date.now() - createdAt) / 60000)
-  if (min < 60) return `Reçu il y a ${min} min`
-  const h = Math.floor(min / 60)
-  if (h < 24) return `Reçu il y a ${h}h`
-  const d = Math.floor(h / 24)
-  return `Reçu il y a ${d}j`
-}
 
 function onCardClick(s) {
   ui.selectSignal(s)
@@ -104,7 +85,7 @@ onUnmounted(() => {
         <div class="signal-card__main">
           {{ s.frequency }} · azimut {{ s.azimuth }}°
         </div>
-        <div class="signal-card__meta">{{ receivedAgo(s.createdAt) }}</div>
+        <div class="signal-card__meta">{{ formatRelativeTime(s.createdAt, { prefix: 'Reçu ', precise: true }) }}</div>
         <div class="bar-wrap signal-card__bar">
           <div class="bar-fill bar-amber" :style="{ width: s.lifetimePct + '%' }" />
         </div>

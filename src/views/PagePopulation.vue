@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
+import { barWidth } from '@/lib/formatUtils'
 
 const supabaseStore = useSupabaseStore()
 const activeTab = ref('current')
@@ -57,10 +58,6 @@ function formatEffectifTrend(trend) {
   if (trend === 'up') return '↗'
   if (trend === 'down') return '↘'
   return '→'
-}
-
-function barWidth(val) {
-  return Math.round((val || 0) * 100) + '%'
 }
 
 async function fetchPopulation() {

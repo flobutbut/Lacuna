@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { useObservationsStore } from '@/stores/observations'
 import { useTracesStore } from '@/stores/traces'
 import { useUIStore } from '@/stores/ui'
+import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
 import LabReportSpectrogram from '@/components/lab/LabReportSpectrogram.vue'
 import LabReportStructureTemporelle from '@/components/lab/LabReportStructureTemporelle.vue'
 
@@ -13,14 +14,6 @@ const obsStore = useObservationsStore()
 const tracesStore = useTracesStore()
 const { list: obsList } = storeToRefs(obsStore)
 const ui = useUIStore()
-const OBJECT_TYPES = {
-  SIGNAL: 'Signal reçu',
-  PLANETE: 'Corps planétaire',
-  MINEUR: 'Corps mineur',
-  OBJET: 'Objet récupéré',
-  ATMOSPHERE: 'Atmosphère',
-  ETOILE: 'Étoile',
-}
 
 const OBS_STATES = { PENDING: 'En attente', RUNNING: 'Analyse en cours', DONE: 'Analysé' }
 
@@ -265,7 +258,7 @@ onUnmounted(() => {
         >
           <button type="button" class="lab-observation-item__dismiss" aria-label="Supprimer" @click.prevent.stop="removeObservation(obs)">×</button>
           <div class="lab-observation-item__name">{{ obs.name }}</div>
-          <div class="lab-observation-item__meta">{{ OBJECT_TYPES[obs.type] }}{{ obs.type === 'SIGNAL' && obs.support ? ` (${SIGNAL_SUPPORTS[obs.support] ?? obs.support})` : '' }} · {{ obs.system }}</div>
+          <div class="lab-observation-item__meta">{{ OBJECT_TYPE_LABELS[obs.type] }}{{ obs.type === 'SIGNAL' && obs.support ? ` (${SIGNAL_SUPPORTS[obs.support] ?? obs.support})` : '' }} · {{ obs.system }}</div>
           <div class="lab-observation-item__meta">{{ obs.date }}</div>
           <div
             class="lab-observation-item__state"

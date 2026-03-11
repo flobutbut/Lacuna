@@ -1,21 +1,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useUIStore } from '@/stores/ui'
+import { formatRaDec } from '@/lib/formatUtils'
 
 const ui = useUIStore()
 const ORIGIN = { ra: 180, dec: 0 }
-
-function formatRaDec(ra, dec) {
-  const raH = (ra ?? 0) / 15
-  const h = Math.floor(raH)
-  const m = Math.floor((raH - h) * 60)
-  const s = Math.floor(((raH - h) * 60 - m) * 60)
-  const decSign = (dec ?? 0) >= 0 ? '+' : '−'
-  const decAbs = Math.abs(dec ?? 0)
-  const decDeg = Math.floor(decAbs)
-  const decMin = Math.floor((decAbs - decDeg) * 60)
-  return `α ${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s  δ ${decSign}${decDeg}° ${String(decMin).padStart(2, '0')}′`
-}
 
 const display = computed(() => {
   const vd = ui.viewDirection?.value ?? ui.viewDirection ?? ORIGIN
