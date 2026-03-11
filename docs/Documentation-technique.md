@@ -26,7 +26,8 @@ Lacuna/
 │   ├── main.js              # Point d'entrée
 │   ├── App.vue              # Layout racine (Header, InstrumentsBar, RouterView)
 │   ├── views/               # Pages (une par module)
-│   │   ├── PageObservatoire.vue   # Ciel + exploration
+│   │   ├── observatoire/
+│   │   │   └── PageObservatoire.vue   # Ciel + exploration
 │   │   ├── PageCarte.vue
 │   │   ├── PageArtefacts.vue
 │   │   ├── PageJournal.vue
@@ -50,8 +51,12 @@ Lacuna/
 │   │   │   ├── LabReportSpectrogram.vue       # Sortie spectrogramme (analyseur spectral)
 │   │   │   └── LabReportStructureTemporelle.vue  # Forme d'onde + autocorrélation (structure temporelle)
 │   │   └── panels/          # (legacy — contenu migré vers views/)
+│   ├── composables/         # Logique réutilisable (Vue)
+│   │   └── useSkyStars.js   # Construction liste étoiles (DB / fallback) — Observatoire
 │   ├── lib/
 │   │   ├── supabase.js      # Client Supabase
+│   │   ├── stellarProjection.js  # Projection stéréographique FOV 120° (ra/dec ↔ écran)
+│   │   ├── skyRenderers.js  # Rendu canvas ciel (Milky Way, grille, nébuleuses, étoiles, signaux)
 │   │   └── spectrogramData.js  # Génération données synthétiques pour spectrogramme
 │   ├── router/
 │   │   └── index.js         # Routes Vue Router

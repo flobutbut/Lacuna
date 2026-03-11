@@ -136,7 +136,16 @@ En mode **Système** : pas de filtres, pas d’azimut, pas de recherche.
 
 ---
 
-## 6. Prochaines étapes (avant code)
+## 6. Refactoring effectué (Mars 2026)
+
+- **lib/stellarProjection.js** — Projection stéréographique (raDecToVector, projectStarInFov, projectNebulaShape, signalPosition)
+- **lib/skyRenderers.js** — Rendu canvas (drawMilkyWay, drawCurvedGrid, drawNebulas, drawStars, drawSignals, drawSpectralBorder)
+- **composables/useSkyStars.js** — Construction liste étoiles (DB + fallback procédural)
+- **views/observatoire/PageObservatoire.vue** — Page déplacée dans dossier dédié
+
+---
+
+## 7. Prochaines étapes (avant code)
 
 1. ~~Créer les **SVG étoiles**~~ — Fait.
 2. ~~Valider la formule de **zone habitable**~~ — Kopparapu 2013 documenté.

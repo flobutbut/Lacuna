@@ -105,3 +105,4 @@
 | Mars 2026 | Audit Interface-DB — doc Interface-DB-mapping.md : valeurs en base vs mock, index des tâches restantes (SideLeft, Drake, coords Header, etc.). |
 | Mars 2026 | Branchements UI↔DB : SideLeft (propulsion, He³, hull, plasma depuis ship_systems), Page Drake + Header (drake_equation), Header coords (stellar_systems + current_system_id). Store drake.js. |
 | Mars 2026 | Naines brunes L/T/Y (LUHMAN16, WISE0855) + table nebulas (formes ellipse/polygone). Store nebulas, projection SkyCanvas. Filtre IR : objets IR-only. |
+| Mars 2026 | Optimisation Observatoire — lib/stellarProjection.js, lib/skyRenderers.js, composables/useSkyStars.js. SkyCanvas refactorisé. views/observatoire/ créé. |

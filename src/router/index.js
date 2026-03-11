@@ -6,7 +6,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'observatoire',
-      component: () => import('@/views/PageObservatoire.vue'),
+      component: () => import('@/views/observatoire/PageObservatoire.vue'),
       meta: { title: 'Observatoire' },
     },
     {
