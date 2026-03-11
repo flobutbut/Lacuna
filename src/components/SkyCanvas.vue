@@ -2,9 +2,11 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { useSignauxStore } from '@/stores/signaux'
+import { useStellarSystemsStore } from '@/stores/stellarSystems'
 
 const ui = useUIStore()
 const signauxStore = useSignauxStore()
+const stellarSystemsStore = useStellarSystemsStore()
 const canvasRef = ref(null)
 const stars = ref([])
 
@@ -15,6 +17,41 @@ function generateStarName() {
   const p = prefixes[Math.floor(Math.random() * prefixes.length)]
   const n = Math.floor(Math.random() * 99999)
   return `${p} ${n}`
+}
+
+/** Projette ra (0–360), dec (-90–90) vers coordonnées écran */
+function projectRaDecToScreen(ra, dec, w, h) {
+  const x = ((ra ?? 0) / 360) * w
+  const y = (0.5 - (dec ?? 0) / 180) * h
+  return { x, y }
+}
+
+/** Systèmes Supabase → format étoiles pour draw (exclut SOL) */
+function projectStarsFromDb(systems, w, h) {
+  const skySystems = systems.filter((s) => s.id !== 'SOL')
+  if (skySystems.length === 0) return null
+  return skySystems.map((s, i) => {
+    const coords = s.coordinates || {}
+    const { x, y } = projectRaDecToScreen(coords.ra, coords.dec, w, h)
+    const dist = parseFloat(s.distance) || 10
+    const isAnomaly = (s.anomaly_level || 0) > 0
+    const r = Math.max(0.4, 2 - dist / 30) * (isAnomaly ? 1.5 : 1)
+    return {
+      id: s.id,
+      x,
+      y,
+      r,
+      brightness: 0.5 + 0.3 * (1 - dist / 50),
+      twinkle: (i * 0.7) % (Math.PI * 2),
+      twinkleSpeed: 0.008 + (i % 5) * 0.003,
+      isAnomaly,
+      anomalyPhase: i * 0.5,
+      name: s.name || s.id,
+      dist: String(dist.toFixed(1)),
+      spectral: s.spectral_type || '?',
+      visited: false,
+    }
+  })
 }
 
 function initStars(w, h) {
@@ -149,17 +186,32 @@ function draw(canvas, starList) {
   animId = requestAnimationFrame(() => draw(canvas, starList))
 }
 
-function handleResize(canvas, starList) {
+function handleResize(canvas, starList, fromDb) {
   const w = window.innerWidth
   const h = window.innerHeight
   const oldW = canvas.width
   const oldH = canvas.height
   canvas.width = w
   canvas.height = h
-  starList.forEach((s) => {
-    s.x = (s.x / oldW) * w
-    s.y = (s.y / oldH) * h
-  })
+  if (fromDb && starList.length > 0 && starList[0].id) {
+    const byId = Object.fromEntries(stellarSystemsStore.forSky().map((s) => [s.id, s]))
+    starList.forEach((s) => {
+      const sys = byId[s.id]
+      if (sys?.coordinates) {
+        const { x, y } = projectRaDecToScreen(sys.coordinates.ra, sys.coordinates.dec, w, h)
+        s.x = x
+        s.y = y
+      } else {
+        s.x = (s.x / oldW) * w
+        s.y = (s.y / oldH) * h
+      }
+    })
+  } else {
+    starList.forEach((s) => {
+      s.x = (s.x / oldW) * w
+      s.y = (s.y / oldH) * h
+    })
+  }
 }
 
 function handleMouseMove(e, starList, canvas) {
@@ -240,7 +292,7 @@ let onMove = null
 let onClick = null
 let onDblClick = null
 
-onMounted(() => {
+onMounted(async () => {
   canvasEl = canvasRef.value
   if (!canvasEl) return
   const w = window.innerWidth
@@ -248,11 +300,15 @@ onMounted(() => {
   canvasEl.width = w
   canvasEl.height = h
   ctx = canvasEl.getContext('2d')
-  stars.value = initStars(w, h)
+
+  await stellarSystemsStore.fetch()
+  const dbStars = projectStarsFromDb(stellarSystemsStore.forSky(), w, h)
+  stars.value = dbStars && dbStars.length > 0 ? dbStars : initStars(w, h)
 
   draw(canvasEl, stars.value)
 
-  onResize = () => handleResize(canvasEl, stars.value)
+  const fromDb = stellarSystemsStore.list.length > 0
+  onResize = () => handleResize(canvasEl, stars.value, fromDb)
   onMove = (e) => handleMouseMove(e, stars.value, canvasEl)
   onClick = handleClick
   onDblClick = handleDblClick

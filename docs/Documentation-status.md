@@ -24,8 +24,9 @@
 - [x] Client installé et configuré
 - [x] Schéma SQL (migrations)
 - [x] RLS et policies
-- [x] Traces immuables (WOW, Oumuamua, Bennu)
-- [x] Système Sol
+- [x] Traces immuables (WOW, Oumuamua, Bennu + PROXIMA-001, BARNARD-001, ROSS128-001, EPSILON-001, TAU-CETI-001, GLIESE667-001)
+- [x] Systèmes stellaires prototype (Sol, Proxima, Barnard, Ross 128, Epsilon Eridani, Tau Ceti, Gliese 667C, HD 44594) — coordonnées ra/dec pour ciel
+- [x] Table observations (file Laboratoire) — session_id pour prototype sans auth, persistée en base
 - [ ] Auth (inscription/connexion)
 - [ ] Création vaisseau au premier login
 
@@ -37,8 +38,8 @@
 - [x] Pinia (stores de base)
 - [x] Composants UI (Header, Sky, Panels, Instruments, Sidebars)
 - [x] Migration maquette HTML → Vue
-- [ ] Intégration données Supabase
-- [x] Ciel interactif (Canvas 2D)
+- [x] Intégration données Supabase (Artefacts, Population, Ciel)
+- [x] Ciel interactif (Canvas 2D) — alimenté par stellar_systems si Supabase configuré, sinon fallback procédural
 
 ### Fonctionnalités
 - [ ] Onboarding (4 écrans GDD)
@@ -48,7 +49,7 @@
 - [ ] Voyage (logique temps réel)
 - [ ] Journal de bord
 - [x] Page Artefacts — grille, détail trace, interprétations, suppression (conformité LACUNA_UI)
-- [x] Page Laboratoire — 3 colonnes (file d'observations | observation sélectionnée | instruments), clic instrument, rapports + fiabilité, [GARDER UNE TRACE]
+- [x] Page Laboratoire — 3 colonnes (file d'observations | observation sélectionnée | instruments), clic instrument, rapports + fiabilité, [GARDER UNE TRACE], sortie spectrogramme pour l'analyseur spectral (signaux)
 - [ ] Carte
 - [ ] Équation de Drake (affichage temps réel)
 - [x] Page Population — 3 onglets (Générations, Génération actuelle, Registre des Raisons)
@@ -59,10 +60,9 @@
 
 ## Prochaines étapes prioritaires
 
-1. **Données Supabase** — Connexion Artefacts, Population, Systèmes
-2. **Auth** — Mise en place Supabase Auth + création vaisseau
-3. **Onboarding** — Premiers écrans selon GDD
-4. **Observatoire complet** — Détail système, scan, fixer cap
+1. **Auth** — Mise en place Supabase Auth + création vaisseau
+2. **Onboarding** — Premiers écrans selon GDD
+3. **Observatoire complet** — Détail système, scan, fixer cap
 
 ---
 
@@ -78,3 +78,10 @@
 | Mars 2026 | Observatoire — TravelWidget (clic étoile), panel détail (double-clic), corps + probas anomalie, Analyser → Laboratoire, Ajouter au laboratoire. Store observations partagé. |
 | Mars 2026 | Signaux — store signaux (listWithRemaining, add/remove, durée 2h temps joueur), SideLeft bloc Signaux captés (cards, tooltip, modale), SignalModal + [ANALYSER AU LABO →], marqueurs azimut sur SkyCanvas, SignalTooltip. |
 | Mars 2026 | Barre instruments — bordures alignées, tab actif avec border-top. Page Systèmes — menu par groupe SVG, highlight plan, overlays par système. |
+| Mars 2026 | Doc LACUNA_LABORATOIRE_INSTRUMENTS — distinction capteurs (à bord) / instruments (Laboratoire). Ajout 5 instruments d'analyse pour signaux. LACUNA_TRACES v0.8, LACUNA_UI mis à jour. |
+| Mars 2026 | Page Laboratoire — instruments conformes à la doc (5 analyseurs signaux + 8 observation). Filtrage par type/support. Champ support sur observations SIGNAL. |
+| Mars 2026 | Stack visualisation Laboratoire : D3.js + spectrogram-js. Thématisation typos/couleurs via tokens.css. Doc technique + LACUNA_LABORATOIRE_INSTRUMENTS mis à jour. |
+| Mars 2026 | Sortie spectrogramme pour l'analyseur spectral — LabReportSpectrogram (spectrogram-js, viridis), spectrogramData.js (données synthétiques seed obsId), intégration PageLaboratoire, durationSec sur observations SIGNAL. |
+| Mars 2026 | Sortie structure temporelle — LabReportStructureTemporelle (forme d'onde + autocorrélation, D3), génération pulsée optionnelle, intégration PageLaboratoire. |
+| Mars 2026 | Seed prototype — 8 systèmes stellaires (Sol, Proxima, Barnard, Ross 128, Epsilon Eridani, Tau Ceti, Gliese 667C, HD 44594) + 6 traces voisinage (PROXIMA-001, BARNARD-001, ROSS128-001, etc.). SkyCanvas branché sur stellar_systems Supabase (projection ra/dec). Store stellarSystems. Fallback procédural si Supabase absent. |
+| Mars 2026 | Table observations en base — migration 00003. Store observations : fetch/insert/update/delete via Supabase. session_id (localStorage) pour prototype sans auth. Persistance de la file d'observations Laboratoire. |

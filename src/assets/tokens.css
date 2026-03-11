@@ -59,9 +59,9 @@
   --weight-semibold:       600;
   --weight-bold:           800;
 
-  --tracking-tight:        1px;
-  --tracking-normal:       2px;
-  --tracking-wide:         3px;
+  --tracking-tight:        0.5px;
+  --tracking-normal:       1px;
+  --tracking-wide:         2px;
   --tracking-wider:        4px;
   --tracking-widest:       6px;
 

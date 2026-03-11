@@ -32,8 +32,10 @@ function addObservation(body) {
     name,
     type: body.type,
     system: ui.selectedStar?.name ?? '—',
+    system_id: ui.selectedStar?.id ?? null,
     distance: ui.selectedStar?.dist ?? '—',
     coords: '—',
+    niveau: obsStore.NIVEAUX.SYSTEME,
   })
 }
 

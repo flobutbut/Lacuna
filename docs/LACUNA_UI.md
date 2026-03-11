@@ -303,7 +303,7 @@ En transit, la modale s'affiche sans bouton [FIXER CAP] — navigation désactiv
 |---|---|---|
 | Carte | Graphe nœuds/arêtes · Couleur par ancienneté · Compteur traces formalisées par système · Stats totales | Clic nœud → modale système · Survol → infos visite |
 | Collection | Grille des traces formalisées · Filtre système/date/fiabilité · Badge "nouvelles interprétations" | Clic → détail trace (données brutes + rapports + métadonnées) · Écriture/modification d'interprétation · Assignation classe |
-| Laboratoire | File d'observations · Observation sélectionnée + données brutes + rapports · Grille instruments | Ajouter observation · Lancer analyse · Ignorer · [Garder une trace] |
+| Laboratoire | File d'observations · Observation sélectionnée + données brutes + rapports · Grille instruments d'analyse | Ajouter observation · Lancer analyse · Ignorer · [Garder une trace] |
 | Journal | Fil chronologique · Types : MANUEL / AUTO / GENERATIONNEL / DOCUMENT TROUVÉ · Mémoire générationnelle | Écriture entrée manuelle · Filtre par type · Lecture fragments Yael |
 | Drake | 7 termes avec barres visuelles · Graphe historique N · Trace source des variations | Lecture seule. Clic sur variation → trace responsable |
 | Population | Effectif + tendance · Barres volonté/cohésion/alim/soins · Statuts culturels · Historique événements | Lecture seule. Événements passés consultables |
@@ -313,6 +313,8 @@ En transit, la modale s'affiche sans bouton [FIXER CAP] — navigation désactiv
 ---
 
 ### Détail — Module Laboratoire
+
+> **Capteurs vs instruments** : Les signaux sont *captés* par les capteurs à bord (récepteur radio, détecteur énergétique, détecteur gravitationnel). Le Laboratoire contient des *instruments d'analyse* qui travaillent sur les données capturées. Réf. `LACUNA_LABORATOIRE_INSTRUMENTS.md`.
 
 Le Laboratoire est l'espace de travail scientifique du vaisseau. C'est un espace persistant — il conserve une file d'observations en attente que le joueur alimente au fil de son voyage. Il peut être ouvert à tout moment depuis la barre d'instruments.
 
@@ -421,7 +423,7 @@ Grille d'instruments disponibles sur le vaisseau. Chaque instrument est dans l'u
 
 Le joueur lance une analyse par un simple clic sur un instrument disponible. Pas de drag & drop — le contexte (observation sélectionnée + instrument cliqué) suffit à définir la combinaison.
 
-Plusieurs instruments peuvent tourner simultanément sur la même observation. Les rapports arrivent dans leur ordre de complétion — les instruments rapides (récepteur radio, magnétomètre) terminent avant les instruments lents (analyseur d'échantillon, analyseur orbital).
+Plusieurs instruments peuvent tourner simultanément sur la même observation. Les rapports arrivent dans leur ordre de complétion — les instruments rapides (analyseur spectral, analyseur de structure temporelle, magnétomètre) terminent avant les instruments lents (analyseur d'échantillon, analyseur orbital).
 
 La disponibilité des instruments dépend du niveau d'observation actuel du vaisseau par rapport à l'observation sélectionnée — pas de l'état général du vaisseau. Un instrument de contact est grisé si l'objet n'a pas été physiquement atteint, même si l'instrument est en parfait état.
 

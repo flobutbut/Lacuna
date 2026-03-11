@@ -11,17 +11,20 @@ function close() {
   ui.closeSignalModal()
 }
 
-function analyserAuLabo() {
+async function analyserAuLabo() {
   const s = ui.selectedSignal
   if (!s) return
   const name = `${s.frequency} · azimut ${s.azimuth}°`
-  obsStore.addObservation({
+  await obsStore.addObservation({
     name,
     type: 'SIGNAL',
+    support: 'EM_RADIO',
     system: '—',
+    system_id: null,
     distance: s.distanceEst ?? '—',
     coords: '—',
     date: s.receivedAt,
+    durationSec: s.durationSec ?? 72,
   })
   signauxStore.removeSignal(s.id)
   ui.setLabHasNew(true)

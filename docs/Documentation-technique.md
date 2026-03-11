@@ -13,7 +13,8 @@
 | **Routing** | Vue Router 5 |
 | **State** | Pinia |
 | **Backend** | Supabase (PostgreSQL, Auth, Realtime) |
-| **3D / Canvas** | Three.js (prévu) |
+| **3D / Canvas** | Three.js |
+| **Visualisation données** | D3.js, spectrogram-js (rapports Laboratoire) |
 | **Animations** | GSAP, @vueuse/core |
 | **Typographie** | Share Tech Mono, Syne (Google Fonts) |
 
@@ -32,10 +33,9 @@ Lacuna/
 │   │   ├── PageDrake.vue
 │   │   ├── PagePopulation.vue
 │   │   └── ...
-│   ├── lib/
-│   │   └── supabase.js      # Client Supabase
 │   ├── stores/
 │   │   ├── supabase.js      # Store Supabase
+│   │   ├── stellarSystems.js # Systèmes stellaires (ciel Observatoire)
 │   │   └── counter.js       # Store exemple
 │   ├── components/          # Composants Vue
 │   │   ├── AppHeader.vue
@@ -44,7 +44,13 @@ Lacuna/
 │   │   ├── SideLeft.vue, SideRight.vue
 │   │   ├── Reticule.vue, StarTooltip.vue
 │   │   ├── TravelWidget.vue, NotificationToast.vue
+│   │   ├── lab/
+│   │   │   ├── LabReportSpectrogram.vue       # Sortie spectrogramme (analyseur spectral)
+│   │   │   └── LabReportStructureTemporelle.vue  # Forme d'onde + autocorrélation (structure temporelle)
 │   │   └── panels/          # (legacy — contenu migré vers views/)
+│   ├── lib/
+│   │   ├── supabase.js      # Client Supabase
+│   │   └── spectrogramData.js  # Génération données synthétiques pour spectrogramme
 │   ├── router/
 │   │   └── index.js         # Routes Vue Router
 │   └── assets/
@@ -59,7 +65,7 @@ Lacuna/
 │   ├── config.toml          # Config Supabase CLI
 │   ├── migrations/
 │   │   └── 00001_initial_schema.sql
-│   └── seed.sql             # Données initiales (traces immuables)
+│   └── seed.sql             # Données initiales (traces immuables + systèmes prototype)
 ├── docs/
 │   ├── Documentation-technique.md
 │   ├── Documentation-status.md
@@ -79,7 +85,8 @@ Lacuna/
 
 | Table | Description |
 |-------|-------------|
-| `stellar_systems` | Systèmes stellaires (génération procédurale) |
+| `stellar_systems` | Systèmes stellaires. Colonne `coordinates` (JSONB) : `{ra, dec}` en degrés pour projection 2D ciel. Seed prototype : 8 systèmes (Sol, Proxima, Barnard, Ross 128, etc.). |
+| `observations` | File d'observations Laboratoire. `session_id` (localStorage) pour prototype sans auth. Types : SIGNAL, PLANETE, ATMOSPHERE, ETOILE, MINEUR, OBJET. États : PENDING, RUNNING, DONE. |
 | `traces` | Traces collectables (signaux, artefacts, anomalies) |
 | `ships` | Vaisseaux joueurs (1 par user) |
 | `populations` | Population par vaisseau |
@@ -93,6 +100,7 @@ Lacuna/
 
 - **Vaisseaux, population, logbook, carte** : accès restreint au propriétaire (`auth.uid()`)
 - **Traces, systèmes stellaires, Drake** : lecture publique
+- **Observations** : lecture/écriture ouverte (filtrage par `session_id` côté client pour prototype)
 - **Interprétations** : insertion ouverte, lecture publique
 
 ### Variables d'environnement
@@ -113,6 +121,26 @@ Lacuna/
 | `components/*.css` | Styles par composant (widget, panel, header, etc.) |
 
 **Pour ajouter un nouveau fichier CSS :** l'ajouter dans `main.js` après les imports existants.
+
+## Visualisation — Laboratoire
+
+Stack pour les rendus visuels des instruments (spectrogrammes, spectres, courbes, diagrammes) :
+
+| Lib | Usage |
+|-----|-------|
+| **D3.js** | Spectres, courbes de lumière, diagrammes orbitaux, polarisation, heatmaps |
+| **spectrogram-js** | Spectrogrammes (Analyseur spectral) |
+| **Three.js** | Modèles 3D, diagrammes orbitaux, Scanner morphologique |
+
+**Thématisation** — Toutes les visualisations doivent utiliser les tokens LACUNA (`tokens.css`) :
+- Fond : `--color-bg` (#03060d)
+- Données / axes : `--color-cyan`
+- Anomalies / alertes : `--color-amber`
+- Texte : `--color-white`, `--color-muted`
+- Police : `--font-mono` (Share Tech Mono) pour axes et labels
+- Pas de couleurs par défaut des librairies — override systématique
+
+Voir `docs/LACUNA_LABORATOIRE_INSTRUMENTS.md` §5 (formats de sortie) et § Annexe.
 
 **URL importante :** Toujours utiliser `http://localhost:5173/` (racine). La maquette `docs/lacuna_interface.html` est redirigée vers `/` — elle a ses propres styles et ne charge pas l'app Vue.
 

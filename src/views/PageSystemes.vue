@@ -1,22 +1,24 @@
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onBeforeUnmount } from 'vue'
 
-const activeSection = ref('plasma-shield')
-const overlayVisible = ref(true)
+const activeSection = ref(null)
+const overlayVisible = ref(false)
 const blueprintRef = ref(null)
+const blueprintCleanups = []
 
 // Menu = 1 item par groupe SVG + Identité + Historique
+// legendColor = couleur de la légende pour les icônes (green, cyan, amber, signal)
 const MENU_ITEMS = [
   { id: 'identity', label: 'Identité', icon: '◈', groupIds: [] },
-  { id: 'plasma-shield', label: 'Bouclier plasma', icon: '◎', groupIds: ['plasma-shield'] },
-  { id: 'bumper-shield', label: 'Pare-chocs ablatif', icon: '⬡', groupIds: ['bumper-shield'] },
-  { id: 'population-quarters', label: 'Anneaux habitat', icon: '⊕', groupIds: ['population-quarters'] },
-  { id: 'fission-reactors', label: 'Réacteurs & Cargaison', icon: '⌬', groupIds: ['fission-reactors'] },
-  { id: 'thermal-radiators', label: 'Radiateurs thermiques', icon: '☰', groupIds: ['thermal-radiators'] },
-  { id: 'fuel-tanks', label: 'Réservoirs cryogéniques', icon: '◉', groupIds: ['fuel-tanks'] },
-  { id: 'propulsion', label: 'Moteur fusion MTF', icon: '≋', groupIds: ['propulsion'] },
-  { id: 'comms', label: 'Laser comms', icon: '↕', groupIds: ['comms'] },
-  { id: 'navigation', label: 'Navigation pulsar', icon: '✧', groupIds: ['navigation'] },
+  { id: 'plasma-shield', label: 'Bouclier plasma', icon: '◎', groupIds: ['plasma-shield'], legendColor: 'cyan' },
+  { id: 'bumper-shield', label: 'Pare-chocs ablatif', icon: '⬡', groupIds: ['bumper-shield'], legendColor: 'bumper' },
+  { id: 'population-quarters', label: 'Anneaux habitat', icon: '⊕', groupIds: ['population-quarters'], legendColor: 'green' },
+  { id: 'fission-reactors', label: 'Réacteurs & Cargaison', icon: '⌬', groupIds: ['fission-reactors'], legendColor: 'cyan' },
+  { id: 'thermal-radiators', label: 'Radiateurs thermiques', icon: '☰', groupIds: ['thermal-radiators'], legendColor: 'amber' },
+  { id: 'fuel-tanks', label: 'Réservoirs cryogéniques', icon: '◉', groupIds: ['fuel-tanks'], legendColor: 'cyan' },
+  { id: 'propulsion', label: 'Moteur fusion MTF', icon: '≋', groupIds: ['propulsion'], legendColor: 'signal' },
+  { id: 'comms', label: 'Laser comms', icon: '↕', groupIds: ['comms'], legendColor: 'comms' },
+  { id: 'navigation', label: 'Navigation pulsar', icon: '✧', groupIds: ['navigation'], legendColor: 'nav' },
   { id: 'history', label: 'Historique', icon: '≡', groupIds: [] },
 ]
 
@@ -37,9 +39,63 @@ function updateBlueprintHighlight() {
   })
 }
 
+function setupBlueprintInteractivity() {
+  const obj = blueprintRef.value
+  if (!obj?.contentDocument) return
+  const doc = obj.contentDocument
+
+  blueprintCleanups.length = 0
+  ALL_GROUP_IDS.forEach((groupId) => {
+    const el = doc.getElementById(groupId)
+    if (!el) return
+
+    const onGroupClick = () => {
+      activeSection.value = groupId
+      overlayVisible.value = true
+    }
+    const onGroupEnter = () => el.classList.add('sys-hover')
+    const onGroupLeave = () => el.classList.remove('sys-hover')
+
+    el.style.cursor = 'pointer'
+    el.addEventListener('click', onGroupClick)
+    el.addEventListener('mouseenter', onGroupEnter)
+    el.addEventListener('mouseleave', onGroupLeave)
+
+    blueprintCleanups.push(() => {
+      el.style.cursor = ''
+      el.classList.remove('sys-hover')
+      el.removeEventListener('click', onGroupClick)
+      el.removeEventListener('mouseenter', onGroupEnter)
+      el.removeEventListener('mouseleave', onGroupLeave)
+    })
+  })
+
+  // Clic en zone vide → désélection
+  const svgRoot = doc.documentElement
+  const onSvgClick = (e) => {
+    const g = e.target.closest?.('g[id]')
+    if (g && ALL_GROUP_IDS.includes(g.id)) return // clic sur un groupe, ne pas désélectionner
+    activeSection.value = null
+    overlayVisible.value = false
+  }
+  svgRoot.addEventListener('click', onSvgClick)
+  blueprintCleanups.push(() => svgRoot.removeEventListener('click', onSvgClick))
+}
+
+function onPlanContainerClick(e) {
+  if (e.target.closest('.sys-overlay')) return // ne pas désélectionner si clic sur l'overlay
+  activeSection.value = null
+  overlayVisible.value = false
+}
+
 function onBlueprintLoad() {
   updateBlueprintHighlight()
+  setupBlueprintInteractivity()
 }
+
+onBeforeUnmount(() => {
+  blueprintCleanups.forEach((fn) => fn())
+})
 
 watch([activeSection, overlayVisible], () => {
   nextTick(updateBlueprintHighlight)
@@ -48,6 +104,8 @@ watch([activeSection, overlayVisible], () => {
 // Données vaisseau (mock — à connecter Supabase plus tard)
 const ship = ref({
   name: 'ARCA',
+  fullName: 'A R C A — AUTONOMOUS RELATIVISTIC COLONY ARK',
+  planDesc: 'VUE LATÉRALE — ÉCHELLE 1:8000 — LONGUEUR ~20 KM',
   class: 'Vaisseau générationnel de classe I',
   builtYear: 2187,
   ageRelative: 47,
@@ -57,6 +115,26 @@ const ship = ref({
   capacity: 12000,
   population: 10247,
   generation: 1,
+})
+
+// Légende du plan (extrait du SVG)
+const blueprintLegend = ref({
+  items: [
+    { type: 'rect', color: 'green', label: 'HABITATS ROTATIFS' },
+    { type: 'rect', color: 'cyan', label: 'RÉSERVOIRS CRYOGÉNIQUES' },
+    { type: 'rect', color: 'amber', label: 'RADIATEURS THERMIQUES' },
+    { type: 'circle', color: 'cyan', label: 'RÉACTEURS FISSION' },
+    { type: 'rect', color: 'signal', label: 'CHAMBRE FUSION MTF' },
+    { type: 'line', color: 'cyan', label: 'BOUCLIER PLASMA MAGNÉTIQUE' },
+  ],
+  systems: [
+    'Propulsion : fusion D+He³ — Δv ~12%c',
+    'Vitesse croisière : 4.8%c (~14 400 km/s)',
+    'Durée : ~160 ans',
+    'Masse départ : ~4.5 Mt',
+    'Population : 10 000 âmes',
+    'Destination : Proxima Centauri b — 4.24 al',
+  ],
 })
 
 const propulsion = ref({ value: 0.88, desc: 'Moteur MTF — poussée nominale 0,12g', state: 'accélération max 0,106g', consequence: 'vitesse croisière atteinte plus lentement' })
@@ -104,13 +182,21 @@ function formatNum(n) {
           :class="{ selected: overlayVisible && activeSection === item.id }"
           @click="activeSection = item.id; overlayVisible = true"
         >
-          <span class="sys-menu-item__icon">{{ item.icon }}</span>
+          <span
+            class="sys-menu-item__icon"
+            :class="item.legendColor && `sys-menu-item__icon--${item.legendColor}`"
+          >{{ item.icon }}</span>
           {{ item.label }}
         </div>
       </div>
 
       <!-- Colonne droite : plan + overlay -->
-      <div class="sys-ship-col">
+      <div class="sys-ship-col" @click="onPlanContainerClick">
+        <!-- Header du plan (extrait du SVG) -->
+        <header class="sys-blueprint-header">
+          <h2 class="sys-blueprint-header__title">{{ ship.fullName }}</h2>
+          <p class="sys-blueprint-header__desc">{{ ship.planDesc }}</p>
+        </header>
         <!-- Plan SVG — pleine largeur, ratio conservé -->
         <div class="sys-blueprint-wrap">
           <object
@@ -122,6 +208,32 @@ function formatNum(n) {
             @load="onBlueprintLoad"
           />
         </div>
+
+        <!-- Footer du plan — légende (extrait du SVG) -->
+        <footer class="sys-blueprint-footer">
+          <div class="sys-blueprint-legend">
+            <span class="sys-blueprint-legend__label">LÉGENDE :</span>
+            <template v-for="item in blueprintLegend.items" :key="item.label">
+              <span class="sys-blueprint-legend__item">
+                <span
+                  class="sys-blueprint-legend__swatch"
+                  :class="[`sys-blueprint-legend__swatch--${item.type}`, `sys-blueprint-legend__swatch--${item.color}`]"
+                />
+                {{ item.label }}
+              </span>
+            </template>
+          </div>
+          <div class="sys-blueprint-systems">
+            <span class="sys-blueprint-systems__label">SYSTÈMES :</span>
+            <span
+              v-for="(spec, i) in blueprintLegend.systems"
+              :key="i"
+              class="sys-blueprint-systems__spec"
+            >
+              <template v-if="i > 0"> | </template>{{ spec }}
+            </span>
+          </div>
+        </footer>
 
         <!-- Overlay infos de l'onglet sélectionné (fermable, hug content) -->
         <div v-if="overlayVisible" class="sys-overlay">

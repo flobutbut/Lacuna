@@ -21,17 +21,53 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Plan SVG — pleine place, ratio conservé, centré verticalement */
+/* Header du plan — titre et description (extrait du SVG) */
+.sys-blueprint-header {
+  flex-shrink: 0;
+  padding: var(--space-5) var(--space-8);
+  background-color: #04080f;
+  border-bottom: var(--border-width) solid var(--border-default);
+  text-align: center;
+}
+
+.sys-blueprint-header__title {
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-regular);
+  color: var(--color-cyan);
+  letter-spacing: var(--tracking-widest);
+  opacity: 0.9;
+  margin: 0 0 var(--space-2);
+}
+
+.sys-blueprint-header__desc {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  letter-spacing: var(--tracking-wider);
+  margin: 0;
+}
+
+/* Plan SVG — pleine place, ratio conservé, centré (object-fit: contain = pas de stretch/scale) */
+/* Grille en arrière-plan uniquement dans la zone du plan, pas sur header/footer */
 .sys-blueprint-wrap {
-  position: absolute;
-  inset: 0;
+  flex: 1;
+  min-height: 0;
   z-index: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #04080f;
+  background-color: #04080f;
+  background-image:
+    linear-gradient(to right, rgba(21, 42, 80, 0.3) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(21, 42, 80, 0.3) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: -20px -20px;
+  background-repeat: repeat;
 }
 
 .sys-blueprint-wrap img,
@@ -43,6 +79,98 @@
   object-fit: contain;
   object-position: center;
   display: block;
+}
+
+/* Footer du plan — légende (extrait du SVG) */
+.sys-blueprint-footer {
+  flex-shrink: 0;
+  padding: var(--space-5) var(--space-8);
+  background-color: #04080f;
+  border-top: var(--border-width) solid var(--border-default);
+}
+
+.sys-blueprint-legend,
+.sys-blueprint-systems {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-6);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  letter-spacing: var(--tracking-wide);
+}
+
+.sys-blueprint-legend {
+  margin-bottom: var(--space-3);
+}
+
+.sys-blueprint-legend__label,
+.sys-blueprint-systems__label {
+  color: var(--color-muted);
+  margin-right: var(--space-2);
+}
+
+.sys-blueprint-legend {
+  display: none; /* Masqué pour tester le rendu sans la ligne complète */
+}
+
+.sys-blueprint-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-white);
+}
+
+.sys-blueprint-legend__swatch {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--border-radius-sm);
+}
+
+.sys-blueprint-legend__swatch--rect { border-radius: var(--border-radius-sm); }
+.sys-blueprint-legend__swatch--circle {
+  border-radius: var(--border-radius-full);
+  background: transparent;
+}
+.sys-blueprint-legend__swatch--line {
+  width: 20px;
+  height: 2px;
+  border-radius: 0;
+  border: none;
+}
+
+.sys-blueprint-legend__swatch--green {
+  background: var(--color-green);
+  border: var(--border-width) solid color-mix(in srgb, var(--color-green) 80%, black);
+}
+
+.sys-blueprint-legend__swatch--cyan {
+  background: var(--color-cyan);
+  border: var(--border-width) solid var(--color-cyan-dim);
+}
+.sys-blueprint-legend__swatch--circle.sys-blueprint-legend__swatch--cyan {
+  background: transparent;
+  border-width: 1.5px;
+}
+
+.sys-blueprint-legend__swatch--amber {
+  background: var(--color-amber);
+  border: var(--border-width) solid var(--color-amber-dim);
+}
+
+.sys-blueprint-legend__swatch--signal {
+  background: color-mix(in srgb, var(--color-signal) 50%, transparent);
+  border: var(--border-width) solid var(--color-signal);
+}
+
+.sys-blueprint-legend__swatch--line.sys-blueprint-legend__swatch--cyan {
+  background: var(--color-cyan);
+}
+
+.sys-blueprint-systems__spec {
+  color: var(--color-cyan);
 }
 
 /* Overlay infos — fermable, hug content */
@@ -115,6 +243,15 @@
   font-size: var(--text-xl);
   flex-shrink: 0;
 }
+
+/* Couleurs des icônes (reprises du plan SVG) */
+.sys-menu-item__icon--cyan { color: var(--color-cyan); }
+.sys-menu-item__icon--green { color: var(--color-green); }
+.sys-menu-item__icon--amber { color: var(--color-amber); }
+.sys-menu-item__icon--signal { color: var(--color-signal); }
+.sys-menu-item__icon--bumper { color: #7ab0cc; } /* PARE-CHOCS ABLATIF */
+.sys-menu-item__icon--comms { color: #4488aa; } /* LASER COMMS */
+.sys-menu-item__icon--nav { color: #336655; } /* NAV. PULSAR MSP */
 
 
 /* Identity block */

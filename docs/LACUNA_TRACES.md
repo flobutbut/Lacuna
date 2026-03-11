@@ -1,5 +1,5 @@
 # LACUNA — Catalogue des Traces
-*Version 0.7 — Mars 2026*
+*Version 0.8 — Mars 2026*
 
 ---
 
@@ -25,6 +25,7 @@
 | 0.5 | Mars 2026 | Ajout type BIOLOGICAL. Séparation structurelle traces immuables / JOURNAL / TRACE_JOUEUR. |
 | 0.6 | Mars 2026 | Refonte §1 — grammaire reconstruite depuis les instruments. |
 | 0.7 | Mars 2026 | Refonte complète §1 — définition reconstruite depuis l'expérience joueur. Trace = écart entre modèle et données. Deux modes d'accès (signal passif / observation active). Propriétés d'un signal (support, fréquence, contenu, durée de vie). Niveaux d'observation par coût physique. Anomalies comme familles de domaines physiques. Interprétations comme classes séparées des anomalies. Suppression des anciens "types" comme catégories assignées. |
+| 0.8 | Mars 2026 | Distinction capteurs / instruments. Les capteurs (récepteur radio, détecteur énergétique, détecteur gravitationnel) capturent à bord ; les instruments du Laboratoire analysent. Ajout instruments d'analyse pour signaux : analyseur spectral, analyseur structure temporelle, analyseur polarisation, analyseur spectre énergétique, analyseur gravimétrique. Réf. LACUNA_LABORATOIRE_INSTRUMENTS.md. |
 
 ---
 
@@ -45,13 +46,13 @@ Le jeu ne désigne jamais une trace. Il retourne des données. C'est le joueur q
 Le joueur entre en contact avec une anomalie par deux chemins distincts.
 
 **Mode passif — un signal arrive**
-Quelque chose atteint les instruments du vaisseau sans que le joueur l'ait cherché. Une fréquence radio, un sursaut gamma, une variation de luminosité d'une étoile lointaine, une perturbation gravitationnelle. Le joueur reçoit des données sur quelque chose qu'il n'a pas encore observé. Sa première décision : est-ce que ça mérite un changement de cap ?
+Quelque chose atteint les **capteurs** du vaisseau sans que le joueur l'ait cherché. Une fréquence radio, un sursaut gamma, une perturbation gravitationnelle. Les capteurs enregistrent des données brutes. Le joueur les envoie au Laboratoire pour analyse. Sa première décision : est-ce que ça mérite un changement de cap ?
 
 Un signal est caractérisé par quatre propriétés indépendantes :
 
 | Propriété | Ce qu'elle décrit | Ce qu'elle pose comme question |
 |-----------|------------------|-------------------------------|
-| **Support** | La nature physique de l'onde — électromagnétique (radio, X, gamma, visible), gravitationnelle, particulaire (neutrinos, rayons cosmiques) | Quel instrument peut le détecter ? Depuis quelle distance ? |
+| **Support** | La nature physique de l'onde — électromagnétique (radio, X, gamma, visible), gravitationnelle, particulaire (neutrinos, rayons cosmiques) | Quel capteur le capture ? Quels instruments du Laboratoire l'analysent ? |
 | **Fréquence** | La structure du signal dans son support — longueur d'onde, fréquence d'oscillation | Cette fréquence est-elle signature d'un processus naturel connu ? |
 | **Contenu** | Ce qui est encodé dans le signal — émission brute, périodicité, pattern, séquence | Y a-t-il une structure qui résiste à une explication naturelle simple ? |
 | **Durée de vie** | La temporalité du phénomène — ponctuel, périodique, continu, en déclin | Un signal ponctuel irreproduit et une émission stable depuis des millénaires posent des questions radicalement différentes |
@@ -74,21 +75,44 @@ Le niveau contact est le seul où la médiation instrumentale peut disparaître 
 
 ---
 
-### 1.3 Les instruments
+### 1.3 Capteurs et instruments
 
-| Instrument | Niveau requis | Ce qu'il mesure | Données produites |
-|------------|--------------|-----------------|-------------------|
-| Récepteur radio | Passif | Ondes électromagnétiques reçues | Fréquence, durée, polarisation, structure temporelle |
-| Détecteur d'événements énergétiques | Passif | Sursauts gamma, émissions X | Durée, intensité, spectre énergétique |
-| Détecteur gravitationnel | Passif | Variations du champ gravitationnel | Masse déduite, corps non visibles, perturbations |
-| Spectromètre stellaire | Observation lointaine | Lumière de l'étoile | Type spectral, courbe de luminosité, variations, émissions |
-| Analyseur orbital | Observation système | Paramètres orbitaux de tous les corps | Demi-grand axe, excentricité, résonances, anomalies de trajectoire |
-| Spectromètre atmosphérique | Orbite proche | Composition gazeuse d'un corps | Profil moléculaire, déséquilibres chimiques, albédo, température |
-| Analyseur volumétrique | Orbite proche | Distribution spatiale d'un phénomène | Cartes de densité 3D, localisation d'anomalies, gradients, tomographie |
-| Scanner morphologique | Orbite proche → contact | Forme, surface, structure | Modèle de surface, carte thermique, géométrie, symétries |
-| Magnétomètre | Orbite proche | Champ magnétique | Intensité, orientation, anomalies sous-surfaciques |
-| Spectromètre de contact | Contact | Composition de surface | Éléments, ratios isotopiques, minéralogie, âge estimé |
-| Analyseur d'échantillon | Contact | Composition moléculaire fine | Molécules complexes, structures organiques, datation radiométrique |
+> **Distinction fondamentale** : Un **capteur** est à bord et *capte* un signal (enregistrement). Un **instrument** est au Laboratoire et *analyse* les données capturées (rapport structuré). Voir `LACUNA_LABORATOIRE_INSTRUMENTS.md` pour la référence complète.
+
+#### Capteurs (à bord — capture des signaux)
+
+| Capteur | Support | Données capturées |
+|---------|---------|-------------------|
+| Récepteur radio | EM radio, micro-ondes | Fréquence, durée, polarisation brute, forme d'onde |
+| Détecteur d'événements énergétiques | Gamma, X, UV extrême | Durée, intensité, spectre énergétique grossier |
+| Détecteur gravitationnel | Ondes gravitationnelles, perturbations | Perturbations mesurées, direction, amplitude |
+
+Les capteurs produisent les données brutes d'une observation "Signal reçu". Ils ne figurent pas dans la grille du Laboratoire.
+
+#### Instruments du Laboratoire (analyse)
+
+**Pour signaux captés** (travail sur les données des capteurs) :
+
+| Instrument | Type d'observation | Données produites |
+|------------|-------------------|-------------------|
+| Analyseur spectral | Signal EM radio | Spectre détaillé (FFT), raies, bande passante |
+| Analyseur de structure temporelle | Tout signal | Périodicité, patterns, modulation |
+| Analyseur de polarisation | Signal EM | État de polarisation (linéaire, circulaire) |
+| Analyseur de spectre énergétique | Signal gamma/X | Spectre énergétique détaillé, comparaison modèles |
+| Analyseur gravimétrique | Signal gravitationnel, données orbitales | Modélisation sources, masse, corps invisibles |
+
+**Pour observations actives** (système, orbite, contact) :
+
+| Instrument | Niveau requis | Données produites |
+|------------|---------------|-------------------|
+| Spectromètre stellaire | Observation lointaine | Type spectral, courbe de luminosité, variations |
+| Analyseur orbital | Observation système | Demi-grand axe, excentricité, résonances |
+| Spectromètre atmosphérique | Orbite proche | Profil moléculaire, déséquilibres chimiques |
+| Analyseur volumétrique | Orbite proche | Cartes densité 3D, gradients, tomographie |
+| Scanner morphologique | Orbite proche → contact | Modèle de surface, géométrie, symétries |
+| Magnétomètre | Orbite proche | Intensité, orientation du champ magnétique |
+| Spectromètre de contact | Contact | Éléments, ratios isotopiques, minéralogie |
+| Analyseur d'échantillon | Contact | Molécules complexes, structures organiques |
 
 ---
 
@@ -98,13 +122,13 @@ Une anomalie est un écart entre données observées et modèle attendu. Elle es
 
 | Famille | Support typique | Instruments | Nature de l'écart |
 |---------|----------------|-------------|-------------------|
-| **Électromagnétique** | Signal reçu, étoile | Récepteur radio, spectromètre stellaire, détecteur énergétique | Fréquence inattendue, structure non aléatoire, intensité anormale |
+| **Électromagnétique** | Signal reçu, étoile | Analyseur spectral, analyseur polarisation, analyseur spectre énergétique, spectromètre stellaire | Fréquence inattendue, structure non aléatoire, polarisation atypique, intensité anormale |
 | **Orbitale / cinétique** | Corps planétaire, corps mineur, objet en transit | Analyseur orbital | Trajectoire impossible, résonance trop parfaite, accélération sans source |
 | **Chimique** | Atmosphère, surface, corps mineur, échantillon | Spectromètre atmosphérique, spectromètre de contact, analyseur d'échantillon | Molécules impossibles, ratios isotopiques incohérents, abondances anormales |
 | **Morphologique** | Objet en orbite, surface, objet récupéré | Scanner morphologique, analyseur volumétrique | Géométrie non naturelle, symétries régulières, structure en couches délibérée |
 | **Thermique** | Surface, atmosphère, objet | Scanner morphologique, spectromètre atmosphérique | Gradient de température incohérent, source de chaleur non identifiée |
-| **Temporelle** | Tout objet revisité | Tout instrument — comparaison entre deux visites | Changement entre deux observations — activité inférable, jamais observable directement |
-| **Gravitationnelle** | Système, corps | Détecteur gravitationnel, analyseur orbital | Masse incompatible avec le volume, corps non visible mais détectable, perturbation sans source |
+| **Temporelle** | Tout objet revisité | Analyseur structure temporelle, tout instrument — comparaison entre deux visites | Structure temporelle atypique, changement entre deux observations |
+| **Gravitationnelle** | Système, corps | Analyseur gravimétrique, analyseur orbital | Masse incompatible avec le volume, corps non visible mais détectable, perturbation sans source |
 | **Absence** | Système, zone | Analyseur orbital, analyseur volumétrique, spectromètre stellaire | Écart statistique — ce qui manque là où les modèles prédisent une présence |
 
 ---
