@@ -103,14 +103,9 @@ const hasSearch = computed(() => !!searchQuery.value.trim())
 
 <style scoped>
 .spectral-bar {
-  position: absolute;
-  top: var(--sidebar-offset);
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: stretch;
   gap: var(--space-4);
-  z-index: 20;
   pointer-events: auto;
 }
 .spectral-filters {

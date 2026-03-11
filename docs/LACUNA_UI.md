@@ -184,9 +184,13 @@ Un indicateur en **bas au centre** du ciel affiche la direction du centre du FOV
 
 **Origine et référence** — En espace interstellaire, il n'y a pas d'origine physique fixe. L'Observatoire utilise la convention **ICRS** (International Celestial Reference System) : l'ascension droite 0h correspond à la direction du point vernal (équinoxe de mars), définie par l'orbite terrestre et calibrée sur des quasars lointains. Le vaisseau embarque des catalogues stellaires établis avant le départ ; le cadre de référence est conventionnel mais stable — les directions (α, δ) restent cohérentes où que soit le vaisseau.
 
+#### Vue Ciel profond / Système (implémenté)
+
+Onglets **Ciel profond** | **Système** en haut. En mode Ciel profond : filtres spectraux + recherche. En mode Système : vue du système courant (étoile à gauche, planètes à droite — ordre orbital si données, sinon grille 3 colonnes), bande zone habitable (Kopparapu).
+
 #### Filtres spectraux (implémenté)
 
-Boutons flottants **au centre sous le header**, sur le ciel. Quatre modes : **Visuel**, **IR**, **UV**, **R**.
+Boutons flottants **sous les onglets** (mode Ciel profond uniquement). Quatre modes : **Visuel**, **IR**, **UV**, **R**.
 
 | Filtre | Effet visuel | Filtrage astres |
 |--------|--------------|-----------------|

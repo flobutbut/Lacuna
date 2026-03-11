@@ -47,6 +47,9 @@
 - [x] Observatoire : pan (drag souris, flèches clavier), lignes horizontales courbes (effet dôme)
 - [x] Observatoire : FOV 120° — projection stéréographique, filtrage front des systèmes hors champ, pan = direction de vue (ra, dec)
 - [x] Observatoire : indicateur azimut (α, δ) direction de vue, réf. ICRS
+- [x] Observatoire : filtres spectraux (Visuel, IR, UV, R) — filtrage par bande, teinte visuelle
+- [x] Observatoire : recherche étoile (centrage + highlight)
+- [x] Observatoire : vue Ciel profond / Système (onglets) — vue Système : étoile (SVG), planètes (grille 3 col ou ordre orbital), zone habitable (Kopparapu)
 
 ### Fonctionnalités
 - [ ] Onboarding (4 écrans GDD)

@@ -25,6 +25,14 @@ export const useUIStore = defineStore('ui', () => {
   const spectralFilter = ref('visible')
   /** ID de l'étoile recherchée (centrée et highlightée) */
   const searchedStarId = ref(null)
+  /** Vue Observatoire : 'sky' | 'system' */
+  const observatoireViewMode = ref('sky')
+
+  function setObservatoireViewMode(mode) {
+    if (['sky', 'system'].includes(mode)) {
+      observatoireViewMode.value = mode
+    }
+  }
 
   function setSearchedStarId(id) {
     searchedStarId.value = id
@@ -174,5 +182,7 @@ export const useUIStore = defineStore('ui', () => {
     searchedStarId,
     setSearchedStarId,
     clearSearchedStarId,
+    observatoireViewMode,
+    setObservatoireViewMode,
   }
 })
