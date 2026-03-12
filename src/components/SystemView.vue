@@ -4,6 +4,7 @@ import { useShipStore } from '@/stores/ship'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import StarSvgInline from '@/components/StarSvgInline.vue'
+import PlanetSvgInline from '@/components/PlanetSvgInline.vue'
 import {
   toPhysicalUnits,
   toVisualParams,
@@ -210,12 +211,20 @@ const orbitalTrackWidthPx = computed(() =>
   Math.ceil(orbitStartPx.value + ORBITAL_TRACK_WIDTH_PX)
 )
 
-/** Largeur totale du contenu scrollable */
-const scrollContentWidthPx = computed(() =>
+/** Décalage de l'origine vers la gauche — 10 % de la taille de l'étoile */
+const viewOriginOffsetPx = computed(() => Math.round(starSizePx.value * 0.1))
+
+/** Largeur du contenu (sans l'offset) */
+const contentInnerWidthPx = computed(() =>
   starSizePx.value +
   (hasOrbitalData.value && planetsWithDistance.value.length
     ? orbitalTrackWidthPx.value + 80
     : 400)
+)
+
+/** Largeur totale du contenu scrollable (inclut l'offset gauche) */
+const scrollContentWidthPx = computed(() =>
+  viewOriginOffsetPx.value + contentInnerWidthPx.value
 )
 
 /** Centre des orbites (Soleil) en px depuis la gauche du layout-inner */
@@ -282,14 +291,18 @@ onBeforeUnmount(() => {
         <div class="system-view__orbital-scroll">
           <div
             class="system-view__content"
-            :style="{ width: scrollContentWidthPx + 'px', minWidth: '100%' }"
+            :style="{
+              paddingLeft: viewOriginOffsetPx + 'px',
+              width: contentInnerWidthPx + 'px',
+              minWidth: '100%',
+            }"
           >
             <div class="system-view__layout">
               <div
                 class="system-view__layout-inner"
                 :style="{
-                  width: scrollContentWidthPx + 'px',
-                  minWidth: scrollContentWidthPx + 'px',
+                  width: contentInnerWidthPx + 'px',
+                  minWidth: contentInnerWidthPx + 'px',
                   minHeight: hasOrbitalData && planetsWithDistance.length ? orbitalHeightPx + 'px' : undefined,
                 }"
               >
@@ -298,9 +311,9 @@ onBeforeUnmount(() => {
           <svg
             v-if="hasOrbitalData && planetsWithDistance.length"
             class="system-view__orbits-svg"
-            :width="scrollContentWidthPx"
+            :width="contentInnerWidthPx"
             :height="orbitalHeightPx"
-            :viewBox="`0 0 ${scrollContentWidthPx} ${orbitalHeightPx}`"
+            :viewBox="`0 0 ${contentInnerWidthPx} ${orbitalHeightPx}`"
             overflow="visible"
           >
             <g :transform="`translate(${orbitCenterX}, ${orbitCenterY})`">
@@ -367,8 +380,9 @@ onBeforeUnmount(() => {
                   <span
                     class="system-view__planet-dot"
                     :class="{ 'in-hz': p.in_habitable_zone }"
-                    :style="{ width: p.diameterPx + 'px', height: p.diameterPx + 'px' }"
-                  />
+                  >
+                    <PlanetSvgInline :planet="p" :diameter="p.diameterPx" />
+                  </span>
                   <svg
                     v-if="p.ringSize"
                     class="system-view__planet-rings"
@@ -402,8 +416,9 @@ onBeforeUnmount(() => {
               <span
                 class="system-view__planet-slot-dot"
                 :class="{ 'in-hz': p.in_habitable_zone }"
-                :style="{ width: p.diameterPx + 'px', height: p.diameterPx + 'px' }"
-              />
+              >
+                <PlanetSvgInline :planet="p" :diameter="p.diameterPx" />
+              </span>
               <span class="system-view__planet-slot-name">{{ p.designation || p.name }}</span>
             </div>
             </div>
@@ -607,18 +622,10 @@ onBeforeUnmount(() => {
 .system-view__planet-dot {
   position: relative;
   z-index: 1;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  width: 12px;
-  height: 12px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--color-muted);
-  border: 1px solid var(--border-default);
-}
-.system-view__planet-dot.in-hz {
-  background: var(--color-cyan);
-  border-color: var(--color-cyan);
 }
 .system-view__planet-label {
   font-size: var(--text-xs);
@@ -673,15 +680,10 @@ onBeforeUnmount(() => {
   position: relative;
 }
 .system-view__planet-slot-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-muted);
-  border: 1px solid var(--border-default);
-}
-.system-view__planet-slot-dot.in-hz {
-  background: var(--color-cyan);
-  border-color: var(--color-cyan);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 .system-view__planet-slot-name {
   font-size: var(--text-sm);

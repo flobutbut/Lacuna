@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- Gradient sphère : lumière en haut à gauche, bord net (pas de glow) -->
+    <radialGradient id="sphere-terrestrial" cx="35%" cy="35%" r="50%" fx="35%" fy="35%">
+      <stop offset="0%" stop-color="#c4b090"/>
+      <stop offset="60%" stop-color="#9a8560"/>
+      <stop offset="100%" stop-color="#6a5a40"/>
+    </radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="32" fill="url(#sphere-terrestrial)"/>
+</svg>
