@@ -1,14 +1,25 @@
 <script setup>
 import { onMounted, onUnmounted, computed } from 'vue'
 import { useSignauxStore } from '@/stores/signaux'
+import { useObservationsStore } from '@/stores/observations'
 import { useUIStore } from '@/stores/ui'
 import { useShipStore } from '@/stores/ship'
+import SignalTypeIcon from '@/components/SignalTypeIcon.vue'
 import { barClass, valClass, formatRelativeTime } from '@/lib/formatUtils'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const signauxStore = useSignauxStore()
+const obsStore = useObservationsStore()
 const ui = useUIStore()
 const shipStore = useShipStore()
+
+function isSignalInLab(signal) {
+  return !!obsStore.findObservationForSignal(signal)
+}
+
+const signalsToShow = computed(() =>
+  signauxStore.listWithRemaining.filter((s) => !isSignalInLab(s))
+)
 
 const propulsion = computed(() => (shipStore.systems?.propulsion ?? 0.88) * 100)
 const he3 = computed(() => (shipStore.fuel?.he3 ?? 0.742) * 100)
@@ -26,7 +37,7 @@ function onIgnore(e, id) {
 
 let expiryInterval = null
 onMounted(async () => {
-  await ensureStoresLoaded(shipStore)
+  await ensureStoresLoaded(shipStore, signauxStore, obsStore)
   signauxStore.removeExpired()
   expiryInterval = setInterval(() => signauxStore.removeExpired(), 60000)
 })
@@ -69,13 +80,13 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="side-widget side-widget--signaux">
-      <div class="sw-title" :class="{ 'sw-title--no-divider': signauxStore.listWithRemaining.length > 0 }">Signaux captés</div>
-      <div v-if="signauxStore.listWithRemaining.length === 0" class="signal-empty">
+    <div v-if="ui.observatoireViewMode === 'sky'" class="side-widget side-widget--signaux">
+      <div class="sw-title" :class="{ 'sw-title--no-divider': signalsToShow.length > 0 }">Signaux captés</div>
+      <div v-if="signalsToShow.length === 0" class="signal-empty">
         Aucun signal.
       </div>
       <div
-        v-for="s in signauxStore.listWithRemaining"
+        v-for="s in signalsToShow"
         v-else
         :key="s.id"
         class="signal-card"
@@ -83,6 +94,7 @@ onUnmounted(() => {
         @click="onCardClick(s)"
       >
         <button type="button" class="signal-card__dismiss" aria-label="Ignorer" @click="onIgnore($event, s.id)">×</button>
+        <SignalTypeIcon :structure="s.structure" :size="12" class="signal-card__type-icon" />
         <div class="signal-card__main">
           {{ s.frequency }} · azimut {{ s.azimuth }}°
         </div>
@@ -93,7 +105,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="side-widget">
+    <div v-if="ui.observatoireViewMode === 'sky'" class="side-widget">
       <div class="sw-title">Observatoire</div>
       <div class="sw-row">
         <div class="sw-key">Systèmes résolus</div>

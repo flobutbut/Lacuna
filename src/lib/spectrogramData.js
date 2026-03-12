@@ -19,36 +19,107 @@ function seededRandom(seed) {
 }
 
 /**
+ * Détecte le type de structure à partir d'une chaîne brute.
+ * @returns {'sursaut'|'pulse'|'carre'|'continu-decroit'|'non-uniforme'}
+ */
+function parseStructure(s) {
+  const str = (s ?? '').toLowerCase()
+  if (/sursaut|burst/.test(str)) return 'sursaut'
+  if (/carré|carre/.test(str)) return 'carre'
+  if (/continu décroissant|decroissant/.test(str)) return 'continu-decroit'
+  if (/pulsé|périodique|continu/.test(str)) return 'pulse'
+  return 'non-uniforme'
+}
+
+/**
  * Génère des données de signal pour le spectrogramme
  * @param {Object} opts
  * @param {number} opts.durationSec - Durée en secondes (défaut 72)
  * @param {number} opts.freqHz - Fréquence du ton principal (défaut 12, dans la bande 0-25Hz)
  * @param {number} opts.seed - Seed pour reproductibilité (défaut hash de obsId)
  * @param {number} opts.noiseLevel - Niveau de bruit 0-1 (défaut 0.15)
+ * @param {boolean} opts.anomalous - Signal « artificiel » : bande étroite, très stable, pulsé régulier
+ * @param {string} [opts.structure] - Structure du signal : sursaut, pulsé, non uniforme, carré
  * @returns {Array<[number, number]>} [[timestamp_ms, amplitude], ...]
  */
 export function generateSpectrogramData(opts = {}) {
   const durationSec = opts.durationSec ?? DEFAULT_DURATION_SEC
-  const freqHz = opts.freqHz ?? 12
   const seed = opts.seed ?? 42
-  const noiseLevel = opts.noiseLevel ?? 0.15
+  const anomalous = opts.anomalous ?? false
+  const structure = parseStructure(opts.structure)
 
   const samplesPerSec = SAMPLE_RATE
   const totalSamples = Math.floor(durationSec * samplesPerSec)
-  const dt = 1000 / samplesPerSec // ms entre échantillons
+  const dt = 1000 / samplesPerSec
   const rng = seededRandom(seed)
 
   const data = []
-  const amplitude = 60000 // amplitude du ton (les exemples README avaient ~30k-80k)
+  const amplitude = 60000
   const twoPi = 2 * Math.PI
 
-  for (let i = 0; i < totalSamples; i++) {
-    const tSec = i / samplesPerSec
-    const tMs = i * dt
-    const tone = amplitude * Math.sin(twoPi * freqHz * tSec)
-    const noise = (rng() - 0.5) * 2 * amplitude * noiseLevel
-    const value = Math.round(tone + noise)
-    data.push([tMs, value])
+  if (anomalous) {
+    const freqHz = 14
+    const noiseLevel = 0.02
+    const pulsePeriod = 1.337
+    const pulseWidth = 0.15
+    for (let i = 0; i < totalSamples; i++) {
+      const tSec = i / samplesPerSec
+      const tMs = i * dt
+      const phase = (tSec % pulsePeriod) / pulsePeriod
+      const inPulse = phase < pulseWidth
+      const envelope = inPulse ? 1 : 0.05
+      const tone = amplitude * Math.sin(twoPi * freqHz * tSec) * envelope
+      const noise = (rng() - 0.5) * 2 * amplitude * noiseLevel
+      data.push([tMs, Math.round(tone + noise)])
+    }
+  } else if (structure === 'sursaut') {
+    const noiseLevel = opts.noiseLevel ?? 0.12
+    const burstCenter = durationSec * (0.2 + (seed % 60) / 100)
+    const burstWidth = durationSec * (0.08 + (seed % 20) / 500)
+    const freqHz = opts.freqHz ?? 8 + (seed % 10)
+    for (let i = 0; i < totalSamples; i++) {
+      const tSec = i / samplesPerSec
+      const tMs = i * dt
+      const dist = Math.abs(tSec - burstCenter) / burstWidth
+      const envelope = Math.exp(-dist * dist * 2)
+      const tone = amplitude * Math.sin(twoPi * freqHz * tSec) * envelope
+      const noise = (rng() - 0.5) * 2 * amplitude * noiseLevel
+      data.push([tMs, Math.round(tone + noise)])
+    }
+  } else if (structure === 'carre') {
+    const freqHz = opts.freqHz ?? 10 + (seed % 8)
+    const noiseLevel = opts.noiseLevel ?? 0.15
+    for (let i = 0; i < totalSamples; i++) {
+      const tSec = i / samplesPerSec
+      const tMs = i * dt
+      const phase = (tSec * freqHz) % 1
+      const square = phase < 0.5 ? 1 : -1
+      const tone = amplitude * 0.8 * square
+      const noise = (rng() - 0.5) * 2 * amplitude * noiseLevel
+      data.push([tMs, Math.round(tone + noise)])
+    }
+  } else if (structure === 'continu-decroit') {
+    const freqHz = opts.freqHz ?? 8 + (seed % 10)
+    const noiseLevel = opts.noiseLevel ?? 0.12
+    const tauSec = durationSec * (0.3 + (seed % 30) / 100)
+    for (let i = 0; i < totalSamples; i++) {
+      const tSec = i / samplesPerSec
+      const tMs = i * dt
+      const envelope = Math.exp(-tSec / tauSec)
+      const tone = amplitude * Math.sin(twoPi * freqHz * tSec) * envelope
+      const noise = (rng() - 0.5) * 2 * amplitude * noiseLevel
+      data.push([tMs, Math.round(tone + noise)])
+    }
+  } else {
+    const freqHz = opts.freqHz ?? 10 + (seed % 8)
+    const noiseLevel = opts.noiseLevel ?? 0.15
+    for (let i = 0; i < totalSamples; i++) {
+      const tSec = i / samplesPerSec
+      const tMs = i * dt
+      const tone = amplitude * Math.sin(twoPi * freqHz * tSec)
+      const noise = (rng() - 0.5) * 2 * amplitude * noiseLevel
+      data.push([tMs, Math.round(tone + noise)])
+    }
   }
 
   return data
@@ -69,17 +140,21 @@ export function seedFromObsId(obsId) {
 
 /**
  * Génère des données pour l'analyseur de structure temporelle.
- * Optionnellement ajoute une modulation pulsée (type pulsar) pour varier les signaux.
- * @param {Object} opts - Mêmes options que generateSpectrogramData + pulsePeriodSec
- * @param {number} [opts.pulsePeriodSec] - Si défini, applique une modulation pulsée (bursts)
+ * La structure (sursaut, pulsé, etc.) est gérée par generateSpectrogramData.
+ * @param {Object} opts - Mêmes options que generateSpectrogramData
+ * @param {number} [opts.pulsePeriodSec] - Si défini (et non anomalous, non sursaut), modulation pulsée type pulsar
+ * @param {boolean} [opts.anomalous] - Signal artificiel : déjà pulsé régulier
+ * @param {string} [opts.structure] - Structure du signal : sursaut → une bosse, pulsé → train de pulses
  * @returns {Array<[number, number]>} [[timestamp_ms, amplitude], ...]
  */
 export function generateStructureTemporelleData(opts = {}) {
-  const { pulsePeriodSec, ...rest } = opts
-  const data = generateSpectrogramData(rest)
-  if (!pulsePeriodSec || pulsePeriodSec <= 0) return data
+  const { pulsePeriodSec, anomalous, structure, ...rest } = opts
+  const struct = parseStructure(structure)
+  const data = generateSpectrogramData({ ...rest, anomalous, structure: opts.structure })
 
-  const burstWidth = pulsePeriodSec * 0.3 // 30 % du cycle en burst
+  if (anomalous || struct === 'sursaut' || !pulsePeriodSec || pulsePeriodSec <= 0) return data
+
+  const burstWidth = pulsePeriodSec * 0.3
   const samplesPerSec = SAMPLE_RATE
 
   return data.map(([tMs, val], i) => {
@@ -120,4 +195,83 @@ export function computeAutocorrelation(values, maxLag = 2000, downsample = 10) {
     out.push([k * dtMs, ck / c0])
   }
   return out
+}
+
+/**
+ * Calcule la matrice spectrogramme (temps × fréquence) pour rendu D3 heatmap.
+ * Résolution élevée : pas de limite pixel, adapté au zoom.
+ * @param {Array<[number, number]>} data - [[timestamp_ms, amplitude], ...]
+ * @param {number} sampleRate
+ * @param {number} durationSec
+ * @param {Object} opts
+ * @param {boolean} opts.anomalous - Fenêtre FFT courte (64) pour résoudre la pulsation
+ * @param {number} opts.timeSteps - Colonnes temporelles (défaut 450)
+ * @param {number} opts.freqBins - Lignes fréquentielles (défaut 96)
+ * @returns {{ cells: Array<{t: number, f: number, value: number}>, tDomain: [number,number], fDomain: [number,number], maxVal: number, dt: number, df: number }}
+ */
+export function computeSpectrogramMatrix(data, sampleRate, durationSec, opts = {}) {
+  if (!data || data.length < 256) return null
+  const values = data.map((d) => d[1])
+
+  const anomalous = opts.anomalous ?? false
+  const windowSize = anomalous ? 64 : 256
+  const timeSteps = opts.timeSteps ?? 450
+  const freqBins = opts.freqBins ?? 96
+  const twoPi = 2 * Math.PI
+
+  function dftMagnitude(samples, k) {
+    let re = 0
+    let im = 0
+    const N = samples.length
+    for (let n = 0; n < N; n++) {
+      const angle = (-twoPi * k * n) / N
+      re += samples[n] * Math.cos(angle)
+      im += samples[n] * Math.sin(angle)
+    }
+    return Math.sqrt(re * re + im * im) / N
+  }
+
+  const step = Math.max(1, Math.floor((values.length - windowSize) / timeSteps))
+  const spectrogram = []
+  let maxVal = 1e-6
+
+  for (let ti = 0; ti < timeSteps; ti++) {
+    const t = Math.min(ti * step, values.length - windowSize)
+    if (t < 0) break
+    const window = values.slice(t, t + windowSize)
+    const mean = window.reduce((a, x) => a + x, 0) / window.length
+    const centered = window.map((x) => x - mean)
+    const row = []
+    for (let k = 0; k < freqBins; k++) {
+      const m = dftMagnitude(centered, k)
+      row.push(m)
+      if (m > maxVal) maxVal = m
+    }
+    spectrogram.push(row)
+  }
+
+  const nyquist = sampleRate / 2
+  const dt = durationSec / Math.max(1, spectrogram.length)
+  const df = nyquist / freqBins
+
+  const cells = []
+  for (let col = 0; col < spectrogram.length; col++) {
+    const tCenter = col * dt + dt / 2
+    for (let row = 0; row < freqBins; row++) {
+      const fCenter = (freqBins - 1 - row) * df + df / 2
+      const val = Math.min(1, Math.max(0, spectrogram[col][row] / maxVal))
+      cells.push({ t: tCenter, f: fCenter, value: val })
+    }
+  }
+
+  return {
+    cells,
+    tDomain: [0, durationSec],
+    fDomain: [0, nyquist],
+    maxVal,
+    dt,
+    df,
+    timeSteps: spectrogram.length,
+    freqBins,
+  }
 }

@@ -186,7 +186,46 @@ Un indicateur en **bas au centre** du ciel affiche la direction du centre du FOV
 
 #### Vue Ciel profond / Système (implémenté)
 
-Onglets **Ciel profond** | **Système** en haut. En mode Ciel profond : filtres spectraux + recherche. En mode Système : vue du système courant (étoile à gauche, planètes à droite — ordre orbital si données, sinon grille 3 colonnes), bande zone habitable (Kopparapu).
+Onglets **Ciel profond** | **Système** en haut. En mode Ciel profond : filtres spectraux + recherche. En mode Système : vue détaillée du système stellaire courant (voir ci-dessous).
+
+---
+
+#### Vue Système — détail (implémenté)
+
+Vue du système où stationne le vaisseau (`ships.current_system_id`). Affiche l'étoile et les planètes avec leurs distances et tailles à l'échelle.
+
+##### Structure visuelle
+
+| Élément | Contenu |
+|---------|---------|
+| **Étoile (Soleil)** | À gauche. SVG selon type spectral (O, B, A, F, G, K, M, L, T, Y, D, Pulsar). Taille à l'échelle réelle (R⊕ → px, même échelle que les planètes). Disque plein (viewBox 64×64, cercles r=32). |
+| **Orbites + zone habitable** | Calque SVG en arrière-plan. Cercles orbitaux centrés sur l'étoile. Bande zone habitable (Kopparapu) en bleu translucide entre inner et outer. |
+| **Planètes** | Positionnées sur orbites (échelle logarithmique) ou en grille 3 colonnes si pas de données orbitales. Point coloré (cyan si dans zone habitable). Label (désignation ou nom). Anneaux si `has_rings`. Tooltip : nom, distance UA, rayon R⊕, anneaux. |
+| **Échelle des distances** | En bas (bottom: 128px), position absolute. Alignée sur la tangente droite du Soleil (0 UA = surface). Graduations : 0, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100 UA. Suit le scroll horizontal. |
+
+##### Données et calculs
+
+| Donnée | Source |
+|--------|--------|
+| Objets du système | `system_objects` (STAR, PLANET, MOON, MINOR_BODY) |
+| Distances orbitales | `orbital_semi_major_axis_au` ou calcul depuis `orbital_period_days` (Kepler) |
+| Tailles (R⊕) | `radius_earth` ou inférence depuis `mass_earth` |
+| Zone habitable | Kopparapu 2013 depuis luminosité stellaire (spectral_type, mass_stellar) |
+| In zone habitable | `in_habitable_zone` par planète |
+
+##### Comportement
+
+| Aspect | Détail |
+|--------|--------|
+| **Scroll** | Horizontal uniquement. Pas de scroll vertical. Contenu aligné à gauche (Soleil accessible à scrollLeft=0). |
+| **Représentation** | Si données orbitales : vue orbitale (échelle log). Sinon : grille 3 colonnes (fallback). |
+| **Message vide** | "Aucune donnée pour ce système" si pas d'étoile. "Aucune planète connue dans ce système" si étoile sans planètes. |
+
+##### Référence technique
+
+- Composant : `src/components/SystemView.vue`
+- Convertisseurs : `src/lib/systemObjectConverters.js` (toPhysicalUnits, toVisualParams, toLuminosityAndHz)
+- SVG étoiles : `src/assets/stars/star-*.svg`
 
 #### Filtres spectraux (implémenté)
 

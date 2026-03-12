@@ -13,3 +13,11 @@ export const OBJECT_TYPE_LABELS = {
   ATMOSPHERE: 'Atmosphère',
   ETOILE: 'Étoile',
 }
+
+/** Libellés composition (planètes, lunes) — composition_type en base */
+export const COMPOSITION_LABELS = {
+  TERESTRIAL: 'Rocheuse',
+  GAS_GIANT: 'Gazeuse',
+  ICE_GIANT: 'Géante de glace',
+  ICY: 'Glacé',
+}

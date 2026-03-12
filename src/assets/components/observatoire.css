@@ -155,6 +155,19 @@
 }
 
 /* ── Modale signal (clic card ou marqueur ciel) ── */
+.signal-modal__footer {
+  display: flex;
+  gap: var(--space-3);
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
+  margin-top: var(--space-4);
+  border-top: none;
+}
+.signal-modal__footer .btn {
+  flex: 1;
+}
+
 .signal-modal .observatoire-panel__body {
   display: flex;
   flex-direction: column;
@@ -207,4 +220,10 @@
 
 .signal-modal__row .signal-modal__val {
   font-size: var(--text-base);
+}
+
+.signal-modal__val--structure {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }

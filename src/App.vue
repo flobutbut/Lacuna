@@ -21,21 +21,24 @@ import NotificationToast from '@/components/NotificationToast.vue'
 
 <style scoped>
 .lacuna-app {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: var(--header-height) 1fr var(--instruments-height);
   width: 100vw;
   height: 100vh;
   overflow: hidden;
 }
 
 .lacuna-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   min-height: 0;
+  overflow: auto;
   position: relative;
-  overflow: hidden;
   background: var(--color-bg);
+}
+
+/* Le contenu routé occupe strictement l'espace entre header et footer */
+.lacuna-main > * {
+  position: absolute;
+  inset: 0;
 }
 
 .fade-enter-active,

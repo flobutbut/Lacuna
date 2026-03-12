@@ -1,14 +1,15 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useObservationsStore } from '@/stores/observations'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
 
+const router = useRouter()
 const ui = useUIStore()
 const obsStore = useObservationsStore()
 const systemObjectsStore = useSystemObjectsStore()
-const addedBodyIds = ref(new Set())
 
 function getFallbackBodies(star) {
   if (!star) return []
@@ -41,9 +42,9 @@ watch(
   { immediate: true }
 )
 
-function addObservation(body) {
+function addObservationPayload(body) {
   const name = `${body.name} · ${OBJECT_TYPE_LABELS[body.type]}`
-  return obsStore.addObservation({
+  return {
     name,
     type: body.type,
     system: ui.selectedStar?.name ?? '—',
@@ -51,32 +52,44 @@ function addObservation(body) {
     distance: ui.selectedStar?.dist ?? '—',
     coords: '—',
     niveau: obsStore.NIVEAUX.SYSTEME,
-  })
+  }
 }
 
-function analyser(body) {
-  addObservation(body)
+function addObservation(body) {
+  return obsStore.addObservation(addObservationPayload(body))
+}
+
+async function analyser(body) {
+  const star = ui.selectedStar
+  const existing = star ? obsStore.findObservationForBody(body, star, OBJECT_TYPE_LABELS[body.type]) : null
+  if (existing) {
+    ui.closeObservatoire()
+    router.push({ path: '/laboratoire', query: { select: existing.id } })
+    return
+  }
+  const obsId = await obsStore.addObservation(addObservationPayload(body))
   ui.setLabHasNew(true)
   ui.closeObservatoire()
+  router.push({ path: '/laboratoire', query: { select: obsId } })
 }
 
 const animatingKey = ref(null)
 
 function addOnly(body) {
-  const key = `${ui.selectedStar?.name}-${body.id}`
-  if (addedBodyIds.value.has(key)) return
+  const star = ui.selectedStar
+  if (!star || obsStore.findObservationForBody(body, star, OBJECT_TYPE_LABELS[body.type])) return
+  const key = `${star.name}-${body.id}`
   animatingKey.value = key
   setTimeout(() => {
     addObservation(body)
-    addedBodyIds.value = new Set([...addedBodyIds.value, key])
     ui.setLabHasNew(true)
     animatingKey.value = null
   }, 350)
 }
 
 function isAdded(body) {
-  const key = `${ui.selectedStar?.name}-${body.id}`
-  return addedBodyIds.value.has(key)
+  const star = ui.selectedStar
+  return star ? !!obsStore.findObservationForBody(body, star, OBJECT_TYPE_LABELS[body.type]) : false
 }
 
 function isAnimating(body) {

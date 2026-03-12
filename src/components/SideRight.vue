@@ -1,3 +1,9 @@
+<script setup>
+import { useUIStore } from '@/stores/ui'
+
+const ui = useUIStore()
+</script>
+
 <template>
   <div class="side-right">
     <div class="side-widget">
@@ -23,7 +29,7 @@
       </div>
     </div>
 
-    <div class="side-widget">
+    <div v-if="ui.observatoireViewMode === 'sky'" class="side-widget">
       <div class="sw-title">Dernière trace</div>
       <div class="sw-row">
         <div class="sw-key">Désignation</div>

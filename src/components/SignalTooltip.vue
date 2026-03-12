@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useUIStore } from '@/stores/ui'
+import SignalTypeIcon from '@/components/SignalTypeIcon.vue'
 
 const ui = useUIStore()
 
@@ -41,6 +42,13 @@ const tooltipStyle = computed(() => {
       <div class="st-row">
         <span class="st-key">Reçu le</span>
         <span class="st-val">{{ sig.receivedAt }}</span>
+      </div>
+      <div class="st-row st-row--type">
+        <span class="st-key">Type</span>
+        <span class="st-val st-val--with-icon">
+          <SignalTypeIcon :structure="sig.structure" :size="12" />
+          {{ sig.structure ?? 'non uniforme' }}
+        </span>
       </div>
       <div class="st-action">[ CLIC POUR DÉTAIL ]</div>
     </div>

@@ -58,6 +58,29 @@ export function formatRelativeTime(ts, options = {}) {
   return `${prefix}il y a ${j}j`
 }
 
+/** Fréquence Hz → chaîne affichable (ex: "1420 MHz", "50 keV", "1.33 Hz") */
+export function formatFrequency(hz) {
+  const n = Number(hz)
+  if (Number.isNaN(n) || n <= 0) return '—'
+  if (n >= 1e12) return `${(n / 1e12).toFixed(1)} THz`
+  if (n >= 1e9) return `${(n / 1e9).toFixed(2)} GHz`
+  if (n >= 1e6) return `${(n / 1e6).toFixed(0)} MHz`
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)} kHz`
+  return `${n} Hz`
+}
+
+/** Chaîne "1420 MHz" ou "408 MHz" → Hz */
+export function parseFrequency(str) {
+  if (!str || typeof str !== 'string') return 1420e6
+  const m = str.match(/^([\d.]+)\s*(MHz|kHz|Hz)?$/i)
+  if (!m) return 1420e6
+  const v = parseFloat(m[1])
+  const unit = (m[2] || 'Hz').toUpperCase()
+  if (unit === 'MHZ') return v * 1e6
+  if (unit === 'KHZ') return v * 1e3
+  return v
+}
+
 /** Coordonnées équatoriales (ra, dec en degrés) → chaîne α h m s  δ ° ′ */
 export function formatRaDec(ra, dec) {
   const raH = (ra ?? 0) / 15

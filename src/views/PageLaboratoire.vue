@@ -3,15 +3,22 @@ import { ref, computed, onUnmounted, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useObservationsStore } from '@/stores/observations'
+import { useLabReportsStore } from '@/stores/labReports'
 import { useTracesStore } from '@/stores/traces'
 import { useUIStore } from '@/stores/ui'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import LabReportSpectrogram from '@/components/lab/LabReportSpectrogram.vue'
 import LabReportStructureTemporelle from '@/components/lab/LabReportStructureTemporelle.vue'
+import LabReportPolarisation from '@/components/lab/LabReportPolarisation.vue'
+import LabReportSpectreEnergetique from '@/components/lab/LabReportSpectreEnergetique.vue'
+import LabInstrumentIcon from '@/components/lab/LabInstrumentIcon.vue'
+import SignalTypeIcon from '@/components/SignalTypeIcon.vue'
+import ObservationTypeIcon from '@/components/ObservationTypeIcon.vue'
 
 const route = useRoute()
 const obsStore = useObservationsStore()
+const labReportsStore = useLabReportsStore()
 const tracesStore = useTracesStore()
 const { list: obsList } = storeToRefs(obsStore)
 const ui = useUIStore()
@@ -53,16 +60,47 @@ function getInstrumentsForObservation(obs) {
   return INSTRUMENTS.filter(i => i.objectTypes?.includes(obs.type))
 }
 
-function getRawDataExample(type) {
-  const map = {
-    SIGNAL: 'Fréquence, durée, polarisation, forme d\'onde brute',
-    PLANETE: 'Masse estimée, demi-grand axe, type orbital, albédo',
-    ATMOSPHERE: 'Pression estimée, température, spectre de réflexion grossier',
-    MINEUR: 'Trajectoire, vitesse, dimensions estimées',
-    OBJET: 'Dimensions, masse, température de surface',
-    ETOILE: 'Type spectral, luminosité, variations de courbe',
+const GRAPH_NAMES = {
+  'analyseur-spectral': 'spectrogramme',
+  'analyseur-structure-temporelle': '',
+  'analyseur-polarisation': 'ellipse de polarisation',
+  'analyseur-spectre-energetique': 'spectre énergétique',
+}
+
+function getGraphName(instrumentId) {
+  return GRAPH_NAMES[instrumentId] ?? 'données'
+}
+
+function hasRunningForObs(obs) {
+  if (!obs) return false
+  return Object.keys(running.value).some((k) => k.startsWith(obs.id + '-'))
+}
+
+const MIN_REPORTS_FOR_CONCLUSION = 2
+
+function getAnalysisConclusion(obs, reportCount) {
+  if (!obs || reportCount < MIN_REPORTS_FOR_CONCLUSION) return null
+  if (obs.type !== 'SIGNAL') return null
+  const struct = (obs.structure ?? '').toLowerCase()
+  const support = obs.support ?? ''
+  if (/sursaut|burst/.test(struct)) {
+    if (support === 'GAMMA_X') return 'Probablement un sursaut gamma'
+    if (support === 'EM_RADIO') return 'Probablement un sursaut radio (FRB)'
+    if (support === 'GRAVITATIONNEL') return 'Probablement une onde gravitationnelle'
   }
-  return map[type] ?? 'Données brutes'
+  if (/pulsé régulier|pulse regulier/.test(struct) && support === 'EM_RADIO') {
+    return 'Probablement un pulsar'
+  }
+  if (/continu décroissant|decroissant/.test(struct) && support === 'EM_RADIO') {
+    return 'Probablement une émission post-supernova'
+  }
+  if (/^continu$/.test(struct) && support === 'EM_RADIO') {
+    return 'Probablement une émission synchrotron'
+  }
+  if (/non uniforme/.test(struct) && support === 'EM_RADIO') {
+    return 'Signal ponctuel — origine non identifiée'
+  }
+  return null
 }
 
 const observations = computed(() =>
@@ -82,13 +120,16 @@ function selectObservation(obs) {
 
 function removeObservation(obs) {
   obsStore.removeObservation(obs.id)
+  labReportsStore.clearForObs(obs.id)
   if (selectedObs.value?.id === obs.id) selectedObs.value = null
-  delete reports.value[obs.id]
-  const next = { ...running.value }
-  Object.keys(next).forEach((k) => {
-    if (k.startsWith(obs.id + '-')) delete next[k]
+  const next = { ...reports.value }
+  delete next[obs.id]
+  reports.value = next
+  const runNext = { ...running.value }
+  Object.keys(runNext).forEach((k) => {
+    if (k.startsWith(obs.id + '-')) delete runNext[k]
   })
-  running.value = next
+  running.value = runNext
 }
 
 function getObsNiveauKey(obs) {
@@ -144,27 +185,33 @@ function startSimulation() {
     let hasActive = false
     Object.keys(running.value).forEach(key => {
       const r = running.value[key]
-      const step = r.instr.delay === 'Court' ? 0.08 : r.instr.delay === 'Moyen' ? 0.04 : r.instr.delay === 'Très long' ? 0.015 : 0.025
+      const step = 0.85 /* ~2s pour prototype — rétablir durées par delay plus tard */
       r.progress = Math.min(100, r.progress + step)
       if (r.progress >= 100) {
         const fiability = 50 + Math.floor(Math.random() * 45)
         const newReports = reports.value[r.obs.id] || []
         const durationSec = r.obs.type === 'SIGNAL' ? (r.obs.durationSec ?? 72) : 72
-        newReports.push({
+        const anomalous = r.obs.type === 'SIGNAL' ? (r.obs.anomalous ?? false) : false
+        const reportPayload = {
           instrumentId: r.instr.id,
           instrument: r.instr.name,
           fiability,
           date: new Date().toISOString().slice(0, 10),
           duration: '2h',
           durationSec,
+          anomalous,
           results:
             r.instr.id === 'analyseur-spectral'
               ? `Spectrogramme — fréquence × temps. Bande passante, raies, stabilité. Fiabilité ${fiability}%.`
               : r.instr.id === 'analyseur-structure-temporelle'
                 ? `Forme d'onde + autocorrélation. Périodicité, modulation, structure vs bruit. Fiabilité ${fiability}%.`
-                : `${r.instr.name} — Données produites. Fiabilité ${fiability}%.`,
-        })
+                : r.instr.id === 'analyseur-polarisation'
+                  ? `Ellipse de polarisation + Stokes (I/Q/U/V). Linéaire, circulaire, elliptique. Fiabilité ${fiability}%.`
+                  : `${r.instr.name} — Données produites. Fiabilité ${fiability}%.`,
+        }
+        newReports.push(reportPayload)
         reports.value = { ...reports.value, [r.obs.id]: newReports }
+        labReportsStore.addReport(r.obs.id, reportPayload)
         const next = { ...running.value }
         delete next[key]
         running.value = next
@@ -226,6 +273,9 @@ const runningForSelected = computed(() => {
 
 onMounted(async () => {
   await ensureStoresLoaded(obsStore)
+  const obsIds = observations.value.map((o) => o.id)
+  await labReportsStore.fetchForObservations(obsIds)
+  reports.value = { ...labReportsStore.cache }
   ui.clearLabHasNew()
   const selectId = route.query.select
   if (selectId && typeof selectId === 'string') {
@@ -258,14 +308,19 @@ onUnmounted(() => {
           @click="selectObservation(obs)"
         >
           <button type="button" class="lab-observation-item__dismiss" aria-label="Supprimer" @click.prevent.stop="removeObservation(obs)">×</button>
+          <SignalTypeIcon v-if="obs.type === 'SIGNAL'" :structure="obs.structure" :size="12" class="lab-observation-item__type-icon" />
+          <ObservationTypeIcon v-else :type="obs.type" :size="12" class="lab-observation-item__type-icon" />
           <div class="lab-observation-item__name">{{ obs.name }}</div>
           <div class="lab-observation-item__meta">{{ OBJECT_TYPE_LABELS[obs.type] }}{{ obs.type === 'SIGNAL' && obs.support ? ` (${SIGNAL_SUPPORTS[obs.support] ?? obs.support})` : '' }} · {{ obs.system }}</div>
           <div class="lab-observation-item__meta">{{ obs.date }}</div>
           <div
             class="lab-observation-item__state"
-            :class="{ analysed: obs.state === OBS_STATES.DONE }"
+            :class="{
+              'lab-observation-item__state--has-reports': (reports[obs.id]?.length ?? 0) > 0 && !hasRunningForObs(obs),
+              'lab-observation-item__state--running': hasRunningForObs(obs),
+            }"
           >
-            {{ obs.state }}
+            {{ hasRunningForObs(obs) ? 'Analyse en cours…' : (reports[obs.id] || []).length > 0 ? `${(reports[obs.id] || []).length} analyse${(reports[obs.id] || []).length > 1 ? 's' : ''} réalisée${(reports[obs.id] || []).length > 1 ? 's' : ''}` : 'En attente' }}
           </div>
         </div>
       </div>
@@ -282,7 +337,16 @@ onUnmounted(() => {
               <div class="lab-selected__meta">Système : {{ selectedObs.system }} — {{ selectedObs.distance }}</div>
               <div class="lab-selected__meta">Coordonnées : {{ selectedObs.coords }}</div>
               <div class="lab-selected__meta">Date de détection : {{ selectedObs.date }}</div>
-              <div v-if="selectedObs.type === 'SIGNAL'" class="lab-selected__meta">Support : {{ SIGNAL_SUPPORTS[selectedObs.support] ?? selectedObs.support ?? 'EM radio' }}</div>
+              <template v-if="selectedObs.type === 'SIGNAL'">
+                <div class="lab-selected__meta">Support : {{ SIGNAL_SUPPORTS[selectedObs.support] ?? selectedObs.support ?? 'EM radio' }}</div>
+                <div class="lab-selected__meta lab-selected__meta--type">
+                  <span class="lab-selected__meta-label">Type :</span>
+                  <span class="lab-selected__meta-val">
+                    <SignalTypeIcon :structure="selectedObs.structure" :size="12" />
+                    {{ selectedObs.structure ?? 'non uniforme' }}
+                  </span>
+                </div>
+              </template>
               <div v-else class="lab-selected__meta">Niveau d'observation : {{ selectedObs.niveau }}</div>
             </div>
             <div class="lab-selected__header-action">
@@ -298,23 +362,31 @@ onUnmounted(() => {
           </div>
 
           <div class="lab-selected__section">
-            <div class="lab-selected__section-title">Données brutes</div>
-            <div class="lab-raw-data">{{ getRawDataExample(selectedObs.type) }}</div>
-          </div>
-
-          <div class="lab-selected__section">
-            <div class="lab-selected__section-title">Rapports d'analyse</div>
+            <div class="lab-selected__section-title">
+              Rapports d'analyse
+              <span v-if="getAnalysisConclusion(selectedObs, selectedReports.length)" class="lab-selected__conclusion">
+                — {{ getAnalysisConclusion(selectedObs, selectedReports.length) }}
+              </span>
+            </div>
             <div v-for="r in selectedReports" :key="r.instrumentId + r.date" class="lab-report">
               <div class="lab-report__header">
-                <span class="lab-report__instrument">{{ r.instrument }}</span>
-                <span class="lab-report__fiability">Fiab. {{ r.fiability }}%</span>
+                <div class="lab-report__header-left">
+                  <div class="lab-report__instrument">{{ r.instrument }}</div>
+                  <div class="lab-report__meta">{{ r.date }} · {{ r.duration }}</div>
+                </div>
+                <div class="lab-report__header-right">
+                  <span v-if="r.anomalous" class="lab-report__badge">Signal atypique</span>
+                  <span class="lab-report__fiability">Fiab. {{ r.fiability }}%</span>
+                </div>
               </div>
-              <div class="lab-report__meta">{{ r.date }} · {{ r.duration }}</div>
+              <div v-if="getGraphName(r.instrumentId)" class="lab-report__graph-label">{{ getGraphName(r.instrumentId) }}</div>
               <LabReportSpectrogram
                 v-if="r.instrumentId === 'analyseur-spectral'"
                 :obs-id="selectedObs?.id ?? ''"
                 :fiability="r.fiability"
                 :duration-sec="r.durationSec ?? 72"
+                :anomalous="r.anomalous ?? false"
+                :structure="selectedObs?.type === 'SIGNAL' ? (selectedObs?.structure ?? 'non uniforme') : 'non uniforme'"
                 class="lab-report__output"
               />
               <LabReportStructureTemporelle
@@ -322,9 +394,26 @@ onUnmounted(() => {
                 :obs-id="selectedObs?.id ?? ''"
                 :fiability="r.fiability"
                 :duration-sec="r.durationSec ?? 72"
+                :anomalous="r.anomalous ?? false"
+                :structure="selectedObs?.type === 'SIGNAL' ? (selectedObs?.structure ?? 'non uniforme') : 'non uniforme'"
                 class="lab-report__output"
               />
-              <div class="lab-report__results">{{ r.results }}</div>
+              <LabReportPolarisation
+                v-else-if="r.instrumentId === 'analyseur-polarisation'"
+                :obs-id="selectedObs?.id ?? ''"
+                :fiability="r.fiability"
+                :anomalous="r.anomalous ?? false"
+                class="lab-report__output"
+              />
+              <LabReportSpectreEnergetique
+                v-else-if="r.instrumentId === 'analyseur-spectre-energetique'"
+                :obs-id="selectedObs?.id ?? ''"
+                :fiability="r.fiability"
+                :duration-sec="r.durationSec ?? 72"
+                :anomalous="r.anomalous ?? false"
+                :structure="selectedObs?.type === 'SIGNAL' ? (selectedObs?.structure ?? 'non uniforme') : 'non uniforme'"
+                class="lab-report__output"
+              />
             </div>
             <div v-if="selectedReports.length === 0 && !Object.keys(runningForSelected).length" class="lab-report" style="opacity: 0.7">
               Lancez un instrument depuis la colonne droite.
@@ -343,29 +432,38 @@ onUnmounted(() => {
           <div
             v-for="instr in getInstrumentsForObservation(selectedObs)"
             :key="instr.id"
-            class="lab-instrument"
+            class="artifact-slot lab-instrument"
             :class="{
               'lab-instrument--disabled': instrumentState(instr, selectedObs) === 'disabled',
               'lab-instrument--running': instrumentState(instr, selectedObs) === 'running',
               'lab-instrument--done': instrumentState(instr, selectedObs) === 'done',
             }"
-            @click="launchInstrument(instr, selectedObs)"
+            role="button"
+            tabindex="0"
+            @click="instrumentState(instr, selectedObs) !== 'disabled' && launchInstrument(instr, selectedObs)"
+            @keydown.enter.space.prevent="instrumentState(instr, selectedObs) !== 'disabled' && launchInstrument(instr, selectedObs)"
           >
-            <div class="lab-instrument__row">
-              <span class="lab-instrument__name">{{ instr.name }}</span>
-              <span v-if="instrumentState(instr, selectedObs) === 'done'" class="lab-instrument__status">✓</span>
-            </div>
             <div
               v-if="instrumentState(instr, selectedObs) === 'running' && runningForSelected[instr.id]"
-              class="bar-wrap"
+              class="lab-instrument__progress-bg"
             >
               <div
-                class="bar-fill bar-fill--cyan"
+                class="lab-instrument__progress-fill"
                 :style="{ width: `${runningForSelected[instr.id].progress}%` }"
               />
             </div>
-            <div v-else-if="instrumentState(instr, selectedObs) === 'disabled'" class="lab-instrument__status">
-              {{ getDisabledReason(instr, selectedObs) }}
+            <div class="lab-instrument__content">
+              <div class="lab-instrument__icon-wrap art-icon">
+                <LabInstrumentIcon :instrument-id="instr.id" :size="36" />
+                <span v-if="instrumentState(instr, selectedObs) === 'done'" class="lab-instrument__check">✓</span>
+              </div>
+              <div class="lab-instrument__name art-name">{{ instr.name }}</div>
+              <span
+                v-if="instrumentState(instr, selectedObs) === 'disabled'"
+                class="lab-instrument__reason"
+              >
+                {{ getDisabledReason(instr, selectedObs) }}
+              </span>
             </div>
           </div>
         </div>

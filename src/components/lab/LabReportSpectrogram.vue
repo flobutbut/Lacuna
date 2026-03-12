@@ -1,68 +1,123 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { Spectrogram } from 'spectrogram-js'
-import { generateSpectrogramData, seedFromObsId, SAMPLE_RATE } from '@/lib/spectrogramData'
+import * as d3 from 'd3'
+import {
+  generateSpectrogramData,
+  computeSpectrogramMatrix,
+  seedFromObsId,
+  SAMPLE_RATE,
+} from '@/lib/spectrogramData'
 
 const props = defineProps({
   obsId: { type: String, default: '' },
   fiability: { type: Number, default: 80 },
   durationSec: { type: Number, default: 72 },
+  anomalous: { type: Boolean, default: false },
+  structure: { type: String, default: 'non uniforme' },
 })
 
-const canvasRef = ref(null)
 const containerRef = ref(null)
-let spectrogram = null
+const svgRef = ref(null)
+const errorMsg = ref('')
 let resizeObserver = null
 
-async function doRender() {
-  if (!canvasRef.value || !containerRef.value) return
-  const width = containerRef.value.clientWidth
-  if (width < 50) return
+const margin = { left: 42, right: 8, top: 8, bottom: 24 }
+const chartHeight = 200
 
-  if (spectrogram) {
-    spectrogram.destroy()
-    spectrogram = null
+function render() {
+  if (!containerRef.value || !svgRef.value) return
+  errorMsg.value = ''
+
+  const width = Math.max(280, containerRef.value.clientWidth || 400)
+  if (width < 80) {
+    errorMsg.value = 'Espace insuffisant.'
+    return
   }
 
-  const height = 200
-  const windowSize = 512
-  const overlap = Math.floor(windowSize * 0.75)
-
-  spectrogram = new Spectrogram({
-    sampleRate: SAMPLE_RATE,
-    windowSize,
-    overlap,
-    windowType: 'hann',
-    minDb: -60,
-    maxDb: 0,
-  })
+  const innerWidth = width - margin.left - margin.right
+  const innerHeight = chartHeight - margin.top - margin.bottom
 
   const seed = seedFromObsId(props.obsId)
   const noiseLevel = Math.max(0.05, 0.35 - (props.fiability / 100) * 0.3)
-  const data = generateSpectrogramData({
+  const rawData = generateSpectrogramData({
     durationSec: props.durationSec,
     freqHz: 10 + (seed % 8),
     seed,
     noiseLevel,
+    anomalous: props.anomalous,
+    structure: props.structure,
   })
 
-  spectrogram.setData(data)
-  spectrogram.setColormap('viridis')
-  await spectrogram.init()
+  if (rawData.length < 256) {
+    errorMsg.value = 'Données insuffisantes.'
+    return
+  }
 
-  spectrogram.render({
-    canvas: canvasRef.value,
-    width,
-    height,
-    timeRange: [0, props.durationSec],
-    freqRange: [0, SAMPLE_RATE / 2],
+  const spec = computeSpectrogramMatrix(rawData, SAMPLE_RATE, props.durationSec, {
+    anomalous: props.anomalous,
+    timeSteps: 480,
+    freqBins: 96,
   })
+
+  if (!spec || spec.cells.length === 0) {
+    errorMsg.value = 'Erreur de calcul du spectrogramme.'
+    return
+  }
+
+  const { cells, tDomain, fDomain, dt, df } = spec
+
+  const xScale = d3.scaleLinear().domain(tDomain).range([0, innerWidth])
+  const yScale = d3.scaleLinear().domain(fDomain).range([innerHeight, 0])
+  const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 1])
+
+  const svg = d3.select(svgRef.value)
+  svg.selectAll('*').remove()
+
+  svg.attr('width', width).attr('height', chartHeight)
+
+  const axisBottom = svg
+    .append('g')
+    .attr('class', 'lab-spectrogram__axis lab-spectrogram__axis--x')
+    .attr('transform', `translate(${margin.left},${chartHeight - margin.bottom})`)
+    .call(d3.axisBottom(xScale).ticks(6).tickSize(4))
+
+  const axisLeft = svg
+    .append('g')
+    .attr('class', 'lab-spectrogram__axis lab-spectrogram__axis--y')
+    .attr('transform', `translate(${margin.left},${margin.top})`)
+    .call(d3.axisLeft(yScale).ticks(5).tickSize(4))
+
+  svg
+    .selectAll('.lab-spectrogram__axis')
+    .attr('font-size', '9px')
+    .attr('font-family', 'var(--font-mono)')
+    .attr('color', 'var(--color-muted)')
+
+  const heatmapWrap = svg
+    .append('g')
+    .attr('class', 'lab-spectrogram__heatmap-wrap')
+    .attr('transform', `translate(${margin.left},${margin.top})`)
+
+  const cellWidth = Math.max(0.5, xScale(dt) - xScale(0))
+  const cellHeight = Math.max(0.5, yScale(0) - yScale(df))
+
+  heatmapWrap
+    .selectAll('rect')
+    .data(cells)
+    .join('rect')
+    .attr('x', (d) => Math.max(0, xScale(d.t - dt / 2)))
+    .attr('y', (d) => yScale(d.f + df / 2))
+    .attr('width', cellWidth)
+    .attr('height', cellHeight)
+    .attr('fill', (d) => colorScale(d.value))
+    .attr('class', 'lab-spectrogram__cell')
 }
 
 onMounted(async () => {
   await nextTick()
-  await doRender()
-  resizeObserver = new ResizeObserver(() => doRender())
+  await new Promise((r) => setTimeout(r, 50))
+  render()
+  resizeObserver = new ResizeObserver(() => render())
   if (containerRef.value) resizeObserver.observe(containerRef.value)
 })
 
@@ -70,28 +125,24 @@ onUnmounted(() => {
   if (resizeObserver && containerRef.value) {
     resizeObserver.unobserve(containerRef.value)
   }
-  if (spectrogram) {
-    spectrogram.destroy()
-    spectrogram = null
-  }
 })
 
 watch(
-  () => [props.obsId, props.fiability, props.durationSec],
-  () => doRender(),
+  () => [props.obsId, props.fiability, props.durationSec, props.anomalous, props.structure],
+  () => render(),
   { deep: true }
 )
 </script>
 
 <template>
   <div ref="containerRef" class="lab-spectrogram">
-    <canvas
-      ref="canvasRef"
-      class="lab-spectrogram__canvas"
-      width="400"
-      height="200"
+    <svg
+      v-show="!errorMsg"
+      ref="svgRef"
+      class="lab-spectrogram__svg"
       role="img"
-      :aria-label="`Spectrogramme — ${durationSec}s, fiabilité ${fiability}%`"
+      :aria-label="`Spectrogramme — ${props.durationSec}s, fiabilité ${props.fiability}%`"
     />
+    <div v-if="errorMsg" class="lab-spectrogram__error">{{ errorMsg }}</div>
   </div>
 </template>

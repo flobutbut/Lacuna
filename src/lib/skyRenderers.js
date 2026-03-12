@@ -3,7 +3,7 @@
  * Milky Way, grille dôme, nébuleuses IR, étoiles, signaux, bordure spectrale
  */
 
-import { projectStarInFov, projectNebulaShape, signalPosition } from './stellarProjection'
+import { projectStarInFov, projectNebulaShape } from './stellarProjection'
 
 /** Voie lactée — gradient elliptique flou */
 export function drawMilkyWay(ctx, w, h) {
@@ -159,13 +159,16 @@ export function drawStars(ctx, starList, raView, decView, w, h, selectedStar, se
   })
 }
 
-/** Signaux radio sur le bord */
-export function drawSignals(ctx, activeSignals, w, h) {
+/** Signaux radio — ancrés aux coordonnées célestes (ra, dec), se déplacent avec le ciel */
+export function drawSignals(ctx, activeSignals, raView, decView, w, h) {
   const t = Date.now() * (Math.PI * 2 / 6000)
   activeSignals.forEach((sig) => {
+    const ra = sig.ra ?? sig.azimuth ?? 0
+    const dec = sig.dec ?? sig.elevation ?? 0
+    const pos = projectStarInFov(ra, dec, raView, decView, w, h)
+    if (!pos) return
     const phase = (sig.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 100) / 100 * Math.PI * 2
     const signalPulse = 0.5 + 0.5 * Math.sin(t + phase)
-    const pos = signalPosition(sig.azimuth, w, h)
     const r = 14 + signalPulse * 6
     const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, r)
     grad.addColorStop(0, `rgba(168, 85, 247, ${0.35 + signalPulse * 0.25})`)
@@ -208,4 +211,3 @@ export function drawSpectralBorder(ctx, band, w, h) {
   ctx.restore()
 }
 
-export { signalPosition }

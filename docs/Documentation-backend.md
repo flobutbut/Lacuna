@@ -38,12 +38,23 @@ Le backend LACUNA centralise les données de jeu dans Supabase : systèmes stell
 supabase/
 ├── config.toml          # Config Supabase CLI
 ├── migrations/
-│   ├── 00001_initial_schema.sql    # Schéma initial (ships, traces, map, drake...)
+│   ├── 00001_initial_schema.sql
 │   ├── 00002_interpretations_delete_policy.sql
 │   ├── 00003_observations_table.sql
 │   ├── 00004_system_objects.sql
-│   ├── ... (00005–00008)
-│   └── 00009_visible_systems_rpc.sql  # RPC filtre systèmes visibles
+│   ├── 00005_signal_sources_option_a.sql
+│   ├── 00006_ship_current_system_and_systems.sql
+│   ├── 00007_ship_systems_table.sql
+│   ├── 00008_ships_classe_built_year.sql
+│   ├── 00009_visible_systems_rpc.sql
+│   ├── 00010_brown_dwarfs_and_nebulas.sql
+│   ├── 00011_observations_anomalous.sql
+│   ├── 00012_observations_structure.sql
+│   ├── 00012_sol_system_objects_enrich.sql
+│   ├── 00013_composition_rings_satellites.sql
+│   ├── 00013_lab_reports.sql
+│   ├── 00014_sol_composition_rings_data.sql
+│   └── ...
 └── seed.sql             # Données initiales (systèmes, traces, objets, system_objects)
 ```
 
@@ -71,6 +82,9 @@ ships
 traces
     ├── ship_traces
     └── interpretations
+
+observations
+    └── lab_reports (rapports d'analyse persistés)
 
 signal_events (événements transients)
     └── signals (source_event_id)
@@ -113,15 +127,22 @@ Objets composant un système (étoiles, planètes, disques).
 | orbital_period_days | DECIMAL | | |
 | orbital_eccentricity | DECIMAL | | |
 | orbital_inclination_deg | DECIMAL | | |
+| orbital_semi_major_axis_km | DECIMAL | MOON | Demi-grand axe en km (distance au corps parent) |
 | mass_earth | DECIMAL | PLANET, MOON | |
 | mass_stellar | DECIMAL | STAR | Masse solaire |
 | radius_earth | DECIMAL | | |
+| composition | composition_type | PLANET, MOON | TERESTRIAL, GAS_GIANT, ICE_GIANT, ICY |
+| has_rings | BOOLEAN | PLANET | Anneaux planétaires |
+| rings_inner_radius_km | DECIMAL | | Rayon interne anneaux (km) |
+| rings_outer_radius_km | DECIMAL | | Rayon externe anneaux (km) |
+| rings_notes | TEXT | | Notes sur les anneaux |
 | spectral_type | TEXT | STAR | |
 | stellar_activity | TEXT | STAR | ACTIVE, CALM |
 | in_habitable_zone | BOOLEAN | PLANET, MOON | |
 | habitable_zone_type | TEXT | | INTERNAL, EXTERNAL, TEMPERATE |
 | has_atmosphere | BOOLEAN | PLANET, MOON | |
 | atmosphere_detected | BOOLEAN | | |
+| atmosphere_pressure_bar | DECIMAL | | Pression atmosphérique (bar) |
 | atmosphere_notes | TEXT | | |
 | disk_inner_radius_au | DECIMAL | DEBRIS_DISK | |
 | disk_outer_radius_au | DECIMAL | | |
@@ -185,6 +206,8 @@ File d'observations Laboratoire.
 | duration_sec | INT | Pour signaux |
 | system_display | TEXT | Nom affiché du système |
 | coords, distance, date | TEXT | Métadonnées |
+| anomalous | BOOLEAN | | Signal atypique (ex. WOW, pulsation inhabituelle) |
+| structure | TEXT | | Structure signal : non uniforme, pulsé, pulsé régulier |
 
 #### `signal_events`
 Événements transients (supernova, fusion, GRB). Pas utilisé pour émetteurs permanents.
@@ -216,6 +239,21 @@ Signaux captés par les capteurs du vaisseau. Pointe vers la source (objet ou é
 | attributes | JSONB | Forme d'onde, spectre... |
 
 *Flux de détection* : objet émetteur (PULSAR, etc.) → joueur en portée → capteurs actifs → création d'une entrée `signals` avec `source_object_id`. Événement transient → création d'une entrée avec `source_event_id`.
+
+#### `lab_reports`
+Rapports d'analyse persistés (instruments Laboratoire).
+
+| Colonne | Type | Description |
+|---------|------|--------------|
+| id | UUID PK | |
+| observation_id | UUID FK | → observations (ON DELETE CASCADE) |
+| instrument_id | TEXT | Identifiant de l'instrument |
+| instrument | TEXT | Nom affiché |
+| fiability | INT | Fiabilité du rapport |
+| date, duration, duration_sec | | Métadonnées temporelles |
+| anomalous | BOOLEAN | Signal atypique |
+| results | TEXT | Résultats bruts ou JSON |
+| created_at | TIMESTAMPTZ | |
 
 #### `ships`
 Vaisseaux joueurs (1 par user). Nom personnalisable par l'utilisateur.
@@ -315,6 +353,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | signal_support | EM_RADIO, GAMMA_X, GRAVITATIONNEL |
 | system_object_type | STAR, PLANET, MOON, MINOR_BODY, DEBRIS_DISK, PULSAR, NEUTRON_STAR, MAGNETAR |
 | confirmation_status | CONFIRMED, DEBATED, UNCONFIRMED |
+| composition_type | TERESTRIAL, GAS_GIANT, ICE_GIANT, ICY |
 
 ---
 
@@ -332,6 +371,12 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00008 | ships : classe, built_year (trigger = année(created_at) + 212) |
 | 00009 | RPC get_visible_systems : filtre magnitude apparente depuis un système (spectral_type→M_abs, radec→xyz) |
 | 00010 | Naines brunes L/T/Y (spectral_type_to_absolute_magnitude), table nebulas (formes ELLIPSE/POLYGON), seed nébuleuses |
+| 00011 | observations : colonne `anomalous` (signaux atypiques) |
+| 00012_observations_structure | observations : colonne `structure` (non uniforme, pulsé, pulsé régulier) |
+| 00012_sol_system_objects_enrich | Seed SOL : orbital_* (UA, jours, excentricité, inclinaison), radius_earth, atmosphères (pressure_bar, notes) — données NASA/IAU |
+| 00013_composition_rings_satellites | system_objects : type `composition_type`, colonnes `composition`, `has_rings`, `rings_inner/outer_radius_km`, `rings_notes`, `orbital_semi_major_axis_km` |
+| 00013_lab_reports | Table `lab_reports` (rapports d'analyse persistés, FK observation_id) |
+| 00014 | Seed SOL : composition (TERESTRIAL, GAS_GIANT, ICE_GIANT), anneaux (Jupiter, Saturne, Uranus, Neptune) — données NASA |
 
 **Application** : `supabase db reset` (local) ou `apply_migration` (MCP).
 
@@ -371,6 +416,7 @@ RETURNS TABLE(id, name, spectral_type, distance, age, planets, habitable_zone, a
 | signals | Allow all for prototype | Tout ouvert (filtrage session_id côté client) |
 | interpretations | Users can insert / Anyone can read / Allow delete | INSERT ouvert, SELECT ouvert, DELETE ouvert |
 | observations | Allow all for prototype | Tout ouvert (filtrage session_id côté client) |
+| lab_reports | Allow all for prototype | Tout ouvert |
 | drake_equation / drake_history | Lecture publique | SELECT pour tous |
 | nebulas | Lecture publique | SELECT pour tous |
 

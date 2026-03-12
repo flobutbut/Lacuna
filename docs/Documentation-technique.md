@@ -49,7 +49,8 @@ Lacuna/
 │   │   ├── TravelWidget.vue, NotificationToast.vue
 │   │   ├── lab/
 │   │   │   ├── LabReportSpectrogram.vue       # Sortie spectrogramme (analyseur spectral)
-│   │   │   └── LabReportStructureTemporelle.vue  # Forme d'onde + autocorrélation (structure temporelle)
+│   │   │   ├── LabReportStructureTemporelle.vue  # Forme d'onde + autocorrélation (structure temporelle)
+│   │   │   └── LabReportPolarisation.vue      # Ellipse de polarisation + Stokes (polarisation)
 │   │   └── panels/          # (legacy — contenu migré vers views/)
 │   ├── composables/         # Logique réutilisable (Vue)
 │   │   ├── useSkyStars.js   # Construction liste étoiles (DB / fallback) — Observatoire
@@ -59,9 +60,16 @@ Lacuna/
 │   ├── lib/
 │   │   ├── supabase.js      # Client Supabase
 │   │   ├── formatUtils.js   # Formatage (barWidth, formatDate, formatRelativeTime, barClass, valClass, formatRaDec)
+│   │   ├── astroConstants.js   # Constantes astronomiques (R⊕, M⊕, UA, R☉/R⊕, etc.)
+│   │   ├── systemObjectConverters.js  # Conversion DB → physiques (km, kg) / visuels (px) — couche unique sortie base
+│   │   ├── bodyRadius.js    # Rayon en R⊕ (depuis mass_earth / mass_stellar)
+│   │   ├── orbitalUtils.js  # Kepler 3 : période (jours) → UA
+│   │   ├── ringUtils.js     # Anneaux planétaires (km → px)
+│   │   ├── habitableZone.js # Zone habitable (Kopparapu)
 │   │   ├── stellarProjection.js  # Projection stéréographique FOV 120° (ra/dec ↔ écran)
 │   │   ├── skyRenderers.js  # Rendu canvas ciel (Milky Way, grille, nébuleuses, étoiles, signaux)
-│   │   └── spectrogramData.js  # Génération données synthétiques pour spectrogramme
+│   │   ├── spectrogramData.js  # Génération données spectrogramme / structure temporelle
+│   │   └── polarisationData.js # Paramètres polarisation (Stokes, ellipse)
 │   ├── router/
 │   │   └── index.js         # Routes Vue Router
 │   └── assets/

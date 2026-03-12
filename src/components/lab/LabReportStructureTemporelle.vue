@@ -12,6 +12,8 @@ const props = defineProps({
   obsId: { type: String, default: '' },
   fiability: { type: Number, default: 80 },
   durationSec: { type: Number, default: 72 },
+  anomalous: { type: Boolean, default: false },
+  structure: { type: String, default: 'non uniforme' },
 })
 
 const containerRef = ref(null)
@@ -38,29 +40,39 @@ function render() {
   if (width < 100) return
 
   const seed = seedFromObsId(props.obsId)
-  const hasPulse = seed % 5 === 2
-  const pulsePeriodSec = hasPulse ? 0.4 + (seed % 3) * 0.2 : undefined
+  const struct = (props.structure ?? '').toLowerCase()
+  const isSursaut = /sursaut|burst/.test(struct)
+  const isContinuDecroit = /continu décroissant|decroissant/.test(struct)
+  const isPulse = !isSursaut && !isContinuDecroit && /pulsé|périodique|continu/.test(struct)
+  const pulsePeriodSec =
+    !props.anomalous && !isSursaut && !isContinuDecroit && (isPulse || seed % 5 === 2)
+      ? 0.4 + (seed % 3) * 0.2
+      : undefined
   const noiseLevel = Math.max(0.05, 0.4 - (props.fiability / 100) * 0.35)
 
+  const durationSec = Math.min(props.durationSec ?? 72, 120)
+
   const rawData = generateStructureTemporelleData({
-    durationSec: props.durationSec,
+    durationSec,
     freqHz: 8 + (seed % 10),
     seed,
     noiseLevel,
     pulsePeriodSec,
+    anomalous: props.anomalous,
+    structure: props.structure,
   })
 
   const values = rawData.map(([, v]) => v)
   const waveformData = downsample(rawData, WAVEFORM_MAX_POINTS)
   const autocorrData = computeAutocorrelation(values, 3000, 15)
 
-  const chartHeight = 90
-  const margin = { top: 4, right: 4, bottom: 20, left: 36 }
+  const chartHeight = 150
+  const margin = { top: 6, right: 6, bottom: 24, left: 42 }
 
   d3.select(waveformRef.value).selectAll('*').remove()
   d3.select(autocorrRef.value).selectAll('*').remove()
 
-  const xWave = d3.scaleLinear().domain([0, props.durationSec]).range([margin.left, width - margin.right])
+  const xWave = d3.scaleLinear().domain([0, durationSec]).range([margin.left, width - margin.right])
   const yMin = Math.min(...values)
   const yMax = Math.max(...values)
   const yPad = (yMax - yMin) * 0.1 || 1
@@ -96,16 +108,24 @@ function render() {
     .attr('font-size', 'var(--text-xs)')
     .attr('color', 'var(--color-muted)')
 
-  svgWave
+  const gYWave = svgWave
     .append('g')
     .attr('transform', `translate(${margin.left},0)`)
-    .call(d3.axisLeft(yWave).ticks(4).tickSize(-width))
-    .attr('font-size', 'var(--text-xs)')
-    .attr('color', 'var(--color-muted)')
+  gYWave.call(
+    d3.axisLeft(yWave).ticks(4).tickSize(-width).tickSizeOuter(0)
+  )
+  gYWave.attr('font-size', 'var(--text-xs)').attr('color', 'var(--color-muted)')
+  gYWave.selectAll('.tick').filter((_, i, n) => i === n.length - 1).select('line').attr('stroke', 'none')
 
   const maxLagMs = Math.max(...autocorrData.map((d) => d[0]), 1)
   const xAutocorr = d3.scaleLinear().domain([0, maxLagMs / 1000]).range([margin.left, width - margin.right])
-  const yAutocorr = d3.scaleLinear().domain([-0.2, 1]).range([chartHeight - margin.bottom, margin.top])
+  const corrValues = autocorrData.map((d) => d[1])
+  const yMinCorr = Math.min(0, ...corrValues) - 0.05
+  const yMaxCorr = Math.max(1, ...corrValues) + 0.05
+  const yAutocorr = d3
+    .scaleLinear()
+    .domain([yMinCorr, yMaxCorr])
+    .range([chartHeight - margin.bottom, margin.top])
 
   const svgAutocorr = d3
     .select(autocorrRef.value)
@@ -144,12 +164,14 @@ function render() {
     .attr('font-size', 'var(--text-xs)')
     .attr('color', 'var(--color-muted)')
 
-  svgAutocorr
+  const gYAutocorr = svgAutocorr
     .append('g')
     .attr('transform', `translate(${margin.left},0)`)
-    .call(d3.axisLeft(yAutocorr).ticks(4).tickSize(-width))
-    .attr('font-size', 'var(--text-xs)')
-    .attr('color', 'var(--color-muted)')
+  gYAutocorr.call(
+    d3.axisLeft(yAutocorr).ticks(4).tickSize(-width).tickSizeOuter(0)
+  )
+  gYAutocorr.attr('font-size', 'var(--text-xs)').attr('color', 'var(--color-muted)')
+  gYAutocorr.selectAll('.tick').filter((_, i, n) => i === n.length - 1).select('line').attr('stroke', 'none')
 }
 
 onMounted(async () => {
@@ -166,7 +188,7 @@ onUnmounted(() => {
 })
 
 watch(
-  () => [props.obsId, props.fiability, props.durationSec],
+  () => [props.obsId, props.fiability, props.durationSec, props.anomalous, props.structure],
   () => render(),
   { deep: true }
 )
@@ -175,11 +197,11 @@ watch(
 <template>
   <div ref="containerRef" class="lab-structure-temporelle">
     <div class="lab-structure-temporelle__chart">
-      <span class="lab-structure-temporelle__label">Forme d'onde</span>
+      <span class="lab-structure-temporelle__label">forme d'onde</span>
       <svg ref="waveformRef" class="lab-structure-temporelle__svg" />
     </div>
     <div class="lab-structure-temporelle__chart">
-      <span class="lab-structure-temporelle__label">Autocorrélation</span>
+      <span class="lab-structure-temporelle__label">autocorrélation</span>
       <svg ref="autocorrRef" class="lab-structure-temporelle__svg" />
     </div>
   </div>

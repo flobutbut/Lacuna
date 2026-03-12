@@ -6,7 +6,7 @@ import { useSignauxStore } from '@/stores/signaux'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useShipStore } from '@/stores/ship'
 import { useNebulasStore } from '@/stores/nebulas'
-import { projectStarInFov, signalPosition } from '@/lib/stellarProjection'
+import { projectStarInFov } from '@/lib/stellarProjection'
 import { drawMilkyWay, drawCurvedGrid, drawNebulas, drawStars, drawSignals, drawSpectralBorder } from '@/lib/skyRenderers'
 import { useSkyStars } from '@/composables/useSkyStars'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
@@ -70,7 +70,7 @@ function draw(canvas, starsRef) {
   const activeSignals = signauxStore.list.filter((s) => now - s.createdAt < s.lifetimeMs)
 
   drawStars(ctx, starList, vd.ra, vd.dec, w, h, selected, searchedStarId.value)
-  drawSignals(ctx, activeSignals, w, h)
+  drawSignals(ctx, activeSignals, vd.ra, vd.dec, w, h)
   drawSpectralBorder(ctx, band, w, h)
 
   animId = requestAnimationFrame(() => draw(canvas, starsRef))
@@ -133,7 +133,10 @@ function handleMouseMove(e, starList, canvas) {
   let closestSignal = null
   let minSignalDist = 16
   activeSignals.forEach((sig) => {
-    const pos = signalPosition(sig.azimuth, w, h)
+    const ra = sig.ra ?? sig.azimuth ?? 0
+    const dec = sig.dec ?? sig.elevation ?? 0
+    const pos = projectStarInFov(ra, dec, vd.ra, vd.dec, w, h)
+    if (!pos) return
     const d = Math.hypot(pos.x - mx, pos.y - my)
     if (d < minSignalDist) {
       minSignalDist = d

@@ -6,19 +6,10 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
+import { getOrCreateSessionId } from '@/lib/session'
 
 const OBS_STATES = { PENDING: 'En attente', RUNNING: 'Analyse en cours', DONE: 'Analysé' }
 const NIVEAUX = { PASSIF: 'Passif', SYSTEME: 'Système', ORBITE: 'Orbite proche', CONTACT: 'Contact' }
-const SESSION_KEY = 'lacuna_session_id'
-
-function getOrCreateSessionId() {
-  let id = localStorage.getItem(SESSION_KEY)
-  if (!id) {
-    id = `sess-${crypto.randomUUID()}`
-    localStorage.setItem(SESSION_KEY, id)
-  }
-  return id
-}
 
 function dbToObs(row) {
   return {
@@ -33,7 +24,9 @@ function dbToObs(row) {
     coords: row.coords ?? '—',
     distance: row.distance ?? '—',
     support: row.support,
+    structure: row.structure ?? null,
     durationSec: row.duration_sec,
+    anomalous: row.anomalous ?? false,
   }
 }
 
@@ -50,15 +43,19 @@ function obsToDb(obs, sessionId) {
     coords: obs.coords ?? null,
     distance: obs.distance ?? null,
     support: obs.type === 'SIGNAL' ? (obs.support ?? 'EM_RADIO') : null,
+    structure: obs.type === 'SIGNAL' ? (obs.structure ?? null) : null,
     duration_sec: obs.type === 'SIGNAL' ? (obs.durationSec ?? 72) : null,
     date: obs.date ?? null,
+    anomalous: obs.type === 'SIGNAL' ? (obs.anomalous ?? false) : null,
   }
 }
 
 const FALLBACK_LIST = [
   { id: '1', name: 'HD44594-b · Atmosphère', type: 'ATMOSPHERE', system: 'HD 44594', system_id: 'HD44594', date: '2341-05-22', state: OBS_STATES.RUNNING, niveau: NIVEAUX.ORBITE, coords: '12.4, -3.1, 0.2', distance: '11,4 al' },
-  { id: '2', name: 'Ross128 · Signal', type: 'SIGNAL', support: 'EM_RADIO', system: 'Ross 128', system_id: 'ROSS128', date: '2341-03-15', state: OBS_STATES.DONE, niveau: NIVEAUX.PASSIF, coords: '11.0, 2.1, 0.5', distance: '10,9 al', durationSec: 72 },
+  { id: '2', name: 'Ross128 · Signal', type: 'SIGNAL', support: 'EM_RADIO', structure: 'non uniforme', system: 'Ross 128', system_id: 'ROSS128', date: '2341-03-15', state: OBS_STATES.DONE, niveau: NIVEAUX.PASSIF, coords: '11.0, 2.1, 0.5', distance: '10,9 al', durationSec: 72 },
   { id: '3', name: 'Proxima c · Corps planétaire', type: 'PLANETE', system: 'Proxima Centauri', system_id: 'PROXIMA', date: '2341-01-08', state: OBS_STATES.PENDING, niveau: NIVEAUX.SYSTEME, coords: '4.2, -1.1, 0.0', distance: '4,2 al' },
+  { id: '4', name: 'GRB-2341-X7 · Signal', type: 'SIGNAL', support: 'GAMMA_X', structure: 'sursaut', system: 'Champ profond', system_id: null, date: '2341-04-12', state: OBS_STATES.PENDING, niveau: NIVEAUX.PASSIF, coords: '—', distance: '—', durationSec: 42 },
+  { id: '5', name: 'PSR B1919+21 · Signal', type: 'SIGNAL', support: 'EM_RADIO', structure: 'pulsé régulier', system: 'PSR B1919', system_id: 'PSR_B1919', date: '2341-04-10', state: OBS_STATES.DONE, niveau: NIVEAUX.PASSIF, coords: '19.3, 21.6, 0.0', distance: '~2 kpc', durationSec: 72 },
 ]
 
 export const useObservationsStore = defineStore('observations', () => {
@@ -72,12 +69,17 @@ export const useObservationsStore = defineStore('observations', () => {
     if (!supabaseStore.isConfigured()) {
       if (list.value.length === 0) list.value = [...FALLBACK_LIST]
       loaded.value = true
+      const hasGammaX = list.value.some((o) => o.type === 'SIGNAL' && o.support === 'GAMMA_X')
+      if (!hasGammaX) {
+        const grbDemo = FALLBACK_LIST.find((o) => o.support === 'GAMMA_X')
+        if (grbDemo) list.value = [grbDemo, ...list.value]
+      }
       return list.value
     }
     const sessionId = getOrCreateSessionId()
     const { data, error } = await supabase
       .from('observations')
-      .select('id, type, system_id, system_display, name, state, niveau, coords, distance, support, duration_sec, date')
+      .select('id, type, system_id, system_display, name, state, niveau, coords, distance, support, structure, duration_sec, date, anomalous')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false })
     if (error) {
@@ -85,6 +87,11 @@ export const useObservationsStore = defineStore('observations', () => {
       list.value = [...FALLBACK_LIST]
     } else {
       list.value = (data ?? []).map(dbToObs)
+    }
+    const hasGammaX = list.value.some((o) => o.type === 'SIGNAL' && o.support === 'GAMMA_X')
+    if (!hasGammaX) {
+      const grbDemo = FALLBACK_LIST.find((o) => o.support === 'GAMMA_X')
+      if (grbDemo) list.value = [grbDemo, ...list.value]
     }
     loaded.value = true
     return list.value
@@ -94,6 +101,27 @@ export const useObservationsStore = defineStore('observations', () => {
     return list.value.some(
       (o) => o.state === OBS_STATES_VAL.PENDING || o.state === OBS_STATES_VAL.RUNNING
     )
+  }
+
+  /** Trouve une observation SIGNAL correspondant au signal (même name = fréquence · azimut) */
+  function findObservationForSignal(signal) {
+    if (!signal) return null
+    const expectedName = `${signal.frequency} · azimut ${signal.azimuth}°`
+    return list.value.find(
+      (o) => o.type === 'SIGNAL' && o.name === expectedName
+    ) ?? null
+  }
+
+  /** Trouve une observation correspondant à un corps (body + star) */
+  function findObservationForBody(body, star, bodyNameLabel) {
+    if (!body || !star) return null
+    const expectedName = `${body.name} · ${bodyNameLabel}`
+    return list.value.find(
+      (o) =>
+        o.type === body.type &&
+        o.system_id === star.id &&
+        o.name === expectedName
+    ) ?? null
   }
 
   async function addObservation(obs) {
@@ -107,7 +135,9 @@ export const useObservationsStore = defineStore('observations', () => {
       coords: obs.coords ?? '—',
       distance: obs.distance ?? '—',
       support: obs.type === 'SIGNAL' ? (obs.support ?? 'EM_RADIO') : undefined,
+      structure: obs.type === 'SIGNAL' ? (obs.structure ?? null) : undefined,
       durationSec: obs.type === 'SIGNAL' ? (obs.durationSec ?? 72) : undefined,
+      anomalous: obs.type === 'SIGNAL' ? (obs.anomalous ?? false) : undefined,
       ...obs,
     }
 
@@ -126,7 +156,7 @@ export const useObservationsStore = defineStore('observations', () => {
     const { data, error } = await supabase
       .from('observations')
       .insert(obsToDb(payload, sessionId))
-      .select('id, type, system_id, system_display, name, state, niveau, coords, distance, support, duration_sec, date')
+      .select('id, type, system_id, system_display, name, state, niveau, coords, distance, support, structure, duration_sec, date, anomalous')
       .single()
 
     if (error) {
@@ -135,7 +165,7 @@ export const useObservationsStore = defineStore('observations', () => {
       list.value.unshift({ id, ...payload, state: OBS_STATES.PENDING })
       return id
     }
-    const item = dbToObs(data)
+    const item = { ...dbToObs(data), anomalous: payload.anomalous }
     list.value = [item, ...list.value]
     return item.id
   }
@@ -165,6 +195,8 @@ export const useObservationsStore = defineStore('observations', () => {
     removeObservation,
     updateObservationState,
     hasUnanalyzed,
+    findObservationForSignal,
+    findObservationForBody,
     OBS_STATES,
     NIVEAUX,
   }

@@ -32,6 +32,7 @@
 - [ ] Création vaisseau au premier login (avec auth)
 - [x] Modèle Option A validé — sources de signaux : objets émetteurs (PULSAR, NEUTRON_STAR, MAGNETAR) dans system_objects ; événements transients dans signal_events ; table signals. Doc backend mise à jour.
 - [x] Migrations Option A — migration 00005 (extension system_objects, signal_events, signals). Seed : système PSR_B1919 + pulsar PSR B1919+21.
+- [x] Store signaux branché sur table signals (fetch + INSERT). Migration 00011 : colonne anomalous sur observations. Support dérivé depuis la source (SignalModal). Seed signaux démo (seed-demo), clonage à la première visite. captureFromSystemObjects() pour objets émetteurs du système courant.
 
 ### Frontend (Vue)
 - [x] Projet Vue 3 + Vite
@@ -73,7 +74,6 @@
 1. **Auth** — Mise en place Supabase Auth + création vaisseau
 2. **Onboarding** — Premiers écrans selon GDD
 3. **Observatoire complet** — Détail système, scan, fixer cap
-4. **Migrations Option A** — signal_events, signals, extension system_objects (émetteurs permanents)
 
 ---
 
@@ -94,6 +94,7 @@
 | Mars 2026 | Stack visualisation Laboratoire : D3.js + spectrogram-js. Thématisation typos/couleurs via tokens.css. Doc technique + LACUNA_LABORATOIRE_INSTRUMENTS mis à jour. |
 | Mars 2026 | Sortie spectrogramme pour l'analyseur spectral — LabReportSpectrogram (spectrogram-js, viridis), spectrogramData.js (données synthétiques seed obsId), intégration PageLaboratoire, durationSec sur observations SIGNAL. |
 | Mars 2026 | Sortie structure temporelle — LabReportStructureTemporelle (forme d'onde + autocorrélation, D3), génération pulsée optionnelle, intégration PageLaboratoire. |
+| Mars 2026 | Sortie polarisation — LabReportPolarisation (ellipse + paramètres Stokes I/Q/U/V), polarisationData.js, intégration PageLaboratoire. |
 | Mars 2026 | Seed prototype — 8 systèmes stellaires (Sol, Proxima, Barnard, Ross 128, Epsilon Eridani, Tau Ceti, Gliese 667C, HD 44594) + 6 traces voisinage (PROXIMA-001, BARNARD-001, ROSS128-001, etc.). SkyCanvas branché sur stellar_systems Supabase (projection ra/dec). Store stellarSystems. Fallback procédural si Supabase absent. |
 | Mars 2026 | Table observations en base — migration 00003. Store observations : fetch/insert/update/delete via Supabase. session_id (localStorage) pour prototype sans auth. Persistance de la file d'observations Laboratoire. |
 | Mars 2026 | Table system_objects — migration 00004. Objets des systèmes (étoiles, planètes, disques) avec propriétés (orbite, atmosphère, zone habitable). Seed pour 8 systèmes. Store systemObjects. ObservatoirePanel branché sur system_objects quand disponible. |
@@ -109,3 +110,6 @@
 | Mars 2026 | formatUtils.js — barWidth, formatDate, barClass, valClass, formatRaDec extraits. PageSystemes, PagePopulation, PageArtefacts, SideLeft, ObservatoireAzimuth mis à jour. |
 | Mars 2026 | formatRelativeTime ajouté à formatUtils. constants/objectTypes.js créé (OBJECT_TYPE_LABELS). SideLeft, PageDrake, ObservatoirePanel, PageLaboratoire, systemObjects mis à jour. |
 | Mars 2026 | composables/useStoreReady.js — ensureStoresLoaded() centralise le pattern "if (!store.loaded) await store.fetch()". AppHeader, SideLeft, PageDrake, PageLaboratoire, PageSystemes, SystemView, SkyCanvas mis à jour. |
+| Mars 2026 | Flux signaux Supabase — store signaux branché sur table signals (fetch, addSignal→INSERT, removeSignal→DELETE). Migration 00011 anomalous sur observations. SignalModal dérive support depuis la source. Seed signaux démo (PSR B1919+21, 1420 MHz, 408 MHz), clonage pour nouvelles sessions. captureFromSystemObjects() pour objets émetteurs. lib/session.js, formatUtils (formatFrequency, parseFrequency). |
+| Mars 2026 | Couche conversion — astroConstants.js, systemObjectConverters.js (toPhysicalUnits, toVisualParams, toLuminosityAndHz). bodyRadius, orbitalUtils, ringUtils refactorés pour utiliser astroConstants. SystemView branché sur convertisseurs. Dépendances mises à jour (yarn upgrade). |
+| Mars 2026 | Documentation-backend.md — migrations 00011–00014 documentées : observations (anomalous, structure), lab_reports, system_objects (composition, anneaux, orbital_semi_major_axis_km), seed SOL enrichi. |

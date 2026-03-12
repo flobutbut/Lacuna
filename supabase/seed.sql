@@ -77,25 +77,26 @@ ON CONFLICT (ship_id) DO UPDATE SET
   generation = EXCLUDED.generation;
 
 -- ── Objets des systèmes (system_objects) ──
--- SOL — étoile + 8 planètes
-INSERT INTO system_objects (system_id, type, designation, name, sort_order, spectral_type, mass_stellar)
-VALUES ('SOL', 'STAR', 'a', 'Soleil', 0, 'G2V', 1.0);
-INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone, habitable_zone_type)
-VALUES ('SOL', 'PLANET', 'b', 'Mercure', 1, 87.97, 0.055, false, NULL);
-INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone, habitable_zone_type)
-VALUES ('SOL', 'PLANET', 'c', 'Vénus', 2, 224.7, 0.815, false, NULL);
-INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone, habitable_zone_type)
-VALUES ('SOL', 'PLANET', 'd', 'Terre', 3, 365.25, 1.0, true, 'TEMPERATE');
-INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone, habitable_zone_type)
-VALUES ('SOL', 'PLANET', 'e', 'Mars', 4, 687.0, 0.107, false, NULL);
-INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone, habitable_zone_type)
-VALUES ('SOL', 'PLANET', 'f', 'Jupiter', 5, 4332.6, 317.8, false, NULL);
-INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone, habitable_zone_type)
-VALUES ('SOL', 'PLANET', 'g', 'Saturne', 6, 10759, 95.2, false, NULL);
-INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone, habitable_zone_type)
-VALUES ('SOL', 'PLANET', 'h', 'Uranus', 7, 30688, 14.5, false, NULL);
-INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone, habitable_zone_type)
-VALUES ('SOL', 'PLANET', 'i', 'Neptune', 8, 60182, 17.1, false, NULL);
+-- SOL — étoile + 8 planètes (données NASA/IAU, distances centre-à-centre en UA)
+-- Réf. JPL Horizons, NSSDC Planetary Fact Sheets
+INSERT INTO system_objects (system_id, type, designation, name, sort_order, spectral_type, mass_stellar, radius_earth, stellar_activity)
+VALUES ('SOL', 'STAR', 'a', 'Soleil', 0, 'G2V', 1.0, 109.1, 'MODERATE');
+INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_semi_major_axis_au, orbital_period_days, orbital_eccentricity, orbital_inclination_deg, mass_earth, radius_earth, composition, in_habitable_zone, habitable_zone_type, has_atmosphere, atmosphere_detected, atmosphere_pressure_bar, atmosphere_notes)
+VALUES ('SOL', 'PLANET', 'b', 'Mercure', 1, 0.3871, 87.97, 0.2056, 7.00, 0.055, 0.383, 'TERESTRIAL', false, NULL, true, true, 1e-14, 'Exosphère ténue (H, He, O, Na)');
+INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_semi_major_axis_au, orbital_period_days, orbital_eccentricity, orbital_inclination_deg, mass_earth, radius_earth, composition, in_habitable_zone, habitable_zone_type, has_atmosphere, atmosphere_detected, atmosphere_pressure_bar, atmosphere_notes)
+VALUES ('SOL', 'PLANET', 'c', 'Vénus', 2, 0.7233, 224.70, 0.0068, 3.39, 0.815, 0.949, 'TERESTRIAL', false, NULL, true, true, 92, 'CO₂ 96.5 %, effet de serre extrême');
+INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_semi_major_axis_au, orbital_period_days, orbital_eccentricity, orbital_inclination_deg, mass_earth, radius_earth, composition, in_habitable_zone, habitable_zone_type, has_atmosphere, atmosphere_detected, atmosphere_pressure_bar, atmosphere_notes)
+VALUES ('SOL', 'PLANET', 'd', 'Terre', 3, 1.0000, 365.25, 0.0167, 0.00, 1.0, 1.0, 'TERESTRIAL', true, 'TEMPERATE', true, true, 1.013, 'N₂ 78 %, O₂ 21 %, zone habitable');
+INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_semi_major_axis_au, orbital_period_days, orbital_eccentricity, orbital_inclination_deg, mass_earth, radius_earth, composition, in_habitable_zone, habitable_zone_type, has_atmosphere, atmosphere_detected, atmosphere_pressure_bar, atmosphere_notes)
+VALUES ('SOL', 'PLANET', 'e', 'Mars', 4, 1.5237, 686.98, 0.0934, 1.85, 0.107, 0.532, 'TERESTRIAL', false, NULL, true, true, 0.00636, 'CO₂ 95 %, fine, poussière');
+INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_semi_major_axis_au, orbital_period_days, orbital_eccentricity, orbital_inclination_deg, mass_earth, radius_earth, composition, has_rings, rings_inner_radius_km, rings_outer_radius_km, rings_notes, in_habitable_zone, habitable_zone_type, has_atmosphere, atmosphere_detected, atmosphere_pressure_bar, atmosphere_notes)
+VALUES ('SOL', 'PLANET', 'f', 'Jupiter', 5, 5.2026, 4332.59, 0.0484, 1.30, 317.8, 11.21, 'GAS_GIANT', true, 92200, 136200, 'Anneaux ténus', false, NULL, true, true, NULL, 'Géante gazeuse H/He, transitions gazeuses');
+INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_semi_major_axis_au, orbital_period_days, orbital_eccentricity, orbital_inclination_deg, mass_earth, radius_earth, composition, has_rings, rings_inner_radius_km, rings_outer_radius_km, rings_notes, in_habitable_zone, habitable_zone_type, has_atmosphere, atmosphere_detected, atmosphere_pressure_bar, atmosphere_notes)
+VALUES ('SOL', 'PLANET', 'g', 'Saturne', 6, 9.5369, 10759.22, 0.0542, 2.49, 95.2, 9.45, 'GAS_GIANT', true, 66900, 480000, 'Système majeur', false, NULL, true, true, NULL, 'Géante gazeuse H/He, anneaux');
+INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_semi_major_axis_au, orbital_period_days, orbital_eccentricity, orbital_inclination_deg, mass_earth, radius_earth, composition, has_rings, rings_inner_radius_km, rings_outer_radius_km, rings_notes, in_habitable_zone, habitable_zone_type, has_atmosphere, atmosphere_detected, atmosphere_pressure_bar, atmosphere_notes)
+VALUES ('SOL', 'PLANET', 'h', 'Uranus', 7, 19.1913, 30687.15, 0.0472, 0.77, 14.5, 4.01, 'ICE_GIANT', true, 38000, 51140, '13 anneaux', false, NULL, true, true, NULL, 'Géante de glace H/He/CH₄');
+INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_semi_major_axis_au, orbital_period_days, orbital_eccentricity, orbital_inclination_deg, mass_earth, radius_earth, composition, has_rings, rings_inner_radius_km, rings_outer_radius_km, rings_notes, in_habitable_zone, habitable_zone_type, has_atmosphere, atmosphere_detected, atmosphere_pressure_bar, atmosphere_notes)
+VALUES ('SOL', 'PLANET', 'i', 'Neptune', 8, 30.0690, 60190.03, 0.0086, 1.77, 17.1, 3.88, 'ICE_GIANT', true, 41000, 63000, '5 anneaux principaux', false, NULL, true, true, NULL, 'Géante de glace H/He/CH₄');
 
 -- PROXIMA — étoile + Proxima b
 INSERT INTO system_objects (system_id, type, designation, name, sort_order, spectral_type, stellar_activity, mass_stellar)
@@ -575,4 +576,39 @@ INSERT INTO system_objects (system_id, type, designation, name, sort_order, spec
 INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone, habitable_zone_type) VALUES ('KEPLER442', 'PLANET', 'b', 'Kepler-442 b', 1, 112.3, 2.3, true, 'TEMPERATE');
 INSERT INTO system_objects (system_id, type, designation, name, sort_order, spectral_type, stellar_activity, mass_stellar) VALUES ('KEPLER438', 'STAR', 'a', 'Kepler-438', 0, 'M1V', 'CALM', 0.54);
 INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone, habitable_zone_type) VALUES ('KEPLER438', 'PLANET', 'b', 'Kepler-438 b', 1, 35.2, 1.5, true, 'TEMPERATE');
+
+-- ── Événements transients (signal_events) — GRB, supernova ──
+INSERT INTO signal_events (system_id, event_type, observed_at, duration_sec, attributes)
+VALUES
+  ('GLIESE667', 'GRB', NOW() - INTERVAL '2 hours', 42, '{"designation": "GRB-2341-G667", "energy_kev": 100}'::jsonb),
+  ('KEPLER452', 'SUPERNOVA', NOW() - INTERVAL '5 hours', 3600, '{"designation": "SN-2341-K452", "phase": "radio_afterglow"}'::jsonb);
+
+-- ── Signaux démo (session seed-demo : clonés à la première visite Observatoire) ──
+-- 1. Permanent : pulsar (OBJECT)
+INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
+SELECT 'OBJECT', so.id, NULL, 'seed-demo', '11111111-1111-1111-1111-111111111111', 1420000000, so.emission_support, 72,
+  '{"azimuth": 290, "elevation": 22, "receivedAt": "2341-04-12", "polarization": "linéaire", "structure": "pulsé régulier", "sourceName": "PSR B1919+21"}'::jsonb
+FROM system_objects so
+WHERE so.system_id = 'PSR_B1919' AND so.emits_signals = true;
+
+-- 2. Ponctuel : GRB (EVENT) — sursaut gamma
+INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
+SELECT 'EVENT', NULL, se.id, 'seed-demo', '11111111-1111-1111-1111-111111111111', 50000000000000, 'GAMMA_X', 42,
+  '{"azimuth": 260, "elevation": -35, "receivedAt": "2341-04-12", "polarization": "—", "structure": "sursaut", "sourceName": "GRB-2341-G667"}'::jsonb
+FROM signal_events se WHERE se.event_type = 'GRB' AND se.system_id = 'GLIESE667' ORDER BY se.created_at DESC LIMIT 1;
+
+-- 3. Ponctuel : supernova (EVENT) — émission radio post-explosion
+INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
+SELECT 'EVENT', NULL, se.id, 'seed-demo', '11111111-1111-1111-1111-111111111111', 1400000000, 'EM_RADIO', 3600,
+  '{"azimuth": 290, "elevation": 45, "receivedAt": "2341-04-11", "polarization": "linéaire", "structure": "continu décroissant", "sourceName": "SN-2341-K452"}'::jsonb
+FROM signal_events se WHERE se.event_type = 'SUPERNOVA' AND se.system_id = 'KEPLER452' ORDER BY se.created_at DESC LIMIT 1;
+
+-- 4. Artificiel : WOW-like (UNKNOWN) — 1420 MHz anomal, direction Sagittaire
+-- 5. Naturel : synchrotron (UNKNOWN) — 408 MHz, émission continue
+INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
+VALUES
+  ('UNKNOWN', NULL, NULL, 'seed-demo', '11111111-1111-1111-1111-111111111111', 1420405600, 'EM_RADIO', 72,
+   '{"azimuth": 280, "elevation": -25, "receivedAt": "2341-04-14", "polarization": "linéaire", "structure": "non uniforme", "anomalous": true, "sourceName": "Sagittaire WOW-like"}'::jsonb),
+  ('UNKNOWN', NULL, NULL, 'seed-demo', '11111111-1111-1111-1111-111111111111', 408000000, 'EM_RADIO', 120,
+   '{"azimuth": 89, "elevation": -5, "receivedAt": "2341-04-11", "polarization": "linéaire", "structure": "continu", "sourceName": "Synchrotron"}'::jsonb);
 

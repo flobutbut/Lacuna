@@ -121,6 +121,22 @@
     opacity: 0.6;
 }
 
+.signal-card--in-lab {
+    border-color: var(--color-green);
+    box-shadow: inset 2px 0 0 var(--color-green);
+}
+
+.signal-card__type-icon {
+    position: absolute;
+    top: var(--space-3);
+    left: var(--space-3);
+    opacity: 0.9;
+}
+
+.signal-card .signal-card__main {
+    padding-left: 20px;
+}
+
 .signal-card__dismiss {
     position: absolute;
     top: var(--space-2);

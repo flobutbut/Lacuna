@@ -47,10 +47,14 @@ const isSkyMode = computed(() => ui.observatoireViewMode === 'sky')
 
 <style scoped>
 .page-observatoire {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  bottom: var(--instruments-height);
+  height: calc(100vh - var(--header-height) - var(--instruments-height));
+  max-height: calc(100vh - var(--header-height) - var(--instruments-height));
+  overflow: auto;
 }
 .page-observatoire :deep(.ui-layer) {
   position: absolute;

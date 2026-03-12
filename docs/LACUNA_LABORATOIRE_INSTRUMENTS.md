@@ -10,8 +10,8 @@
 |------------|--------------------|----------------|-------|
 | **Analyseur spectral** | Spectrogramme (fréquence × temps) | ✅ Complète | `LabReportSpectrogram.vue`, spectrogram-js, viridis |
 | **Analyseur structure temporelle** | Forme d'onde + autocorrélation | ✅ Complète | `LabReportStructureTemporelle.vue`, D3, modulation pulsée optionnelle |
-| **Analyseur polarisation** | Diagramme polarisation | ⏳ Texte | — |
-| **Analyseur spectre énergétique** | Spectre énergétique | ⏳ Texte | — |
+| **Analyseur polarisation** | Diagramme Stokes / ellipse | ✅ Complète | `LabReportPolarisation.vue`, ellipse + I/Q/U/V |
+| **Analyseur spectre énergétique** | Spectre énergétique | ✅ Complète | `LabReportSpectreEnergetique.vue`, D3, énergie keV × comptage |
 | **Analyseur gravimétrique** | Modèle sources + résidus | ⏳ Texte | — |
 | **Spectromètre stellaire** | Spectre + courbe luminosité | ⏳ Texte | — |
 | **Analyseur orbital** | Diagramme orbital | ⏳ Texte | — |
