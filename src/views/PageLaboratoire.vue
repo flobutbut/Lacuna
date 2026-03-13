@@ -5,6 +5,8 @@ import { useRoute } from 'vue-router'
 import { useObservationsStore } from '@/stores/observations'
 import { useLabReportsStore } from '@/stores/labReports'
 import { useTracesStore } from '@/stores/traces'
+import { useStellarSystemsStore } from '@/stores/stellarSystems'
+import { useShipStore } from '@/stores/ship'
 import { useUIStore } from '@/stores/ui'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
@@ -12,6 +14,10 @@ import LabReportSpectrogram from '@/components/lab/LabReportSpectrogram.vue'
 import LabReportStructureTemporelle from '@/components/lab/LabReportStructureTemporelle.vue'
 import LabReportPolarisation from '@/components/lab/LabReportPolarisation.vue'
 import LabReportSpectreEnergetique from '@/components/lab/LabReportSpectreEnergetique.vue'
+import LabReportGravimetrique from '@/components/lab/LabReportGravimetrique.vue'
+import LabReportSpectreStellaire from '@/components/lab/LabReportSpectreStellaire.vue'
+import LabReportOrbital from '@/components/lab/LabReportOrbital.vue'
+import LabReportAtmosphere from '@/components/lab/LabReportAtmosphere.vue'
 import LabInstrumentIcon from '@/components/lab/LabInstrumentIcon.vue'
 import SignalTypeIcon from '@/components/SignalTypeIcon.vue'
 import ObservationTypeIcon from '@/components/ObservationTypeIcon.vue'
@@ -20,6 +26,8 @@ const route = useRoute()
 const obsStore = useObservationsStore()
 const labReportsStore = useLabReportsStore()
 const tracesStore = useTracesStore()
+const stellarStore = useStellarSystemsStore()
+const shipStore = useShipStore()
 const { list: obsList } = storeToRefs(obsStore)
 const ui = useUIStore()
 
@@ -57,7 +65,8 @@ function getInstrumentsForObservation(obs) {
     const support = obs.support ?? 'EM_RADIO'
     return INSTRUMENTS.filter(i => i.signalSupports?.includes(support))
   }
-  return INSTRUMENTS.filter(i => i.objectTypes?.includes(obs.type))
+  const bodyType = obs.type === 'STAR' ? 'ETOILE' : obs.type === 'PLANET' ? 'PLANETE' : obs.type
+  return INSTRUMENTS.filter(i => i.objectTypes?.includes(bodyType))
 }
 
 const GRAPH_NAMES = {
@@ -65,6 +74,10 @@ const GRAPH_NAMES = {
   'analyseur-structure-temporelle': '',
   'analyseur-polarisation': 'ellipse de polarisation',
   'analyseur-spectre-energetique': 'spectre énergétique',
+  'analyseur-gravimetrique': 'modèle sources + résidus',
+  'spectro-stellaire': 'spectre + courbe de lumière',
+  'analyseur-orbital': 'diagramme orbital',
+  'spectro-atmo': 'profil moléculaire',
 }
 
 function getGraphName(instrumentId) {
@@ -136,11 +149,21 @@ function getObsNiveauKey(obs) {
   return Object.keys(NIVEAUX).find(k => NIVEAUX[k] === obs.niveau) || 'PASSIF'
 }
 
+/** Niveau effectif : si le vaisseau est dans le système de l'obs, on considère ORBITE atteint */
+function getEffectiveNiveau(obs) {
+  const base = NIVEAU_ORDER[getObsNiveauKey(obs)] ?? 0
+  const inSystem = obs.system_id && shipStore.currentSystemId && obs.system_id === shipStore.currentSystemId
+  if (inSystem && obs.type !== 'SIGNAL') {
+    return Math.max(base, NIVEAU_ORDER.ORBITE)
+  }
+  return base
+}
+
 function isInstrumentCompatible(instr, obs) {
   const available = getInstrumentsForObservation(obs)
   if (!available.some(i => i.id === instr.id)) return false
   if (obs.type === 'SIGNAL') return true
-  const obsNiveau = NIVEAU_ORDER[getObsNiveauKey(obs)] ?? 0
+  const obsNiveau = getEffectiveNiveau(obs)
   const instrNiveau = NIVEAU_ORDER[instr.niveau] ?? 0
   return instrNiveau <= obsNiveau
 }
@@ -152,7 +175,7 @@ function getDisabledReason(instr, obs) {
     return obs.type === 'SIGNAL' ? 'Support incompatible' : 'Type incompatible'
   }
   if (obs.type !== 'SIGNAL' && instr.niveau) {
-    const obsNiveau = NIVEAU_ORDER[getObsNiveauKey(obs)] ?? 0
+    const obsNiveau = getEffectiveNiveau(obs)
     const instrNiveau = NIVEAU_ORDER[instr.niveau] ?? 0
     if (instrNiveau > obsNiveau) return 'Niveau insuffisant'
   }
@@ -207,7 +230,15 @@ function startSimulation() {
                 ? `Forme d'onde + autocorrélation. Périodicité, modulation, structure vs bruit. Fiabilité ${fiability}%.`
                 : r.instr.id === 'analyseur-polarisation'
                   ? `Ellipse de polarisation + Stokes (I/Q/U/V). Linéaire, circulaire, elliptique. Fiabilité ${fiability}%.`
-                  : `${r.instr.name} — Données produites. Fiabilité ${fiability}%.`,
+                  : r.instr.id === 'analyseur-gravimetrique'
+                    ? `Modèle de sources + résidus. Masses déduites, perturbations résiduelles. Fiabilité ${fiability}%.`
+                    : r.instr.id === 'spectro-stellaire'
+                      ? `Spectre + courbe de lumière. Type spectral, raies d'absorption, variations. Fiabilité ${fiability}%.`
+                      : r.instr.id === 'analyseur-orbital'
+                        ? `Diagramme orbital + paramètres (a, e, i, P). Résonances, anomalies de trajectoire. Fiabilité ${fiability}%.`
+                        : r.instr.id === 'spectro-atmo'
+                          ? `Profil moléculaire (H₂O, CO₂, CH₄, O₂…). Déséquilibres chimiques, biosignatures. Fiabilité ${fiability}%.`
+                          : `${r.instr.name} — Données produites. Fiabilité ${fiability}%.`,
         }
         newReports.push(reportPayload)
         reports.value = { ...reports.value, [r.obs.id]: newReports }
@@ -272,7 +303,7 @@ const runningForSelected = computed(() => {
 })
 
 onMounted(async () => {
-  await ensureStoresLoaded(obsStore)
+  await ensureStoresLoaded(obsStore, stellarStore)
   const obsIds = observations.value.map((o) => o.id)
   await labReportsStore.fetchForObservations(obsIds)
   reports.value = { ...labReportsStore.cache }
@@ -412,6 +443,41 @@ onUnmounted(() => {
                 :duration-sec="r.durationSec ?? 72"
                 :anomalous="r.anomalous ?? false"
                 :structure="selectedObs?.type === 'SIGNAL' ? (selectedObs?.structure ?? 'non uniforme') : 'non uniforme'"
+                class="lab-report__output"
+              />
+              <LabReportGravimetrique
+                v-else-if="r.instrumentId === 'analyseur-gravimetrique'"
+                :obs-id="selectedObs?.id ?? ''"
+                :fiability="r.fiability"
+                :duration-sec="r.durationSec ?? 72"
+                :anomalous="r.anomalous ?? false"
+                :structure="selectedObs?.type === 'SIGNAL' ? (selectedObs?.structure ?? 'non uniforme') : 'non uniforme'"
+                :obs-type="selectedObs?.type ?? 'SIGNAL'"
+                class="lab-report__output"
+              />
+              <LabReportSpectreStellaire
+                v-else-if="r.instrumentId === 'spectro-stellaire'"
+                :obs-id="selectedObs?.id ?? ''"
+                :system-id="selectedObs?.system_id ?? ''"
+                :fiability="r.fiability"
+                :anomalous="r.anomalous ?? false"
+                class="lab-report__output"
+              />
+              <LabReportOrbital
+                v-else-if="r.instrumentId === 'analyseur-orbital'"
+                :obs-id="selectedObs?.id ?? ''"
+                :system-id="selectedObs?.system_id ?? ''"
+                :fiability="r.fiability"
+                :anomalous="r.anomalous ?? false"
+                class="lab-report__output"
+              />
+              <LabReportAtmosphere
+                v-else-if="r.instrumentId === 'spectro-atmo'"
+                :obs-id="selectedObs?.id ?? ''"
+                :system-id="selectedObs?.system_id ?? ''"
+                :obs-name="selectedObs?.name ?? ''"
+                :fiability="r.fiability"
+                :anomalous="r.anomalous ?? false"
                 class="lab-report__output"
               />
             </div>

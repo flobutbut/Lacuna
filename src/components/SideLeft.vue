@@ -13,8 +13,14 @@ const obsStore = useObservationsStore()
 const ui = useUIStore()
 const shipStore = useShipStore()
 
+const SUPPORT_LABELS = { GRAVITATIONNEL: 'Grav', GAMMA_X: 'γ/X', EM_RADIO: 'EM' }
+
 function isSignalInLab(signal) {
   return !!obsStore.findObservationForSignal(signal)
+}
+
+function supportLabel(support) {
+  return SUPPORT_LABELS[support] ?? support ?? '—'
 }
 
 const signalsToShow = computed(() =>
@@ -90,11 +96,12 @@ onUnmounted(() => {
         v-else
         :key="s.id"
         class="signal-card"
-        :class="{ expired: s.remainingMs <= 0 }"
+        :class="{ expired: s.remainingMs <= 0, 'signal-card--search-hit': ui.signalSearchMatchIds.has(s.id) }"
         @click="onCardClick(s)"
       >
         <button type="button" class="signal-card__dismiss" aria-label="Ignorer" @click="onIgnore($event, s.id)">×</button>
         <SignalTypeIcon :structure="s.structure" :size="12" class="signal-card__type-icon" />
+        <span class="signal-card__support" :title="s.support">{{ supportLabel(s.support) }}</span>
         <div class="signal-card__main">
           {{ s.frequency }} · azimut {{ s.azimuth }}°
         </div>

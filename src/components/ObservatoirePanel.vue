@@ -11,6 +11,13 @@ const ui = useUIStore()
 const obsStore = useObservationsStore()
 const systemObjectsStore = useSystemObjectsStore()
 
+/** Nom d'affichage : nom propre prioritaire, sinon système + désignation */
+function getBodyDisplayName(body) {
+  const sysName = ui.selectedStar?.name ?? ''
+  const fallback = body.designation ? `${sysName} ${body.designation}` : sysName || '—'
+  return body.name || fallback
+}
+
 function getFallbackBodies(star) {
   if (!star) return []
   return [
@@ -22,6 +29,7 @@ function getFallbackBodies(star) {
 }
 
 const bodies = computed(() => {
+  if (ui.selectedBody) return [ui.selectedBody]
   const star = ui.selectedStar
   if (!star) return []
   const systemId = star.id
@@ -30,6 +38,11 @@ const bodies = computed(() => {
     return dbObjects.map((obj) => systemObjectsStore.toBodyFormat(obj, star.name))
   }
   return getFallbackBodies(star)
+})
+
+const panelTitle = computed(() => {
+  if (ui.selectedBody) return `Observatoire — ${getBodyDisplayName(ui.selectedBody)}`
+  return `Observatoire — ${ui.selectedStar?.name ?? '—'}`
 })
 
 watch(
@@ -43,7 +56,8 @@ watch(
 )
 
 function addObservationPayload(body) {
-  const name = `${body.name} · ${OBJECT_TYPE_LABELS[body.type]}`
+  const name = `${getBodyDisplayName(body)} · ${OBJECT_TYPE_LABELS[body.type]}`
+  const needsOrbit = body.type === 'ATMOSPHERE' || (body.type === 'PLANETE' && (body.has_atmosphere !== false))
   return {
     name,
     type: body.type,
@@ -51,7 +65,7 @@ function addObservationPayload(body) {
     system_id: ui.selectedStar?.id ?? null,
     distance: ui.selectedStar?.dist ?? '—',
     coords: '—',
-    niveau: obsStore.NIVEAUX.SYSTEME,
+    niveau: needsOrbit ? obsStore.NIVEAUX.ORBITE : obsStore.NIVEAUX.SYSTEME,
   }
 }
 
@@ -97,6 +111,7 @@ function isAnimating(body) {
   return animatingKey.value === key
 }
 
+
 </script>
 
 <template>
@@ -104,12 +119,12 @@ function isAnimating(body) {
     <div class="observatoire-panel__backdrop" @click="ui.closeObservatoire" />
     <div class="observatoire-panel__box">
       <div class="observatoire-panel__header">
-        <h2 class="observatoire-panel__title">Observatoire — {{ ui.selectedStar.name }}</h2>
+        <h2 class="observatoire-panel__title">{{ panelTitle }}</h2>
         <button type="button" class="observatoire-panel__close" @click="ui.closeObservatoire">×</button>
       </div>
       <div class="observatoire-panel__body">
         <div class="observatoire-panel__section">
-          <div class="observatoire-panel__section-title">Corps détectables</div>
+          <div class="observatoire-panel__section-title">{{ ui.selectedBody ? 'Corps sélectionné' : 'Corps détectables' }}</div>
           <div class="observatoire-panel__bodies">
             <div
               v-for="b in bodies"
@@ -117,7 +132,7 @@ function isAnimating(body) {
               class="observatoire-body"
             >
               <div class="observatoire-body__info">
-                <span class="observatoire-body__name">{{ b.name }}</span>
+                <span class="observatoire-body__name">{{ getBodyDisplayName(b) }}</span>
                 <span class="observatoire-body__type">{{ OBJECT_TYPE_LABELS[b.type] }}</span>
                 <span class="observatoire-body__anomaly" :class="{ high: b.anomaly >= 40 }">
                   Anomalie {{ b.anomaly }}%

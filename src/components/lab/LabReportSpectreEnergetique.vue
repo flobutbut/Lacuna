@@ -67,7 +67,7 @@ function render() {
     .attr('fill-opacity', 0.7)
     .attr('class', 'lab-spectre-energetique__bar')
 
-  svg
+  const gX = svg
     .append('g')
     .attr('class', 'lab-spectre-energetique__axis lab-spectre-energetique__axis--x')
     .attr('transform', `translate(${margin.left},${chartHeight - margin.bottom})`)
@@ -78,6 +78,15 @@ function render() {
         .tickSize(4)
         .tickFormat((v) => (v >= 1000 ? `${v / 1000}` : `${v}`))
     )
+  gX
+    .append('text')
+    .attr('x', innerWidth)
+    .attr('y', 18)
+    .attr('text-anchor', 'end')
+    .attr('font-size', '9px')
+    .attr('font-family', 'var(--font-mono)')
+    .attr('fill', 'var(--color-muted)')
+    .text('Énergie (keV)')
 
   svg
     .append('g')

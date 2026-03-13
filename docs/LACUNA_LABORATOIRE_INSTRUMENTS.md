@@ -12,10 +12,10 @@
 | **Analyseur structure temporelle** | Forme d'onde + autocorrélation | ✅ Complète | `LabReportStructureTemporelle.vue`, D3, modulation pulsée optionnelle |
 | **Analyseur polarisation** | Diagramme Stokes / ellipse | ✅ Complète | `LabReportPolarisation.vue`, ellipse + I/Q/U/V |
 | **Analyseur spectre énergétique** | Spectre énergétique | ✅ Complète | `LabReportSpectreEnergetique.vue`, D3, énergie keV × comptage |
-| **Analyseur gravimétrique** | Modèle sources + résidus | ⏳ Texte | — |
-| **Spectromètre stellaire** | Spectre + courbe luminosité | ⏳ Texte | — |
-| **Analyseur orbital** | Diagramme orbital | ⏳ Texte | — |
-| **Spectromètre atmosphérique** | Profil moléculaire | ⏳ Texte | — |
+| **Analyseur gravimétrique** | Modèle sources + résidus | ✅ Complète | `LabReportGravimetrique.vue`, D3, schéma sources + courbe résidus |
+| **Spectromètre stellaire** | Spectre + courbe luminosité | ✅ Complète | `LabReportSpectreStellaire.vue`, spectreStellaireData.js, D3 |
+| **Analyseur orbital** | Diagramme orbital + paramètres | ✅ Complète | `LabReportOrbital.vue`, orbitalData.js, D3, orbites (a, e, i, P), résonances |
+| **Spectromètre atmosphérique** | Profil moléculaire | ✅ Complète | `LabReportAtmosphere.vue`, atmosphereData.js, D3, barres H₂O/CO₂/CH₄/O₂… |
 | **Analyseur volumétrique** | Cartes densité 3D | ⏳ Texte | — |
 | **Scanner morphologique** | Modèle surface / heatmap | ⏳ Texte | — |
 | **Magnétomètre** | Champ magnétique | ⏳ Texte | — |

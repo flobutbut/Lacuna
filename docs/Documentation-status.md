@@ -10,7 +10,7 @@
 |-----------|--------|-------|
 | **Git** | ✅ Initialisé | Remote GitHub configuré |
 | **Supabase** | ✅ Configuré | Schéma appliqué, seed exécuté |
-| **Documentation** | ✅ Créée | Technique, Backend, Status, Fonctionnelle, Interface-DB-mapping |
+| **Documentation** | ✅ Créée | Technique, Backend, Status, Fonctionnelle, Interface-DB-mapping, LACUNA_I18N_SETTINGS |
 | **Maquette UI** | ✅ Migrée | Composants Vue |
 | **Intégration Vue** | ✅ Faite | Ciel, Header, Panels, Instruments |
 | **Auth** | ⏳ À faire | Supabase Auth |
@@ -60,7 +60,7 @@
 - [ ] Voyage (logique temps réel)
 - [ ] Journal de bord
 - [x] Page Artefacts — grille, détail trace, interprétations, suppression (conformité LACUNA_UI)
-- [x] Page Laboratoire — 3 colonnes (file d'observations | observation sélectionnée | instruments), clic instrument, rapports + fiabilité, [GARDER UNE TRACE], sortie spectrogramme pour l'analyseur spectral (signaux)
+- [x] Page Laboratoire — 3 colonnes (file d'observations | observation sélectionnée | instruments), clic instrument, rapports + fiabilité, [GARDER UNE TRACE], sorties visuelles : spectrogramme, structure temporelle, polarisation, spectre énergétique, gravimétrique, spectre stellaire, analyseur orbital, spectromètre atmosphérique (profil moléculaire)
 - [ ] Carte
 - [ ] Équation de Drake (affichage temps réel)
 - [x] Page Population — 3 onglets (Générations, Génération actuelle, Registre des Raisons)
@@ -113,3 +113,6 @@
 | Mars 2026 | Flux signaux Supabase — store signaux branché sur table signals (fetch, addSignal→INSERT, removeSignal→DELETE). Migration 00011 anomalous sur observations. SignalModal dérive support depuis la source. Seed signaux démo (PSR B1919+21, 1420 MHz, 408 MHz), clonage pour nouvelles sessions. captureFromSystemObjects() pour objets émetteurs. lib/session.js, formatUtils (formatFrequency, parseFrequency). |
 | Mars 2026 | Couche conversion — astroConstants.js, systemObjectConverters.js (toPhysicalUnits, toVisualParams, toLuminosityAndHz). bodyRadius, orbitalUtils, ringUtils refactorés pour utiliser astroConstants. SystemView branché sur convertisseurs. Dépendances mises à jour (yarn upgrade). |
 | Mars 2026 | Documentation-backend.md — migrations 00011–00014 documentées : observations (anomalous, structure), lab_reports, system_objects (composition, anneaux, orbital_semi_major_axis_km), seed SOL enrichi. |
+| Mars 2026 | LACUNA_I18N_SETTINGS.md — doc dédiée i18n (Vue I18n, locales), détection automatique langue (navigator.languages), menu Settings (langue, notifications, accessibilité, affichage), menu User Profile (compte, mon vaisseau, stats perso, anonymat). |
+| Mars 2026 | Analyseur gravimétrique — LabReportGravimetrique.vue (schéma sources + courbe résidus, D3), gravimetriqueData.js. Signal GRAVITATIONNEL ou données orbitales (PLANETE, MINEUR, OBJET). LACUNA_LABORATOIRE_INSTRUMENTS mis à jour. |
+| Mars 2026 | Seed signaux gravitationnels — stellar_system GW_REGION_A, signal_event (GW), system_object (NEUTRON_STAR emission_support GRAVITATIONNEL). 2 signaux GRAVITATIONNEL en base (EVENT + OBJECT). |

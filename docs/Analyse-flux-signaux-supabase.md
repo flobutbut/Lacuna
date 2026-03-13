@@ -149,11 +149,9 @@ Exemple en base : 1 objet `PULSAR` avec `emits_signals=true`, `emission_support=
 - **Effet :** Les rapports ne peuvent pas savoir si un signal est atypique après rechargement.
 - **Action :** Ajouter une migration `ALTER TABLE observations ADD COLUMN anomalous BOOLEAN DEFAULT false` et adapter `obsToDb` / `dbToObs`.
 
-### 5.3 Support toujours EM_RADIO
+### 5.3 Support dérivé de la source (résolu)
 
-- **Problème :** `SignalModal.signalToObsPayload()` force `support: 'EM_RADIO'`.
-- **Effet :** Aucun signal GAMMA_X ou GRAVITATIONNEL ne peut être ajouté depuis l’Observatoire.
-- **Action :** Dériver `support` du signal source (ex. `system_objects.emission_support` ou `signal_events` / champs dédiés).
+- **Résolu :** `support` dérivé du signal source. Seed : GAMMA_X + GRAVITATIONNEL (GW_REGION_A, event GW, object NEUTRON_STAR).
 
 ### 5.4 Table `signals` vide
 

@@ -8,10 +8,13 @@ export const useUIStore = defineStore('ui', () => {
   const activePanel = ref(null) // 'obs' | 'map' | 'art' | 'lab' | 'log' | 'drake' | 'pop' | 'sys'
   const notification = ref('')
   const notificationVisible = ref(false)
+  /** Variante du toast : 'default' | 'info' | 'warn' | 'error' | 'success' */
+  const notificationVariant = ref('default')
   const travelWidgetVisible = ref(false)
   const travelDestination = ref('')
   const travelTime = ref('')
   const selectedStar = ref(null)
+  const selectedBody = ref(null)
   const observatoireOpen = ref(false)
   const labHasNewObservations = ref(false)
   const hoveredStar = ref(null)
@@ -25,6 +28,8 @@ export const useUIStore = defineStore('ui', () => {
   const spectralFilter = ref('visible')
   /** ID de l'étoile recherchée (centrée et highlightée) */
   const searchedStarId = ref(null)
+  /** IDs des signaux correspondant à la recherche (pour surligner dans SideLeft) */
+  const signalSearchMatchIds = ref(new Set())
   /** Vue Observatoire : 'sky' | 'system' */
   const observatoireViewMode = ref('sky')
 
@@ -40,6 +45,14 @@ export const useUIStore = defineStore('ui', () => {
 
   function clearSearchedStarId() {
     searchedStarId.value = null
+  }
+
+  function setSignalSearchMatchIds(ids) {
+    signalSearchMatchIds.value = new Set(Array.isArray(ids) ? ids : [])
+  }
+
+  function clearSignalSearchMatchIds() {
+    signalSearchMatchIds.value = new Set()
   }
 
   function setViewDirection(ra, dec) {
@@ -78,8 +91,9 @@ export const useUIStore = defineStore('ui', () => {
     activePanel.value = activePanel.value === id ? null : id
   }
 
-  function showNotification(msg, duration = 3000) {
+  function showNotification(msg, duration = 3000, variant = 'default') {
     notification.value = msg
+    notificationVariant.value = ['default', 'info', 'warn', 'error', 'success'].includes(variant) ? variant : 'default'
     notificationVisible.value = true
     setTimeout(() => {
       notificationVisible.value = false
@@ -97,8 +111,13 @@ export const useUIStore = defineStore('ui', () => {
 
   function selectStar(star) {
     selectedStar.value = star
+    selectedBody.value = null
     travelWidgetVisible.value = !!star
     selectedSignal.value = null
+  }
+
+  function setSelectedBody(body) {
+    selectedBody.value = body
   }
 
   function openObservatoire() {
@@ -107,6 +126,7 @@ export const useUIStore = defineStore('ui', () => {
 
   function closeObservatoire() {
     observatoireOpen.value = false
+    selectedBody.value = null
   }
 
   function setLabHasNew(value = true) {
@@ -145,10 +165,13 @@ export const useUIStore = defineStore('ui', () => {
     activePanel,
     notification,
     notificationVisible,
+    notificationVariant,
     travelWidgetVisible,
     travelDestination,
     travelTime,
     selectedStar,
+    selectedBody,
+    setSelectedBody,
     observatoireOpen,
     labHasNewObservations,
     hoveredStar,
@@ -182,6 +205,9 @@ export const useUIStore = defineStore('ui', () => {
     searchedStarId,
     setSearchedStarId,
     clearSearchedStarId,
+    signalSearchMatchIds,
+    setSignalSearchMatchIds,
+    clearSignalSearchMatchIds,
     observatoireViewMode,
     setObservatoireViewMode,
   }

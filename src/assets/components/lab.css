@@ -422,6 +422,49 @@
   stroke-opacity: 0.3;
 }
 
+/* Gravimétrique — modèle sources + résidus */
+.lab-gravimetrique {
+  margin-top: var(--space-4);
+  overflow: hidden;
+}
+
+.lab-gravimetrique:first-child {
+  margin-top: 0;
+}
+
+.lab-gravimetrique__chart {
+  padding: var(--space-3) 0;
+  border-bottom: var(--border-width) solid var(--border-default);
+}
+
+.lab-gravimetrique__chart:last-child {
+  border-bottom: none;
+}
+
+.lab-gravimetrique__label {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  margin-bottom: var(--space-2);
+}
+
+.lab-gravimetrique__svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.lab-gravimetrique .tick text {
+  font-size: var(--text-xs);
+  fill: var(--color-muted);
+  font-family: var(--font-mono);
+}
+
+.lab-gravimetrique .tick line {
+  stroke: var(--color-muted);
+  stroke-opacity: 0.3;
+}
+
 /* ── Colonne droite : instruments ── */
 .lab-instruments__title {
   font-size: var(--text-sm);

@@ -25,6 +25,7 @@ function dbToSignal(row) {
   return {
     id: row.id,
     frequency: formatFrequency(row.frequency_hz) || att.frequency || '1420 MHz',
+    sourceName: att.sourceName ?? null,
     azimuth: att.azimuth ?? 0,
     elevation: att.elevation ?? 0,
     distanceEst: att.distanceEst ?? null,
@@ -69,6 +70,7 @@ function createSignal(payload) {
   return {
     id,
     frequency: payload.frequency ?? '1420 MHz',
+    sourceName: payload.sourceName ?? null,
     azimuth: payload.azimuth ?? 0,
     elevation: payload.elevation ?? 0,
     distanceEst: payload.distanceEst ?? null,
@@ -102,7 +104,8 @@ export const useSignauxStore = defineStore('signaux', () => {
       .from('signals')
       .select('*')
       .eq('session_id', 'seed-demo')
-      .limit(5)
+      .order('support', { ascending: false })
+      .limit(10)
     if (!demo?.length) return []
     const cloned = []
     for (const row of demo) {

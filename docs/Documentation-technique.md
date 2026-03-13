@@ -50,7 +50,12 @@ Lacuna/
 │   │   ├── lab/
 │   │   │   ├── LabReportSpectrogram.vue       # Sortie spectrogramme (analyseur spectral)
 │   │   │   ├── LabReportStructureTemporelle.vue  # Forme d'onde + autocorrélation (structure temporelle)
-│   │   │   └── LabReportPolarisation.vue      # Ellipse de polarisation + Stokes (polarisation)
+│   │   │   ├── LabReportPolarisation.vue      # Ellipse de polarisation + Stokes (polarisation)
+│   │   │   ├── LabReportSpectreEnergetique.vue   # Spectre énergétique (gamma/X)
+│   │   │   ├── LabReportGravimetrique.vue     # Modèle sources + résidus (gravimétrique)
+│   │   │   ├── LabReportSpectreStellaire.vue  # Spectre + courbe de lumière
+│   │   │   ├── LabReportOrbital.vue           # Diagramme orbital + paramètres (a, e, i, P)
+│   │   │   └── LabReportAtmosphere.vue        # Profil moléculaire (spectromètre atmosphérique)
 │   │   └── panels/          # (legacy — contenu migré vers views/)
 │   ├── composables/         # Logique réutilisable (Vue)
 │   │   ├── useSkyStars.js   # Construction liste étoiles (DB / fallback) — Observatoire
@@ -68,8 +73,14 @@ Lacuna/
 │   │   ├── habitableZone.js # Zone habitable (Kopparapu)
 │   │   ├── stellarProjection.js  # Projection stéréographique FOV 120° (ra/dec ↔ écran)
 │   │   ├── skyRenderers.js  # Rendu canvas ciel (Milky Way, grille, nébuleuses, étoiles, signaux)
+│   │   ├── labLineChart.js     # Utilitaire D3 partagé (courbes temps×amplitude)
 │   │   ├── spectrogramData.js  # Génération données spectrogramme / structure temporelle
-│   │   └── polarisationData.js # Paramètres polarisation (Stokes, ellipse)
+│   │   ├── spectreEnergetiqueData.js  # Spectre énergétique (gamma/X)
+│   │   ├── polarisationData.js # Paramètres polarisation (Stokes, ellipse)
+│   │   ├── gravimetriqueData.js  # Modèle sources + résidus (analyseur gravimétrique)
+│   │   ├── spectreStellaireData.js  # Spectre stellaire + courbe de lumière
+│   │   ├── orbitalData.js       # Données orbites (analyseur orbital, résonances)
+│   │   └── atmosphereData.js    # Profil moléculaire (spectromètre atmosphérique)
 │   ├── router/
 │   │   └── index.js         # Routes Vue Router
 │   └── assets/
@@ -92,6 +103,7 @@ Lacuna/
 │   ├── Documentation-fonctionnelle.md
 │   ├── LACUNA_GDD.md        # Game Design Document
 │   ├── LACUNA_vision_v01.md # Document de vision
+│   ├── LACUNA_I18N_SETTINGS.md  # i18n, détection langue, Settings, User Profile
 │   └── lacuna_interface.html # Maquette UI de référence
 ├── .env                     # Variables Supabase (gitignored)
 ├── .env.example

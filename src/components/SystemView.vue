@@ -3,6 +3,8 @@ import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useShipStore } from '@/stores/ship'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
+import { useUIStore } from '@/stores/ui'
+import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
 import StarSvgInline from '@/components/StarSvgInline.vue'
 import PlanetSvgInline from '@/components/PlanetSvgInline.vue'
 import {
@@ -34,6 +36,7 @@ function ringSizeForPlanet(diameterPx) {
 const shipStore = useShipStore()
 const stellarStore = useStellarSystemsStore()
 const systemObjectsStore = useSystemObjectsStore()
+const ui = useUIStore()
 
 const currentSystemId = computed(() => shipStore.currentSystemId ?? 'SOL')
 
@@ -48,6 +51,14 @@ const objects = computed(() =>
 const star = computed(() =>
   objects.value.find((o) => o.type === 'STAR' || o.type === 'PULSAR')
 )
+
+function getSpectralLetter(obj) {
+  if (!obj) return 'M'
+  if (obj.type === 'PULSAR') return 'PULSAR'
+  const st = (obj.spectral_type || '').toUpperCase()
+  return /^[OBAFGKM][0-9]?/.test(st) ? st[0] : st[0] || 'M'
+}
+const starSpectralLetter = computed(() => getSpectralLetter(star.value))
 
 const planets = computed(() =>
   objects.value.filter((o) =>
@@ -262,6 +273,53 @@ watch(currentSystemId, (id) => {
   if (id) systemObjectsStore.fetchForSystem(id)
 }, { immediate: true })
 
+const hoveredBody = ref(null)
+const tooltipPos = ref({ x: 0, y: 0 })
+
+function onBodyEnter(body, e) {
+  hoveredBody.value = body
+  if (e) tooltipPos.value = { x: e.clientX, y: e.clientY }
+}
+
+function onBodyMove(e) {
+  if (hoveredBody.value) tooltipPos.value = { x: e.clientX, y: e.clientY }
+}
+
+function onBodyLeave() {
+  hoveredBody.value = null
+}
+
+function onBodyClick(obj) {
+  const sys = stellarStore.list.find((s) => s.id === currentSystemId.value)
+  if (!sys || !obj) return
+  const body = systemObjectsStore.toBodyFormat(obj, sys.name)
+  ui.selectStar({ id: sys.id, name: sys.name, dist: sys.distance ?? '0' })
+  ui.setSelectedBody(body)
+  ui.openObservatoire()
+}
+
+const tooltipBody = computed(() => {
+  const obj = hoveredBody.value
+  if (!obj) return null
+  const sysName = stellarSystem.value?.name ?? ''
+  const displayName = obj.name || (obj.designation ? `${sysName} ${obj.designation}` : sysName)
+  if (obj.type === 'STAR' || obj.type === 'PULSAR') {
+    return {
+      name: displayName,
+      typeLabel: OBJECT_TYPE_LABELS.ETOILE,
+      spectral: obj.spectral_type || stellarSystem.value?.spectral_type || 'G2V',
+      distanceAu: null,
+    }
+  }
+  const { distanceAu } = toPhysicalUnits(obj)
+  const typeMap = { PLANET: 'PLANETE', MOON: 'PLANETE', MINOR_BODY: 'MINEUR' }
+  return {
+    name: displayName,
+    typeLabel: OBJECT_TYPE_LABELS[typeMap[obj.type] || 'PLANETE'],
+    distanceAu,
+  }
+})
+
 let resizeObserver = null
 onMounted(async () => {
   await ensureStoresLoaded(stellarStore)
@@ -336,17 +394,21 @@ onBeforeUnmount(() => {
           </svg>
           <!-- Soleil : origine de l'échelle des distances (0 UA), taille à l'échelle comme les planètes -->
           <div
-            class="system-view__star"
+            class="system-view__star system-view__body-interactive"
             :style="{
               width: starSizePx + 'px',
               minWidth: starSizePx + 'px',
               height: starSizePx + 'px',
             }"
+            @mouseenter="onBodyEnter(star, $event)"
+            @mousemove="onBodyMove($event)"
+            @mouseleave="onBodyLeave"
+            @click="onBodyClick(star)"
           >
             <div class="system-view__star-wrapper">
               <StarSvgInline
                 :spectral-type="star.type === 'PULSAR' ? 'PSR' : (star.spectral_type || 'G2V')"
-                class="system-view__star-svg"
+                :class="['system-view__star-svg', `system-view__star-svg--${starSpectralLetter}`]"
               />
             </div>
           </div>
@@ -366,9 +428,12 @@ onBeforeUnmount(() => {
               <div
                 v-for="(p, i) in planetsWithSize"
                 :key="p.id"
-                class="system-view__planet-orbital"
+                class="system-view__planet-orbital system-view__body-interactive"
                 :style="{ left: distanceAuToPx(p.distanceAu ?? 0) + 'px' }"
-                :title="`${p.name} ${p.distanceAu ? p.distanceAu.toFixed(2) + ' UA' : ''} — ${p.radiusEarth.toFixed(2)} R⊕${p.ringAttrs ? ' · Anneaux' : ''}`"
+                @mouseenter="onBodyEnter(p, $event)"
+                @mousemove="onBodyMove($event)"
+                @mouseleave="onBodyLeave"
+                @click="onBodyClick(p)"
               >
                 <div
                   class="system-view__planet-center"
@@ -402,7 +467,7 @@ onBeforeUnmount(() => {
                     />
                   </svg>
                 </div>
-                <span class="system-view__planet-label">{{ p.designation || p.name }}</span>
+                <span class="system-view__planet-label">{{ p.name || p.designation }}</span>
               </div>
             </div>
           </div>
@@ -410,8 +475,11 @@ onBeforeUnmount(() => {
             <div
               v-for="p in planetsForGrid"
               :key="p.id"
-              class="system-view__planet-slot"
-              :title="`${p.name} — ${p.radiusEarth.toFixed(2)} R⊕`"
+              class="system-view__planet-slot system-view__body-interactive"
+              @mouseenter="onBodyEnter(p, $event)"
+              @mousemove="onBodyMove($event)"
+              @mouseleave="onBodyLeave"
+              @click="onBodyClick(p)"
             >
               <span
                 class="system-view__planet-slot-dot"
@@ -419,7 +487,7 @@ onBeforeUnmount(() => {
               >
                 <PlanetSvgInline :planet="p" :diameter="p.diameterPx" />
               </span>
-              <span class="system-view__planet-slot-name">{{ p.designation || p.name }}</span>
+              <span class="system-view__planet-slot-name">{{ p.name || p.designation }}</span>
             </div>
             </div>
           </div>
@@ -450,6 +518,34 @@ onBeforeUnmount(() => {
       <div v-if="!planets.length" class="system-view__no-planets">
         Aucune planète connue dans ce système.
       </div>
+      <!-- Tooltip au survol (comme vue ciel profond) -->
+      <Teleport to="body">
+        <div
+          v-if="tooltipBody"
+          class="system-view__tooltip"
+          :style="{
+            left: tooltipPos.x + 'px',
+            top: tooltipPos.y + 'px',
+          }"
+        >
+          <div class="system-view__tooltip-inner">
+            <div class="system-view__tooltip-name">{{ tooltipBody.name }}</div>
+            <div class="system-view__tooltip-row">
+              <span class="system-view__tooltip-key">Type</span>
+              <span class="system-view__tooltip-val">{{ tooltipBody.typeLabel }}</span>
+            </div>
+            <div v-if="tooltipBody.spectral" class="system-view__tooltip-row">
+              <span class="system-view__tooltip-key">Spectral</span>
+              <span class="system-view__tooltip-val">{{ tooltipBody.spectral }}</span>
+            </div>
+            <div v-else-if="tooltipBody.distanceAu != null" class="system-view__tooltip-row">
+              <span class="system-view__tooltip-key">Distance</span>
+              <span class="system-view__tooltip-val">{{ tooltipBody.distanceAu.toFixed(2) }} UA</span>
+            </div>
+            <div class="system-view__tooltip-action">[ CLIC POUR OBSERVER ]</div>
+          </div>
+        </div>
+      </Teleport>
     </template>
   </div>
 </template>
@@ -577,6 +673,45 @@ onBeforeUnmount(() => {
   aspect-ratio: 1;
   flex-shrink: 0;
 }
+.system-view__star-svg--O {
+  filter: drop-shadow(0 0 16px rgba(155, 176, 255, 0.8)) drop-shadow(0 0 40px rgba(107, 140, 255, 0.6)) drop-shadow(0 0 72px rgba(74, 111, 217, 0.4));
+}
+.system-view__star-svg--B {
+  filter: drop-shadow(0 0 16px rgba(170, 191, 255, 0.8)) drop-shadow(0 0 40px rgba(122, 159, 255, 0.6)) drop-shadow(0 0 72px rgba(90, 127, 221, 0.4));
+}
+.system-view__star-svg--A {
+  filter: drop-shadow(0 0 16px rgba(208, 220, 255, 0.8)) drop-shadow(0 0 40px rgba(160, 184, 240, 0.6)) drop-shadow(0 0 72px rgba(128, 152, 216, 0.4));
+}
+.system-view__star-svg--F {
+  filter: drop-shadow(0 0 16px rgba(255, 248, 232, 0.8)) drop-shadow(0 0 40px rgba(240, 232, 216, 0.6)) drop-shadow(0 0 72px rgba(216, 200, 176, 0.4));
+}
+.system-view__star-svg--G {
+  filter: drop-shadow(0 0 16px rgba(255, 232, 160, 0.8)) drop-shadow(0 0 40px rgba(255, 200, 100, 0.6)) drop-shadow(0 0 72px rgba(255, 180, 80, 0.4));
+}
+.system-view__star-svg--K {
+  filter: drop-shadow(0 0 16px rgba(255, 208, 128, 0.8)) drop-shadow(0 0 40px rgba(240, 160, 80, 0.6)) drop-shadow(0 0 72px rgba(216, 120, 48, 0.4));
+}
+.system-view__star-svg--M {
+  filter: drop-shadow(0 0 16px rgba(255, 144, 96, 0.8)) drop-shadow(0 0 40px rgba(216, 96, 64, 0.6)) drop-shadow(0 0 72px rgba(184, 64, 40, 0.4));
+}
+.system-view__star-svg--L {
+  filter: drop-shadow(0 0 16px rgba(192, 96, 64, 0.8)) drop-shadow(0 0 40px rgba(144, 64, 48, 0.6)) drop-shadow(0 0 72px rgba(96, 48, 32, 0.4));
+}
+.system-view__star-svg--T {
+  filter: drop-shadow(0 0 16px rgba(128, 64, 48, 0.8)) drop-shadow(0 0 40px rgba(80, 40, 32, 0.6)) drop-shadow(0 0 72px rgba(48, 24, 16, 0.4));
+}
+.system-view__star-svg--Y {
+  filter: drop-shadow(0 0 16px rgba(80, 48, 32, 0.8)) drop-shadow(0 0 40px rgba(48, 32, 24, 0.6)) drop-shadow(0 0 72px rgba(32, 24, 16, 0.4));
+}
+.system-view__star-svg--D {
+  filter: drop-shadow(0 0 16px rgba(192, 200, 224, 0.8)) drop-shadow(0 0 40px rgba(128, 136, 176, 0.6)) drop-shadow(0 0 72px rgba(128, 144, 176, 0.4));
+}
+.system-view__star-svg--PULSAR {
+  filter: drop-shadow(0 0 16px rgba(112, 112, 128, 0.8)) drop-shadow(0 0 40px rgba(96, 112, 160, 0.6)) drop-shadow(0 0 72px rgba(64, 80, 160, 0.4));
+}
+.system-view__star-svg:not([class*='--']) {
+  filter: drop-shadow(0 0 16px rgba(255, 232, 160, 0.8)) drop-shadow(0 0 40px rgba(255, 200, 100, 0.6)) drop-shadow(0 0 72px rgba(255, 180, 80, 0.4));
+}
 .system-view__star-svg :deep(svg) {
   height: 100%;
   width: auto;
@@ -689,5 +824,46 @@ onBeforeUnmount(() => {
   font-size: var(--text-sm);
   color: var(--color-muted);
   text-align: center;
+}
+
+.system-view__body-interactive {
+  cursor: pointer;
+}
+
+.system-view__tooltip {
+  position: fixed;
+  transform: translate(12px, 12px);
+  z-index: 100;
+  pointer-events: none;
+}
+.system-view__tooltip-inner {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg);
+  border: 1px solid var(--color-cyan-dim);
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  min-width: 160px;
+}
+.system-view__tooltip-name {
+  color: var(--color-cyan);
+  font-weight: 500;
+  margin-bottom: var(--space-1);
+}
+.system-view__tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  color: var(--color-muted);
+}
+.system-view__tooltip-key {
+  color: var(--color-muted);
+}
+.system-view__tooltip-val {
+  color: var(--color-white);
+}
+.system-view__tooltip-action {
+  margin-top: var(--space-2);
+  color: var(--color-cyan);
+  font-size: 10px;
 }
 </style>

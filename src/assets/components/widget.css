@@ -126,6 +126,22 @@
     box-shadow: inset 2px 0 0 var(--color-green);
 }
 
+.signal-card--search-hit {
+    border-color: var(--color-amber);
+    box-shadow: 0 0 0 1px rgba(232, 160, 32, 0.4);
+}
+
+.signal-card__support {
+    position: absolute;
+    top: var(--space-2);
+    right: 28px;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 .signal-card__type-icon {
     position: absolute;
     top: var(--space-3);

@@ -1,11 +1,14 @@
 <script setup>
+import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import InstrumentsBar from '@/components/InstrumentsBar.vue'
 import NotificationToast from '@/components/NotificationToast.vue'
+
+const route = useRoute()
 </script>
 
 <template>
-  <div class="lacuna-app">
+  <div class="lacuna-app" :class="{ 'route-observatoire': route.name === 'observatoire' }">
     <AppHeader />
     <main class="lacuna-main">
       <RouterView v-slot="{ Component }">

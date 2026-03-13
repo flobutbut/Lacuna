@@ -3,18 +3,18 @@
    Notifications et widget de voyage
    ══════════════════════════════════════════════════════ */
 
-/* ── Notification standard ── */
-.notif {
-    position: absolute;
-    top: 58px;
+/* ── NotificationToast : composant réutilisable ── */
+.notification-toast {
+    position: fixed;
+    top: calc(var(--header-height) + 10px);
     left: 50%;
     transform: translateX(-50%);
     background: var(--color-panel);
-    border: var(--border-width) solid var(--border-bright);
+    border: var(--border-width) solid var(--color-violet-dim);
     padding: var(--space-4) var(--space-8);
     font-size: var(--text-md);
     letter-spacing: var(--tracking-normal);
-    color: var(--color-cyan);
+    color: var(--color-violet);
     opacity: 0;
     transition: opacity var(--transition-smooth);
     white-space: nowrap;
@@ -22,27 +22,37 @@
     z-index: var(--z-notification);
 }
 
-.notif.visible {
+.notification-toast--visible {
     opacity: 1;
 }
 
-/* ── Variantes de notification ── */
-.notif--info {
+/* Observatoire : sous la barre (tabs + filtres + recherche) */
+.lacuna-app.route-observatoire .notification-toast {
+    top: calc(var(--header-height) + var(--sidebar-offset) + 80px);
+}
+
+/* Variantes */
+.notification-toast--default {
+    color: var(--color-violet);
+    border-color: var(--color-violet-dim);
+}
+
+.notification-toast--info {
     color: var(--color-cyan);
     border-color: var(--border-bright);
 }
 
-.notif--warn {
+.notification-toast--warn {
     color: var(--color-amber);
     border-color: var(--color-amber-dim);
 }
 
-.notif--error {
+.notification-toast--error {
     color: var(--color-red);
     border-color: var(--color-red);
 }
 
-.notif--success {
+.notification-toast--success {
     color: var(--color-green);
     border-color: var(--color-green);
 }

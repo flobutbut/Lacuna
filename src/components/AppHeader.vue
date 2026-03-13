@@ -3,11 +3,20 @@ import { computed, onMounted } from 'vue'
 import { useShipStore } from '@/stores/ship'
 import { useDrakeStore } from '@/stores/drake'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
+import { useUIStore } from '@/stores/ui'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
+import { resetPrototypeSession } from '@/lib/session'
 
 const shipStore = useShipStore()
 const drakeStore = useDrakeStore()
 const stellarStore = useStellarSystemsStore()
+const ui = useUIStore()
+
+function resetProto() {
+  resetPrototypeSession()
+  ui.showNotification('Session prototype réinitialisée — rechargement…', 500)
+  setTimeout(() => window.location.reload(), 400)
+}
 
 const currentSystemName = computed(() => {
   const sys = stellarStore.list.find((s) => s.id === shipStore.currentSystemId)
@@ -21,7 +30,12 @@ onMounted(async () => {
 
 <template>
   <header class="header">
-    <RouterLink to="/" class="header__logo">LAC<span class="header__logo-accent">U</span>NA</RouterLink>
+    <RouterLink
+      to="/"
+      class="header__logo"
+      title="Accueil — Double-clic : réinitialiser la session prototype"
+      @dblclick.prevent="resetProto"
+    >LAC<span class="header__logo-accent">U</span>NA</RouterLink>
 
     <div class="header__center">
       <div class="header__ship-name">{{ shipStore.name }} — VOYAGE {{ shipStore.voyage }}</div>

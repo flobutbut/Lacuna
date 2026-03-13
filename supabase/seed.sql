@@ -16,6 +16,7 @@ VALUES
   ('GLIESE667', 'Gliese 667C', 'M1.5V', 22.0, 2.0, 3, true, 3, '{"ra": 259.7, "dec": -34.9}'),
   ('HD44594', 'HD 44594', 'G0V', 11.4, 5.2, 2, true, 0, '{"ra": 95.0, "dec": -3.1}'),
   ('PSR_B1919', 'Région PSR B1919+21', NULL, 2283, NULL, 0, false, 2, '{"ra": 290.0, "dec": 21.8}'),
+  ('GW_REGION_A', 'Région GW-2341-A', NULL, 130, NULL, 0, false, 2, '{"ra": 200, "dec": -35}'),
   -- Naines brunes (IR-only) — sources : WISE, Luhman
   ('LUHMAN16', 'Luhman 16', 'L7.5', 6.5, 1, 0, false, 1, '{"ra": 162.3, "dec": -53.3}'),
   ('WISE0855', 'WISE 0855−0714', 'Y4', 7.4, 1, 0, false, 2, '{"ra": 133.9, "dec": -7.2}')
@@ -155,6 +156,10 @@ VALUES ('HD44594', 'PLANET', 'c', 'HD 44594 c', 2, 120, 1.5, true);
 -- PSR_B1919 — Pulsar (trace PSR-001, LACUNA_TRACES §3). Premier pulsar découvert — initialement nommé LGM-1.
 INSERT INTO system_objects (system_id, type, designation, name, sort_order, emits_signals, emission_support, emission_pattern, emission_frequency_hz, emission_direction, confirmation_status)
 VALUES ('PSR_B1919', 'PULSAR', NULL, 'PSR B1919+21', 0, true, 'EM_RADIO', 'PERIODIC', 1.33, 'beam', 'CONFIRMED');
+
+-- GW_REGION_A — Binaire d'étoiles à neutrons (onde gravitationnelle). Réf. GW170817, LIGO/Virgo.
+INSERT INTO system_objects (system_id, type, designation, name, sort_order, emits_signals, emission_support, emission_pattern, emission_frequency_hz, emission_direction, confirmation_status)
+VALUES ('GW_REGION_A', 'NEUTRON_STAR', NULL, 'BNS GW-2341', 0, true, 'GRAVITATIONNEL', 'BURST', 0.02, 'omni', 'CONFIRMED');
 
 -- Trace immuable : Signal WOW! 1977
 INSERT INTO traces (
@@ -577,11 +582,12 @@ INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbi
 INSERT INTO system_objects (system_id, type, designation, name, sort_order, spectral_type, stellar_activity, mass_stellar) VALUES ('KEPLER438', 'STAR', 'a', 'Kepler-438', 0, 'M1V', 'CALM', 0.54);
 INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone, habitable_zone_type) VALUES ('KEPLER438', 'PLANET', 'b', 'Kepler-438 b', 1, 35.2, 1.5, true, 'TEMPERATE');
 
--- ── Événements transients (signal_events) — GRB, supernova ──
+-- ── Événements transients (signal_events) — GRB, supernova, GW ──
 INSERT INTO signal_events (system_id, event_type, observed_at, duration_sec, attributes)
 VALUES
   ('GLIESE667', 'GRB', NOW() - INTERVAL '2 hours', 42, '{"designation": "GRB-2341-G667", "energy_kev": 100}'::jsonb),
-  ('KEPLER452', 'SUPERNOVA', NOW() - INTERVAL '5 hours', 3600, '{"designation": "SN-2341-K452", "phase": "radio_afterglow"}'::jsonb);
+  ('KEPLER452', 'SUPERNOVA', NOW() - INTERVAL '5 hours', 3600, '{"designation": "SN-2341-K452", "phase": "radio_afterglow"}'::jsonb),
+  ('GW_REGION_A', 'GW', NOW() - INTERVAL '8 hours', 16, '{"designation": "GW-2341-A", "chirp_mass_solar": 1.2, "distance_mpc": 130}'::jsonb);
 
 -- ── Signaux démo (session seed-demo : clonés à la première visite Observatoire) ──
 -- 1. Permanent : pulsar (OBJECT)
@@ -603,8 +609,21 @@ SELECT 'EVENT', NULL, se.id, 'seed-demo', '11111111-1111-1111-1111-111111111111'
   '{"azimuth": 290, "elevation": 45, "receivedAt": "2341-04-11", "polarization": "linéaire", "structure": "continu décroissant", "sourceName": "SN-2341-K452"}'::jsonb
 FROM signal_events se WHERE se.event_type = 'SUPERNOVA' AND se.system_id = 'KEPLER452' ORDER BY se.created_at DESC LIMIT 1;
 
--- 4. Artificiel : WOW-like (UNKNOWN) — 1420 MHz anomal, direction Sagittaire
--- 5. Naturel : synchrotron (UNKNOWN) — 408 MHz, émission continue
+-- 4. Ponctuel : onde gravitationnelle (EVENT) — fusion binaire
+INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
+SELECT 'EVENT', NULL, se.id, 'seed-demo', '11111111-1111-1111-1111-111111111111', 100, 'GRAVITATIONNEL', 16,
+  '{"azimuth": 200, "elevation": -35, "receivedAt": "2341-04-10", "polarization": "—", "structure": "sursaut", "sourceName": "GW-2341-A"}'::jsonb
+FROM signal_events se WHERE se.event_type = 'GW' AND se.system_id = 'GW_REGION_A' ORDER BY se.created_at DESC LIMIT 1;
+
+-- 5. Permanent : binaire compact (OBJECT) — émetteur gravitationnel
+INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
+SELECT 'OBJECT', so.id, NULL, 'seed-demo', '11111111-1111-1111-1111-111111111111', 100, so.emission_support, 16,
+  '{"azimuth": 200, "elevation": -35, "receivedAt": "2341-04-10", "polarization": "—", "structure": "sursaut", "sourceName": "BNS GW-2341"}'::jsonb
+FROM system_objects so
+WHERE so.system_id = 'GW_REGION_A' AND so.emits_signals = true;
+
+-- 6. Artificiel : WOW-like (UNKNOWN) — 1420 MHz anomal, direction Sagittaire
+-- 7. Naturel : synchrotron (UNKNOWN) — 408 MHz, émission continue
 INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
 VALUES
   ('UNKNOWN', NULL, NULL, 'seed-demo', '11111111-1111-1111-1111-111111111111', 1420405600, 'EM_RADIO', 72,

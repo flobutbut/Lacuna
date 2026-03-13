@@ -80,12 +80,30 @@ function render() {
     .attr('class', 'lab-spectrogram__axis lab-spectrogram__axis--x')
     .attr('transform', `translate(${margin.left},${chartHeight - margin.bottom})`)
     .call(d3.axisBottom(xScale).ticks(6).tickSize(4))
+  axisBottom
+    .append('text')
+    .attr('x', innerWidth)
+    .attr('y', 18)
+    .attr('text-anchor', 'end')
+    .attr('font-size', '9px')
+    .attr('font-family', 'var(--font-mono)')
+    .attr('fill', 'var(--color-muted)')
+    .text('Temps (s)')
 
   const axisLeft = svg
     .append('g')
     .attr('class', 'lab-spectrogram__axis lab-spectrogram__axis--y')
     .attr('transform', `translate(${margin.left},${margin.top})`)
     .call(d3.axisLeft(yScale).ticks(5).tickSize(4))
+  axisLeft
+    .append('text')
+    .attr('x', -8)
+    .attr('y', 0)
+    .attr('text-anchor', 'end')
+    .attr('font-size', '9px')
+    .attr('font-family', 'var(--font-mono)')
+    .attr('fill', 'var(--color-muted)')
+    .text('Fréq. (Hz)')
 
   svg
     .selectAll('.lab-spectrogram__axis')

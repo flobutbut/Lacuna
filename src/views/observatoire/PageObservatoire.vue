@@ -13,7 +13,6 @@ import TravelWidget from '@/components/TravelWidget.vue'
 import ObservatoirePanel from '@/components/ObservatoirePanel.vue'
 import SignalModal from '@/components/SignalModal.vue'
 import SignalTooltip from '@/components/SignalTooltip.vue'
-import NotificationToast from '@/components/NotificationToast.vue'
 
 const ui = useUIStore()
 const isSkyMode = computed(() => ui.observatoireViewMode === 'sky')
@@ -37,9 +36,8 @@ const isSkyMode = computed(() => ui.observatoireViewMode === 'sky')
         <div class="cc-v" />
       </div>
       <ObservatoireAzimuth v-if="isSkyMode" />
-      <NotificationToast />
       <TravelWidget v-if="isSkyMode" />
-      <ObservatoirePanel v-if="isSkyMode" />
+      <ObservatoirePanel v-if="ui.selectedStar && ui.observatoireOpen" />
       <SignalModal />
     </div>
   </div>

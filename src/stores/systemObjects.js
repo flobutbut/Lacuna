@@ -58,7 +58,7 @@ export const useSystemObjectsStore = defineStore('systemObjects', () => {
     return bySystem.value[systemId] ?? []
   }
 
-  /** Convertit un system_object en format "body" pour ObservatoirePanel */
+  /** Convertit un system_object en format "body" pour ObservatoirePanel (type = ETOILE, PLANETE, etc.) */
   function toBodyFormat(obj, systemName) {
     const typeMap = {
       STAR: 'ETOILE',
@@ -68,13 +68,14 @@ export const useSystemObjectsStore = defineStore('systemObjects', () => {
       DEBRIS_DISK: 'MINEUR',
     }
     const anomaly = obj.in_habitable_zone ? 45 : obj.type === 'STAR' ? 8 : 22
-    const displayName = obj.designation ? `${systemName} ${obj.designation}` : obj.name
+    const displayName = obj.name || (obj.designation ? `${systemName} ${obj.designation}` : systemName)
+    const bodyType = typeMap[obj.type] || 'PLANETE'
     return {
+      ...obj,
       id: String(obj.designation || obj.id),
       name: displayName,
-      type: typeMap[obj.type] || 'PLANETE',
+      type: bodyType,
       anomaly: obj.confirmation_status === 'DEBATED' ? 72 : anomaly,
-      ...obj,
     }
   }
 
