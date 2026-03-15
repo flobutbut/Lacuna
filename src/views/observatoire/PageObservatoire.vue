@@ -1,5 +1,6 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import SkyCanvas from '@/components/SkyCanvas.vue'
 import SystemView from '@/components/SystemView.vue'
@@ -15,8 +16,20 @@ import SignalModal from '@/components/SignalModal.vue'
 import SignalTooltip from '@/components/SignalTooltip.vue'
 import ConstellationTooltip from '@/components/ConstellationTooltip.vue'
 
+const route = useRoute()
 const ui = useUIStore()
 const isSkyMode = computed(() => ui.observatoireViewMode === 'sky')
+
+function onKeydown(e) {
+  if (e.key !== '@') return
+  if (route.name !== 'observatoire' || !isSkyMode.value) return
+  if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return
+  e.preventDefault()
+  ui.toggleObservatoireTiles()
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
@@ -27,8 +40,8 @@ const isSkyMode = computed(() => ui.observatoireViewMode === 'sky')
     <div v-if="!isSkyMode" class="scanlines" />
     <div class="ui-layer">
       <ObservatoireViewTabs />
-      <SideLeft />
-      <SideRight />
+      <SideLeft v-show="!isSkyMode || ui.observatoireTilesVisible" />
+      <SideRight v-show="!isSkyMode || ui.observatoireTilesVisible" />
       <Reticule v-if="isSkyMode" />
       <StarTooltip v-if="isSkyMode" />
       <SignalTooltip v-if="isSkyMode" />

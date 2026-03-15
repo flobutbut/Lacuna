@@ -119,12 +119,16 @@ export function useSkyStars(spectralFilterRef, exoplanetFilterRef) {
   const systemObjectsStore = useSystemObjectsStore()
   const mapStore = useMapNodesStore()
 
-  function buildStarsFromDb(viewerCoords = { x: 0, y: 0, z: 0 }) {
+  /**
+   * @param {object} [viewerCoords]
+   * @param {{ skipExoplanetFilter?: boolean }} [options] - skipExoplanetFilter: true pour garder toutes les étoiles (ex. positions des constellations)
+   */
+  function buildStarsFromDb(viewerCoords = { x: 0, y: 0, z: 0 }, options = {}) {
     const band = spectralFilterRef.value
     const raw = stellarSystemsStore.forSky().filter((s) => s.id !== 'SOL')
     const pool = getPoolForBandFilters(raw)
     let entries = pool.map((star) => ({ star, ...getStarBandParamsOrZero(star, band) }))
-    if (exoplanetFilterRef?.value) {
+    if (exoplanetFilterRef?.value && !options.skipExoplanetFilter) {
       entries = entries.filter((e) => systemObjectsStore.hasExoplanets(e.star.id))
     }
     const visitedIds = mapStore.visitedSystemIds ?? new Set()

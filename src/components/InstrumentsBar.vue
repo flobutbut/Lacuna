@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { useUIStore } from '@/stores/ui'
 import { useObservationsStore } from '@/stores/observations'
 import { INSTRUMENTS } from '@/constants/menus'
@@ -8,6 +9,7 @@ import NavTabButton from '@/components/NavTabButton.vue'
 
 const route = useRoute()
 const ui = useUIStore()
+const { carteHasNewNodes, labHasNewObservations } = storeToRefs(ui)
 const obsStore = useObservationsStore()
 
 const instrumentsWithBadge = computed(() =>
@@ -16,7 +18,8 @@ const instrumentsWithBadge = computed(() =>
     showBadge:
       inst.id === 'artefacts' ||
       (inst.id === 'observatoire' && obsStore.hasUnanalyzed()) ||
-      (inst.id === 'laboratoire' && ui.labHasNewObservations),
+      (inst.id === 'laboratoire' && labHasNewObservations.value) ||
+      (inst.id === 'carte' && carteHasNewNodes.value),
   }))
 )
 

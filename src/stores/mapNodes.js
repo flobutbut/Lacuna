@@ -54,8 +54,12 @@ export const useMapNodesStore = defineStore('mapNodes', () => {
     const shipId = ship?.id
     const supabaseStore = useSupabaseStore()
 
-    if (!supabaseStore.isConfigured() || !shipId) {
+    if (!supabaseStore.isConfigured()) {
       loaded.value = true
+      return { nodes: [], edges: [] }
+    }
+    if (!shipId) {
+      // Ne pas marquer loaded : permet un retry après chargement du vaisseau (ex. après refresh)
       return { nodes: [], edges: [] }
     }
 

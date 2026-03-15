@@ -17,6 +17,8 @@ export const useUIStore = defineStore('ui', () => {
   const selectedBody = ref(null)
   const observatoireOpen = ref(false)
   const labHasNewObservations = ref(false)
+  /** Pastille Carte : true quand un nouveau système a été ajouté à la carte depuis une autre vue */
+  const carteHasNewNodes = ref(false)
   const hoveredStar = ref(null)
   const reticulePosition = ref({ x: 0, y: 0 })
   const reticuleVisible = ref(false)
@@ -31,7 +33,7 @@ export const useUIStore = defineStore('ui', () => {
   const spectralFilter = ref('visible')
   /** Filtre exoplanètes — n'afficher que les systèmes avec exoplanètes connues (s'additionne aux filtres spectraux) */
   const exoplanetFilter = ref(false)
-  /** Afficher les lignes de constellation (VISUEL uniquement) — préférence localStorage, désactivé par défaut */
+  /** Afficher les lignes de constellation (tous filtres spectraux) — préférence localStorage, désactivé par défaut */
   const constellationsEnabled = ref(
     JSON.parse(localStorage.getItem('lacuna_constellations_enabled') ?? 'false')
   )
@@ -41,6 +43,8 @@ export const useUIStore = defineStore('ui', () => {
   const signalSearchMatchIds = ref(new Set())
   /** Vue Observatoire : 'sky' | 'system' */
   const observatoireViewMode = ref('sky')
+  /** Tuiles latérales (SideLeft, SideRight) en vue ciel profond — raccourci [@] pour masquer */
+  const observatoireTilesVisible = ref(true)
 
   function setObservatoireViewMode(mode) {
     if (['sky', 'system'].includes(mode)) {
@@ -97,6 +101,10 @@ export const useUIStore = defineStore('ui', () => {
 
   function toggleExoplanetFilter() {
     exoplanetFilter.value = !exoplanetFilter.value
+  }
+
+  function toggleObservatoireTiles() {
+    observatoireTilesVisible.value = !observatoireTilesVisible.value
   }
 
   function toggleConstellationsEnabled() {
@@ -164,6 +172,14 @@ export const useUIStore = defineStore('ui', () => {
     labHasNewObservations.value = false
   }
 
+  function setCarteHasNew(value = true) {
+    carteHasNewNodes.value = !!value
+  }
+
+  function clearCarteHasNew() {
+    carteHasNewNodes.value = false
+  }
+
   function setReticulePosition(x, y) {
     reticulePosition.value = { x, y }
     reticuleVisible.value = true
@@ -205,6 +221,7 @@ export const useUIStore = defineStore('ui', () => {
     setSelectedBody,
     observatoireOpen,
     labHasNewObservations,
+    carteHasNewNodes,
     hoveredStar,
     reticulePosition,
     openPanel,
@@ -217,6 +234,8 @@ export const useUIStore = defineStore('ui', () => {
     closeObservatoire,
     setLabHasNew,
     clearLabHasNew,
+    setCarteHasNew,
+    clearCarteHasNew,
     setReticulePosition,
     setReticuleVisible,
     reticuleVisible,
@@ -248,5 +267,7 @@ export const useUIStore = defineStore('ui', () => {
     clearSignalSearchMatchIds,
     observatoireViewMode,
     setObservatoireViewMode,
+    observatoireTilesVisible,
+    toggleObservatoireTiles,
   }
 })

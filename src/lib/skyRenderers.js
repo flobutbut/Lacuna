@@ -98,11 +98,12 @@ let _lastCtxLog = 0
  * @param {CanvasRenderingContext2D} ctx
  * @param {Array<{star_from:string, star_to:string, constellation_abbr:string}>} lines
  * @param {Map<string, {x:number, y:number}>} projectedPositions - id → position écran (stars in FOV)
+ * @param {number} [opacity=0.35] - opacité des traits (ex. 0.2 quand filtre exoplanètes actif)
  */
-export function drawConstellationLines(ctx, lines, projectedPositions, w, h) {
+export function drawConstellationLines(ctx, lines, projectedPositions, w, h, opacity = 0.35) {
   if (!lines?.length || !projectedPositions) return
   ctx.save()
-  ctx.strokeStyle = 'rgba(0, 180, 200, 0.35)'
+  ctx.strokeStyle = `rgba(0, 180, 200, ${opacity})`
   ctx.lineWidth = 1
   ctx.setLineDash([])
   lines.forEach((seg) => {

@@ -35,6 +35,8 @@ const shipStore = useShipStore()
 const mapStore = useMapNodesStore()
 const canvasRef = ref(null)
 const stars = ref([])
+/** Liste complète (sans filtre exoplanètes) pour positions des segments de constellation quand filtre exoplanètes actif */
+const starsForConstellations = ref([])
 const isPanning = ref(false)
 const lastPanPos = ref({ x: 0, y: 0 })
 const hasPanned = ref(false)
@@ -54,7 +56,13 @@ function getViewerCoords() {
 
 function rebuildStars() {
   if (canvasEl) {
-    stars.value = buildStarsFromDb(getViewerCoords()) ?? []
+    const coords = getViewerCoords()
+    stars.value = buildStarsFromDb(coords) ?? []
+    if (exoplanetFilter.value && constellationsEnabled.value) {
+      starsForConstellations.value = buildStarsFromDb(coords, { skipExoplanetFilter: true }) ?? []
+    } else {
+      starsForConstellations.value = []
+    }
   }
 }
 
@@ -111,8 +119,15 @@ function draw(canvas, starsRef) {
     if (pos) projectedPositions.set(s.id, pos)
   })
 
-  if (band === 'visible' && constellationsEnabled.value && stellarSystemsStore.constellationLines.length) {
-    drawConstellationLines(ctx, stellarSystemsStore.constellationLines, projectedPositions, w, h)
+  if (constellationsEnabled.value && stellarSystemsStore.constellationLines.length) {
+    const listForConstellations = exoplanetFilter.value && starsForConstellations.value.length ? starsForConstellations.value : starList
+    const constellationPositions = new Map()
+    listForConstellations.forEach((s) => {
+      const pos = projectStarInFov(s.ra, s.dec, vd.ra, vd.dec, w, h)
+      if (pos) constellationPositions.set(s.id, pos)
+    })
+    const constellationOpacity = exoplanetFilter.value ? 0.15 : 0.35
+    drawConstellationLines(ctx, stellarSystemsStore.constellationLines, constellationPositions, w, h, constellationOpacity)
   }
 
   drawStars(ctx, starList, vd.ra, vd.dec, w, h, selected, searchedStarId.value, projectedPositions)
@@ -206,13 +221,10 @@ function handleMouseMove(e, starList, canvas) {
     ui.hoveredStar = null
     let closestLine = null
     let minLineDist = CONSTELLATION_HOVER_THRESHOLD
-    if (
-      spectralFilter.value === 'visible' &&
-      constellationsEnabled.value &&
-      stellarSystemsStore.constellationLines.length
-    ) {
+    if (constellationsEnabled.value && stellarSystemsStore.constellationLines.length) {
+      const listForConstellations = exoplanetFilter.value && starsForConstellations.value.length ? starsForConstellations.value : starList
       const projectedPositions = new Map()
-      starList.forEach((s) => {
+      listForConstellations.forEach((s) => {
         const pos = projectStarInFov(s.ra, s.dec, vd.ra, vd.dec, w, h)
         if (pos) projectedPositions.set(s.id, pos)
       })
@@ -324,7 +336,8 @@ onMounted(async () => {
   canvasEl.height = h
   ctx = canvasEl.getContext('2d')
 
-  await ensureStoresLoaded(shipStore, stellarSystemsStore, nebulasStore, mapStore)
+  await ensureStoresLoaded(shipStore, stellarSystemsStore, nebulasStore)
+  await ensureStoresLoaded(mapStore)
   await Promise.all([
     stellarSystemsStore.fetchVisibleForSky(shipStore.currentSystemId, 18),
     stellarSystemsStore.fetchConstellationLines(),
@@ -375,6 +388,10 @@ watch(
 watch(spectralFilter, onSpectralFilterChange)
 watch(exoplanetFilter, () => {
   if (canvasEl) rebuildStars()
+})
+
+watch(constellationsEnabled, () => {
+  if (constellationsEnabled.value && exoplanetFilter.value && canvasEl) rebuildStars()
 })
 
 watch(

@@ -12,21 +12,19 @@ const TABS = [
 
 <template>
   <div class="observatoire-tabs">
-    <div class="observatoire-tabs__row">
-      <div class="observatoire-tabs__buttons">
-        <button
-          v-for="t in TABS"
-          :key="t.id"
-          type="button"
-          class="observatoire-tabs__btn"
-          :class="{ 'observatoire-tabs__btn--active': ui.observatoireViewMode === t.id }"
-          @click="ui.setObservatoireViewMode(t.id)"
-        >
-          {{ t.label }}
-        </button>
-      </div>
+    <div class="observatoire-tabs__buttons">
+      <button
+        v-for="t in TABS"
+        :key="t.id"
+        type="button"
+        class="observatoire-tabs__btn"
+        :class="{ 'observatoire-tabs__btn--active': ui.observatoireViewMode === t.id }"
+        @click="ui.setObservatoireViewMode(t.id)"
+      >
+        {{ t.label }}
+      </button>
     </div>
-    <ObservatoireSpectralFilters v-if="ui.observatoireViewMode === 'sky'" />
+    <ObservatoireSpectralFilters v-if="ui.observatoireViewMode === 'sky'" class="observatoire-tabs__filters" />
   </div>
 </template>
 
@@ -34,22 +32,25 @@ const TABS = [
 .observatoire-tabs {
   position: absolute;
   top: var(--sidebar-offset);
-  left: 50%;
-  transform: translateX(-50%);
+  /* Réserve la place des panneaux latéraux (SideLeft / SideRight) */
+  left: calc(var(--sidebar-offset) + var(--sidebar-width));
+  right: calc(var(--sidebar-offset) + var(--sidebar-width));
+  padding-left: var(--space-6);
+  padding-right: var(--space-6);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-4);
   z-index: 20;
   pointer-events: auto;
 }
-.observatoire-tabs__row {
-  display: flex;
-  align-items: center;
-}
 .observatoire-tabs__buttons {
   display: flex;
   gap: 0;
+}
+.observatoire-tabs__filters {
+  flex-shrink: 0;
 }
 .observatoire-tabs__btn {
   padding: var(--space-4) var(--space-8);

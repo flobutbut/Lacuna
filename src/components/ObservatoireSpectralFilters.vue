@@ -8,6 +8,7 @@ import { useSignauxStore } from '@/stores/signaux'
 import { useObservationsStore } from '@/stores/observations'
 import { filterBySpectralBand } from '@/lib/spectralBands'
 import { xyzToRaDec } from '@/lib/stellarProjection'
+import AppSelect from '@/components/AppSelect.vue'
 
 const ui = useUIStore()
 const stellarStore = useStellarSystemsStore()
@@ -178,17 +179,15 @@ onUnmounted(() => {
 <template>
   <div class="spectral-bar">
     <div class="spectral-filters">
-      <button
-        v-for="f in FILTERS"
-        :key="f.id"
-        type="button"
-        class="spectral-filters__btn"
-        :class="{ 'spectral-filters__btn--active': ui.spectralFilter === f.id }"
-        :title="f.title"
-        @click="ui.setSpectralFilter(f.id)"
-      >
-        {{ f.label }}
-      </button>
+      <AppSelect
+        :model-value="ui.spectralFilter"
+        :options="FILTERS"
+        value-key="id"
+        label-key="label"
+        aria-label="Filtre spectral"
+        title="Bande spectrale"
+        @update:model-value="ui.setSpectralFilter"
+      />
       <button
         type="button"
         class="spectral-filters__btn"
@@ -202,7 +201,7 @@ onUnmounted(() => {
         type="button"
         class="spectral-filters__btn"
         :class="{ 'spectral-filters__btn--active': ui.constellationsEnabled }"
-        title="Afficher les lignes de constellation (Visuel uniquement)"
+        title="Afficher les lignes de constellation"
         @click="ui.toggleConstellationsEnabled"
       >
         Constellations

@@ -375,7 +375,39 @@ Tooltip unifié pour étoiles, signaux, corps.
 
 ---
 
-### 3.13 Widgets latéraux (widget.css)
+### 3.13 AppSelect (Select / Dropdown)
+
+**Fichier** : `src/components/AppSelect.vue`  
+**Styles** : `select.css` — classe `.ds-select`
+
+Liste déroulante native stylée avec les tokens du design system (couleurs, bordures, typo mono, états hover/focus). La dropdown (options) utilise `--color-panel-solid` et `--color-white`.
+
+**Props** :
+- `modelValue` : valeur sélectionnée (v-model)
+- `options` : tableau d’objets (ex. `[{ id, label, title? }]`)
+- `valueKey` : clé de la valeur (défaut : `'id'`)
+- `labelKey` : clé du libellé (défaut : `'label'`)
+- `name`, `ariaLabel`, `title`, `disabled`
+
+**Events** : `@update:modelValue`
+
+**Exemple** :
+```vue
+<AppSelect
+  :model-value="ui.spectralFilter"
+  :options="FILTERS"
+  value-key="id"
+  label-key="label"
+  aria-label="Filtre spectral"
+  @update:model-value="ui.setSpectralFilter"
+/>
+```
+
+**Utilisation** : ObservatoireSpectralFilters (filtre bande spectrale)
+
+---
+
+### 3.14 Widgets latéraux (widget.css)
 
 | Classe | Usage |
 |--------|-------|
@@ -442,6 +474,7 @@ Tooltip unifié pour étoiles, signaux, corps.
 | `instruments.css` | NavTabButton (barre nav) |
 | `widget.css` | sw-row, sw-cell, sw-key, sw-val, side-widget |
 | `button.css` | Boutons |
+| `select.css` | AppSelect, dropdown (.ds-select) |
 | `tooltip.css` | Tooltips, réticule |
 | `observatoire.css` | Sections modales, signal-modal, observatoire-body |
 | `notification.css` | Toast, travel-widget content |

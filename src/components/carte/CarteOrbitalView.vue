@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { toPhysicalUnits, toLuminosityAndHz } from '@/lib/systemObjectConverters'
@@ -10,6 +10,12 @@ const props = defineProps({
   systemId: { type: String, default: '' },
   systemName: { type: String, default: '' },
   spectralType: { type: String, default: 'G2V' },
+  /** true quand l’étoile est sélectionnée (détails dans la colonne droite) */
+  starSelected: { type: Boolean, default: false },
+  /** id ou designation de la planète sélectionnée (pour bordure de sélection) */
+  selectedPlanetId: { type: String, default: null },
+  /** true pendant le chargement des objets du système (évite vue vide) */
+  loading: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['select-planet', 'select-star'])
@@ -23,6 +29,92 @@ const MAX_BODY_DIAMETER_PX = 128
 const MIN_DISTANCE_AU = 0.001
 
 const size = ref(320)
+
+/** Progression eased de l'animation one-shot (0 à 1) */
+const orbitProgressEased = ref(0)
+const ORBIT_ANIM_DURATION_MS = 4800
+/** 5 tours pour la planète la plus rapide (référence) en one-shot */
+const ORBIT_ANIM_MAX_TURNS = 5
+let orbitRafId = null
+
+/** Mode lecture continue (bouton Play) : la phase augmente sans s'arrêter */
+const isPlaying = ref(false)
+const orbitPhaseContinuous = ref(0)
+/** true une fois que l'utilisateur a cliqué Play : en pause on garde orbitPhaseContinuous pour ne pas reprendre la position one-shot */
+const continuousPhaseHolds = ref(false)
+let continuousRafId = null
+/** Vitesse angulaire de référence (rad/ms) — planète la plus rapide : ~1 tour / 1,5 s */
+const CONTINUOUS_RAD_PER_MS = (2 * Math.PI) / 1500
+
+/** Période orbitale min (jours) — référence : la planète la plus rapide fait 3/4 de tour */
+const minOrbitalPeriodDays = computed(() => {
+  const periods = planetsWithSize.value
+    .map((p) => p.orbital_period_days)
+    .filter((x) => x != null && x > 0)
+  return periods.length > 0 ? Math.min(...periods) : 1
+})
+
+/** Ease-out uniquement : ralentissement en fin de course, pas d'accélération au début */
+function orbitEase(t) {
+  return 1 - (1 - t) ** 3
+}
+
+function runOrbitAnimation() {
+  const startTime = performance.now()
+  function tick(now) {
+    const elapsed = now - startTime
+    const progress = Math.min(1, elapsed / ORBIT_ANIM_DURATION_MS)
+    orbitProgressEased.value = orbitEase(progress)
+    if (progress < 1) {
+      orbitRafId = requestAnimationFrame(tick)
+    } else {
+      orbitRafId = null
+    }
+  }
+  orbitRafId = requestAnimationFrame(tick)
+}
+
+function stopOrbitAnimation() {
+  if (orbitRafId != null) {
+    cancelAnimationFrame(orbitRafId)
+    orbitRafId = null
+  }
+}
+
+function runContinuousOrbitAnimation() {
+  let lastTime = performance.now()
+  function tick(now) {
+    if (!continuousRafId) return
+    const delta = now - lastTime
+    lastTime = now
+    orbitPhaseContinuous.value += delta * CONTINUOUS_RAD_PER_MS
+    continuousRafId = requestAnimationFrame(tick)
+  }
+  continuousRafId = requestAnimationFrame(tick)
+}
+
+function stopContinuousOrbitAnimation() {
+  if (continuousRafId != null) {
+    cancelAnimationFrame(continuousRafId)
+    continuousRafId = null
+  }
+}
+
+function togglePlayPause() {
+  if (isPlaying.value) {
+    isPlaying.value = false
+    stopContinuousOrbitAnimation()
+    /* orbitPhaseContinuous garde sa valeur : les astres restent en place en pause */
+  } else {
+    stopOrbitAnimation()
+    if (!continuousPhaseHolds.value) {
+      orbitPhaseContinuous.value = orbitProgressEased.value * ORBIT_ANIM_MAX_TURNS * 2 * Math.PI
+      continuousPhaseHolds.value = true
+    }
+    isPlaying.value = true
+    runContinuousOrbitAnimation()
+  }
+}
 
 const stellarSystem = computed(() =>
   stellarStore.list.find((s) => s.id === props.systemId)
@@ -175,11 +267,18 @@ const viewBox = computed(() => {
   return `0 0 ${s} ${s}`
 })
 
-/** Position planète sur son orbite (cercle) — planète toujours sur le cercle */
+/** Position planète — angle de base + phase (one-shot eased ou continue selon isPlaying) */
 function getPlanetPosition(p, index = 0) {
   const rPx = distanceAuToPx(p.a ?? 0)
   const n = planetsWithSize.value.length
-  const angle = n > 0 ? (2 * Math.PI * index) / n : 0
+  const baseAngle = n > 0 ? (2 * Math.PI * index) / n : 0
+  const minP = minOrbitalPeriodDays.value
+  const periodDays = p.orbital_period_days != null && p.orbital_period_days > 0 ? p.orbital_period_days : minP
+  const ratio = minP / periodDays
+  const phaseRad = (isPlaying.value || continuousPhaseHolds.value)
+    ? orbitPhaseContinuous.value * ratio
+    : orbitProgressEased.value * (ORBIT_ANIM_MAX_TURNS * 2 * Math.PI) * ratio
+  const angle = baseAngle + phaseRad
   return {
     x: center.value + rPx * Math.cos(angle),
     y: center.value - rPx * Math.sin(angle),
@@ -196,8 +295,24 @@ function onPlanetClick(p, e) {
   emit('select-planet', p)
 }
 
+function isPlanetSelected(p) {
+  if (!props.selectedPlanetId) return false
+  return (p.designation && p.designation === props.selectedPlanetId) || (p.id && String(p.id) === props.selectedPlanetId)
+}
+
 function onStarClick() {
-  emit('select-star')
+  const s = star.value
+  if (s) {
+    emit('select-star', s)
+  } else if (props.systemId && props.systemName) {
+    emit('select-star', { id: 'star', type: 'STAR', name: props.systemName, designation: props.systemId })
+  } else {
+    emit('select-star')
+  }
+}
+
+function onBackgroundClick() {
+  emit('select-star', null)
 }
 
 async function load() {
@@ -209,6 +324,23 @@ async function load() {
 watch(
   () => props.systemId,
   () => load(),
+  { immediate: true }
+)
+
+// One-shot au changement de système ; arrêter le mode continu si actif
+watch(
+  () => [props.systemId, props.loading, planetsWithSize.value.length],
+  ([systemId, loading, planetCount]) => {
+    stopOrbitAnimation()
+    stopContinuousOrbitAnimation()
+    isPlaying.value = false
+    continuousPhaseHolds.value = false
+    orbitProgressEased.value = 0
+    orbitPhaseContinuous.value = 0
+    if (systemId && !loading && planetCount > 0) {
+      runOrbitAnimation()
+    }
+  },
   { immediate: true }
 )
 
@@ -229,6 +361,11 @@ onMounted(() => {
     ro.observe(containerRef.value)
   }
 })
+
+onBeforeUnmount(() => {
+  stopOrbitAnimation()
+  stopContinuousOrbitAnimation()
+})
 </script>
 
 <template>
@@ -236,7 +373,20 @@ onMounted(() => {
     <div v-if="!systemId" class="carte-orbital__empty">
       Sélectionnez un système.
     </div>
+    <div v-else-if="loading" class="carte-orbital__empty">
+      Chargement…
+    </div>
     <template v-else>
+      <div v-if="planetsWithSize.length > 0" class="carte-orbital__play-bar">
+        <button
+          type="button"
+          class="btn btn-ghost carte-orbital__play-btn"
+          :aria-label="isPlaying ? 'Pause' : 'Lancer l’animation'"
+          @click="togglePlayPause"
+        >
+          {{ isPlaying ? '⏸ Pause' : '▶ Lecture' }}
+        </button>
+      </div>
       <svg
         class="carte-orbital__svg"
         :viewBox="viewBox"
@@ -244,31 +394,61 @@ onMounted(() => {
         overflow="visible"
       >
         <g>
-          <!-- Zone habitable (bande entre hzInner et hzOuter) — comme SystemView Observatoire -->
-          <g v-if="planetsWithDistance.length && hzBandPath" :transform="`translate(${center}, ${center})`">
+          <!-- Clic dans le vide : déselectionne l'astre (en premier dans le SVG pour être en arrière-plan) -->
+          <rect
+            class="carte-orbital__bg-hit"
+            x="0"
+            y="0"
+            :width="size"
+            :height="size"
+            fill="transparent"
+            @click="onBackgroundClick"
+          />
+          <!-- Zone habitable + orbites : pointer-events none pour ne pas bloquer les clics sur l'étoile -->
+          <g v-if="planetsWithDistance.length && hzBandPath" :transform="`translate(${center}, ${center})`" class="carte-orbital__decor">
             <path
               :d="hzBandPath"
               fill-rule="evenodd"
               class="carte-orbital__hz-band"
             />
           </g>
-          <!-- Orbites en cercles (échelle logarithmique) -->
-          <circle
-            v-for="(p, i) in planetsWithSize"
-            :key="'orbit-' + i"
-            :cx="center"
-            :cy="center"
-            :r="getOrbitR(p)"
-            fill="none"
-            :stroke="p.in_habitable_zone ? 'var(--color-cyan)' : 'var(--color-muted)'"
-            :stroke-opacity="p.in_habitable_zone ? 0.6 : 0.35"
-            stroke-width="1"
-          />
-          <!-- Étoile au centre -->
+          <g class="carte-orbital__decor">
+            <circle
+              v-for="(p, i) in planetsWithSize"
+              :key="'orbit-' + i"
+              :cx="center"
+              :cy="center"
+              :r="getOrbitR(p)"
+              fill="none"
+              :stroke="isPlanetSelected(p) ? 'var(--color-cyan)' : (p.in_habitable_zone ? 'var(--color-cyan)' : 'var(--color-muted)')"
+              :stroke-opacity="isPlanetSelected(p) ? 1 : (p.in_habitable_zone ? 0.6 : 0.35)"
+              stroke-width="1"
+            />
+          </g>
+          <!-- Étoile au centre : cercle invisible étendu pour faciliter le clic + image -->
           <g
             class="carte-orbital__star"
+            :class="{ 'carte-orbital__star--selected': starSelected }"
             @click="onStarClick"
           >
+            <!-- Bordure sélection : 1px d'épaisseur, 4px en dehors de l'astre -->
+            <circle
+              v-if="starSelected"
+              :cx="center"
+              :cy="center"
+              :r="starDiameterPx / 2 + 4.5"
+              fill="none"
+              stroke="var(--color-cyan)"
+              stroke-width="1"
+              class="carte-orbital__body-selection-ring"
+            />
+            <circle
+              :cx="center"
+              :cy="center"
+              :r="Math.max(starDiameterPx / 2 + 8, 24)"
+              fill="transparent"
+              class="carte-orbital__star-hit"
+            />
             <image
               :href="starSvgPath"
               :x="center - starDiameterPx / 2"
@@ -278,14 +458,41 @@ onMounted(() => {
               class="carte-orbital__body-img"
             />
           </g>
+          <!-- Zones cliquables sur les orbites (sous l'étoile et les planètes) : clic sur la trajectoire = sélection planète -->
+          <g class="carte-orbital__orbit-hits">
+            <circle
+              v-for="(p, i) in planetsWithSize"
+              :key="'orbit-hit-' + i"
+              :cx="center"
+              :cy="center"
+              :r="getOrbitR(p)"
+              fill="none"
+              stroke="transparent"
+              stroke-width="16"
+              class="carte-orbital__orbit-hit"
+              @click="onPlanetClick(p, $event)"
+            />
+          </g>
           <!-- Planètes (tailles via toVisualParams) -->
           <g
             v-for="(p, i) in planetsWithSize"
             :key="'planet-' + i"
             class="carte-orbital__planet"
+            :class="{ 'carte-orbital__planet--selected': isPlanetSelected(p) }"
             :transform="`translate(${getPlanetPosition(p, i).x}, ${getPlanetPosition(p, i).y})`"
             @click="onPlanetClick(p, $event)"
           >
+            <!-- Bordure sélection : 1px d'épaisseur, 4px en dehors de l'astre -->
+            <circle
+              v-if="isPlanetSelected(p)"
+              cx="0"
+              cy="0"
+              :r="p.diameterPx / 2 + 4.5"
+              fill="none"
+              stroke="var(--color-cyan)"
+              stroke-width="1"
+              class="carte-orbital__body-selection-ring"
+            />
             <image
               v-if="getPlanetSvgPathForObject(p)"
               :href="getPlanetSvgPathForObject(p)"
@@ -313,14 +520,50 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* Pas de marge gauche/droite pour que le schéma utilise toute la largeur (scale 1) */
 .carte-orbital {
   flex: 1;
   min-width: 200px;
-  min-height: 280px;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   justify-content: center;
   position: relative;
+  padding-inline: 0;
+}
+
+/* Barre sticky : marge uniquement en haut et à droite pour le bouton */
+.carte-orbital__play-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  padding-block: var(--space-2);
+  padding-inline: 0 var(--space-2);
+  flex-shrink: 0;
+  background: linear-gradient(180deg, var(--color-bg) 0%, transparent 100%);
+}
+
+/* Remonte de la hauteur barre (bouton + padding) pour récupérer la place */
+.carte-orbital__svg {
+  flex: 1;
+  min-height: 0;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 1;
+  margin-top: calc(-1 * (2.25rem + 2 * var(--space-2)));
+}
+
+/* Fixe la hauteur : les glyphes ▶ / ⏸ n'ont pas les mêmes métriques, sans height le bouton varie */
+.carte-orbital__play-btn {
+  height: 2.25rem;
+  box-sizing: border-box;
 }
 
 .carte-orbital__empty,
@@ -334,15 +577,6 @@ onMounted(() => {
   pointer-events: none;
 }
 
-.carte-orbital__svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-width: 200px;
-  min-height: 200px;
-  aspect-ratio: 1;
-}
-
 .carte-orbital__star,
 .carte-orbital__planet {
   cursor: pointer;
@@ -354,8 +588,26 @@ onMounted(() => {
   opacity: 1;
 }
 
+.carte-orbital__body-selection-ring {
+  pointer-events: none;
+}
+
 .carte-orbital__planet {
   opacity: 0.9;
+}
+
+.carte-orbital__decor {
+  pointer-events: none;
+}
+
+.carte-orbital__orbit-hit {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.carte-orbital__bg-hit {
+  cursor: default;
+  pointer-events: auto;
 }
 
 .carte-orbital__hz-band {
@@ -364,6 +616,10 @@ onMounted(() => {
 
 .carte-orbital__body-img {
   pointer-events: none;
+}
+
+.carte-orbital__star-hit {
+  pointer-events: auto;
 }
 
 .carte-orbital__body-img--planet {

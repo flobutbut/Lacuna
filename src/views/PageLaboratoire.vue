@@ -391,6 +391,7 @@ async function addSelectedSystemToCarte() {
   const stellar = stellarStore.list.find((s) => s.id === obs.system_id)
   const name = stellar?.name ?? obs.system ?? obs.system_id
   await mapStore.addNode(obs.system_id, name)
+  ui.setCarteHasNew(true)
   ui.showNotification(`Système ${name} ajouté à la carte`)
 }
 

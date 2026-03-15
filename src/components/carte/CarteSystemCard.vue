@@ -14,8 +14,12 @@ const props = defineProps({
   state: { type: String, default: 'idle' },
   /** Badge optionnel (ex. traces_found) */
   badge: { type: [String, Number], default: '' },
-  /** Afficher le bouton supprimer */
+  /** Afficher le bouton supprimer (masqué si visité ou actuel) */
   dismissable: { type: Boolean, default: true },
+  /** Système visité — affiche un marqueur */
+  visited: { type: Boolean, default: false },
+  /** Système actuel (vaisseau) — affiche un marqueur */
+  isCurrent: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['click', 'dismiss'])
@@ -54,6 +58,8 @@ function onDismiss(e) {
         <StarSvgInline :spectral-type="spectralType" />
       </span>
       <div class="carte-system-card__main">
+        <span v-if="isCurrent" class="carte-system-card__marker carte-system-card__marker--current" title="Système actuel">Système actuel</span>
+        <span v-else-if="visited" class="carte-system-card__marker carte-system-card__marker--visited" title="Système visité">Visitée</span>
         <div class="carte-system-card__title">{{ name || systemId }}</div>
         <div class="carte-system-card__row">
           {{ exoplanetCount === 0 ? 'Aucune exoplanète' : exoplanetCount === 1 ? '1 exoplanète' : `${exoplanetCount} exoplanètes` }}
@@ -116,6 +122,22 @@ function onDismiss(e) {
   right: 28px;
   font-size: var(--text-sm);
   font-family: var(--font-mono);
+  color: var(--color-muted);
+}
+
+.carte-system-card__marker {
+  display: block;
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-normal);
+  margin-bottom: var(--space-1);
+}
+
+.carte-system-card__marker--current {
+  color: var(--color-cyan);
+}
+
+.carte-system-card__marker--visited {
   color: var(--color-muted);
 }
 

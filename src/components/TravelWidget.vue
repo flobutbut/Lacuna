@@ -28,6 +28,7 @@ const isOnMap = computed(() => ui.selectedStar ? mapStore.isOnMap(ui.selectedSta
 async function addToCarte() {
   const star = ui.selectedStar
   if (!star) return
+  ui.setCarteHasNew(true)
   const node = await mapStore.addNode(star.id, star.name ?? star.id)
   if (node) {
     ui.showNotification(`Système ${star.name} ajouté à la carte`)
