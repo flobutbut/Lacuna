@@ -1,56 +1,43 @@
 <script setup>
 import { computed } from 'vue'
 import { useUIStore } from '@/stores/ui'
-import SignalTypeIcon from '@/components/SignalTypeIcon.vue'
+import ObservatoireTooltip from '@/components/ObservatoireTooltip.vue'
 
 const ui = useUIStore()
 
 const sig = computed(() => ui.hoveredSignal)
 
-const tooltipStyle = computed(() => {
-  if (!sig.value) return {}
-  const x = ui.reticulePosition.x
-  const y = ui.reticulePosition.y
-  const tx = x + 18 > window.innerWidth - 200 ? x - 190 : x + 18
+const tooltipData = computed(() => {
+  if (!sig.value) return null
+  const dirText = `azimut ${sig.value.azimuth}° · plan ${sig.value.elevation >= 0 ? '+' : ''}${sig.value.elevation}°`
   return {
-    left: `${tx}px`,
-    top: `${y - 60}px`,
+    visible: true,
+    position: ui.reticulePosition,
+    title: 'Signal capté',
+    rows: [
+      { key: 'Fréquence', value: sig.value.frequency },
+      { key: 'Direction', value: dirText },
+      { key: 'Distance est.', value: sig.value.distanceEst ?? '—' },
+      { key: 'Reçu le', value: sig.value.receivedAt },
+      {
+        key: 'Type',
+        value: sig.value.structure ?? 'non uniforme',
+        icon: 'signal',
+        structure: sig.value.structure,
+      },
+    ],
+    actionLabel: '[ CLIC POUR DÉTAIL ]',
   }
 })
 </script>
 
 <template>
-  <div
-    v-if="sig"
-    class="star-tooltip visible signal-tooltip"
-    :style="tooltipStyle"
-  >
-    <div class="st-inner">
-      <div class="st-name">Signal capté</div>
-      <div class="st-row">
-        <span class="st-key">Fréquence</span>
-        <span class="st-val">{{ sig.frequency }}</span>
-      </div>
-      <div class="st-row">
-        <span class="st-key">Direction</span>
-        <span class="st-val">azimut {{ sig.azimuth }}° · plan {{ sig.elevation >= 0 ? '+' : '' }}{{ sig.elevation }}°</span>
-      </div>
-      <div class="st-row">
-        <span class="st-key">Distance est.</span>
-        <span class="st-val">{{ sig.distanceEst ?? '—' }}</span>
-      </div>
-      <div class="st-row">
-        <span class="st-key">Reçu le</span>
-        <span class="st-val">{{ sig.receivedAt }}</span>
-      </div>
-      <div class="st-row st-row--type">
-        <span class="st-key">Type</span>
-        <span class="st-val st-val--with-icon">
-          <SignalTypeIcon :structure="sig.structure" :size="12" />
-          {{ sig.structure ?? 'non uniforme' }}
-        </span>
-      </div>
-      <div class="st-action">[ CLIC POUR DÉTAIL ]</div>
-    </div>
-  </div>
+  <ObservatoireTooltip
+    v-if="tooltipData"
+    :visible="tooltipData.visible"
+    :position="tooltipData.position"
+    :title="tooltipData.title"
+    :rows="tooltipData.rows"
+    :action-label="tooltipData.actionLabel"
+  />
 </template>

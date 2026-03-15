@@ -2,7 +2,9 @@
 import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
-import { barWidth } from '@/lib/formatUtils'
+import { POPULATION_MENU_ITEMS } from '@/constants/menus'
+import NavMenuItem from '@/components/NavMenuItem.vue'
+import ProgressBar from '@/components/ProgressBar.vue'
 
 const supabaseStore = useSupabaseStore()
 const activeTab = ref('current')
@@ -100,30 +102,15 @@ fetchPopulation()
         <div class="panel-section-title" style="margin-bottom: var(--space-6)">
           Mémoire de la civilisation embarquée
         </div>
-        <div
-          class="pop-menu-item"
-          :class="{ selected: activeTab === 'generations' }"
-          @click="activeTab = 'generations'"
-        >
-          <span class="pop-menu-item__icon">⊕</span>
-          Générations
-        </div>
-        <div
-          class="pop-menu-item"
-          :class="{ selected: activeTab === 'current' }"
-          @click="activeTab = 'current'"
-        >
-          <span class="pop-menu-item__icon">◉</span>
-          Génération actuelle
-        </div>
-        <div
-          class="pop-menu-item"
-          :class="{ selected: activeTab === 'reasons' }"
-          @click="activeTab = 'reasons'"
-        >
-          <span class="pop-menu-item__icon">◈</span>
-          Registre des Raisons
-        </div>
+        <NavMenuItem
+          v-for="item in POPULATION_MENU_ITEMS"
+          :key="item.id"
+          variant="menu"
+          :icon="item.icon"
+          :label="item.label"
+          :selected="activeTab === item.id"
+          @click="activeTab = item.id"
+        />
       </div>
 
       <!-- Colonne droite : contenu -->
@@ -146,9 +133,7 @@ fetchPopulation()
             <span class="pop-indicator__label">Volonté</span>
             <span class="pop-indicator__val">{{ currentGen.will.toFixed(2) }}</span>
           </div>
-          <div class="bar-wrap">
-            <div class="bar-fill bar-cyan" :style="{ width: barWidth(currentGen.will) }" />
-          </div>
+          <ProgressBar :value="currentGen.will" color="cyan" />
         </div>
 
         <div class="pop-indicator pop-indicator__bar">
@@ -156,9 +141,7 @@ fetchPopulation()
             <span class="pop-indicator__label">Cohésion</span>
             <span class="pop-indicator__val">{{ currentGen.cohesion.toFixed(2) }}</span>
           </div>
-          <div class="bar-wrap">
-            <div class="bar-fill bar-cyan" :style="{ width: barWidth(currentGen.cohesion) }" />
-          </div>
+          <ProgressBar :value="currentGen.cohesion" color="cyan" />
         </div>
 
         <div class="pop-indicator pop-indicator__bar">
@@ -166,9 +149,7 @@ fetchPopulation()
             <span class="pop-indicator__label">Alimentation</span>
             <span class="pop-indicator__val">{{ currentGen.food.toFixed(2) }}</span>
           </div>
-          <div class="bar-wrap">
-            <div class="bar-fill bar-cyan" :style="{ width: barWidth(currentGen.food) }" />
-          </div>
+          <ProgressBar :value="currentGen.food" color="cyan" />
         </div>
 
         <div class="pop-indicator pop-indicator__bar">
@@ -176,9 +157,7 @@ fetchPopulation()
             <span class="pop-indicator__label">Soins</span>
             <span class="pop-indicator__val">{{ currentGen.care.toFixed(2) }}</span>
           </div>
-          <div class="bar-wrap">
-            <div class="bar-fill bar-cyan" :style="{ width: barWidth(currentGen.care) }" />
-          </div>
+          <ProgressBar :value="currentGen.care" color="cyan" />
         </div>
 
         <div class="pop-indicator">

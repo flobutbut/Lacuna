@@ -1,5 +1,6 @@
 <script setup>
 import { useUIStore } from '@/stores/ui'
+import ProgressBar from '@/components/ProgressBar.vue'
 
 const ui = useUIStore()
 
@@ -39,13 +40,13 @@ const terms = [
           <div class="dt-val" :style="t.amber ? { color: 'var(--color-amber)' } : {}">
             {{ t.val }}
           </div>
-          <div class="dt-bar">
-            <div
-              class="dt-bar-fill"
-              :class="{ 'bar-amber': t.amber }"
-              :style="{ width: t.width + '%' }"
-            ></div>
-          </div>
+          <ProgressBar
+            :value="t.width"
+            :color="t.amber ? 'amber' : 'cyan'"
+            pct
+            no-margin
+            class="dt-bar"
+          />
         </div>
         <div class="drake-result">
           <div class="dr-label">N — CIVILISATIONS ACTIVES ESTIMÉES</div>

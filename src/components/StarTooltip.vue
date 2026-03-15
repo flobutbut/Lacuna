@@ -1,10 +1,25 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
+import { useSystemObjectsStore } from '@/stores/systemObjects'
+import ObservatoireTooltip from '@/components/ObservatoireTooltip.vue'
 
 const ui = useUIStore()
+const systemObjectsStore = useSystemObjectsStore()
 
 const s = computed(() => ui.hoveredStar)
+
+watch(() => s.value?.id, (id) => {
+  if (id) systemObjectsStore.fetchForSystem(id)
+}, { immediate: true })
+
+const exoplanetCount = computed(() => {
+  const id = s.value?.id
+  if (!id) return null
+  const objects = systemObjectsStore.getForSystem(id)
+  const planets = objects.filter((o) => ['PLANET', 'MOON', 'MINOR_BODY'].includes(o.type))
+  return planets.length
+})
 
 const travelLabel = computed(() => {
   if (!s.value) return '—'
@@ -21,40 +36,39 @@ const statusText = computed(() => {
   return '— NON EXPLORÉ'
 })
 
-const tooltipStyle = computed(() => {
-  if (!s.value) return {}
-  const x = ui.reticulePosition.x
-  const y = ui.reticulePosition.y
-  const tx = x + 18 > window.innerWidth - 200 ? x - 190 : x + 18
+const tooltipData = computed(() => {
+  if (!s.value) return null
+  const rows = [
+    { key: 'Distance', value: `${s.value.dist} al` },
+    { key: 'Type spectral', value: s.value.spectral },
+    { key: 'Voyage estimé', value: travelLabel.value },
+  ]
+  const count = exoplanetCount.value
+  const systemId = s.value?.id
+  const hasLoaded = systemId && systemObjectsStore.bySystem[systemId]
+  if (hasLoaded && count != null) {
+    const label = count === 0 ? 'Aucune connue' : count === 1 ? '1 connue' : `${count} connues`
+    rows.push({ key: 'Exoplanètes', value: label })
+  }
   return {
-    left: `${tx}px`,
-    top: `${y - 60}px`,
+    visible: true,
+    position: ui.reticulePosition,
+    title: s.value.name,
+    rows,
+    status: statusText.value,
+    actionLabel: '[ CLIC POUR OBSERVER ]',
   }
 })
 </script>
 
 <template>
-  <div
-    v-if="s"
-    class="star-tooltip visible"
-    :style="tooltipStyle"
-  >
-    <div class="st-inner">
-      <div class="st-name">{{ s.name }}</div>
-      <div class="st-row">
-        <span class="st-key">Distance</span>
-        <span class="st-val">{{ s.dist }} al</span>
-      </div>
-      <div class="st-row">
-        <span class="st-key">Type spectral</span>
-        <span class="st-val">{{ s.spectral }}</span>
-      </div>
-      <div class="st-row">
-        <span class="st-key">Voyage estimé</span>
-        <span class="st-val">{{ travelLabel }}</span>
-      </div>
-      <div class="st-status">{{ statusText }}</div>
-      <div class="st-action">[ CLIC POUR OBSERVER ]</div>
-    </div>
-  </div>
+  <ObservatoireTooltip
+    v-if="tooltipData"
+    :visible="tooltipData.visible"
+    :position="tooltipData.position"
+    :title="tooltipData.title"
+    :rows="tooltipData.rows"
+    :status="tooltipData.status"
+    :action-label="tooltipData.actionLabel"
+  />
 </template>

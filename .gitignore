@@ -1,6 +1,9 @@
 # Logs
 logs
 *.log
+
+# Stellar import (progression reprise)
+import_progress.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -8,6 +11,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.venv_stellar
 .DS_Store
 dist
 dist-ssr

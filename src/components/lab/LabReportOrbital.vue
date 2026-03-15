@@ -201,7 +201,7 @@ watch(
   gap: var(--space-1);
 }
 .lab-orbital__label {
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   color: var(--color-muted);
   font-family: var(--font-mono);
 }
@@ -209,7 +209,7 @@ watch(
   display: block;
 }
 .lab-orbital__table {
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-family: var(--font-mono);
   border-collapse: collapse;
   color: var(--color-muted);
@@ -228,7 +228,7 @@ watch(
 .lab-orbital__res-list {
   margin: 0;
   padding-left: var(--space-4);
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-family: var(--font-mono);
   color: var(--color-amber);
 }

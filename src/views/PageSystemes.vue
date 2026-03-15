@@ -1,8 +1,12 @@
 <script setup>
 import { ref, watch, nextTick, onBeforeUnmount, onMounted, computed } from 'vue'
 import { useShipStore } from '@/stores/ship'
-import { barWidth } from '@/lib/formatUtils'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
+import { SYSTEMS_MENU_ITEMS } from '@/constants/menus'
+import NavMenuItem from '@/components/NavMenuItem.vue'
+import AppModal from '@/components/AppModal.vue'
+import Divider from '@/components/Divider.vue'
+import ProgressBar from '@/components/ProgressBar.vue'
 
 const shipStore = useShipStore()
 const activeSection = ref(null)
@@ -10,29 +14,13 @@ const overlayVisible = ref(false)
 const blueprintRef = ref(null)
 const blueprintCleanups = []
 
-// Menu = 1 item par groupe SVG + Identité + Historique
-// legendColor = couleur de la légende pour les icônes (green, cyan, amber, signal)
-const MENU_ITEMS = [
-  { id: 'identity', label: 'Identité', icon: '◈', groupIds: [] },
-  { id: 'plasma-shield', label: 'Bouclier plasma', icon: '◎', groupIds: ['plasma-shield'], legendColor: 'cyan' },
-  { id: 'bumper-shield', label: 'Pare-chocs ablatif', icon: '⬡', groupIds: ['bumper-shield'], legendColor: 'bumper' },
-  { id: 'population-quarters', label: 'Anneaux habitat', icon: '⊕', groupIds: ['population-quarters'], legendColor: 'green' },
-  { id: 'fission-reactors', label: 'Réacteurs & Cargaison', icon: '⌬', groupIds: ['fission-reactors'], legendColor: 'cyan' },
-  { id: 'thermal-radiators', label: 'Radiateurs thermiques', icon: '☰', groupIds: ['thermal-radiators'], legendColor: 'amber' },
-  { id: 'fuel-tanks', label: 'Réservoirs cryogéniques', icon: '◉', groupIds: ['fuel-tanks'], legendColor: 'cyan' },
-  { id: 'propulsion', label: 'Moteur fusion MTF', icon: '≋', groupIds: ['propulsion'], legendColor: 'signal' },
-  { id: 'comms', label: 'Laser comms', icon: '↕', groupIds: ['comms'], legendColor: 'comms' },
-  { id: 'navigation', label: 'Navigation pulsar', icon: '✧', groupIds: ['navigation'], legendColor: 'nav' },
-  { id: 'history', label: 'Historique', icon: '≡', groupIds: [] },
-]
-
 const ALL_GROUP_IDS = ['plasma-shield', 'bumper-shield', 'population-quarters', 'fission-reactors', 'thermal-radiators', 'fuel-tanks', 'propulsion', 'comms', 'navigation']
 
 function updateBlueprintHighlight() {
   const obj = blueprintRef.value
   if (!obj?.contentDocument) return
   const doc = obj.contentDocument
-  const item = MENU_ITEMS.find((m) => m.id === activeSection.value)
+  const item = SYSTEMS_MENU_ITEMS.find((m) => m.id === activeSection.value)
   const idsToHighlight = overlayVisible.value && item ? item.groupIds : []
   ALL_GROUP_IDS.forEach((id) => {
     const el = doc.getElementById(id)
@@ -84,12 +72,6 @@ function setupBlueprintInteractivity() {
   }
   svgRoot.addEventListener('click', onSvgClick)
   blueprintCleanups.push(() => svgRoot.removeEventListener('click', onSvgClick))
-}
-
-function onPlanContainerClick(e) {
-  if (e.target.closest('.sys-overlay')) return // ne pas désélectionner si clic sur l'overlay
-  activeSection.value = null
-  overlayVisible.value = false
 }
 
 function onBlueprintLoad() {
@@ -178,6 +160,16 @@ const history = ref([
 function formatNum(n) {
   return new Intl.NumberFormat('fr-FR').format(n)
 }
+
+const modalTitle = computed(() => {
+  const item = SYSTEMS_MENU_ITEMS.find((m) => m.id === activeSection.value)
+  return item?.label ?? ''
+})
+
+function closeOverlay() {
+  overlayVisible.value = false
+  activeSection.value = null
+}
 </script>
 
 <template>
@@ -189,23 +181,20 @@ function formatNum(n) {
         <div class="panel-section-title" style="margin-bottom: var(--space-6)">
           Tableau de bord ARCA
         </div>
-        <div
-          v-for="item in MENU_ITEMS"
+        <NavMenuItem
+          v-for="item in SYSTEMS_MENU_ITEMS"
           :key="item.id"
-          class="sys-menu-item"
-          :class="{ selected: overlayVisible && activeSection === item.id }"
+          variant="menu"
+          :icon="item.icon"
+          :label="item.label"
+          :icon-color="item.legendColor || ''"
+          :selected="overlayVisible && activeSection === item.id"
           @click="activeSection = item.id; overlayVisible = true"
-        >
-          <span
-            class="sys-menu-item__icon"
-            :class="item.legendColor && `sys-menu-item__icon--${item.legendColor}`"
-          >{{ item.icon }}</span>
-          {{ item.label }}
-        </div>
+        />
       </div>
 
-      <!-- Colonne droite : plan + overlay -->
-      <div class="sys-ship-col" @click="onPlanContainerClick">
+      <!-- Colonne droite : plan + modale -->
+      <div class="sys-ship-col">
         <!-- Header du plan (extrait du SVG) -->
         <header class="sys-blueprint-header">
           <h2 class="sys-blueprint-header__title">{{ ship.fullName }}</h2>
@@ -249,240 +238,141 @@ function formatNum(n) {
           </div>
         </footer>
 
-        <!-- Overlay infos de l'onglet sélectionné (fermable, hug content) -->
-        <div v-if="overlayVisible" class="sys-overlay">
-          <button type="button" class="sys-overlay__close" title="Fermer" @click="overlayVisible = false; activeSection = null">×</button>
-        <!-- Identité -->
-        <div v-show="activeSection === 'identity'" class="sys-identity">
-          <div class="sys-identity__title">{{ ship.name }} — {{ ship.class }}</div>
-          <div class="sys-identity__row">
-            <span class="sys-identity__key">Construit</span>
-            <span class="sys-identity__val">{{ ship.builtYear }}</span>
+        <!-- Modale infos (AppModal, position top-right) -->
+        <AppModal
+          v-if="overlayVisible"
+          :title="modalTitle"
+          position="top-right"
+          :overlay="false"
+          @close="closeOverlay"
+        >
+          <!-- Identité -->
+          <div v-show="activeSection === 'identity'" class="sys-modal-content">
+            <p class="sys-modal-subtitle">{{ ship.name }} — {{ ship.class }}</p>
+            <div class="sw-row"><span class="sw-key">Construit</span><span class="sw-val">{{ ship.builtYear }}</span></div>
+            <Divider variant="solid" tight />
+            <div class="sw-row"><span class="sw-key">Âge relatif</span><span class="sw-val">{{ ship.ageRelative }} ans</span></div>
+            <Divider variant="solid" tight />
+            <div class="sw-row"><span class="sw-key">Âge réel</span><span class="sw-val">{{ ship.ageReal }} ans</span></div>
+            <Divider variant="solid" tight />
+            <div class="sw-row"><span class="sw-key">Écart</span><span class="sw-val">+{{ ship.ageGap }} ans</span></div>
+            <Divider variant="solid" tight />
+            <div class="sw-row"><span class="sw-key">Masse sèche</span><span class="sw-val">{{ formatNum(ship.dryMass) }} t</span></div>
+            <Divider variant="solid" tight />
+            <div class="sw-row"><span class="sw-key">Capacité</span><span class="sw-val">{{ formatNum(ship.capacity) }} personnes</span></div>
+            <Divider variant="solid" tight />
+            <div class="sw-row"><span class="sw-key">Population actuelle</span><span class="sw-val">{{ formatNum(ship.population) }}</span></div>
+            <Divider variant="solid" tight />
+            <div class="sw-row"><span class="sw-key">Génération</span><span class="sw-val">{{ ship.generation }}</span></div>
           </div>
-          <div class="sys-identity__row">
-            <span class="sys-identity__key">Âge relatif</span>
-            <span class="sys-identity__val">{{ ship.ageRelative }} ans</span>
-          </div>
-          <div class="sys-identity__row">
-            <span class="sys-identity__key">Âge réel</span>
-            <span class="sys-identity__val">{{ ship.ageReal }} ans</span>
-          </div>
-          <div class="sys-identity__row">
-            <span class="sys-identity__key">Écart</span>
-            <span class="sys-identity__val">+{{ ship.ageGap }} ans</span>
-          </div>
-          <div class="sys-identity__row">
-            <span class="sys-identity__key">Masse sèche</span>
-            <span class="sys-identity__val">{{ formatNum(ship.dryMass) }} t</span>
-          </div>
-          <div class="sys-identity__row">
-            <span class="sys-identity__key">Capacité</span>
-            <span class="sys-identity__val">{{ formatNum(ship.capacity) }} personnes</span>
-          </div>
-          <div class="sys-identity__row">
-            <span class="sys-identity__key">Population actuelle</span>
-            <span class="sys-identity__val">{{ formatNum(ship.population) }}</span>
-          </div>
-          <div class="sys-identity__row">
-            <span class="sys-identity__key">Génération</span>
-            <span class="sys-identity__val">{{ ship.generation }}</span>
-          </div>
-        </div>
 
-        <!-- Bouclier plasma -->
-        <div v-show="activeSection === 'plasma-shield'">
-          <div class="sys-section-title">Bouclier plasma</div>
-          <div class="sys-indicator">
-            <div class="sys-indicator__name">BOUCLIER PLASMA</div>
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">{{ plasmaShield.value.toFixed(2) }}</span>
+          <!-- Bouclier plasma -->
+          <div v-show="activeSection === 'plasma-shield'" class="sys-modal-content">
+            <div class="sys-indicator-block">
+              <div class="sw-row"><span class="sw-key">Bouclier plasma</span><span class="sw-val">{{ plasmaShield.value.toFixed(2) }}</span></div>
+              <p class="sys-value-desc">{{ plasmaShield.desc }}</p>
+              <p class="sys-value-desc">{{ plasmaShield.state }}</p>
+              <ProgressBar :value="plasmaShield.value" color="cyan" />
             </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(plasmaShield.value) }" />
-            </div>
-            <div class="sys-indicator__desc">{{ plasmaShield.desc }}</div>
-            <div class="sys-indicator__desc">{{ plasmaShield.state }}</div>
           </div>
-        </div>
 
-        <!-- Pare-chocs ablatif -->
-        <div v-show="activeSection === 'bumper-shield'">
-          <div class="sys-section-title">Pare-chocs ablatif</div>
-          <div class="sys-indicator">
-            <div class="sys-indicator__name">COQUE</div>
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">{{ hull.value.toFixed(2) }}</span>
+          <!-- Pare-chocs ablatif -->
+          <div v-show="activeSection === 'bumper-shield'" class="sys-modal-content">
+            <div class="sys-indicator-block">
+              <div class="sw-row"><span class="sw-key">Coque</span><span class="sw-val">{{ hull.value.toFixed(2) }}</span></div>
+              <p class="sys-value-desc">{{ hull.desc }}</p>
+              <ProgressBar :value="hull.value" color="cyan" />
             </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(hull.value) }" />
-            </div>
-            <div class="sys-indicator__desc">{{ hull.desc }}</div>
           </div>
-        </div>
 
-        <!-- Anneaux habitat -->
-        <div v-show="activeSection === 'population-quarters'">
-          <div class="sys-section-title">Anneaux habitat rotatifs</div>
-          <p class="sys-indicator__desc" style="margin-bottom: var(--space-5)">
-            Efficacité des systèmes de survie (boucle fermée).
-          </p>
-          <div class="sys-indicator">
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">RÉSERVOIR</span>
-              <span class="sys-indicator__val">{{ reservoir.value.toFixed(2) }}</span>
-            </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(reservoir.value) }" />
-            </div>
-            <div class="sys-indicator__desc">{{ reservoir.desc }}</div>
+          <!-- Anneaux habitat -->
+          <div v-show="activeSection === 'population-quarters'" class="sys-modal-content">
+            <p class="sw-desc">Efficacité des systèmes de survie (boucle fermée).</p>
+            <Divider variant="solid" tight />
+            <template v-for="(ind, i) in [
+              { key: 'Réservoir', val: reservoir.value.toFixed(2), desc: reservoir.desc, bar: reservoir.value },
+              { key: 'Alimentation', val: alimentation.value.toFixed(2), desc: alimentation.desc, bar: alimentation.value },
+              { key: 'Atmosphère', val: atmosphere.value.toFixed(2), desc: atmosphere.desc, bar: atmosphere.value },
+              { key: 'Médical', val: medical.value.toFixed(2), desc: medical.desc, bar: medical.value },
+            ]" :key="ind.key">
+              <Divider v-if="i > 0" variant="solid" tight />
+              <div class="sys-indicator-block">
+                <div class="sw-row"><span class="sw-key">{{ ind.key }}</span><span class="sw-val">{{ ind.val }}</span></div>
+                <p class="sys-value-desc">{{ ind.desc }}</p>
+                <ProgressBar :value="ind.bar" color="cyan" />
+              </div>
+            </template>
           </div>
-          <div class="sys-indicator">
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">ALIMENTATION</span>
-              <span class="sys-indicator__val">{{ alimentation.value.toFixed(2) }}</span>
-            </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(alimentation.value) }" />
-            </div>
-            <div class="sys-indicator__desc">{{ alimentation.desc }}</div>
-          </div>
-          <div class="sys-indicator">
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">ATMOSPHÈRE</span>
-              <span class="sys-indicator__val">{{ atmosphere.value.toFixed(2) }}</span>
-            </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(atmosphere.value) }" />
-            </div>
-            <div class="sys-indicator__desc">{{ atmosphere.desc }}</div>
-          </div>
-          <div class="sys-indicator">
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">MÉDICAL</span>
-              <span class="sys-indicator__val">{{ medical.value.toFixed(2) }}</span>
-            </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(medical.value) }" />
-            </div>
-            <div class="sys-indicator__desc">{{ medical.desc }}</div>
-          </div>
-        </div>
 
-        <!-- Réacteurs & Cargaison -->
-        <div v-show="activeSection === 'fission-reactors'">
-          <div class="sys-section-title">Réacteurs fission & Cargaison</div>
-          <div class="sys-indicator__desc">
-            SAFE-400 × 12 — 800 MW électriques — triple redondance. Banque génomique, embryons, semences.
+          <!-- Réacteurs & Cargaison -->
+          <div v-show="activeSection === 'fission-reactors'" class="sys-modal-content">
+            <p class="sw-desc">SAFE-400 × 12 — 800 MW électriques — triple redondance. Banque génomique, embryons, semences.</p>
           </div>
-        </div>
 
-        <!-- Radiateurs thermiques -->
-        <div v-show="activeSection === 'thermal-radiators'">
-          <div class="sys-section-title">Radiateurs thermiques</div>
-          <div class="sys-indicator__desc">
-            Graphite pyrolytique — ~40 km² — perpendiculaires à l'axe de vol.
+          <!-- Radiateurs thermiques -->
+          <div v-show="activeSection === 'thermal-radiators'" class="sys-modal-content">
+            <p class="sw-desc">Graphite pyrolytique — ~40 km² — perpendiculaires à l'axe de vol.</p>
           </div>
-        </div>
 
-        <!-- Réservoirs cryogéniques -->
-        <div v-show="activeSection === 'fuel-tanks'">
-          <div class="sys-section-title">Réservoirs cryogéniques</div>
-          <p class="sys-indicator__desc" style="margin-bottom: var(--space-5)">
-            He³ et deutérium ne sont pas en boucle fermée — consommation par voyage (Tsiolkovsky).
-          </p>
-          <div class="sys-indicator">
-            <div class="sys-indicator__name">He³</div>
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">{{ formatNum(he3.current) }} t / {{ formatNum(he3.max) }} t</span>
-              <span class="sys-indicator__val">{{ (he3.pct * 100).toFixed(1) }}%</span>
+          <!-- Réservoirs cryogéniques -->
+          <div v-show="activeSection === 'fuel-tanks'" class="sys-modal-content">
+            <p class="sw-desc">He³ et deutérium ne sont pas en boucle fermée — consommation par voyage (Tsiolkovsky).</p>
+            <Divider variant="solid" tight />
+            <div class="sys-indicator-block">
+              <div class="sw-row"><span class="sw-key">He³</span><span class="sw-val">{{ formatNum(he3.current) }} t / {{ formatNum(he3.max) }} t · {{ (he3.pct * 100).toFixed(1) }}%</span></div>
+              <ProgressBar :value="he3.pct" color="cyan" />
             </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(he3.pct) }" />
+            <Divider variant="solid" tight />
+            <div class="sys-indicator-block">
+              <div class="sw-row"><span class="sw-key">Deutérium</span><span class="sw-val">{{ formatNum(deuterium.current) }} t / {{ formatNum(deuterium.max) }} t · {{ (deuterium.pct * 100).toFixed(1) }}%</span></div>
+              <ProgressBar :value="deuterium.pct" color="cyan" />
             </div>
+            <Divider variant="solid" tight />
+            <div class="sw-row"><span class="sw-key">Vitesse actuelle</span><span class="sw-val">{{ fuel.speed }}</span></div>
+            <div class="sw-row"><span class="sw-key">Autonomie estimée</span><span class="sw-val">{{ fuel.autonomy }}</span></div>
           </div>
-          <div class="sys-indicator">
-            <div class="sys-indicator__name">Deutérium</div>
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">{{ formatNum(deuterium.current) }} t / {{ formatNum(deuterium.max) }} t</span>
-              <span class="sys-indicator__val">{{ (deuterium.pct * 100).toFixed(1) }}%</span>
-            </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(deuterium.pct) }" />
-            </div>
-          </div>
-          <div class="sys-identity" style="margin-top: var(--space-6)">
-            <div class="sys-identity__row">
-              <span class="sys-identity__key">Vitesse actuelle</span>
-              <span class="sys-identity__val">{{ fuel.speed }}</span>
-            </div>
-            <div class="sys-identity__row">
-              <span class="sys-identity__key">Autonomie estimée</span>
-              <span class="sys-identity__val">{{ fuel.autonomy }}</span>
-            </div>
-          </div>
-        </div>
 
-        <!-- Moteur fusion MTF -->
-        <div v-show="activeSection === 'propulsion'">
-          <div class="sys-section-title">Moteur fusion MTF</div>
-          <div class="sys-indicator">
-            <div class="sys-indicator__name">PROPULSION</div>
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">{{ propulsion.value.toFixed(2) }}</span>
+          <!-- Moteur fusion MTF -->
+          <div v-show="activeSection === 'propulsion'" class="sys-modal-content">
+            <div class="sys-indicator-block">
+              <div class="sw-row"><span class="sw-key">Propulsion</span><span class="sw-val">{{ propulsion.value.toFixed(2) }}</span></div>
+              <p class="sys-value-desc">{{ propulsion.desc }}</p>
+              <p class="sys-value-desc">État actuel : {{ propulsion.state }}</p>
+              <ProgressBar :value="propulsion.value" color="cyan" />
             </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(propulsion.value) }" />
-            </div>
-            <div class="sys-indicator__desc">{{ propulsion.desc }}</div>
-            <div class="sys-indicator__desc">État actuel : {{ propulsion.state }}</div>
           </div>
-        </div>
 
-        <!-- Laser comms -->
-        <div v-show="activeSection === 'comms'">
-          <div class="sys-section-title">Laser comms</div>
-          <div class="sys-indicator">
-            <div class="sys-indicator__row">
-              <span class="sys-indicator__label">OBSERVATOIRE</span>
-              <span class="sys-indicator__val">{{ observatoire.value.toFixed(2) }}</span>
+          <!-- Laser comms -->
+          <div v-show="activeSection === 'comms'" class="sys-modal-content">
+            <div class="sys-indicator-block">
+              <div class="sw-row"><span class="sw-key">Observatoire</span><span class="sw-val">{{ observatoire.value.toFixed(2) }}</span></div>
+              <p class="sys-value-desc">{{ observatoire.desc }}</p>
+              <p class="sys-value-desc">1 Gbps — délai 4.24 ans</p>
+              <ProgressBar :value="observatoire.value" color="cyan" />
             </div>
-            <div class="bar-wrap">
-              <div class="bar-fill bar-cyan" :style="{ width: barWidth(observatoire.value) }" />
-            </div>
-            <div class="sys-indicator__desc">{{ observatoire.desc }}</div>
-            <div class="sys-indicator__desc">1 Gbps — délai 4.24 ans</div>
           </div>
-        </div>
 
-        <!-- Navigation pulsar -->
-        <div v-show="activeSection === 'navigation'">
-          <div class="sys-section-title">Navigation pulsar</div>
-          <div class="sys-indicator__desc">
-            Pulsar MSP pour localisation et orientation en transit interstellaire.
+          <!-- Navigation pulsar -->
+          <div v-show="activeSection === 'navigation'" class="sys-modal-content">
+            <p class="sw-desc">Pulsar MSP pour localisation et orientation en transit interstellaire.</p>
           </div>
-        </div>
 
-        <!-- Historique -->
-        <div v-show="activeSection === 'history'">
-          <div class="sys-section-title">Historique technique</div>
-          <div
-            v-for="(h, i) in history"
-            :key="i"
-            class="sys-history-item"
-          >
-            <div class="sys-history-item__meta">GÉN. {{ h.gen }} — {{ h.date }}</div>
-            <div>
-              {{ h.event }}
-              <span
-                class="sys-history-item__delta"
-                :class="{ positive: h.delta > 0 }"
-              >
-                {{ h.delta > 0 ? '+' : '' }}{{ h.delta }} {{ h.system }}
-              </span>
-            </div>
+          <!-- Historique -->
+          <div v-show="activeSection === 'history'" class="sys-modal-content">
+            <template v-for="(h, i) in history" :key="i">
+              <Divider v-if="i > 0" variant="solid" tight />
+              <div class="sys-history-item">
+                <div class="sw-key sys-history-item__meta">GÉN. {{ h.gen }} — {{ h.date }}</div>
+                <div class="sys-history-item__event">
+                  {{ h.event }}
+                  <span class="sw-val" :class="h.delta > 0 ? 'ok' : 'warn'" style="margin-left: var(--space-2)">
+                    {{ h.delta > 0 ? '+' : '' }}{{ h.delta }} {{ h.system }}
+                  </span>
+                </div>
+              </div>
+            </template>
           </div>
-        </div>
-        </div>
+        </AppModal>
       </div>
     </div>
   </div>

@@ -213,7 +213,7 @@ watch(
   gap: var(--space-1);
 }
 .lab-spectre-stellaire__label {
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   color: var(--color-muted);
   font-family: var(--font-mono);
 }

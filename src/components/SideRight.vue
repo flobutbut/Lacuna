@@ -1,5 +1,6 @@
 <script setup>
 import { useUIStore } from '@/stores/ui'
+import ProgressBar from '@/components/ProgressBar.vue'
 
 const ui = useUIStore()
 </script>
@@ -20,9 +21,7 @@ const ui = useUIStore()
         <div class="sw-key">Volonté</div>
         <div class="sw-val ok">HAUTE</div>
       </div>
-      <div class="bar-wrap">
-        <div class="bar-fill bar-green" style="width: 82%"></div>
-      </div>
+      <ProgressBar :value="82" color="green" pct />
       <div class="sw-row">
         <div class="sw-key">Âge moyen</div>
         <div class="sw-val">34.2 ans</div>

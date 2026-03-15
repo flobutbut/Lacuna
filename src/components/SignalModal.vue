@@ -3,7 +3,9 @@ import { useRouter } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
 import { useSignauxStore } from '@/stores/signaux'
 import { useObservationsStore } from '@/stores/observations'
-import SignalTypeIcon from '@/components/SignalTypeIcon.vue'
+import AppModal from '@/components/AppModal.vue'
+import Divider from '@/components/Divider.vue'
+import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
 
 const router = useRouter()
 const ui = useUIStore()
@@ -69,63 +71,62 @@ function isAdded() {
 </script>
 
 <template>
-  <div v-if="ui.selectedSignal" class="observatoire-panel signal-modal">
-    <div class="observatoire-panel__backdrop" @click="close" />
-    <div class="observatoire-panel__box">
-      <div class="observatoire-panel__header">
-        <h2 class="observatoire-panel__title">Signal · {{ ui.selectedSignal?.frequency }}</h2>
-        <button type="button" class="observatoire-panel__close" @click="close">×</button>
+  <AppModal
+    v-if="ui.selectedSignal"
+    :title="`Signal · ${ui.selectedSignal?.frequency}`"
+    @close="close"
+  >
+    <div class="signal-modal__body">
+      <div class="signal-modal__grid signal-modal__grid--top">
+        <div class="sw-cell">
+          <div class="signal-modal__key sw-key">Distance est.</div>
+          <div class="signal-modal__val sw-val">{{ ui.selectedSignal?.distanceEst ?? '—' }}</div>
+        </div>
+        <div class="sw-cell">
+          <div class="signal-modal__key sw-key">Reçu le</div>
+          <div class="signal-modal__val sw-val">{{ ui.selectedSignal?.receivedAt }}</div>
+        </div>
       </div>
-      <div class="observatoire-panel__body">
-        <div class="signal-modal__grid">
-          <div class="signal-modal__cell">
-            <div class="signal-modal__key">FRÉQUENCE</div>
-            <div class="signal-modal__val">{{ ui.selectedSignal?.frequency }}</div>
-          </div>
-          <div class="signal-modal__cell">
-            <div class="signal-modal__key">TYPE</div>
-            <div class="signal-modal__val signal-modal__val--structure">
-              <SignalTypeIcon :structure="ui.selectedSignal?.structure" :size="14" />
-              {{ ui.selectedSignal?.structure ?? 'non uniforme' }}
-            </div>
-          </div>
-          <div class="signal-modal__cell">
-            <div class="signal-modal__key">DIRECTION</div>
-            <div class="signal-modal__val">azimut {{ ui.selectedSignal?.azimuth }}°</div>
-          </div>
-          <div class="signal-modal__cell">
-            <div class="signal-modal__key">DISTANCE EST.</div>
-            <div class="signal-modal__val">{{ ui.selectedSignal?.distanceEst ?? '—' }}</div>
-          </div>
-          <div class="signal-modal__cell">
-            <div class="signal-modal__key">REÇU LE</div>
-            <div class="signal-modal__val">{{ ui.selectedSignal?.receivedAt }}</div>
-          </div>
+      <Divider variant="dashed" />
+      <div class="signal-modal__section">
+        <div class="signal-modal__section-title sw-key">Propriétés du signal</div>
+        <div class="sw-row">
+          <span class="sw-key">Fréquence</span>
+          <span class="sw-val">{{ ui.selectedSignal?.frequency }}</span>
         </div>
-        <div class="signal-modal__rows">
-          <div class="signal-modal__row">
-            <span class="signal-modal__key">Durée du signal</span>
-            <span class="signal-modal__val">{{ ui.selectedSignal?.durationSec }} secondes</span>
-          </div>
-          <div class="signal-modal__row">
-            <span class="signal-modal__key">Polarisation</span>
-            <span class="signal-modal__val">{{ ui.selectedSignal?.polarization }}</span>
-          </div>
+        <div class="sw-row">
+          <span class="sw-key">Type</span>
+          <span class="signal-modal__val--structure sw-val">
+            <SignalTypeIcon :structure="ui.selectedSignal?.structure" :size="14" />
+            {{ ui.selectedSignal?.structure ?? 'non uniforme' }}
+          </span>
         </div>
-        <div class="observatoire-panel__footer signal-modal__footer">
-          <button type="button" class="btn btn-primary" @click="analyser">
-            Analyser
-          </button>
-          <button
-            type="button"
-            class="btn btn-primary"
-            :disabled="isAdded()"
-            @click="ajouterAuLabo"
-          >
-            {{ isAdded() ? 'Ajouté' : 'Ajouter au laboratoire' }}
-          </button>
+        <div class="sw-row">
+          <span class="sw-key">Direction</span>
+          <span class="sw-val">azimut {{ ui.selectedSignal?.azimuth }}°</span>
+        </div>
+        <div class="sw-row">
+          <span class="sw-key">Durée</span>
+          <span class="sw-val">{{ ui.selectedSignal?.durationSec }} secondes</span>
+        </div>
+        <div class="sw-row">
+          <span class="sw-key">Polarisation</span>
+          <span class="sw-val">{{ ui.selectedSignal?.polarization }}</span>
         </div>
       </div>
     </div>
-  </div>
+    <template #footer>
+      <button type="button" class="btn btn-primary" @click="analyser">
+        Analyser
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        :disabled="isAdded()"
+        @click="ajouterAuLabo"
+      >
+        {{ isAdded() ? 'Ajouté' : 'Ajouter au laboratoire' }}
+      </button>
+    </template>
+  </AppModal>
 </template>

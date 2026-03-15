@@ -1,0 +1,118 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — NavMenuItem
+   Item de menu (Systèmes, Population), slot (Artefacts)
+   ══════════════════════════════════════════════════════ */
+
+.nav-menu-item {
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  position: relative;
+  border: var(--border-width) solid var(--border-default);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--color-muted);
+  text-decoration: none;
+  overflow: hidden;
+  /* Reset button when used as <button> */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.nav-menu-item:focus-visible {
+  outline: 1px solid var(--color-cyan-dim);
+  outline-offset: 2px;
+}
+
+/* ── Variant: menu (Systèmes, Population — colonne gauche) ── */
+.nav-menu-item--menu {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-5) var(--space-4);
+  font-size: var(--text-base);
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: var(--space-4);
+  text-align: left;
+}
+
+.nav-menu-item--menu:hover {
+  border-color: var(--border-bright);
+  background: var(--color-cyan-subtle);
+  color: var(--color-white);
+}
+
+.nav-menu-item--menu.nav-menu-item--selected {
+  border-color: var(--color-cyan);
+  background: var(--color-cyan-subtle);
+  color: var(--color-cyan);
+  box-shadow: 0 0 0 1px var(--color-cyan-dim);
+}
+
+.nav-menu-item--menu .nav-menu-item__icon {
+  font-size: var(--text-xl);
+  flex-shrink: 0;
+}
+
+.nav-menu-item--menu .nav-menu-item__label {
+  flex: 1;
+}
+
+/* ── Variant: slot (Artefacts — grille) ── */
+.nav-menu-item--slot {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.nav-menu-item--slot:hover {
+  border-color: var(--border-bright);
+  background: var(--color-cyan-subtle);
+  color: var(--color-white);
+}
+
+.nav-menu-item--slot.nav-menu-item--selected {
+  border-color: var(--color-cyan);
+  background: var(--color-cyan-subtle);
+  color: var(--color-cyan);
+  box-shadow: 0 0 0 1px var(--color-cyan-dim);
+}
+
+.nav-menu-item--slot .nav-menu-item__icon {
+  font-size: var(--text-3xl);
+}
+
+.nav-menu-item--slot .nav-menu-item__label {
+  font-size: var(--text-base);
+  letter-spacing: var(--tracking-tight);
+  text-align: center;
+}
+
+/* ── Badge (point de notification) ── */
+.nav-menu-item__badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--border-radius-full);
+  background: var(--color-amber);
+}
+
+.nav-menu-item--slot .nav-menu-item__badge {
+  width: 5px;
+  height: 5px;
+}
+
+/* ── Couleurs icône (menu Systèmes) ── */
+.nav-menu-item--icon-cyan .nav-menu-item__icon { color: var(--color-cyan); }
+.nav-menu-item--icon-green .nav-menu-item__icon { color: var(--color-green); }
+.nav-menu-item--icon-amber .nav-menu-item__icon { color: var(--color-amber); }
+.nav-menu-item--icon-signal .nav-menu-item__icon { color: var(--color-signal); }
+.nav-menu-item--icon-bumper .nav-menu-item__icon { color: #7ab0cc; }
+.nav-menu-item--icon-comms .nav-menu-item__icon { color: #4488aa; }
+.nav-menu-item--icon-nav .nav-menu-item__icon { color: #336655; }

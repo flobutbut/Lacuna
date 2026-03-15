@@ -1,9 +1,51 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
+import { useSystemObjectsStore } from '@/stores/systemObjects'
+import { useMapNodesStore } from '@/stores/mapNodes'
 import { computeTransit, formatDuration, formatDureeSimulee } from '@/lib/transit'
+import AppModal from '@/components/AppModal.vue'
+import Divider from '@/components/Divider.vue'
+import ModalCell from '@/components/ModalCell.vue'
 
 const ui = useUIStore()
+const systemObjectsStore = useSystemObjectsStore()
+const mapStore = useMapNodesStore()
+
+watch(
+  () => ui.selectedStar?.id,
+  async (id) => {
+    if (id) {
+      await systemObjectsStore.fetchForSystem(id)
+      if (!mapStore.loaded) await mapStore.fetch()
+    }
+  },
+  { immediate: true }
+)
+
+const isOnMap = computed(() => ui.selectedStar ? mapStore.isOnMap(ui.selectedStar.id) : false)
+
+async function addToCarte() {
+  const star = ui.selectedStar
+  if (!star) return
+  const node = await mapStore.addNode(star.id, star.name ?? star.id)
+  if (node) {
+    ui.showNotification(`Système ${star.name} ajouté à la carte`)
+  } else {
+    ui.showNotification('Impossible d\'ajouter à la carte — vérifiez la migration 00022', 5000)
+  }
+}
+
+const exoplanetLabel = computed(() => {
+  const id = ui.selectedStar?.id
+  if (!id) return '—'
+  const objects = systemObjectsStore.getForSystem(id)
+  const hasLoaded = systemObjectsStore.bySystem[id]
+  if (!hasLoaded) return '…'
+  const planets = objects.filter((o) => ['PLANET', 'MOON', 'MINOR_BODY'].includes(o.type))
+  const count = planets.length
+  return count === 0 ? 'Aucune connue' : count === 1 ? '1 connue' : `${count} connues`
+})
 
 const transit = computed(() => {
   if (!ui.selectedStar?.dist) return null
@@ -26,79 +68,90 @@ function close() {
 </script>
 
 <template>
-  <div
+  <AppModal
     v-if="ui.selectedStar && !ui.observatoireOpen"
-    class="travel-widget travel-widget--full"
+    @close="close"
   >
-    <div class="travel-widget__backdrop" @click="close" />
-    <div class="travel-widget__inner">
-      <div class="travel-widget__header">
-        <span class="travel-widget__name">{{ ui.selectedStar.name }}</span>
-        <button type="button" class="travel-widget__close" @click="close">×</button>
-      </div>
-      <div v-if="ui.selectedStar.isAnomaly" class="travel-widget__badge">Anomalie détectée</div>
+    <template #header>
+      <h2 class="app-modal__title">{{ ui.selectedStar?.name }}</h2>
+    </template>
+    <div class="travel-widget__content">
+      <div v-if="ui.selectedStar?.isAnomaly" class="travel-widget__badge">Anomalie détectée</div>
       <div class="travel-widget__grid">
-        <div class="travel-widget__cell">
-          <div class="travel-widget__key">DISTANCE</div>
-          <div class="travel-widget__val">{{ ui.selectedStar.dist }} al</div>
+        <div class="sw-cell">
+          <div class="travel-widget__key sw-key">DISTANCE</div>
+          <div class="travel-widget__val sw-val">{{ ui.selectedStar?.dist }} al</div>
         </div>
-        <div class="travel-widget__cell">
-          <div class="travel-widget__key">TYPE</div>
-          <div class="travel-widget__val">{{ ui.selectedStar.spectral }}</div>
+        <div class="sw-cell">
+          <div class="travel-widget__key sw-key">TYPE</div>
+          <div class="travel-widget__val sw-val">{{ ui.selectedStar?.spectral }}</div>
+        </div>
+        <div class="sw-cell">
+          <div class="travel-widget__key sw-key">EXOPLANÈTES</div>
+          <div class="travel-widget__val sw-val">{{ exoplanetLabel }}</div>
         </div>
       </div>
+      <Divider v-if="transit" variant="dashed" />
       <div v-if="transit" class="travel-widget__transit">
         <div class="travel-widget__transit-block">
-          <div class="travel-widget__transit-title">Phases (durée simulée)</div>
+          <div class="travel-widget__transit-title sw-key">Transit</div>
           <div class="travel-widget__transit-grid">
-            <div class="travel-widget__transit-phase">
-              <span>Accélération</span>
-              <span>{{ formatDureeSimulee(transit.tAccel) }}</span>
-            </div>
-            <div class="travel-widget__transit-phase">
-              <span>Inertie</span>
-              <span>{{ formatDureeSimulee(transit.tInertie) }}</span>
-            </div>
-            <div class="travel-widget__transit-phase">
-              <span>Freinage</span>
-              <span>{{ formatDureeSimulee(transit.tFreinage) }}</span>
-            </div>
+            <ModalCell variant="compact">
+              <span class="sw-key">Accélération</span>
+              <span class="sw-val">{{ formatDureeSimulee(transit.tAccel) }}</span>
+            </ModalCell>
+            <ModalCell variant="compact">
+              <span class="sw-key">Inertie</span>
+              <span class="sw-val">{{ formatDureeSimulee(transit.tInertie) }}</span>
+            </ModalCell>
+            <ModalCell variant="compact">
+              <span class="sw-key">Freinage</span>
+              <span class="sw-val">{{ formatDureeSimulee(transit.tFreinage) }}</span>
+            </ModalCell>
           </div>
-          <div class="travel-widget__transit-row travel-widget__transit-summary">
-            <span>Total simulé</span>
-            <span>{{ formatDureeSimulee(transit.tPhysTotal) }}</span>
+          <div class="sw-row">
+            <span class="sw-key">Total simulé</span>
+            <span class="sw-val">{{ formatDureeSimulee(transit.tPhysTotal) }}</span>
           </div>
-          <div class="travel-widget__transit-row travel-widget__transit-summary travel-widget__transit-summary--last">
-            <span>Durée joueur</span>
-            <span>{{ formatDuration(transit.tJoueurSec) }}</span>
+          <div class="sw-row">
+            <span class="sw-key">Durée joueur</span>
+            <span class="sw-val">{{ formatDuration(transit.tJoueurSec) }}</span>
           </div>
-        </div>
-        <div class="travel-widget__transit-block travel-widget__transit-block--compact">
-          <div class="travel-widget__transit-title">Ressources</div>
-          <div class="travel-widget__transit-row">
-            <span>Carburant</span>
-            <span>−{{ transit.carburantPct }}%</span>
+          <div class="sw-row">
+            <span class="sw-key">Carburant</span>
+            <span class="sw-val">−{{ transit.carburantPct }}%</span>
           </div>
-          <div class="travel-widget__transit-row travel-widget__transit-row--last">
-            <span>Consommation (générations)</span>
-            <span>{{ transit.generations }}</span>
+          <div class="sw-row">
+            <span class="sw-key">Consommation (générations)</span>
+            <span class="sw-val">{{ transit.generations }}</span>
           </div>
         </div>
       </div>
-      <div class="travel-widget__footer">
-        Âge de la lumière d'observation : {{ ui.selectedStar.dist }} ans
+      <Divider variant="dashed" />
+      <div class="travel-widget__footer sw-row">
+        <span class="sw-key">Âge de la lumière d'observation</span>
+        <span class="sw-val">{{ ui.selectedStar?.dist }} ans</span>
       </div>
-      <div class="travel-widget__footer">
-        Probabilité d'anomalie : {{ ui.selectedStar.isAnomaly ? '61%' : '12%' }}
-      </div>
-      <div class="travel-widget__actions">
-        <button type="button" class="btn btn-primary" @click="analyser">
-          [ANALYSER]
-        </button>
-        <button type="button" class="btn btn-primary" @click="fixerCap">
-          [FIXER CAP]
-        </button>
+      <div class="travel-widget__footer sw-row">
+        <span class="sw-key">Probabilité d'anomalie</span>
+        <span class="sw-val">{{ ui.selectedStar?.isAnomaly ? '61%' : '12%' }}</span>
       </div>
     </div>
-  </div>
+    <template #footer>
+      <button
+        type="button"
+        class="btn btn-primary"
+        :disabled="isOnMap"
+        @click="addToCarte"
+      >
+        {{ isOnMap ? 'Sur la carte' : 'Ajouter à la carte' }}
+      </button>
+      <button type="button" class="btn btn-primary" @click="analyser">
+        [ANALYSER]
+      </button>
+      <button type="button" class="btn btn-primary" @click="fixerCap">
+        [FIXER CAP]
+      </button>
+    </template>
+  </AppModal>
 </template>

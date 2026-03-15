@@ -53,7 +53,7 @@ const TABS = [
 }
 .observatoire-tabs__btn {
   padding: var(--space-4) var(--space-8);
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   font-family: var(--font-mono);
   letter-spacing: var(--tracking-normal);
   text-transform: uppercase;

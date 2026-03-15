@@ -22,10 +22,19 @@ export const useUIStore = defineStore('ui', () => {
   const reticuleVisible = ref(false)
   const selectedSignal = ref(null)
   const hoveredSignal = ref(null)
+  /** Constellation survolée (ligne) : { abbr, name } ou null */
+  const hoveredConstellation = ref(null)
+  /** Vue par défaut ra=180,dec=0 — override à l’ouverture Observatoire si à SOL (voir SkyCanvas) */
   const viewDirection = ref({ ra: 180, dec: 0 })
   const targetViewDirection = ref({ ra: 180, dec: 0 })
   /** Filtre spectral Observatoire : 'visible' | 'ir' | 'uv' | 'r' */
   const spectralFilter = ref('visible')
+  /** Filtre exoplanètes — n'afficher que les systèmes avec exoplanètes connues (s'additionne aux filtres spectraux) */
+  const exoplanetFilter = ref(false)
+  /** Afficher les lignes de constellation (VISUEL uniquement) — préférence localStorage, désactivé par défaut */
+  const constellationsEnabled = ref(
+    JSON.parse(localStorage.getItem('lacuna_constellations_enabled') ?? 'false')
+  )
   /** ID de l'étoile recherchée (centrée et highlightée) */
   const searchedStarId = ref(null)
   /** IDs des signaux correspondant à la recherche (pour surligner dans SideLeft) */
@@ -36,6 +45,11 @@ export const useUIStore = defineStore('ui', () => {
   function setObservatoireViewMode(mode) {
     if (['sky', 'system'].includes(mode)) {
       observatoireViewMode.value = mode
+      if (mode === 'sky') {
+        selectedStar.value = null
+        selectedBody.value = null
+        observatoireOpen.value = false
+      }
     }
   }
 
@@ -75,6 +89,19 @@ export const useUIStore = defineStore('ui', () => {
     if (['visible', 'ir', 'uv', 'r'].includes(band)) {
       spectralFilter.value = band
     }
+  }
+
+  function setExoplanetFilter(value) {
+    exoplanetFilter.value = !!value
+  }
+
+  function toggleExoplanetFilter() {
+    exoplanetFilter.value = !exoplanetFilter.value
+  }
+
+  function toggleConstellationsEnabled() {
+    constellationsEnabled.value = !constellationsEnabled.value
+    localStorage.setItem('lacuna_constellations_enabled', JSON.stringify(constellationsEnabled.value))
   }
 
   function openPanel(id) {
@@ -161,6 +188,10 @@ export const useUIStore = defineStore('ui', () => {
     hoveredSignal.value = signal
   }
 
+  function setHoveredConstellation(constellation) {
+    hoveredConstellation.value = constellation
+  }
+
   return {
     activePanel,
     notification,
@@ -194,6 +225,8 @@ export const useUIStore = defineStore('ui', () => {
     selectSignal,
     closeSignalModal,
     setHoveredSignal,
+    hoveredConstellation,
+    setHoveredConstellation,
     viewDirection,
     targetViewDirection,
     setViewDirection,
@@ -202,6 +235,11 @@ export const useUIStore = defineStore('ui', () => {
     setTargetViewDirectionValue,
     spectralFilter,
     setSpectralFilter,
+    exoplanetFilter,
+    setExoplanetFilter,
+    toggleExoplanetFilter,
+    constellationsEnabled,
+    toggleConstellationsEnabled,
     searchedStarId,
     setSearchedStarId,
     clearSearchedStarId,

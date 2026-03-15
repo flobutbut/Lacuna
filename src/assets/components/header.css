@@ -86,7 +86,7 @@ a.header__stat-block:hover {
 }
 
 .header__stat-label {
-    font-size: var(--text-xs);
+    font-size: var(--text-base);
     color: var(--color-muted);
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);

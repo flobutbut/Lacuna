@@ -1,0 +1,132 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — AppModal
+   Composant modal réutilisable (header, content, footer)
+   ══════════════════════════════════════════════════════ */
+
+.app-modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+}
+
+.app-modal--top-right {
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.app-modal--top-right .app-modal__box {
+  margin: var(--space-6);
+  max-height: calc(100vh - var(--space-12));
+}
+
+.app-modal--no-overlay {
+  pointer-events: none;
+}
+
+.app-modal--no-overlay .app-modal__box {
+  pointer-events: auto;
+}
+
+.app-modal__divider {
+  margin: 0;
+}
+
+.app-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+}
+
+.app-modal__box {
+  position: relative;
+  width: 100%;
+  min-width: 400px;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow: hidden;
+  background: var(--color-panel);
+  border: var(--border-width) solid var(--border-bright);
+  display: flex;
+  flex-direction: column;
+}
+
+.app-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-8);
+}
+
+.app-modal__title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-cyan);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.app-modal__close {
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  font-size: var(--text-xl);
+  cursor: pointer;
+  padding: 0 var(--space-2);
+  transition: color var(--transition-base);
+}
+
+.app-modal__close:hover {
+  color: var(--color-white);
+}
+
+.app-modal__content {
+  padding: var(--space-8);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.app-modal__footer {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-8);
+}
+
+.app-modal__footer .btn {
+  flex: 1;
+}
+
+/* ── ModalCell : cellules dans le contenu des modales ── */
+.modal-cell {
+  display: flex;
+  flex-direction: column;
+  border: var(--border-width) solid var(--border-default);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.modal-cell--default {
+  padding: var(--space-4);
+  gap: var(--space-3);
+}
+
+.modal-cell--compact {
+  padding: var(--space-3) var(--space-5);
+  background: rgba(0, 0, 0, 0.25);
+  font-size: var(--text-md);
+}
+
+.modal-cell--compact .sw-key {
+  font-size: var(--text-md);
+  color: var(--color-muted);
+  text-transform: uppercase;
+}
+
+.modal-cell--compact .sw-val {
+  color: var(--color-white);
+  font-family: var(--font-mono);
+}

@@ -7,9 +7,13 @@ import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 
+const EXOPLANET_TYPES = ['PLANET', 'MOON', 'MINOR_BODY']
+
 export const useSystemObjectsStore = defineStore('systemObjects', () => {
   const bySystem = ref({}) // { systemId: [obj, ...] }
   const loaded = ref(false)
+  /** IDs des systèmes ayant au moins une exoplanète — pour filtre Observatoire */
+  const systemIdsWithExoplanets = ref(new Set())
 
   async function fetchAll() {
     const supabaseStore = useSupabaseStore()
@@ -20,7 +24,9 @@ export const useSystemObjectsStore = defineStore('systemObjects', () => {
     const { data, error } = await supabase
       .from('system_objects')
       .select('*')
+      .order('system_id', { ascending: true })
       .order('sort_order', { ascending: true })
+      .limit(5000)
     if (error) {
       console.warn('[systemObjects] Erreur fetch:', error.message)
       loaded.value = true
@@ -58,6 +64,25 @@ export const useSystemObjectsStore = defineStore('systemObjects', () => {
     return bySystem.value[systemId] ?? []
   }
 
+  function hasExoplanets(systemId) {
+    return systemIdsWithExoplanets.value.has(systemId)
+  }
+
+  async function fetchSystemIdsWithExoplanets() {
+    const supabaseStore = useSupabaseStore()
+    if (!supabaseStore.isConfigured()) return
+    const { data, error } = await supabase
+      .from('system_objects')
+      .select('system_id')
+      .in('type', EXOPLANET_TYPES)
+    if (error) {
+      console.warn('[systemObjects] Erreur fetch systèmes avec exoplanètes:', error.message)
+      return
+    }
+    const ids = new Set((data || []).map((r) => r.system_id).filter(Boolean))
+    systemIdsWithExoplanets.value = ids
+  }
+
   /** Convertit un system_object en format "body" pour ObservatoirePanel (type = ETOILE, PLANETE, etc.) */
   function toBodyFormat(obj, systemName) {
     const typeMap = {
@@ -82,9 +107,12 @@ export const useSystemObjectsStore = defineStore('systemObjects', () => {
   return {
     bySystem,
     loaded,
+    systemIdsWithExoplanets,
     fetchAll,
     fetchForSystem,
     getForSystem,
+    hasExoplanets,
+    fetchSystemIdsWithExoplanets,
     toBodyFormat,
   }
 })

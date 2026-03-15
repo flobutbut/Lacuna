@@ -34,7 +34,8 @@
 .page-full--spread .artifacts-layout,
 .page-full--spread .pop-layout,
 .page-full--spread .sys-layout,
-.page-full--spread .lab-layout {
+.page-full--spread .lab-layout,
+.page-full--spread .carte-layout {
   flex: 1;
   min-height: 0;
 }

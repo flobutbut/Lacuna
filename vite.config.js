@@ -11,7 +11,7 @@ function redirectMaquette() {
     name: 'redirect-maquette',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (req.url === '/docs/lacuna_interface.html' || req.url?.startsWith('/docs/lacuna_interface')) {
+        if (req.url === '/docs/lacuna_interface.html' || req.url === '/docs/assets/lacuna_interface.html' || req.url?.startsWith('/docs/lacuna_interface') || req.url?.includes('lacuna_interface')) {
           res.writeHead(302, { Location: '/' })
           res.end()
           return

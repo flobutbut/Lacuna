@@ -96,7 +96,7 @@
   align-items: center;
   gap: var(--space-4) var(--space-6);
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   color: var(--color-muted);
   letter-spacing: var(--tracking-wide);
 }
@@ -173,186 +173,53 @@
   color: var(--color-cyan);
 }
 
-/* Overlay infos — fermable, hug content */
-.sys-overlay {
-  position: absolute;
-  top: var(--space-6);
-  right: var(--space-6);
-  z-index: var(--z-panel);
-  width: fit-content;
-  max-width: min(400px, 50%);
-  max-height: calc(100% - var(--space-12));
-  overflow-y: auto;
-  padding: var(--space-6);
-  padding-top: var(--space-8);
-  background: var(--color-panel-solid);
-  border: var(--border-width) solid var(--border-default);
-}
-
-.sys-overlay__close {
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--color-muted);
-  font-size: var(--text-xl);
-  line-height: 1;
-  cursor: pointer;
-  transition: color var(--transition-base);
-}
-
-.sys-overlay__close:hover {
-  color: var(--color-white);
-}
-
-.sys-menu-item {
+/* Modale Systèmes (contenu AppModal) */
+.sys-modal-content {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-5) var(--space-4);
-  border: var(--border-width) solid var(--border-default);
-  background: rgba(0, 0, 0, 0.3);
-  color: var(--color-muted);
-  font-family: var(--font-mono);
-  font-size: var(--text-base);
-  letter-spacing: var(--tracking-tight);
-  cursor: pointer;
-  transition: all var(--transition-base);
-  margin-bottom: var(--space-4);
-  position: relative;
 }
 
-.sys-menu-item:hover {
-  border-color: var(--border-bright);
-  background: var(--color-cyan-subtle);
-  color: var(--color-white);
-}
-
-.sys-menu-item.selected {
-  border-color: var(--color-cyan);
-  background: var(--color-cyan-subtle);
-  color: var(--color-cyan);
-  box-shadow: 0 0 0 1px var(--color-cyan-dim);
-}
-
-.sys-menu-item__icon {
-  font-size: var(--text-xl);
-  flex-shrink: 0;
-}
-
-/* Couleurs des icônes (reprises du plan SVG) */
-.sys-menu-item__icon--cyan { color: var(--color-cyan); }
-.sys-menu-item__icon--green { color: var(--color-green); }
-.sys-menu-item__icon--amber { color: var(--color-amber); }
-.sys-menu-item__icon--signal { color: var(--color-signal); }
-.sys-menu-item__icon--bumper { color: #7ab0cc; } /* PARE-CHOCS ABLATIF */
-.sys-menu-item__icon--comms { color: #4488aa; } /* LASER COMMS */
-.sys-menu-item__icon--nav { color: #336655; } /* NAV. PULSAR MSP */
-
-
-/* Identity block */
-.sys-identity {
-  margin-bottom: var(--space-8);
-}
-
-.sys-identity__title {
-  font-size: var(--text-md);
-  color: var(--color-cyan);
-  letter-spacing: var(--tracking-wider);
-  margin-bottom: var(--space-5);
-}
-
-.sys-identity__row {
+/* Bloc indicateur : [titre-value] + [description] + (gap) + [barre] */
+.sys-indicator-block {
   display: flex;
-  justify-content: space-between;
-  padding: var(--space-2) 0;
-  border-bottom: var(--border-width) solid var(--border-default);
-  font-size: var(--text-base);
+  flex-direction: column;
+  gap: 0;
 }
 
-.sys-identity__row:last-child {
-  border-bottom: none;
-}
-
-.sys-identity__key {
-  color: var(--color-muted);
-}
-
-.sys-identity__val {
-  color: var(--color-white);
-  font-variant-numeric: tabular-nums;
-}
-
-/* System indicator */
-.sys-indicator {
-  margin-bottom: var(--space-6);
-}
-
-.sys-indicator__name {
+.sys-indicator-block .sys-value-desc {
   font-size: var(--text-sm);
-  color: var(--color-cyan);
-  letter-spacing: var(--tracking-wide);
-  margin-bottom: var(--space-2);
-}
-
-.sys-indicator__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-1);
-}
-
-.sys-indicator__label {
-  font-size: var(--text-base);
   color: var(--color-muted);
+  margin: 0;
 }
 
-.sys-indicator__val {
-  font-size: var(--text-base);
-  color: var(--color-white);
-  font-variant-numeric: tabular-nums;
-}
-
-.sys-indicator__desc {
-  font-size: var(--text-xs);
-  color: var(--color-muted);
+.sys-indicator-block .bar-wrap,
+.sys-indicator-block .progress-bar {
   margin-top: var(--space-2);
 }
 
-/* Section title */
-.sys-section-title {
+.sys-modal-subtitle {
   font-size: var(--text-md);
   color: var(--color-cyan);
   letter-spacing: var(--tracking-wider);
-  margin: var(--space-8) 0 var(--space-5);
-  padding-bottom: var(--space-3);
-  border-bottom: var(--border-width) solid var(--border-default);
+  margin: 0 0 var(--space-4);
 }
 
-.sys-section-title:first-child {
-  margin-top: 0;
-}
-
-/* History */
+/* History (dans modale) */
 .sys-history-item {
-  padding: var(--space-4) 0;
-  border-bottom: var(--border-width) solid var(--border-default);
-  font-size: var(--text-base);
+  padding: 0;
+  font-size: var(--text-sm);
   color: var(--color-white);
 }
 
-.sys-history-item:last-child {
-  border-bottom: none;
-}
-
 .sys-history-item__meta {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   color: var(--color-muted);
   margin-bottom: var(--space-1);
+}
+
+.sys-history-item__event {
+  font-size: var(--text-sm);
 }
 
 .sys-history-item__delta {

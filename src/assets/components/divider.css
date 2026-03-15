@@ -1,0 +1,23 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Divider
+   Ligne de séparation horizontale (dashed | solid)
+   ══════════════════════════════════════════════════════ */
+
+.divider {
+  border: none;
+  height: 0;
+  margin: var(--space-4) 0;
+  flex-shrink: 0;
+}
+
+.divider--dashed {
+  border-top: var(--border-width) dashed var(--border-default);
+}
+
+.divider--solid {
+  border-top: var(--border-width) solid var(--border-default);
+}
+
+.divider--tight {
+  margin: var(--space-2) 0;
+}

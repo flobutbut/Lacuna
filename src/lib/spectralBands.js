@@ -3,6 +3,28 @@
  * Réf. Johnson-Cousins, Pecaut & Mamajek
  */
 
+import { luminosityFromSpectralType } from './habitableZone'
+
+/** L/L☉ → facteur normalisé 0–1 (log scale) — partagé par brightness et taille */
+export function getLuminosityFactor(luminosity, spectralType) {
+  const L = parseFloat(luminosity)
+  const lum = Number.isFinite(L) ? L : (spectralType ? luminosityFromSpectralType(spectralType) : 1)
+  const logL = Math.log10(1 + Math.max(0, lum))
+  return Math.min(1, logL / 5)
+}
+
+/** L/L☉ → baseBrightness (0.5–1.0) — plus de contraste entre étoiles brillantes et faibles */
+export function luminosityToBaseBrightness(luminosity, spectralType) {
+  const t = getLuminosityFactor(luminosity, spectralType)
+  return 0.5 + 0.5 * t
+}
+
+/** L/L☉ → multiplicateur de rayon (0.6–1.5) — étoiles lumineuses = plus grandes */
+export function luminosityToRadiusMultiplier(luminosity, spectralType) {
+  const t = getLuminosityFactor(luminosity, spectralType)
+  return 0.6 + 0.9 * t
+}
+
 /** Magnitude absolue estimée depuis spectral_type — aligné avec backend */
 function spectralTypeToMabs(st) {
   if (!st || typeof st !== 'string') return 15
@@ -131,30 +153,107 @@ export function magnitudeInBand(mVis, spectralType, band) {
   return mVis
 }
 
-/**
- * Filtre les systèmes par magnitude dans la bande sélectionnée.
- * @param {Array} systems - [{ apparent_magnitude?, spectral_type, distance, ... }]
- * @param {string} band
- * @param {number} limit - magnitude max (défaut 12)
- */
-export function filterBySpectralBand(systems, band, limit = 12) {
-  const letter = (s) => (s.spectral_type || '').toUpperCase()[0]
-  const isBrownDwarf = (s) => ['L', 'T', 'Y'].includes(letter(s))
-  if (band === 'ir') {
-    return systems.filter((s) => {
-      if (isBrownDwarf(s)) {
-        const mIR = apparentMagnitudeIRFromDistance(s.spectral_type, s.distance)
-        return mIR <= limit
-      }
-      const mVis = s.apparent_magnitude ?? apparentMagnitudeFromDistance(s.spectral_type, s.distance)
-      const mBand = magnitudeInBand(mVis, s.spectral_type, band)
-      return mBand <= limit
-    })
+/** Classe spectrale — premier caractère de spectral_type */
+export function getSpectralClass(spectralType) {
+  if (!spectralType) return 'G'
+  const first = spectralType.trim().toUpperCase()[0]
+  return ['O', 'B', 'A', 'F', 'G', 'K', 'M', 'L', 'T', 'Y'].includes(first) ? first : 'G'
+}
+
+const HOT_STARS = ['O', 'B', 'A']
+const COLD_STARS = ['K', 'M', 'L', 'T', 'Y']
+const WHITE_DWARF = (st) => st && /^D[ABCOQZX]/i.test(st)
+
+/** B-V (color_index) → RGB — visible uniquement. -0.3 (bleu) → 2.0 (rouge) */
+function colorIndexToRGB(colorIndex) {
+  const ci = colorIndex ?? 0.65
+  const t = Math.min(1, Math.max(0, (ci + 0.3) / 2.3))
+  return {
+    r: Math.round(100 + t * 155),
+    g: Math.round(150 + t * 70),
+    b: Math.round(255 - t * 200),
   }
-  return systems.filter((s) => {
-    if (isBrownDwarf(s)) return false
-    const mVis = s.apparent_magnitude ?? apparentMagnitudeFromDistance(s.spectral_type, s.distance)
-    const mBand = magnitudeInBand(mVis, s.spectral_type, band)
-    return mBand <= limit
+}
+
+/** Couleur d'étoile selon colorOverride (IR, UV, R) ou couleur réelle (visible) */
+export function resolveStarColor(star, colorOverride) {
+  const ci = star.color_index ?? 0.65
+  if (colorOverride === 'IR') {
+    const t = Math.min(1, Math.max(0, (ci ?? 1.0) / 2.0))
+    return { r: 255, g: Math.round(120 - t * 80), b: Math.round(60 - t * 50) }
+  }
+  if (colorOverride === 'UV') {
+    const t = Math.min(1, Math.max(0, (-(ci ?? 0) + 0.4) / 0.8))
+    return { r: Math.round(180 + t * 75), g: Math.round(180 + t * 50), b: 255 }
+  }
+  if (colorOverride === 'R') {
+    return { r: 255, g: Math.round(60 + (ci ?? 0.6) * 30), b: 40 }
+  }
+  return colorIndexToRGB(ci)
+}
+
+/** Étoiles pouvant apparaître dans au moins une bande (union des 4 filtres) */
+export function getPoolForBandFilters(stars) {
+  return stars.filter((star) => {
+    const cls = getSpectralClass(star.spectral_type)
+    const mag = star.apparent_magnitude ?? apparentMagnitudeFromDistance(star.spectral_type, star.distance) ?? 8
+    if (cls === 'L' || cls === 'T' || cls === 'Y') {
+      const mIR = apparentMagnitudeIRFromDistance(star.spectral_type, star.distance)
+      return mIR <= 15
+    }
+    return mag <= 15
   })
+}
+
+/** Paramètres de rendu pour une étoile dans une bande — null si hors limite (pour filtrage) */
+export function getStarBandParams(star, band) {
+  const params = getStarBandParamsOrZero(star, band)
+  if (params.opacity === 0) return null
+  return params
+}
+
+/** Toujours retourne un objet — opacity 0 si hors limite (pour transition fluide) */
+export function getStarBandParamsOrZero(star, band) {
+  const cls = getSpectralClass(star.spectral_type)
+  const mag = star.apparent_magnitude ?? apparentMagnitudeFromDistance(star.spectral_type, star.distance) ?? 8
+
+  switch (band) {
+    case 'ir': {
+      const mIR = (cls === 'L' || cls === 'T' || cls === 'Y')
+        ? apparentMagnitudeIRFromDistance(star.spectral_type, star.distance)
+        : mag
+      if (mIR > 15) return { opacity: 0, brightnessMultiplier: 0.5, colorOverride: null }
+      const isWarm = COLD_STARS.includes(cls)
+      return { opacity: isWarm ? 1.0 : 0.15, brightnessMultiplier: isWarm ? 1.2 : 0.5, colorOverride: isWarm ? 'IR' : null }
+    }
+    case 'uv': {
+      if (mag > 12) return { opacity: 0, brightnessMultiplier: 0.5, colorOverride: null }
+      const isHot = HOT_STARS.includes(cls) || WHITE_DWARF(star.spectral_type)
+      return { opacity: isHot ? 1.0 : 0.15, brightnessMultiplier: isHot ? 1.2 : 0.5, colorOverride: isHot ? 'UV' : null }
+    }
+    case 'r': {
+      if (mag > 12) return { opacity: 0, brightnessMultiplier: 1.0, colorOverride: null }
+      const isCold = COLD_STARS.includes(cls)
+      const isHot = HOT_STARS.includes(cls)
+      return { opacity: 1.0, brightnessMultiplier: isCold ? 1.3 : isHot ? 0.7 : 1.0, colorOverride: 'R' }
+    }
+    default: {
+      if (mag > 12 || cls === 'L' || cls === 'T' || cls === 'Y') return { opacity: 0, brightnessMultiplier: 1.0, colorOverride: null }
+      return { opacity: 1.0, brightnessMultiplier: 1.0, colorOverride: null }
+    }
+  }
+}
+
+/**
+ * Filtre les systèmes par bande spectrale — populations distinctes.
+ * Retourne { star, opacity, brightnessMultiplier, colorOverride } ou null si hors limite.
+ */
+export function filterBySpectralBand(stars, band) {
+  return stars
+    .map((star) => {
+      const params = getStarBandParams(star, band)
+      if (!params) return null
+      return { star, ...params }
+    })
+    .filter(Boolean)
 }

@@ -3,6 +3,7 @@ import { onMounted, computed } from 'vue'
 import { useDrakeStore } from '@/stores/drake'
 import { formatRelativeTime } from '@/lib/formatUtils'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
+import ProgressBar from '@/components/ProgressBar.vue'
 
 const drakeStore = useDrakeStore()
 
@@ -39,13 +40,13 @@ onMounted(async () => {
         <div class="dt-val" :style="t.amber ? { color: 'var(--color-amber)' } : {}">
           {{ t.val }}
         </div>
-        <div class="dt-bar">
-          <div
-            class="dt-bar-fill"
-            :class="{ 'bar-amber': t.amber }"
-            :style="{ width: t.width + '%' }"
-          />
-        </div>
+        <ProgressBar
+          :value="t.width"
+          :color="t.amber ? 'amber' : 'cyan'"
+          pct
+          no-margin
+          class="dt-bar"
+        />
       </div>
       <div class="drake-result">
         <div class="dr-label">N — CIVILISATIONS ACTIVES ESTIMÉES</div>

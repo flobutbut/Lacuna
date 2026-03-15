@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "seed:generate": "node scripts/generateExtendedSeed.js > supabase/seed_extended_systems.sql"
+    "seed:generate": "node scripts/generateExtendedSeed.js > supabase/seed_extended_systems.sql",
+    "import:stellar": "cd stellar_import && python main.py"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",

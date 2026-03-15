@@ -8,8 +8,27 @@
     width: 100%;
     height: 3px;
     background: var(--color-ghost);
-    margin: var(--space-1) 0 7px;
+    margin: var(--space-1) 0 0;
     position: relative;
+}
+
+/* ── ProgressBar (composant) ── */
+.progress-bar {
+    width: 100%;
+    height: 3px;
+    background: var(--color-ghost);
+    margin: var(--space-1) 0 var(--space-4);
+    position: relative;
+}
+
+.progress-bar__fill {
+    height: 100%;
+    transition: width var(--transition-bar);
+}
+
+.progress-bar--no-margin {
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 .bar-fill {

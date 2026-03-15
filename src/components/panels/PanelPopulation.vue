@@ -1,5 +1,6 @@
 <script setup>
 import { useUIStore } from '@/stores/ui'
+import ProgressBar from '@/components/ProgressBar.vue'
 
 const ui = useUIStore()
 
@@ -30,27 +31,21 @@ const statuses = [
             <span class="pop-bar-label">Volonté collective</span>
             <span class="pop-bar-val" style="color: var(--color-green)">HAUTE — 82%</span>
           </div>
-          <div class="bar-wrap">
-            <div class="bar-fill bar-green" style="width: 82%"></div>
-          </div>
+          <ProgressBar :value="82" color="green" pct />
         </div>
         <div class="pop-bar-row">
           <div class="pop-bar-header">
             <span class="pop-bar-label">Ressources alimentaires</span>
             <span class="pop-bar-val" style="color: var(--color-green)">91%</span>
           </div>
-          <div class="bar-wrap">
-            <div class="bar-fill bar-green" style="width: 91%"></div>
-          </div>
+          <ProgressBar :value="91" color="green" pct />
         </div>
         <div class="pop-bar-row">
           <div class="pop-bar-header">
             <span class="pop-bar-label">Cohésion sociale</span>
             <span class="pop-bar-val" style="color: var(--color-amber)">67%</span>
           </div>
-          <div class="bar-wrap">
-            <div class="bar-fill bar-amber" style="width: 67%"></div>
-          </div>
+          <ProgressBar :value="67" color="amber" pct />
         </div>
         <div style="margin-top: 12px; border-top: 1px solid var(--border-default); padding-top: 10px">
           <div class="panel-section-title" style="margin-bottom: 8px">État des systèmes sociaux</div>

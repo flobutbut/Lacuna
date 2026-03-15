@@ -4,8 +4,9 @@ import { useSignauxStore } from '@/stores/signaux'
 import { useObservationsStore } from '@/stores/observations'
 import { useUIStore } from '@/stores/ui'
 import { useShipStore } from '@/stores/ship'
-import SignalTypeIcon from '@/components/SignalTypeIcon.vue'
-import { barClass, valClass, formatRelativeTime } from '@/lib/formatUtils'
+import ObservationCard from '@/components/ObservationCard.vue'
+import ProgressBar from '@/components/ProgressBar.vue'
+import { valClass, formatRelativeTime } from '@/lib/formatUtils'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const signauxStore = useSignauxStore()
@@ -36,8 +37,7 @@ function onCardClick(s) {
   ui.selectSignal(s)
 }
 
-function onIgnore(e, id) {
-  e.stopPropagation()
+function onIgnore(id) {
   signauxStore.removeSignal(id)
 }
 
@@ -60,30 +60,22 @@ onUnmounted(() => {
         <div class="sw-key">Propulsion</div>
         <div class="sw-val" :class="valClass(propulsion/100)">{{ propulsion >= 80 ? 'NOMINAL' : (propulsion.toFixed(1) + '%') }}</div>
       </div>
-      <div class="bar-wrap">
-        <div class="bar-fill" :class="barClass(propulsion/100)" :style="{ width: propulsion + '%' }"></div>
-      </div>
+      <ProgressBar :value="propulsion" pct />
       <div class="sw-row">
         <div class="sw-key">Carburant He³</div>
         <div class="sw-val" :class="valClass(he3/100)">{{ he3.toFixed(1) }}%</div>
       </div>
-      <div class="bar-wrap">
-        <div class="bar-fill" :class="barClass(he3/100)" :style="{ width: he3 + '%' }"></div>
-      </div>
+      <ProgressBar :value="he3" pct />
       <div class="sw-row">
         <div class="sw-key">Intégrité coque</div>
         <div class="sw-val" :class="valClass(hull/100)">{{ hull.toFixed(1) }}%</div>
       </div>
-      <div class="bar-wrap">
-        <div class="bar-fill" :class="barClass(hull/100)" :style="{ width: hull + '%' }"></div>
-      </div>
+      <ProgressBar :value="hull" pct />
       <div class="sw-row">
         <div class="sw-key">Bouclier plasma</div>
         <div class="sw-val" :class="valClass(plasmaShield/100)">{{ plasmaShield >= 80 ? 'ACTIF' : (plasmaShield.toFixed(1) + '%') }}</div>
       </div>
-      <div class="bar-wrap">
-        <div class="bar-fill bar-cyan" :style="{ width: plasmaShield + '%' }"></div>
-      </div>
+      <ProgressBar :value="plasmaShield" color="cyan" pct />
     </div>
 
     <div v-if="ui.observatoireViewMode === 'sky'" class="side-widget side-widget--signaux">
@@ -91,25 +83,22 @@ onUnmounted(() => {
       <div v-if="signalsToShow.length === 0" class="signal-empty">
         Aucun signal.
       </div>
-      <div
+      <ObservationCard
         v-for="s in signalsToShow"
         v-else
         :key="s.id"
-        class="signal-card"
-        :class="{ expired: s.remainingMs <= 0, 'signal-card--search-hit': ui.signalSearchMatchIds.has(s.id) }"
+        icon-type="signal"
+        :icon-value="s.structure"
+        :title="`${s.frequency} · azimut ${s.azimuth}°`"
+        title-variant="signal"
+        :rows="[formatRelativeTime(s.createdAt, { prefix: 'Reçu ', precise: true })]"
+        :badge="supportLabel(s.support)"
+        :progress="{ pct: s.lifetimePct, variant: 'amber' }"
+        :state="s.remainingMs <= 0 ? 'expired' : ui.signalSearchMatchIds.has(s.id) ? 'highlight' : 'idle'"
+        dismiss-label="Ignorer"
         @click="onCardClick(s)"
-      >
-        <button type="button" class="signal-card__dismiss" aria-label="Ignorer" @click="onIgnore($event, s.id)">×</button>
-        <SignalTypeIcon :structure="s.structure" :size="12" class="signal-card__type-icon" />
-        <span class="signal-card__support" :title="s.support">{{ supportLabel(s.support) }}</span>
-        <div class="signal-card__main">
-          {{ s.frequency }} · azimut {{ s.azimuth }}°
-        </div>
-        <div class="signal-card__meta">{{ formatRelativeTime(s.createdAt, { prefix: 'Reçu ', precise: true }) }}</div>
-        <div class="bar-wrap signal-card__bar">
-          <div class="bar-fill bar-amber" :style="{ width: s.lifetimePct + '%' }" />
-        </div>
-      </div>
+        @dismiss="() => onIgnore(s.id)"
+      />
     </div>
 
     <div v-if="ui.observatoireViewMode === 'sky'" class="side-widget">

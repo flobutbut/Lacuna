@@ -6,17 +6,33 @@ import { useSignauxStore } from '@/stores/signaux'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useShipStore } from '@/stores/ship'
 import { useNebulasStore } from '@/stores/nebulas'
+import { useMapNodesStore } from '@/stores/mapNodes'
 import { projectStarInFov } from '@/lib/stellarProjection'
-import { drawMilkyWay, drawCurvedGrid, drawNebulas, drawStars, drawSignals, drawSpectralBorder } from '@/lib/skyRenderers'
+import { drawCurvedGrid, drawMilkyWay, drawNebulas, drawStars, drawSignals, drawSpectralBorder, drawConstellationLines } from '@/lib/skyRenderers'
 import { useSkyStars } from '@/composables/useSkyStars'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const ui = useUIStore()
 const nebulasStore = useNebulasStore()
-const { spectralFilter, searchedStarId } = storeToRefs(ui)
+const { spectralFilter, exoplanetFilter, searchedStarId, constellationsEnabled } = storeToRefs(ui)
+
+const CONSTELLATION_HOVER_THRESHOLD = 12
+
+function distanceToSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1
+  const dy = y2 - y1
+  const len2 = dx * dx + dy * dy
+  if (len2 === 0) return Math.hypot(px - x1, py - y1)
+  let t = ((px - x1) * dx + (py - y1) * dy) / len2
+  t = Math.max(0, Math.min(1, t))
+  const projX = x1 + t * dx
+  const projY = y1 + t * dy
+  return Math.hypot(px - projX, py - projY)
+}
 const signauxStore = useSignauxStore()
 const stellarSystemsStore = useStellarSystemsStore()
 const shipStore = useShipStore()
+const mapStore = useMapNodesStore()
 const canvasRef = ref(null)
 const stars = ref([])
 const isPanning = ref(false)
@@ -28,7 +44,27 @@ const PAN_SENSITIVITY = 0.15
 const PAN_DRAG_THRESHOLD = 5
 const LERP_SPEED = 0.05
 
-const buildStarsFromDb = useSkyStars(spectralFilter)
+const { buildStarsFromDb, updateStarBandParams } = useSkyStars(spectralFilter, exoplanetFilter)
+
+function getViewerCoords() {
+  const viewerSystem = stellarSystemsStore.list.find((s) => s.id === shipStore.currentSystemId)
+  const coords = viewerSystem?.coordinates ?? { x: 0, y: 0, z: 0 }
+  return coords
+}
+
+function rebuildStars() {
+  if (canvasEl) {
+    stars.value = buildStarsFromDb(getViewerCoords()) ?? []
+  }
+}
+
+function onSpectralFilterChange() {
+  if (canvasEl && stars.value?.length > 0) {
+    updateStarBandParams(stars.value, spectralFilter.value)
+  } else {
+    rebuildStars()
+  }
+}
 
 function lerpAngle(a, b, t) {
   let d = ((b - a + 540) % 360) - 180
@@ -62,14 +98,24 @@ function draw(canvas, starsRef) {
   drawMilkyWay(ctx, w, h)
 
   if (band === 'ir') {
-    drawNebulas(ctx, nebulasStore.forSky('ir'), vd.ra, vd.dec, w, h)
+    drawNebulas(ctx, nebulasStore.forSky('ir'), vd.ra, vd.dec, w, h, getViewerCoords())
   }
 
   const selected = ui.selectedStar
   const now = Date.now()
   const activeSignals = signauxStore.list.filter((s) => now - s.createdAt < s.lifetimeMs)
 
-  drawStars(ctx, starList, vd.ra, vd.dec, w, h, selected, searchedStarId.value)
+  const projectedPositions = new Map()
+  starList.forEach((s) => {
+    const pos = projectStarInFov(s.ra, s.dec, vd.ra, vd.dec, w, h)
+    if (pos) projectedPositions.set(s.id, pos)
+  })
+
+  if (band === 'visible' && constellationsEnabled.value && stellarSystemsStore.constellationLines.length) {
+    drawConstellationLines(ctx, stellarSystemsStore.constellationLines, projectedPositions, w, h)
+  }
+
+  drawStars(ctx, starList, vd.ra, vd.dec, w, h, selected, searchedStarId.value, projectedPositions)
   drawSignals(ctx, activeSignals, vd.ra, vd.dec, w, h)
   drawSpectralBorder(ctx, band, w, h)
 
@@ -107,6 +153,9 @@ function handleMouseMove(e, starList, canvas) {
       isPanning.value = true
       hasPanned.value = true
       ui.clearSearchedStarId()
+      ui.hoveredStar = null
+      ui.setHoveredSignal(null)
+      ui.setHoveredConstellation(null)
       return handleMouseMove(e, starList, canvas)
     }
   }
@@ -146,10 +195,45 @@ function handleMouseMove(e, starList, canvas) {
 
   if (closestSignal && (!closestStar || minSignalDist < minStarDist)) {
     ui.hoveredStar = null
+    ui.setHoveredConstellation(null)
     ui.setHoveredSignal(closestSignal)
+  } else if (closestStar) {
+    ui.setHoveredSignal(null)
+    ui.setHoveredConstellation(null)
+    ui.hoveredStar = closestStar
   } else {
     ui.setHoveredSignal(null)
-    ui.hoveredStar = closestStar
+    ui.hoveredStar = null
+    let closestLine = null
+    let minLineDist = CONSTELLATION_HOVER_THRESHOLD
+    if (
+      spectralFilter.value === 'visible' &&
+      constellationsEnabled.value &&
+      stellarSystemsStore.constellationLines.length
+    ) {
+      const projectedPositions = new Map()
+      starList.forEach((s) => {
+        const pos = projectStarInFov(s.ra, s.dec, vd.ra, vd.dec, w, h)
+        if (pos) projectedPositions.set(s.id, pos)
+      })
+      stellarSystemsStore.constellationLines.forEach((seg) => {
+        const posFrom = projectedPositions.get(seg.star_from)
+        const posTo = projectedPositions.get(seg.star_to)
+        if (!posFrom || !posTo) return
+        const d = distanceToSegment(mx, my, posFrom.x, posFrom.y, posTo.x, posTo.y)
+        if (d < minLineDist) {
+          minLineDist = d
+          closestLine = seg
+        }
+      })
+    }
+    if (closestLine) {
+      const c = closestLine.constellations
+      const name = c?.name_fr || c?.name_latin || closestLine.constellation_abbr || ''
+      ui.setHoveredConstellation({ abbr: closestLine.constellation_abbr, name })
+    } else {
+      ui.setHoveredConstellation(null)
+    }
   }
 }
 
@@ -158,6 +242,7 @@ function handleMouseLeave() {
   isPanning.value = false
   ui.hoveredStar = null
   ui.setHoveredSignal(null)
+  ui.setHoveredConstellation(null)
   ui.setReticuleVisible(false)
 }
 
@@ -239,9 +324,25 @@ onMounted(async () => {
   canvasEl.height = h
   ctx = canvasEl.getContext('2d')
 
-  await ensureStoresLoaded(shipStore, stellarSystemsStore, nebulasStore)
-  await stellarSystemsStore.fetchVisibleForSky(shipStore.currentSystemId, 14)
-  stars.value = buildStarsFromDb()
+  await ensureStoresLoaded(shipStore, stellarSystemsStore, nebulasStore, mapStore)
+  await Promise.all([
+    stellarSystemsStore.fetchVisibleForSky(shipStore.currentSystemId, 18),
+    stellarSystemsStore.fetchConstellationLines(),
+  ])
+  rebuildStars()
+
+  // Vue initiale : centrer sur Proxima quand à SOL (ra 180, dec 0 met Proxima hors FOV ~69°)
+  const vd = ui.viewDirection?.value ?? ui.viewDirection
+  if (
+    shipStore.currentSystemId === 'SOL' &&
+    Math.abs((vd?.ra ?? 180) - 180) < 0.5 &&
+    Math.abs(vd?.dec ?? 0) < 0.5
+  ) {
+    const PROXIMA_RA = 217.5
+    const PROXIMA_DEC = -62.7
+    ui.setViewDirectionValue({ ra: PROXIMA_RA, dec: PROXIMA_DEC })
+    ui.setTargetViewDirectionValue({ ra: PROXIMA_RA, dec: PROXIMA_DEC })
+  }
 
   draw(canvasEl, stars)
 
@@ -262,11 +363,35 @@ onMounted(async () => {
   canvasEl.addEventListener('dblclick', onDblClick)
 })
 
-watch(spectralFilter, () => {
-  if (canvasEl) {
-    stars.value = buildStarsFromDb()
-  }
+// Reconstruire les étoiles quand la carte change (visited)
+watch(
+  () => mapStore.nodes,
+  () => {
+    if (canvasEl) rebuildStars()
+  },
+  { deep: true }
+)
+
+watch(spectralFilter, onSpectralFilterChange)
+watch(exoplanetFilter, () => {
+  if (canvasEl) rebuildStars()
 })
+
+watch(
+  () => stellarSystemsStore.visibleForSky.length,
+  () => {
+    if (canvasEl) rebuildStars()
+  },
+  { immediate: false }
+)
+
+watch(
+  () => shipStore.currentSystemId,
+  async (newId) => {
+    await stellarSystemsStore.fetchVisibleForSky(newId, 18)
+    rebuildStars()
+  }
+)
 
 onUnmounted(() => {
   if (animId) cancelAnimationFrame(animId)
@@ -290,6 +415,12 @@ onUnmounted(() => {
       class="sky-canvas"
       :class="{ 'sky-canvas--panning': isPanning }"
     />
+    <div
+      v-if="stellarSystemsStore.skyLoadingPass2 || stellarSystemsStore.skyLoadingPass3"
+      class="sky-loading-indicator"
+    >
+      CATALOGUE EN COURS…
+    </div>
   </div>
 </template>
 
@@ -306,5 +437,15 @@ onUnmounted(() => {
 }
 .sky-canvas--panning {
   cursor: grabbing;
+}
+.sky-loading-indicator {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--color-muted);
+  opacity: 0.4;
+  font-family: var(--font-mono);
 }
 </style>

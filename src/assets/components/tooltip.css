@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════
-   LACUNA — Tooltip Component
-   Tooltips d'étoiles et réticule curseur
+   LACUNA — Tooltip & Réticule
+   Réticule curseur, anomalies. Styles tooltip unifiés dans ObservatoireTooltip.vue
    ══════════════════════════════════════════════════════ */
 
 /* ── Réticule (curseur sur le ciel) ── */
@@ -85,27 +85,27 @@
 }
 
 .tooltip__key {
-    font-size: var(--text-base);
+    font-size: var(--text-md);
     color: var(--color-muted);
 }
 
 .tooltip__val {
-    font-size: var(--text-base);
-    color: var(--color-cyan);
+    font-size: var(--text-md);
+    color: var(--color-white);
 }
 
 .tooltip__status {
     margin-top: var(--space-4);
     padding-top: var(--space-3);
     border-top: var(--border-width) solid var(--border-default);
-    font-size: var(--text-base);
+    font-size: var(--text-md);
     color: var(--color-amber);
     letter-spacing: var(--tracking-tight);
 }
 
 .tooltip__action {
     margin-top: var(--space-3);
-    font-size: var(--text-base);
+    font-size: var(--text-md);
     color: var(--color-cyan-muted);
     letter-spacing: var(--tracking-tight);
     text-align: right;
@@ -146,13 +146,13 @@
 }
 
 .st-key {
-    font-size: var(--text-base);
+    font-size: var(--text-md);
     color: var(--color-muted);
 }
 
 .st-val {
-    font-size: var(--text-base);
-    color: var(--color-cyan);
+    font-size: var(--text-md);
+    color: var(--color-white);
 }
 
 .st-val--with-icon {
@@ -165,14 +165,14 @@
     margin-top: var(--space-4);
     padding-top: var(--space-3);
     border-top: var(--border-width) solid var(--border-default);
-    font-size: var(--text-base);
+    font-size: var(--text-md);
     color: var(--color-amber);
     letter-spacing: var(--tracking-tight);
 }
 
 .st-action {
     margin-top: var(--space-3);
-    font-size: var(--text-base);
+    font-size: var(--text-md);
     color: var(--color-cyan-muted);
     letter-spacing: var(--tracking-tight);
     text-align: right;

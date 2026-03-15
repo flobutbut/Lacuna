@@ -1,12 +1,29 @@
 /**
  * Composable — construction de la liste d'étoiles pour le ciel Observatoire
  * DB (filtrée par bande spectrale) ou fallback procédural
+ * Coordonnées unifiées en x/y/z (référentiel galactique, Sol à l'origine)
  */
 
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
-import { filterBySpectralBand } from '@/lib/spectralBands'
+import { useSystemObjectsStore } from '@/stores/systemObjects'
+import { useMapNodesStore } from '@/stores/mapNodes'
+import { getPoolForBandFilters, getStarBandParamsOrZero, luminosityToBaseBrightness, luminosityToRadiusMultiplier } from '@/lib/spectralBands'
+import { xyzToRaDec } from '@/lib/stellarProjection'
 
 const STAR_COUNT = 1800
+
+/** Met à jour opacityTarget, brightnessMultiplier, colorOverride (sans recalcul géométrique) */
+export function updateStarBandParams(starList, band) {
+  if (!starList || !Array.isArray(starList)) return
+  starList.forEach((proj) => {
+    const s = proj.star
+    if (!s) return
+    const params = getStarBandParamsOrZero(s, band)
+    proj.opacityTarget = params.opacity
+    proj.brightnessMultiplier = params.brightnessMultiplier
+    proj.colorOverride = params.colorOverride
+  })
+}
 
 function generateStarName() {
   const prefixes = ['HD', 'HIP', 'TYC', 'BD', 'GJ', 'LHS', 'Wolf', 'Ross', 'Lalande', 'Gliese']
@@ -15,33 +32,55 @@ function generateStarName() {
   return `${p} ${n}`
 }
 
-/** Systèmes Supabase → format étoiles (avec ra,dec pour FOV) */
-function projectStarsFromDb(systems) {
-  const skySystems = systems.filter((s) => s.id !== 'SOL')
-  if (skySystems.length === 0) return null
-  return skySystems.map((s, i) => {
-    const coords = s.coordinates || {}
-    const ra = coords.ra ?? 0
-    const dec = coords.dec ?? 0
-    const dist = parseFloat(s.distance) || 10
+/** Projette les étoiles filtrées — inclut opacityTarget, brightnessMultiplier, colorOverride.
+ * visitedIds : Set des system_id visités (carte) — si fourni, visited reflète map_nodes */
+function projectStarsFromDb(filteredEntries, viewerCoords = { x: 0, y: 0, z: 0 }, visitedIds = new Set()) {
+  if (!filteredEntries || filteredEntries.length === 0) return null
+  return filteredEntries.map((entry, i) => {
+    const { star: s, opacity, brightnessMultiplier, colorOverride } = entry
+    if (s.id === 'SOL') return null
+    let coords = s.coordinates || {}
+    if (coords.x == null && coords.ra != null) {
+      const ra = (coords.ra ?? 0) * (Math.PI / 180)
+      const dec = (coords.dec ?? 0) * (Math.PI / 180)
+      const d = parseFloat(s.distance) || 1
+      coords = {
+        x: d * Math.cos(dec) * Math.cos(ra),
+        y: d * Math.cos(dec) * Math.sin(ra),
+        z: d * Math.sin(dec),
+      }
+    }
+    const dx = (coords.x ?? 0) - (viewerCoords.x ?? 0)
+    const dy = (coords.y ?? 0) - (viewerCoords.y ?? 0)
+    const dz = (coords.z ?? 0) - (viewerCoords.z ?? 0)
+    const { ra, dec, dist } = xyzToRaDec(dx, dy, dz)
+    const distNum = dist > 0 ? dist : parseFloat(s.distance) || 10
     const isAnomaly = (s.anomaly_level || 0) > 0
-    const r = Math.max(0.4, 2 - dist / 30) * (isAnomaly ? 1.5 : 1)
+    const rBase = Math.max(1.2, 3.4 - distNum / 25)
+    const rLum = luminosityToRadiusMultiplier(s.luminosity, s.spectral_type)
+    const r = rBase * rLum * (isAnomaly ? 1.5 : 1)
+    const baseBrightness = luminosityToBaseBrightness(s.luminosity, s.spectral_type)
     return {
       id: s.id,
       ra,
       dec,
       r,
-      brightness: 0.5 + 0.3 * (1 - dist / 50),
+      brightness: baseBrightness,
       twinkle: (i * 0.7) % (Math.PI * 2),
       twinkleSpeed: 0.008 + (i % 5) * 0.003,
       isAnomaly,
       anomalyPhase: i * 0.5,
       name: s.name || s.id,
-      dist: String(dist.toFixed(1)),
+      dist: String(distNum.toFixed(1)),
       spectral: s.spectral_type || '?',
-      visited: false,
+      visited: visitedIds.has(s.id),
+      star: s,
+      opacityTarget: opacity,
+      opacityCurrent: opacity,
+      brightnessMultiplier,
+      colorOverride,
     }
-  })
+  }).filter(Boolean)
 }
 
 function initStars() {
@@ -72,18 +111,27 @@ function initStars() {
 
 /**
  * @param {import('vue').Ref<string>} spectralFilterRef
- * @returns {import('vue').ComputedRef<Array>}
+ * @param {import('vue').Ref<boolean>} [exoplanetFilterRef] - Filtre exoplanètes (systèmes avec planètes connues)
+ * @returns {{ buildStarsFromDb: (viewerCoords?: object) => Array, updateStarBandParams: (starList: Array, band: string) => void }}
  */
-export function useSkyStars(spectralFilterRef) {
+export function useSkyStars(spectralFilterRef, exoplanetFilterRef) {
   const stellarSystemsStore = useStellarSystemsStore()
+  const systemObjectsStore = useSystemObjectsStore()
+  const mapStore = useMapNodesStore()
 
-  return function buildStarsFromDb() {
+  function buildStarsFromDb(viewerCoords = { x: 0, y: 0, z: 0 }) {
     const band = spectralFilterRef.value
-    const raw = stellarSystemsStore.forSky()
-    const magLimit = band === 'ir' ? 15 : 12
-    const filtered = filterBySpectralBand(raw, band, magLimit)
-    const projected = projectStarsFromDb(filtered)
+    const raw = stellarSystemsStore.forSky().filter((s) => s.id !== 'SOL')
+    const pool = getPoolForBandFilters(raw)
+    let entries = pool.map((star) => ({ star, ...getStarBandParamsOrZero(star, band) }))
+    if (exoplanetFilterRef?.value) {
+      entries = entries.filter((e) => systemObjectsStore.hasExoplanets(e.star.id))
+    }
+    const visitedIds = mapStore.visitedSystemIds ?? new Set()
+    const projected = projectStarsFromDb(entries, viewerCoords, visitedIds)
     if (projected && projected.length > 0) return projected
     return initStars()
   }
+
+  return { buildStarsFromDb, updateStarBandParams }
 }

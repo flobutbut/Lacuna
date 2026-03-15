@@ -5,8 +5,9 @@ import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { useUIStore } from '@/stores/ui'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
-import StarSvgInline from '@/components/StarSvgInline.vue'
-import PlanetSvgInline from '@/components/PlanetSvgInline.vue'
+import StarSvgInline from '@/components/illustrations/StarSvgInline.vue'
+import PlanetSvgInline from '@/components/illustrations/PlanetSvgInline.vue'
+import ObservatoireTooltip from '@/components/ObservatoireTooltip.vue'
 import {
   toPhysicalUnits,
   toVisualParams,
@@ -276,6 +277,45 @@ watch(currentSystemId, (id) => {
 const hoveredBody = ref(null)
 const tooltipPos = ref({ x: 0, y: 0 })
 
+const orbitalScrollRef = ref(null)
+const panState = ref({ active: false, hasPanned: false, startX: 0, startScrollLeft: 0 })
+const PAN_DRAG_THRESHOLD = 5
+
+function onScrollPanStart(e) {
+  if (e.button !== 0 || !orbitalScrollRef.value) return
+  panState.value = {
+    active: true,
+    hasPanned: false,
+    startX: e.clientX,
+    startScrollLeft: orbitalScrollRef.value.scrollLeft,
+  }
+  document.addEventListener('mousemove', onScrollPanMove)
+  document.addEventListener('mouseup', onScrollPanEnd)
+}
+
+function onScrollPanMove(e) {
+  const el = orbitalScrollRef.value
+  if (!el || !panState.value.active) return
+  const dx = e.clientX - panState.value.startX
+  if (!panState.value.hasPanned && Math.abs(dx) > PAN_DRAG_THRESHOLD) {
+    panState.value = { ...panState.value, hasPanned: true }
+  }
+  if (panState.value.hasPanned) {
+    el.scrollLeft = panState.value.startScrollLeft - dx
+    panState.value = { ...panState.value, startX: e.clientX, startScrollLeft: el.scrollLeft }
+  }
+}
+
+function onScrollPanEnd() {
+  panState.value = { ...panState.value, active: false, startX: 0, startScrollLeft: 0 }
+  document.removeEventListener('mousemove', onScrollPanMove)
+  document.removeEventListener('mouseup', onScrollPanEnd)
+  // Reset hasPanned après le click (le click se déclenche après mouseup)
+  requestAnimationFrame(() => {
+    panState.value = { ...panState.value, hasPanned: false }
+  })
+}
+
 function onBodyEnter(body, e) {
   hoveredBody.value = body
   if (e) tooltipPos.value = { x: e.clientX, y: e.clientY }
@@ -290,6 +330,7 @@ function onBodyLeave() {
 }
 
 function onBodyClick(obj) {
+  if (panState.value.hasPanned) return
   const sys = stellarStore.list.find((s) => s.id === currentSystemId.value)
   if (!sys || !obj) return
   const body = systemObjectsStore.toBodyFormat(obj, sys.name)
@@ -298,25 +339,31 @@ function onBodyClick(obj) {
   ui.openObservatoire()
 }
 
-const tooltipBody = computed(() => {
+const tooltipData = computed(() => {
   const obj = hoveredBody.value
   if (!obj) return null
   const sysName = stellarSystem.value?.name ?? ''
   const displayName = obj.name || (obj.designation ? `${sysName} ${obj.designation}` : sysName)
+  const rows = []
   if (obj.type === 'STAR' || obj.type === 'PULSAR') {
-    return {
-      name: displayName,
-      typeLabel: OBJECT_TYPE_LABELS.ETOILE,
-      spectral: obj.spectral_type || stellarSystem.value?.spectral_type || 'G2V',
-      distanceAu: null,
+    rows.push({ key: 'Type', value: OBJECT_TYPE_LABELS.ETOILE })
+    const spectral = obj.spectral_type || stellarSystem.value?.spectral_type || 'G2V'
+    rows.push({ key: 'Spectral', value: spectral })
+  } else {
+    const typeMap = { PLANET: 'PLANETE', MOON: 'PLANETE', MINOR_BODY: 'MINEUR' }
+    rows.push({ key: 'Type', value: OBJECT_TYPE_LABELS[typeMap[obj.type] || 'PLANETE'] })
+    const { distanceAu } = toPhysicalUnits(obj)
+    if (distanceAu != null) {
+      rows.push({ key: 'Distance', value: `${distanceAu.toFixed(2)} UA` })
     }
   }
-  const { distanceAu } = toPhysicalUnits(obj)
-  const typeMap = { PLANET: 'PLANETE', MOON: 'PLANETE', MINOR_BODY: 'MINEUR' }
   return {
-    name: displayName,
-    typeLabel: OBJECT_TYPE_LABELS[typeMap[obj.type] || 'PLANETE'],
-    distanceAu,
+    visible: true,
+    position: tooltipPos.value,
+    title: displayName,
+    rows,
+    actionLabel: '[ CLIC POUR OBSERVER ]',
+    offset: { x: 12, y: 12 },
   }
 })
 
@@ -346,7 +393,12 @@ onBeforeUnmount(() => {
     </div>
     <template v-else>
       <div ref="bodyRef" class="system-view__body">
-        <div class="system-view__orbital-scroll">
+        <div
+          ref="orbitalScrollRef"
+          class="system-view__orbital-scroll"
+          :class="{ 'system-view__orbital-scroll--panning': panState.active && panState.hasPanned }"
+          @mousedown="onScrollPanStart"
+        >
           <div
             class="system-view__content"
             :style="{
@@ -520,31 +572,15 @@ onBeforeUnmount(() => {
       </div>
       <!-- Tooltip au survol (comme vue ciel profond) -->
       <Teleport to="body">
-        <div
-          v-if="tooltipBody"
-          class="system-view__tooltip"
-          :style="{
-            left: tooltipPos.x + 'px',
-            top: tooltipPos.y + 'px',
-          }"
-        >
-          <div class="system-view__tooltip-inner">
-            <div class="system-view__tooltip-name">{{ tooltipBody.name }}</div>
-            <div class="system-view__tooltip-row">
-              <span class="system-view__tooltip-key">Type</span>
-              <span class="system-view__tooltip-val">{{ tooltipBody.typeLabel }}</span>
-            </div>
-            <div v-if="tooltipBody.spectral" class="system-view__tooltip-row">
-              <span class="system-view__tooltip-key">Spectral</span>
-              <span class="system-view__tooltip-val">{{ tooltipBody.spectral }}</span>
-            </div>
-            <div v-else-if="tooltipBody.distanceAu != null" class="system-view__tooltip-row">
-              <span class="system-view__tooltip-key">Distance</span>
-              <span class="system-view__tooltip-val">{{ tooltipBody.distanceAu.toFixed(2) }} UA</span>
-            </div>
-            <div class="system-view__tooltip-action">[ CLIC POUR OBSERVER ]</div>
-          </div>
-        </div>
+        <ObservatoireTooltip
+          v-if="tooltipData"
+          :visible="tooltipData.visible"
+          :position="tooltipData.position"
+          :title="tooltipData.title"
+          :rows="tooltipData.rows"
+          :action-label="tooltipData.actionLabel"
+          :offset="tooltipData.offset"
+        />
       </Teleport>
     </template>
   </div>
@@ -578,6 +614,10 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
+  cursor: grab;
+}
+.system-view__orbital-scroll--panning {
+  cursor: grabbing;
 }
 .system-view__content {
   display: flex;
@@ -763,7 +803,7 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 .system-view__planet-label {
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   color: var(--color-muted);
 }
 
@@ -830,40 +870,4 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.system-view__tooltip {
-  position: fixed;
-  transform: translate(12px, 12px);
-  z-index: 100;
-  pointer-events: none;
-}
-.system-view__tooltip-inner {
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-bg);
-  border: 1px solid var(--color-cyan-dim);
-  font-size: var(--text-xs);
-  font-family: var(--font-mono);
-  min-width: 160px;
-}
-.system-view__tooltip-name {
-  color: var(--color-cyan);
-  font-weight: 500;
-  margin-bottom: var(--space-1);
-}
-.system-view__tooltip-row {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
-  color: var(--color-muted);
-}
-.system-view__tooltip-key {
-  color: var(--color-muted);
-}
-.system-view__tooltip-val {
-  color: var(--color-white);
-}
-.system-view__tooltip-action {
-  margin-top: var(--space-2);
-  color: var(--color-cyan);
-  font-size: 10px;
-}
 </style>

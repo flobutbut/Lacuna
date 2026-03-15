@@ -4,35 +4,22 @@
  */
 
 import { projectStarInFov, projectNebulaShape } from './stellarProjection'
+import { resolveStarColor } from './spectralBands'
 
-/** Voie lactée — gradient elliptique flou */
+const TRANSITION_SPEED = 0.032 // ~0.5s à 60fps
+
+/** Voie lactée — gradient elliptique flou (désactivé en ciel profond) */
 export function drawMilkyWay(ctx, w, h) {
-  ctx.save()
-  ctx.filter = 'blur(35px)'
-  const grad = ctx.createLinearGradient(w * 0.1, h * 0.3, w * 0.9, h * 0.7)
-  grad.addColorStop(0, 'rgba(60,80,120,0)')
-  grad.addColorStop(0.3, 'rgba(60,80,120,0.08)')
-  grad.addColorStop(0.5, 'rgba(80,100,150,0.14)')
-  grad.addColorStop(0.7, 'rgba(60,80,120,0.08)')
-  grad.addColorStop(1, 'rgba(60,80,120,0)')
-  ctx.fillStyle = grad
-  ctx.beginPath()
-  ctx.ellipse(w / 2, h / 2, w * 0.45, h * 0.18, Math.PI * 0.15, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
+  /* Flare désactivé — no-op */
 }
 
-/** Lignes horizontales courbes — effet dôme céleste */
+/** Lignes horizontales courbes — effet dôme céleste (alpha uniforme, pas de flare centre) */
 export function drawCurvedGrid(ctx, w, h) {
   const tiers = [0.15, 0.3, 0.45, 0.55, 0.7, 0.85]
   const curveStrength = Math.min(w, h) * 0.08
-  const centerY = h / 2
-  const maxDist = h / 2
+  const alpha = 0.08
   tiers.forEach((t) => {
     const y = h * t
-    const distFromCenter = Math.abs(y - centerY)
-    const tNorm = distFromCenter / maxDist
-    const alpha = 0.02 + 0.2 * Math.pow(tNorm, 0.8)
     const cy = y + (t < 0.5 ? curveStrength : -curveStrength)
     ctx.strokeStyle = `rgba(100, 130, 180, ${alpha})`
     ctx.lineWidth = 1
@@ -44,9 +31,9 @@ export function drawCurvedGrid(ctx, w, h) {
 }
 
 /** Nébuleuses IR — style JWST */
-export function drawNebulas(ctx, nebulas, raView, decView, w, h) {
+export function drawNebulas(ctx, nebulas, raView, decView, w, h, viewerCoords = { x: 0, y: 0, z: 0 }) {
   nebulas.forEach((n) => {
-    const vertices = projectNebulaShape(n, raView, decView, w, h)
+    const vertices = projectNebulaShape(n, raView, decView, w, h, viewerCoords)
     if (!vertices || vertices.length <= 2) return
 
     const cx = vertices.reduce((s, v) => s + v.x, 0) / vertices.length
@@ -103,37 +90,121 @@ export function drawNebulas(ctx, nebulas, raView, decView, w, h) {
   })
 }
 
-/** Étoiles avec scintillement et highlight */
-export function drawStars(ctx, starList, raView, decView, w, h, selectedStar, searchedStarId) {
+const LOG_THROTTLE_MS = 1000
+let _lastLog = 0
+let _lastCtxLog = 0
+
+/** Lignes de constellation — cyan atténué, réutilise positions projetées.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {Array<{star_from:string, star_to:string, constellation_abbr:string}>} lines
+ * @param {Map<string, {x:number, y:number}>} projectedPositions - id → position écran (stars in FOV)
+ */
+export function drawConstellationLines(ctx, lines, projectedPositions, w, h) {
+  if (!lines?.length || !projectedPositions) return
+  ctx.save()
+  ctx.strokeStyle = 'rgba(0, 180, 200, 0.35)'
+  ctx.lineWidth = 1
+  ctx.setLineDash([])
+  lines.forEach((seg) => {
+    const posFrom = projectedPositions.get(seg.star_from)
+    const posTo = projectedPositions.get(seg.star_to)
+    if (!posFrom || !posTo) return
+    ctx.beginPath()
+    ctx.moveTo(posFrom.x, posFrom.y)
+    ctx.lineTo(posTo.x, posTo.y)
+    ctx.stroke()
+  })
+  ctx.restore()
+}
+
+/** Étoiles avec scintillement, palettes spectrales et transition d'opacité.
+ * @param {Map<string, {x:number, y:number}>} [projectedPositions] - si fourni, réutilise au lieu de recalculer
+ */
+export function drawStars(ctx, starList, raView, decView, w, h, selectedStar, searchedStarId, projectedPositions) {
+  if (Date.now() - _lastCtxLog > LOG_THROTTLE_MS) {
+    _lastCtxLog = Date.now()
+    console.log('[drawStars] ctx', {
+      globalAlpha: ctx.globalAlpha,
+      canvasWidth: ctx.canvas?.width,
+      canvasHeight: ctx.canvas?.height,
+    })
+  }
+
+  const cx = w / 2
+  const cy = h / 2
+  let targetStar = starList.find((s) => (s.name || s.id || '').toLowerCase().includes('sirius'))
+  if (!targetStar) {
+    let minD2 = Infinity
+    starList.forEach((s) => {
+      const pos = projectedPositions ? projectedPositions.get(s.id) : projectStarInFov(s.ra, s.dec, raView, decView, w, h)
+      if (pos) {
+        const d2 = (pos.x - cx) ** 2 + (pos.y - cy) ** 2
+        if (d2 < minD2) { minD2 = d2; targetStar = s }
+      }
+    })
+  }
+
   starList.forEach((s) => {
-    const pos = projectStarInFov(s.ra, s.dec, raView, decView, w, h)
+    const pos = projectedPositions
+      ? projectedPositions.get(s.id)
+      : projectStarInFov(s.ra, s.dec, raView, decView, w, h)
     if (!pos) return
 
+    if (s.opacityTarget !== undefined) {
+      s.opacityCurrent += (s.opacityTarget - s.opacityCurrent) * TRANSITION_SPEED
+    }
+
     s.twinkle += s.twinkleSpeed
-    const flicker = 0.85 + 0.15 * Math.sin(s.twinkle)
-    const alpha = s.brightness * flicker
+    const flicker = 0.92 + 0.08 * Math.sin(s.twinkle)
+    const mult = s.brightnessMultiplier ?? 1.0
+    const opacity = s.opacityCurrent ?? 1.0
+    const rawAlpha = s.brightness * mult * flicker * opacity
+    const alpha = (s.opacityTarget ?? 0) > 0 ? Math.max(0.35, rawAlpha) : rawAlpha
+
+    const rgb = s.star
+      ? resolveStarColor(s.star, s.colorOverride ?? null)
+      : { r: 255, g: 255, b: 255 }
+
+    const fillStyleMain = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`
+    const fillStyleHalo = s.r > 1.2 ? `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha * 0.08})` : null
+
+    if (s === targetStar && Date.now() - _lastLog > LOG_THROTTLE_MS) {
+      _lastLog = Date.now()
+      console.log('[drawStars]', targetStar.name || targetStar.id, {
+        luminosity: s.star?.luminosity,
+        baseBrightness: s.brightness,
+        brightnessMultiplier: mult,
+        flicker,
+        opacityCurrent: opacity,
+        rawAlpha,
+        alpha,
+        r: s.r,
+        fillStyle: fillStyleMain,
+        fillStyleHalo,
+      })
+    }
 
     if (s.isAnomaly) {
       s.anomalyPhase += 0.03
       const pulse = 0.4 + 0.4 * Math.sin(s.anomalyPhase)
       ctx.beginPath()
       ctx.arc(pos.x, pos.y, s.r * 3.5, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(232,160,32,${pulse * 0.15})`
+      ctx.fillStyle = `rgba(232,160,32,${pulse * 0.15 * opacity})`
       ctx.fill()
       ctx.beginPath()
       ctx.arc(pos.x, pos.y, s.r * 1.5, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(232,160,32,${pulse * 0.8})`
+      ctx.fillStyle = `rgba(232,160,32,${pulse * 0.8 * opacity})`
       ctx.fill()
     } else {
       if (s.r > 1.2) {
         ctx.beginPath()
         ctx.arc(pos.x, pos.y, s.r * 2.5, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(255,255,255,${alpha * 0.08})`
+        ctx.fillStyle = fillStyleHalo ?? `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha * 0.08})`
         ctx.fill()
       }
       ctx.beginPath()
       ctx.arc(pos.x, pos.y, s.r, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(255,255,255,${alpha})`
+      ctx.fillStyle = fillStyleMain
       ctx.fill()
     }
 

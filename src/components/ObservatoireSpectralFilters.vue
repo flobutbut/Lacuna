@@ -2,12 +2,17 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
+import { useSystemObjectsStore } from '@/stores/systemObjects'
+import { useShipStore } from '@/stores/ship'
 import { useSignauxStore } from '@/stores/signaux'
 import { useObservationsStore } from '@/stores/observations'
 import { filterBySpectralBand } from '@/lib/spectralBands'
+import { xyzToRaDec } from '@/lib/stellarProjection'
 
 const ui = useUIStore()
 const stellarStore = useStellarSystemsStore()
+const systemObjectsStore = useSystemObjectsStore()
+const shipStore = useShipStore()
 const signauxStore = useSignauxStore()
 const obsStore = useObservationsStore()
 const searchQuery = ref('')
@@ -24,31 +29,14 @@ const FILTERS = [
   { id: 'r', label: 'R', title: 'Rouge (R) — géantes, intermédiaire' },
 ]
 
-/** Score de priorité : exact=3, préfixe=2, substring=1. Tri décroissant puis par nom. */
-function matchScore(s, q) {
-  const name = (s.name ?? s.id ?? '').toLowerCase()
-  const id = (s.id ?? '').toLowerCase()
-  const spectral = (s.spectral_type ?? '').toLowerCase()
-  const dist = String(s.distance ?? '')
-  const matches = name.includes(q) || id.includes(q) || spectral.includes(q) || dist.includes(q)
-  if (!matches) return 0
-  if (name === q || id === q) return 3
-  if (name.startsWith(q) || id.startsWith(q) || spectral.startsWith(q)) return 2
-  return 1
-}
-
-function computeMatches() {
+/**
+ * Recherche systèmes : interroge Supabase par name et id (case-insensitive, contains).
+ * Ne dépend pas de list ni de visibleForSky — trouve toute étoile en base (ex. Polaris).
+ */
+async function computeMatches() {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q) return []
-  const systems = stellarStore.list.filter((s) => s.id !== 'SOL')
-  return systems
-    .filter((s) => matchScore(s, q) > 0)
-    .sort((a, b) => {
-      const sa = matchScore(a, q)
-      const sb = matchScore(b, q)
-      if (sb !== sa) return sb - sa
-      return (a.name ?? a.id).localeCompare(b.name ?? b.id)
-    })
+  return stellarStore.searchSystems(q)
 }
 
 /** Signaux correspondant à la requête (support, fréquence, sourceName) — hors lab. */
@@ -67,8 +55,12 @@ function computeSignalMatches() {
 
 function goToMatch(match) {
   const coords = match.coordinates || {}
-  const ra = coords.ra ?? 0
-  const dec = coords.dec ?? 0
+  const viewerSystem = stellarStore.list.find((s) => s.id === shipStore.currentSystemId)
+  const viewerCoords = viewerSystem?.coordinates ?? { x: 0, y: 0, z: 0 }
+  const dx = (coords.x ?? 0) - (viewerCoords.x ?? 0)
+  const dy = (coords.y ?? 0) - (viewerCoords.y ?? 0)
+  const dz = (coords.z ?? 0) - (viewerCoords.z ?? 0)
+  const { ra, dec } = xyzToRaDec(dx, dy, dz)
   const letter = (match.spectral_type || '').toUpperCase()[0]
   const band = letter === 'L' || letter === 'T' || letter === 'Y' ? 'ir' : ui.spectralFilter
   if (letter === 'L' || letter === 'T' || letter === 'Y') {
@@ -76,15 +68,16 @@ function goToMatch(match) {
   }
   ui.setSearchedStarId(match.id)
   ui.setTargetViewDirectionValue({ ra, dec })
-  const raw = stellarStore.forSky()
-  const magLimit = band === 'ir' ? 15 : 12
-  const filtered = filterBySpectralBand(raw, band, magLimit)
-  if (!filtered.some((s) => s.id === match.id)) {
+  const raw = stellarStore.forSky().filter((s) => s.id !== 'SOL')
+  const filtered = filterBySpectralBand(raw, band)
+  if (!filtered.some((f) => f.star?.id === match.id)) {
     ui.showNotification('Trop loin pour voir cette étoile — vue centrée sur la zone', 4000)
+  } else if (ui.exoplanetFilter && !systemObjectsStore.hasExoplanets(match.id)) {
+    ui.showNotification('Système sans exoplanètes connues — masqué par le filtre', 3000)
   }
 }
 
-function searchStar() {
+async function searchStar() {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q) {
     searchMatches.value = []
@@ -92,7 +85,7 @@ function searchStar() {
     ui.clearSignalSearchMatchIds()
     return
   }
-  const systemMatches = computeMatches()
+  const systemMatches = await computeMatches()
   const signalMatches = computeSignalMatches()
   ui.setSignalSearchMatchIds(signalMatches.map((s) => s.id))
   if (systemMatches.length === 0 && signalMatches.length === 0) {
@@ -131,6 +124,13 @@ function clearSearch() {
   searchMatches.value = []
   ui.clearSearchedStarId()
   ui.clearSignalSearchMatchIds()
+}
+
+async function toggleExoplanetFilter() {
+  if (!ui.exoplanetFilter) {
+    await systemObjectsStore.fetchSystemIdsWithExoplanets()
+  }
+  ui.toggleExoplanetFilter()
 }
 
 const hasSearch = computed(() => !!searchQuery.value.trim())
@@ -179,15 +179,33 @@ onUnmounted(() => {
   <div class="spectral-bar">
     <div class="spectral-filters">
       <button
-      v-for="f in FILTERS"
-      :key="f.id"
-      type="button"
-      class="spectral-filters__btn"
-      :class="{ 'spectral-filters__btn--active': ui.spectralFilter === f.id }"
-      :title="f.title"
-      @click="ui.setSpectralFilter(f.id)"
-    >
+        v-for="f in FILTERS"
+        :key="f.id"
+        type="button"
+        class="spectral-filters__btn"
+        :class="{ 'spectral-filters__btn--active': ui.spectralFilter === f.id }"
+        :title="f.title"
+        @click="ui.setSpectralFilter(f.id)"
+      >
         {{ f.label }}
+      </button>
+      <button
+        type="button"
+        class="spectral-filters__btn"
+        :class="{ 'spectral-filters__btn--active': ui.exoplanetFilter }"
+        title="N'afficher que les systèmes avec exoplanètes connues"
+        @click="toggleExoplanetFilter"
+      >
+        Exoplanètes
+      </button>
+      <button
+        type="button"
+        class="spectral-filters__btn"
+        :class="{ 'spectral-filters__btn--active': ui.constellationsEnabled }"
+        title="Afficher les lignes de constellation (Visuel uniquement)"
+        @click="ui.toggleConstellationsEnabled"
+      >
+        Constellations
       </button>
     </div>
     <div class="spectral-search">
@@ -256,7 +274,7 @@ onUnmounted(() => {
 }
 .spectral-filters__btn {
   padding: var(--space-4) var(--space-8);
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   font-family: var(--font-mono);
   letter-spacing: var(--tracking-normal);
   text-transform: uppercase;
@@ -316,7 +334,7 @@ onUnmounted(() => {
 }
 .spectral-search__count {
   padding: 0 var(--space-2);
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-family: var(--font-mono);
   color: var(--color-muted);
   border-left: var(--border-width) solid var(--border-default);

@@ -54,12 +54,17 @@
     padding-bottom: 0;
 }
 
+/* ── Key-value cell (grille key/val) ── */
+.sw-cell {
+    display: flex;
+    flex-direction: column;
+}
+
 /* ── Key-value rows ── */
 .sw-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 5px;
 }
 
 .sw-key {
@@ -69,7 +74,7 @@
 }
 
 .sw-val {
-    font-size: var(--text-sm);
+    font-size: var(--text-md);
     color: var(--color-white);
 }
 
@@ -81,8 +86,15 @@
     color: var(--color-amber);
 }
 
-.sw-val.crit {
+.sw-val.crit,
+.sw-val.err {
     color: var(--color-red);
+}
+
+.sw-desc {
+    font-size: var(--text-base);
+    color: var(--color-muted);
+    margin: var(--space-2) 0 0;
 }
 
 /* ── Signaux captés (panel gauche) ── */
@@ -100,94 +112,4 @@
     color: var(--color-muted);
     text-align: center;
     padding: var(--space-3) 0;
-}
-
-.signal-card {
-    position: relative;
-    padding: var(--space-3) var(--space-4);
-    margin-bottom: var(--space-2);
-    border: var(--border-width) solid var(--border-default);
-    background: rgba(0, 0, 0, 0.3);
-    cursor: pointer;
-    transition: border-color var(--transition-base), background var(--transition-base);
-}
-
-.signal-card:hover {
-    border-color: var(--border-bright);
-    background: var(--color-cyan-subtle);
-}
-
-.signal-card.expired {
-    opacity: 0.6;
-}
-
-.signal-card--in-lab {
-    border-color: var(--color-green);
-    box-shadow: inset 2px 0 0 var(--color-green);
-}
-
-.signal-card--search-hit {
-    border-color: var(--color-amber);
-    box-shadow: 0 0 0 1px rgba(232, 160, 32, 0.4);
-}
-
-.signal-card__support {
-    position: absolute;
-    top: var(--space-2);
-    right: 28px;
-    font-size: 9px;
-    font-family: var(--font-mono);
-    color: var(--color-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.signal-card__type-icon {
-    position: absolute;
-    top: var(--space-3);
-    left: var(--space-3);
-    opacity: 0.9;
-}
-
-.signal-card .signal-card__main {
-    padding-left: 20px;
-}
-
-.signal-card__dismiss {
-    position: absolute;
-    top: var(--space-2);
-    right: var(--space-2);
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--color-muted);
-    font-size: var(--text-md);
-    cursor: pointer;
-    line-height: 1;
-    border-radius: var(--border-radius-sm);
-}
-
-.signal-card__dismiss:hover {
-    color: var(--color-white);
-    background: rgba(200, 64, 64, 0.2);
-}
-
-.signal-card__main {
-    font-size: var(--text-base);
-    color: var(--color-white);
-    font-family: var(--font-mono);
-    letter-spacing: var(--tracking-tight);
-    padding-right: 24px;
-}
-
-.signal-card__meta {
-    font-size: var(--text-xs);
-    color: var(--color-muted);
-    margin-top: var(--space-1);
-}
-
-.signal-card__bar {
-    margin-top: var(--space-2);
 }

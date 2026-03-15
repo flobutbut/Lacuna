@@ -181,7 +181,7 @@ watch(
   gap: var(--space-2);
 }
 .lab-atmosphere__section-label {
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   color: var(--color-muted);
   font-family: var(--font-mono);
 }

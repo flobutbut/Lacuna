@@ -1,11 +1,11 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- LACUNA — Filtre des systèmes visibles depuis un point (Observatoire)
--- Magnitude absolue estimée depuis spectral_type (références astronomiques)
--- m_app = M_abs + 5 * log10(d / 10)  avec d = distance 3D en al
+-- Coordonnées : x,y,z en al (HYG) ou ra/dec (fallback legacy)
+-- Magnitude : apparent_magnitude (HYG) ou M_abs + 5*log10(d/10) (fallback)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- ── 1. Magnitude absolue depuis spectral_type (séquence principale V) ──
--- Réf. Schmidt-Kaler, Pecaut & Mamajek ; interpolation pour sous-types
+-- Réf. Schmidt-Kaler, Pecaut & Mamajek ; fallback pour étoiles procédurales sans HYG
 CREATE OR REPLACE FUNCTION spectral_type_to_absolute_magnitude(st TEXT)
 RETURNS NUMERIC
 LANGUAGE plpgsql
@@ -23,11 +23,12 @@ BEGIN
   END IF;
 
   letter := UPPER(SUBSTRING(st FROM 1 FOR 1));
-  subtype := COALESCE(
-    (regexp_match(st, '^[OBAGKMF]([0-9.]+)'))[1]::numeric,
-    5
-  );
-  subtype := GREATEST(0, LEAST(9, subtype));
+  BEGIN
+    subtype := (regexp_match(st, '^[OBAGKMF]([0-9]+\.?[0-9]*)'))[1]::numeric;
+  EXCEPTION WHEN OTHERS THEN
+    subtype := 5;
+  END;
+  subtype := COALESCE(GREATEST(0, LEAST(9, subtype)), 5);
 
   -- Anchors par type (O5=-5.8, B0=-4.1…, M5=12, M8=16)
   CASE letter
@@ -50,9 +51,10 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION spectral_type_to_absolute_magnitude IS 'Magnitude absolue visuelle estimée depuis spectral_type (seq. principale). Pulsars/NULL→24.';
+COMMENT ON FUNCTION spectral_type_to_absolute_magnitude IS 'Magnitude absolue visuelle estimée depuis spectral_type (seq. principale). Pulsars/NULL→24. Fallback pour étoiles sans apparent_magnitude HYG.';
 
 -- ── 2. RA, Dec, distance → coordonnées cartésiennes 3D (al, Sol à l''origine) ──
+-- Utilisé en fallback pour données legacy (ra/dec) ; HYG utilise x,y,z directement
 CREATE OR REPLACE FUNCTION ra_dec_distance_to_xyz(
   ra_deg NUMERIC,
   dec_deg NUMERIC,
@@ -69,9 +71,11 @@ AS $$
 $$;
 
 -- ── 3. Systèmes visibles depuis un système donné ──
+-- Coordonnées : x,y,z (HYG, al) prioritaire ; ra/dec (legacy) en fallback
+-- Magnitude : apparent_magnitude (HYG vue depuis Sol) si dispo ; sinon M_abs + 5*log10(d/10)
 CREATE OR REPLACE FUNCTION get_visible_systems(
   p_viewer_system_id TEXT,
-  p_magnitude_limit NUMERIC DEFAULT 12
+  p_magnitude_limit NUMERIC DEFAULT 18
 )
 RETURNS TABLE(
   id TEXT,
@@ -89,9 +93,6 @@ LANGUAGE plpgsql
 STABLE
 AS $$
 DECLARE
-  v_ra NUMERIC;
-  v_dec NUMERIC;
-  v_dist NUMERIC;
   v_x NUMERIC;
   v_y NUMERIC;
   v_z NUMERIC;
@@ -102,50 +103,67 @@ DECLARE
   d_3d NUMERIC;
   m_abs NUMERIC;
   m_app NUMERIC;
+  m_calc NUMERIC;
+  coord JSONB;
+  v_dist NUMERIC;
 BEGIN
-  -- Position 3D du viewer (Sol = 0,0,0)
-  SELECT
-    COALESCE((coord->>'ra')::numeric, 0),
-    COALESCE((coord->>'dec')::numeric, 0),
-    COALESCE(ss.distance::numeric, 0)
-  INTO v_ra, v_dec, v_dist
-  FROM stellar_systems ss,
-       LATERAL (SELECT COALESCE(ss.coordinates, '{"ra":0,"dec":0}'::jsonb) AS coord) c
+  -- Position 3D du viewer : x,y,z (HYG) ou ra_dec_distance_to_xyz (legacy)
+  SELECT COALESCE(ss.coordinates, '{}'::jsonb), COALESCE(ss.distance::numeric, 0)
+  INTO coord, v_dist
+  FROM stellar_systems ss
   WHERE ss.id = p_viewer_system_id;
 
-  v_ra := COALESCE(v_ra, 0);
-  v_dec := COALESCE(v_dec, 0);
-  v_dist := COALESCE(v_dist, 0);
-
-  SELECT * INTO v_x, v_y, v_z
-  FROM ra_dec_distance_to_xyz(v_ra, v_dec, v_dist)
-  LIMIT 1;
-
-  v_x := COALESCE(v_x, 0);
-  v_y := COALESCE(v_y, 0);
-  v_z := COALESCE(v_z, 0);
+  IF coord ? 'x' AND coord ? 'y' AND coord ? 'z' THEN
+    v_x := COALESCE((coord->>'x')::numeric, 0);
+    v_y := COALESCE((coord->>'y')::numeric, 0);
+    v_z := COALESCE((coord->>'z')::numeric, 0);
+  ELSE
+    SELECT x, y, z INTO v_x, v_y, v_z
+    FROM ra_dec_distance_to_xyz(
+      COALESCE((coord->>'ra')::numeric, 0),
+      COALESCE((coord->>'dec')::numeric, 0),
+      COALESCE(v_dist, 0)
+    )
+    LIMIT 1;
+    v_x := COALESCE(v_x, 0);
+    v_y := COALESCE(v_y, 0);
+    v_z := COALESCE(v_z, 0);
+  END IF;
 
   FOR r IN
     SELECT ss.id, ss.name, ss.spectral_type, ss.distance, ss.age, ss.planets,
-           ss.habitable_zone, ss.anomaly_level, ss.coordinates
+           ss.habitable_zone, ss.anomaly_level, ss.coordinates, ss.apparent_magnitude
     FROM stellar_systems ss
     WHERE ss.id != p_viewer_system_id
   LOOP
-    SELECT x, y, z INTO t_x, t_y, t_z
-    FROM ra_dec_distance_to_xyz(
-      COALESCE((r.coordinates->>'ra')::numeric, 0),
-      COALESCE((r.coordinates->>'dec')::numeric, 0),
-      COALESCE(r.distance::numeric, 0)
-    )
-    LIMIT 1;
-
-    d_3d := SQRT(POWER(t_x - v_x, 2) + POWER(t_y - v_y, 2) + POWER(t_z - v_z, 2));
-    IF d_3d < 0.01 THEN
-      CONTINUE;  -- éviter log(0)
+    -- Position 3D cible : x,y,z (HYG) ou ra_dec_distance_to_xyz (legacy)
+    coord := COALESCE(r.coordinates, '{}'::jsonb);
+    IF coord ? 'x' AND coord ? 'y' AND coord ? 'z' THEN
+      t_x := COALESCE((coord->>'x')::numeric, 0);
+      t_y := COALESCE((coord->>'y')::numeric, 0);
+      t_z := COALESCE((coord->>'z')::numeric, 0);
+    ELSE
+      SELECT x, y, z INTO t_x, t_y, t_z
+      FROM ra_dec_distance_to_xyz(
+        COALESCE((coord->>'ra')::numeric, 0),
+        COALESCE((coord->>'dec')::numeric, 0),
+        COALESCE(r.distance::numeric, 0)
+      )
+      LIMIT 1;
+      t_x := COALESCE(t_x, 0);
+      t_y := COALESCE(t_y, 0);
+      t_z := COALESCE(t_z, 0);
     END IF;
 
-    m_abs := spectral_type_to_absolute_magnitude(r.spectral_type);
-    m_app := m_abs + 5 * LOG(10, GREATEST(d_3d / 10, 0.001));
+    -- Distance 3D en al : sqrt((x2-x1)² + (y2-y1)² + (z2-z1)²)
+    d_3d := SQRT(POWER(t_x - v_x, 2) + POWER(t_y - v_y, 2) + POWER(t_z - v_z, 2));
+    IF d_3d < 0.01 THEN
+      CONTINUE;  -- éviter division / log proche de 0
+    END IF;
+
+    -- Magnitude apparente : HYG si dispo, sinon calcul depuis spectral_type (M_abs + 5*log10(d/10))
+    m_calc := spectral_type_to_absolute_magnitude(r.spectral_type) + 5 * LOG(10, GREATEST(d_3d / 10, 0.001));
+    m_app := COALESCE(r.apparent_magnitude, m_calc);
 
     IF m_app <= p_magnitude_limit THEN
       id := r.id;
@@ -164,4 +182,4 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION get_visible_systems IS 'Systèmes stellaires visibles depuis p_viewer_system_id (magnitude apparente <= limite). Exclut le système courant.';
+COMMENT ON FUNCTION get_visible_systems IS 'Systèmes stellaires visibles depuis p_viewer_system_id. Coordonnées x,y,z (HYG) ou ra/dec (legacy). Magnitude : COALESCE(apparent_magnitude, M_abs+5*log10(d/10)). Défaut limite 18 (configurable selon zoom).';

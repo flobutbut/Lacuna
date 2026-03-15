@@ -6,22 +6,13 @@ import { useSupabaseStore } from '@/stores/supabase'
 import { useTracesStore } from '@/stores/traces'
 import { useUIStore } from '@/stores/ui'
 import { formatDate } from '@/lib/formatUtils'
+import { TRACE_ICONS } from '@/constants/menus'
+import NavMenuItem from '@/components/NavMenuItem.vue'
 
 const supabaseStore = useSupabaseStore()
 const tracesStore = useTracesStore()
 const { playerTraces } = storeToRefs(tracesStore)
 const ui = useUIStore()
-
-const TRACE_ICONS = {
-  SIGNAL_RADIO: '≋',
-  INTERSTELLAR_OBJECT: '◇',
-  CHEMICAL_ANOMALY: '⌬',
-  STELLAR_ANOMALY: '◉',
-  ORBITAL_ANOMALY: '⊚',
-  ENCODED_SEQUENCE: '⌇',
-  PHYSICAL_ARTIFACT: '◈',
-  PLAYER_TRACE: '✦',
-}
 
 // Données de repli si Supabase non configuré
 const FALLBACK_TRACES = [
@@ -187,17 +178,16 @@ watch(artefacts, ensureSelection, { immediate: true })
           {{ artefacts.length }} trace{{ artefacts.length > 1 ? 's' : '' }} collectée{{ artefacts.length > 1 ? 's' : '' }}
         </div>
         <div class="artifact-grid">
-          <div
+          <NavMenuItem
             v-for="art in artefacts"
             :key="art.id"
-            class="artifact-slot"
-            :class="{ selected: selectedId === art.id }"
+            variant="slot"
+            :icon="getTraceIcon(art.type)"
+            :label="art.designation"
+            :selected="selectedId === art.id"
+            :badge="!!art.unread"
             @click="selectTrace(art)"
-          >
-            <div class="art-icon">{{ getTraceIcon(art.type) }}</div>
-            <div class="art-name">{{ art.designation }}</div>
-            <div v-if="art.unread" class="art-dot" />
-          </div>
+          />
         </div>
       </div>
 
@@ -286,7 +276,7 @@ watch(artefacts, ensureSelection, { immediate: true })
 }
 
 .artifact-detail__meta {
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   color: var(--color-muted);
 }
 

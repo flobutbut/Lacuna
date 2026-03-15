@@ -13,6 +13,7 @@ import TravelWidget from '@/components/TravelWidget.vue'
 import ObservatoirePanel from '@/components/ObservatoirePanel.vue'
 import SignalModal from '@/components/SignalModal.vue'
 import SignalTooltip from '@/components/SignalTooltip.vue'
+import ConstellationTooltip from '@/components/ConstellationTooltip.vue'
 
 const ui = useUIStore()
 const isSkyMode = computed(() => ui.observatoireViewMode === 'sky')
@@ -22,8 +23,8 @@ const isSkyMode = computed(() => ui.observatoireViewMode === 'sky')
   <div class="page-observatoire">
     <SkyCanvas v-show="isSkyMode" />
     <SystemView v-show="!isSkyMode" />
-    <div class="vignette" />
-    <div class="scanlines" />
+    <div v-if="!isSkyMode" class="vignette" />
+    <div v-if="!isSkyMode" class="scanlines" />
     <div class="ui-layer">
       <ObservatoireViewTabs />
       <SideLeft />
@@ -31,6 +32,7 @@ const isSkyMode = computed(() => ui.observatoireViewMode === 'sky')
       <Reticule v-if="isSkyMode" />
       <StarTooltip v-if="isSkyMode" />
       <SignalTooltip v-if="isSkyMode" />
+      <ConstellationTooltip v-if="isSkyMode" />
       <div v-if="isSkyMode" class="center-cross">
         <div class="cc-h" />
         <div class="cc-v" />

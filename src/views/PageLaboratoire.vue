@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onUnmounted, onMounted } from 'vue'
+import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useObservationsStore } from '@/stores/observations'
@@ -7,6 +7,7 @@ import { useLabReportsStore } from '@/stores/labReports'
 import { useTracesStore } from '@/stores/traces'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useShipStore } from '@/stores/ship'
+import { useMapNodesStore } from '@/stores/mapNodes'
 import { useUIStore } from '@/stores/ui'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
@@ -18,9 +19,13 @@ import LabReportGravimetrique from '@/components/lab/LabReportGravimetrique.vue'
 import LabReportSpectreStellaire from '@/components/lab/LabReportSpectreStellaire.vue'
 import LabReportOrbital from '@/components/lab/LabReportOrbital.vue'
 import LabReportAtmosphere from '@/components/lab/LabReportAtmosphere.vue'
-import LabInstrumentIcon from '@/components/lab/LabInstrumentIcon.vue'
-import SignalTypeIcon from '@/components/SignalTypeIcon.vue'
-import ObservationTypeIcon from '@/components/ObservationTypeIcon.vue'
+import LabReportVolumetrique from '@/components/lab/LabReportVolumetrique.vue'
+import LabReportMorpho from '@/components/lab/LabReportMorpho.vue'
+import LabReportMagneto from '@/components/lab/LabReportMagneto.vue'
+import InstrumentButton from '@/components/InstrumentButton.vue'
+import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
+import ObservationTypeIcon from '@/components/icons/ObservationTypeIcon.vue'
+import ObservationCard from '@/components/ObservationCard.vue'
 
 const route = useRoute()
 const obsStore = useObservationsStore()
@@ -28,6 +33,7 @@ const labReportsStore = useLabReportsStore()
 const tracesStore = useTracesStore()
 const stellarStore = useStellarSystemsStore()
 const shipStore = useShipStore()
+const mapStore = useMapNodesStore()
 const { list: obsList } = storeToRefs(obsStore)
 const ui = useUIStore()
 
@@ -78,6 +84,9 @@ const GRAPH_NAMES = {
   'spectro-stellaire': 'spectre + courbe de lumière',
   'analyseur-orbital': 'diagramme orbital',
   'spectro-atmo': 'profil moléculaire',
+  'analyseur-vol': 'cartes de densité',
+  'scanner-morpho': 'modèle surface + thermique',
+  'magnetometre': 'carte champ + profil',
 }
 
 function getGraphName(instrumentId) {
@@ -120,6 +129,40 @@ const observations = computed(() =>
   [...obsList.value].sort((a, b) => Number(b.id) - Number(a.id))
 )
 
+/** Type normalisé pour le filtre (STAR→ETOILE, PLANET→PLANETE) */
+function getObsFilterType(obs) {
+  if (!obs?.type) return null
+  if (obs.type === 'STAR') return 'ETOILE'
+  if (obs.type === 'PLANET') return 'PLANETE'
+  return obs.type
+}
+
+const FILTER_OPTIONS = [
+  { id: 'all', label: 'Tous' },
+  { id: 'SIGNAL', label: 'Signaux' },
+  { id: 'ETOILE', label: 'Étoiles' },
+  { id: 'PLANETE', label: 'Corps planétaires' },
+  { id: 'MINEUR', label: 'Corps mineurs' },
+  { id: 'OBJET', label: 'Objets' },
+  { id: 'ATMOSPHERE', label: 'Atmosphères' },
+]
+
+const filterType = ref('all')
+
+const filterOptionsVisible = computed(() => {
+  if (observations.value.length === 0) return []
+  return FILTER_OPTIONS.filter((opt) => {
+    if (opt.id === 'all') return true
+    return observations.value.some((o) => getObsFilterType(o) === opt.id)
+  })
+})
+
+const filteredObservations = computed(() => {
+  const list = observations.value
+  if (filterType.value === 'all') return list
+  return list.filter((o) => getObsFilterType(o) === filterType.value)
+})
+
 const selectedObs = ref(null)
 const reports = ref({})
 const running = ref({})
@@ -147,6 +190,28 @@ function removeObservation(obs) {
 
 function getObsNiveauKey(obs) {
   return Object.keys(NIVEAUX).find(k => NIVEAUX[k] === obs.niveau) || 'PASSIF'
+}
+
+function getObservationIcon(obs) {
+  if (!obs) return { type: 'signal', value: '' }
+  if (obs.type === 'SIGNAL') return { type: 'signal', value: obs.structure ?? '' }
+  const bodyType = obs.type === 'STAR' ? 'ETOILE' : obs.type === 'PLANET' ? 'PLANETE' : obs.type
+  return { type: 'observation', value: bodyType }
+}
+
+function getObservationStateText(obs) {
+  if (!obs) return ''
+  if (hasRunningForObs(obs)) return 'Analyse en cours…'
+  const count = reports.value[obs.id]?.length ?? 0
+  if (count > 0) return `${count} analyse${count > 1 ? 's' : ''} réalisée${count > 1 ? 's' : ''}`
+  return 'En attente'
+}
+
+function getObservationState(obs) {
+  if (!obs) return 'idle'
+  if (hasRunningForObs(obs)) return 'running'
+  if ((reports.value[obs.id]?.length ?? 0) > 0) return 'done'
+  return 'idle'
 }
 
 /** Niveau effectif : si le vaisseau est dans le système de l'obs, on considère ORBITE atteint */
@@ -238,7 +303,13 @@ function startSimulation() {
                         ? `Diagramme orbital + paramètres (a, e, i, P). Résonances, anomalies de trajectoire. Fiabilité ${fiability}%.`
                         : r.instr.id === 'spectro-atmo'
                           ? `Profil moléculaire (H₂O, CO₂, CH₄, O₂…). Déséquilibres chimiques, biosignatures. Fiabilité ${fiability}%.`
-                          : `${r.instr.name} — Données produites. Fiabilité ${fiability}%.`,
+                          : r.instr.id === 'analyseur-vol'
+                            ? `Cartes de densité + coupes. Zones de surconcentration, déplétion, gradients. Fiabilité ${fiability}%.`
+                            : r.instr.id === 'scanner-morpho'
+                              ? `Modèle de surface + carte thermique. Forme, symétries, gradient. Fiabilité ${fiability}%.`
+                              : r.instr.id === 'magnetometre'
+                                ? `Carte du champ + profil. Intensité, orientation, anomalies. Fiabilité ${fiability}%.`
+                                : `${r.instr.name} — Données produites. Fiabilité ${fiability}%.`,
         }
         newReports.push(reportPayload)
         reports.value = { ...reports.value, [r.obs.id]: newReports }
@@ -302,8 +373,29 @@ const runningForSelected = computed(() => {
   return out
 })
 
+watch(filterOptionsVisible, (opts) => {
+  const ids = opts.map((o) => o.id)
+  if (filterType.value !== 'all' && !ids.includes(filterType.value)) {
+    filterType.value = 'all'
+  }
+}, { immediate: true })
+
+const isSelectedSystemOnMap = computed(() => {
+  const sid = selectedObs.value?.system_id
+  return sid ? mapStore.isOnMap(sid) : false
+})
+
+async function addSelectedSystemToCarte() {
+  const obs = selectedObs.value
+  if (!obs?.system_id) return
+  const stellar = stellarStore.list.find((s) => s.id === obs.system_id)
+  const name = stellar?.name ?? obs.system ?? obs.system_id
+  await mapStore.addNode(obs.system_id, name)
+  ui.showNotification(`Système ${name} ajouté à la carte`)
+}
+
 onMounted(async () => {
-  await ensureStoresLoaded(obsStore, stellarStore)
+  await ensureStoresLoaded(obsStore, stellarStore, mapStore)
   const obsIds = observations.value.map((o) => o.id)
   await labReportsStore.fetchForObservations(obsIds)
   reports.value = { ...labReportsStore.cache }
@@ -330,30 +422,37 @@ onUnmounted(() => {
         <div v-if="observations.length === 0" class="lab-empty-observations">
           Aucune observation. Ajoutez-en depuis l'Observatoire ou une notification.
         </div>
-        <div
-          v-for="obs in observations"
-          v-else
-          :key="obs.id"
-          class="lab-observation-item"
-          :class="{ selected: selectedId === obs.id, 'lab-observation-item--signal': obs.type === 'SIGNAL' }"
-          @click="selectObservation(obs)"
-        >
-          <button type="button" class="lab-observation-item__dismiss" aria-label="Supprimer" @click.prevent.stop="removeObservation(obs)">×</button>
-          <SignalTypeIcon v-if="obs.type === 'SIGNAL'" :structure="obs.structure" :size="12" class="lab-observation-item__type-icon" />
-          <ObservationTypeIcon v-else :type="obs.type" :size="12" class="lab-observation-item__type-icon" />
-          <div class="lab-observation-item__name">{{ obs.name }}</div>
-          <div class="lab-observation-item__meta">{{ OBJECT_TYPE_LABELS[obs.type] }}{{ obs.type === 'SIGNAL' && obs.support ? ` (${SIGNAL_SUPPORTS[obs.support] ?? obs.support})` : '' }} · {{ obs.system }}</div>
-          <div class="lab-observation-item__meta">{{ obs.date }}</div>
-          <div
-            class="lab-observation-item__state"
-            :class="{
-              'lab-observation-item__state--has-reports': (reports[obs.id]?.length ?? 0) > 0 && !hasRunningForObs(obs),
-              'lab-observation-item__state--running': hasRunningForObs(obs),
-            }"
-          >
-            {{ hasRunningForObs(obs) ? 'Analyse en cours…' : (reports[obs.id] || []).length > 0 ? `${(reports[obs.id] || []).length} analyse${(reports[obs.id] || []).length > 1 ? 's' : ''} réalisée${(reports[obs.id] || []).length > 1 ? 's' : ''}` : 'En attente' }}
+        <template v-else>
+          <div class="lab-observations-filter">
+            <button
+              v-for="opt in filterOptionsVisible"
+              :key="opt.id"
+              type="button"
+              class="lab-filter-btn"
+              :class="{ 'lab-filter-btn--active': filterType === opt.id }"
+              @click="filterType = opt.id"
+            >
+              {{ opt.label }}
+            </button>
           </div>
-        </div>
+          <ObservationCard
+            v-for="obs in filteredObservations"
+            :key="obs.id"
+            :icon-type="getObservationIcon(obs).type"
+            :icon-value="getObservationIcon(obs).value"
+            :title="obs.name"
+            :title-variant="obs.type === 'SIGNAL' ? 'signal' : 'default'"
+            :rows="[
+              `${OBJECT_TYPE_LABELS[obs.type === 'STAR' ? 'ETOILE' : obs.type === 'PLANET' ? 'PLANETE' : obs.type] ?? obs.type}${obs.type === 'SIGNAL' && obs.support ? ` (${SIGNAL_SUPPORTS[obs.support] ?? obs.support})` : ''} · ${obs.system}`,
+              obs.date,
+            ]"
+            :state="selectedId === obs.id ? 'selected' : getObservationState(obs)"
+            :state-text="getObservationStateText(obs)"
+            dismiss-label="Supprimer"
+            @click="selectObservation(obs)"
+            @dismiss="() => removeObservation(obs)"
+          />
+        </template>
       </div>
 
       <!-- Colonne centrale : observation sélectionnée -->
@@ -365,22 +464,46 @@ onUnmounted(() => {
           <div class="lab-selected__header">
             <div class="lab-selected__header-info">
               <div class="lab-selected__name" :class="{ 'lab-selected__name--signal': selectedObs.type === 'SIGNAL' }">{{ selectedObs.name }}</div>
-              <div class="lab-selected__meta">Système : {{ selectedObs.system }} — {{ selectedObs.distance }}</div>
-              <div class="lab-selected__meta">Coordonnées : {{ selectedObs.coords }}</div>
-              <div class="lab-selected__meta">Date de détection : {{ selectedObs.date }}</div>
+              <div class="lab-selected__meta-row">
+                <span class="sw-key">Système</span>
+                <span class="sw-val">{{ selectedObs.system }} — {{ selectedObs.distance }}</span>
+              </div>
+              <div class="lab-selected__meta-row">
+                <span class="sw-key">Coordonnées</span>
+                <span class="sw-val">{{ selectedObs.coords }}</span>
+              </div>
+              <div class="lab-selected__meta-row">
+                <span class="sw-key">Date de détection</span>
+                <span class="sw-val">{{ selectedObs.date }}</span>
+              </div>
               <template v-if="selectedObs.type === 'SIGNAL'">
-                <div class="lab-selected__meta">Support : {{ SIGNAL_SUPPORTS[selectedObs.support] ?? selectedObs.support ?? 'EM radio' }}</div>
-                <div class="lab-selected__meta lab-selected__meta--type">
-                  <span class="lab-selected__meta-label">Type :</span>
-                  <span class="lab-selected__meta-val">
+                <div class="lab-selected__meta-row">
+                  <span class="sw-key">Support</span>
+                  <span class="sw-val">{{ SIGNAL_SUPPORTS[selectedObs.support] ?? selectedObs.support ?? 'EM radio' }}</span>
+                </div>
+                <div class="lab-selected__meta-row lab-selected__meta-row--type">
+                  <span class="sw-key">Type</span>
+                  <span class="sw-val">
                     <SignalTypeIcon :structure="selectedObs.structure" :size="12" />
                     {{ selectedObs.structure ?? 'non uniforme' }}
                   </span>
                 </div>
               </template>
-              <div v-else class="lab-selected__meta">Niveau d'observation : {{ selectedObs.niveau }}</div>
+              <div v-else class="lab-selected__meta-row">
+                <span class="sw-key">Niveau d'observation</span>
+                <span class="sw-val">{{ selectedObs.niveau }}</span>
+              </div>
             </div>
             <div class="lab-selected__header-action">
+              <button
+                v-if="selectedObs.system_id"
+                type="button"
+                class="btn btn-primary"
+                :disabled="isSelectedSystemOnMap"
+                @click="addSelectedSystemToCarte"
+              >
+                {{ isSelectedSystemOnMap ? 'Sur la carte' : 'Ajouter à la carte' }}
+              </button>
               <button
                 type="button"
                 class="btn btn-primary"
@@ -402,12 +525,18 @@ onUnmounted(() => {
             <div v-for="r in selectedReports" :key="r.instrumentId + r.date" class="lab-report">
               <div class="lab-report__header">
                 <div class="lab-report__header-left">
-                  <div class="lab-report__instrument">{{ r.instrument }}</div>
-                  <div class="lab-report__meta">{{ r.date }} · {{ r.duration }}</div>
+                  <div class="lab-report__instrument sw-val">{{ r.instrument }}</div>
+                  <div class="lab-report__meta-row">
+                    <span class="sw-key">Date</span>
+                    <span class="sw-val">{{ r.date }} · {{ r.duration }}</span>
+                  </div>
                 </div>
                 <div class="lab-report__header-right">
-                  <span v-if="r.anomalous" class="lab-report__badge">Signal atypique</span>
-                  <span class="lab-report__fiability">Fiab. {{ r.fiability }}%</span>
+                  <div v-if="r.anomalous" class="lab-report__badge">Signal atypique</div>
+                  <div class="lab-report__meta-row lab-report__meta-row--right">
+                    <span class="sw-key">Fiabilité</span>
+                    <span class="sw-val">{{ r.fiability }}%</span>
+                  </div>
                 </div>
               </div>
               <div v-if="getGraphName(r.instrumentId)" class="lab-report__graph-label">{{ getGraphName(r.instrumentId) }}</div>
@@ -480,6 +609,30 @@ onUnmounted(() => {
                 :anomalous="r.anomalous ?? false"
                 class="lab-report__output"
               />
+              <LabReportVolumetrique
+                v-else-if="r.instrumentId === 'analyseur-vol'"
+                :obs-id="selectedObs?.id ?? ''"
+                :system-id="selectedObs?.system_id ?? ''"
+                :fiability="r.fiability"
+                :anomalous="r.anomalous ?? false"
+                class="lab-report__output"
+              />
+              <LabReportMorpho
+                v-else-if="r.instrumentId === 'scanner-morpho'"
+                :obs-id="selectedObs?.id ?? ''"
+                :system-id="selectedObs?.system_id ?? ''"
+                :fiability="r.fiability"
+                :anomalous="r.anomalous ?? false"
+                class="lab-report__output"
+              />
+              <LabReportMagneto
+                v-else-if="r.instrumentId === 'magnetometre'"
+                :obs-id="selectedObs?.id ?? ''"
+                :system-id="selectedObs?.system_id ?? ''"
+                :fiability="r.fiability"
+                :anomalous="r.anomalous ?? false"
+                class="lab-report__output"
+              />
             </div>
             <div v-if="selectedReports.length === 0 && !Object.keys(runningForSelected).length" class="lab-report" style="opacity: 0.7">
               Lancez un instrument depuis la colonne droite.
@@ -495,43 +648,15 @@ onUnmounted(() => {
           Sélectionnez une observation pour lancer des analyses.
         </div>
         <div v-else class="lab-instruments-grid">
-          <div
+          <InstrumentButton
             v-for="instr in getInstrumentsForObservation(selectedObs)"
             :key="instr.id"
-            class="artifact-slot lab-instrument"
-            :class="{
-              'lab-instrument--disabled': instrumentState(instr, selectedObs) === 'disabled',
-              'lab-instrument--running': instrumentState(instr, selectedObs) === 'running',
-              'lab-instrument--done': instrumentState(instr, selectedObs) === 'done',
-            }"
-            role="button"
-            tabindex="0"
-            @click="instrumentState(instr, selectedObs) !== 'disabled' && launchInstrument(instr, selectedObs)"
-            @keydown.enter.space.prevent="instrumentState(instr, selectedObs) !== 'disabled' && launchInstrument(instr, selectedObs)"
-          >
-            <div
-              v-if="instrumentState(instr, selectedObs) === 'running' && runningForSelected[instr.id]"
-              class="lab-instrument__progress-bg"
-            >
-              <div
-                class="lab-instrument__progress-fill"
-                :style="{ width: `${runningForSelected[instr.id].progress}%` }"
-              />
-            </div>
-            <div class="lab-instrument__content">
-              <div class="lab-instrument__icon-wrap art-icon">
-                <LabInstrumentIcon :instrument-id="instr.id" :size="36" />
-                <span v-if="instrumentState(instr, selectedObs) === 'done'" class="lab-instrument__check">✓</span>
-              </div>
-              <div class="lab-instrument__name art-name">{{ instr.name }}</div>
-              <span
-                v-if="instrumentState(instr, selectedObs) === 'disabled'"
-                class="lab-instrument__reason"
-              >
-                {{ getDisabledReason(instr, selectedObs) }}
-              </span>
-            </div>
-          </div>
+            :instrument="instr"
+            :state="instrumentState(instr, selectedObs)"
+            :progress="runningForSelected[instr.id]?.progress ?? 0"
+            :disabled-reason="getDisabledReason(instr, selectedObs)"
+            @click="launchInstrument(instr, selectedObs)"
+          />
         </div>
       </div>
     </div>
