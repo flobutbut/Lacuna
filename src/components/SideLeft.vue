@@ -3,16 +3,13 @@ import { onMounted, onUnmounted, computed } from 'vue'
 import { useSignauxStore } from '@/stores/signaux'
 import { useObservationsStore } from '@/stores/observations'
 import { useUIStore } from '@/stores/ui'
-import { useShipStore } from '@/stores/ship'
 import ObservationCard from '@/components/ObservationCard.vue'
-import ProgressBar from '@/components/ProgressBar.vue'
-import { valClass, formatRelativeTime } from '@/lib/formatUtils'
+import { formatRelativeTime } from '@/lib/formatUtils'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const signauxStore = useSignauxStore()
 const obsStore = useObservationsStore()
 const ui = useUIStore()
-const shipStore = useShipStore()
 
 const SUPPORT_LABELS = { GRAVITATIONNEL: 'Grav', GAMMA_X: 'γ/X', EM_RADIO: 'EM' }
 
@@ -28,11 +25,6 @@ const signalsToShow = computed(() =>
   signauxStore.listWithRemaining.filter((s) => !isSignalInLab(s))
 )
 
-const propulsion = computed(() => (shipStore.systems?.propulsion ?? 0.88) * 100)
-const he3 = computed(() => (shipStore.fuel?.he3 ?? 0.742) * 100)
-const hull = computed(() => (shipStore.systems?.hull ?? 0.971) * 100)
-const plasmaShield = computed(() => (shipStore.systems?.plasma_shield ?? 1) * 100)
-
 function onCardClick(s) {
   ui.selectSignal(s)
 }
@@ -43,7 +35,7 @@ function onIgnore(id) {
 
 let expiryInterval = null
 onMounted(async () => {
-  await ensureStoresLoaded(shipStore, signauxStore, obsStore)
+  await ensureStoresLoaded(signauxStore, obsStore)
   signauxStore.removeExpired()
   expiryInterval = setInterval(() => signauxStore.removeExpired(), 60000)
 })
@@ -54,28 +46,20 @@ onUnmounted(() => {
 
 <template>
   <div class="side-left">
-    <div class="side-widget">
-      <div class="sw-title">Systèmes vaisseau</div>
+    <div v-if="ui.observatoireViewMode === 'sky'" class="side-widget">
+      <div class="sw-title">Observatoire</div>
       <div class="sw-row">
-        <div class="sw-key">Propulsion</div>
-        <div class="sw-val" :class="valClass(propulsion/100)">{{ propulsion >= 80 ? 'NOMINAL' : (propulsion.toFixed(1) + '%') }}</div>
+        <div class="sw-key">Systèmes résolus</div>
+        <div class="sw-val">3</div>
       </div>
-      <ProgressBar :value="propulsion" pct />
       <div class="sw-row">
-        <div class="sw-key">Carburant He³</div>
-        <div class="sw-val" :class="valClass(he3/100)">{{ he3.toFixed(1) }}%</div>
+        <div class="sw-key">Anomalies détectées</div>
+        <div class="sw-val warn">2</div>
       </div>
-      <ProgressBar :value="he3" pct />
       <div class="sw-row">
-        <div class="sw-key">Intégrité coque</div>
-        <div class="sw-val" :class="valClass(hull/100)">{{ hull.toFixed(1) }}%</div>
+        <div class="sw-key">Scan en cours</div>
+        <div class="sw-val ok">ACTIF</div>
       </div>
-      <ProgressBar :value="hull" pct />
-      <div class="sw-row">
-        <div class="sw-key">Bouclier plasma</div>
-        <div class="sw-val" :class="valClass(plasmaShield/100)">{{ plasmaShield >= 80 ? 'ACTIF' : (plasmaShield.toFixed(1) + '%') }}</div>
-      </div>
-      <ProgressBar :value="plasmaShield" color="cyan" pct />
     </div>
 
     <div v-if="ui.observatoireViewMode === 'sky'" class="side-widget side-widget--signaux">
@@ -99,22 +83,6 @@ onUnmounted(() => {
         @click="onCardClick(s)"
         @dismiss="() => onIgnore(s.id)"
       />
-    </div>
-
-    <div v-if="ui.observatoireViewMode === 'sky'" class="side-widget">
-      <div class="sw-title">Observatoire</div>
-      <div class="sw-row">
-        <div class="sw-key">Systèmes résolus</div>
-        <div class="sw-val">3</div>
-      </div>
-      <div class="sw-row">
-        <div class="sw-key">Anomalies détectées</div>
-        <div class="sw-val warn">2</div>
-      </div>
-      <div class="sw-row">
-        <div class="sw-key">Scan en cours</div>
-        <div class="sw-val ok">ACTIF</div>
-      </div>
     </div>
   </div>
 </template>

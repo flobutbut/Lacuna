@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useShipStore } from '@/stores/ship'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
@@ -279,6 +279,28 @@ const tooltipPos = ref({ x: 0, y: 0 })
 
 const orbitalScrollRef = ref(null)
 const panState = ref({ active: false, hasPanned: false, startX: 0, startScrollLeft: 0 })
+
+/** Opacité de l'étoile pour transition "adaptation à la luminosité" à l'ouverture de la vue système */
+const starRevealOpacity = ref(1)
+const STAR_REVEAL_DURATION_MS = 3500
+const STAR_REVEAL_START = 0.06
+
+watch(
+  () => ui.observatoireViewMode,
+  (mode) => {
+    if (mode === 'system') {
+      starRevealOpacity.value = STAR_REVEAL_START
+      nextTick(() => {
+        requestAnimationFrame(() => {
+          starRevealOpacity.value = 1
+        })
+      })
+    } else {
+      starRevealOpacity.value = 1
+    }
+  },
+  { immediate: true }
+)
 const PAN_DRAG_THRESHOLD = 5
 
 function onScrollPanStart(e) {
@@ -457,7 +479,13 @@ onBeforeUnmount(() => {
             @mouseleave="onBodyLeave"
             @click="onBodyClick(star)"
           >
-            <div class="system-view__star-wrapper">
+            <div
+              class="system-view__star-wrapper"
+              :style="{
+                opacity: starRevealOpacity,
+                transition: `opacity ${STAR_REVEAL_DURATION_MS}ms cubic-bezier(0.33, 0, 0.67, 0)`,
+              }"
+            >
               <StarSvgInline
                 :spectral-type="star.type === 'PULSAR' ? 'PSR' : (star.spectral_type || 'G2V')"
                 :class="['system-view__star-svg', `system-view__star-svg--${starSpectralLetter}`]"

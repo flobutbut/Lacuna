@@ -57,7 +57,15 @@ function getViewerCoords() {
 function rebuildStars() {
   if (canvasEl) {
     const coords = getViewerCoords()
-    stars.value = buildStarsFromDb(coords) ?? []
+    const prevList = stars.value
+    const nextList = buildStarsFromDb(coords) ?? []
+    nextList.forEach((s) => {
+      const prev = prevList.find((p) => p.id === s.id)
+      if (prev != null && prev.opacityCurrent != null) {
+        s.opacityCurrent = prev.opacityCurrent
+      }
+    })
+    stars.value = nextList
     if (exoplanetFilter.value && constellationsEnabled.value) {
       starsForConstellations.value = buildStarsFromDb(coords, { skipExoplanetFilter: true }) ?? []
     } else {
@@ -338,10 +346,8 @@ onMounted(async () => {
 
   await ensureStoresLoaded(shipStore, stellarSystemsStore, nebulasStore)
   await ensureStoresLoaded(mapStore)
-  await Promise.all([
-    stellarSystemsStore.fetchVisibleForSky(shipStore.currentSystemId, 18),
-    stellarSystemsStore.fetchConstellationLines(),
-  ])
+
+  // Premier affichage immédiat (list ou fallback procédural) — chargement progressif en arrière-plan
   rebuildStars()
 
   // Vue initiale : centrer sur Proxima quand à SOL (ra 180, dec 0 met Proxima hors FOV ~69°)
@@ -358,6 +364,11 @@ onMounted(async () => {
   }
 
   draw(canvasEl, stars)
+
+  // Chargement progressif : passe 1 → passe 2 → passe 3 (visibleForSky mis à jour à chaque fois, watch déclenche rebuildStars)
+  stellarSystemsStore.fetchVisibleForSky(shipStore.currentSystemId, 18)
+  // Constellations en parallèle, sans bloquer l'affichage des étoiles
+  stellarSystemsStore.fetchConstellationLines()
 
   onResize = () => handleResize(canvasEl)
   onMove = (e) => handleMouseMove(e, stars.value, canvasEl)
@@ -404,9 +415,9 @@ watch(
 
 watch(
   () => shipStore.currentSystemId,
-  async (newId) => {
-    await stellarSystemsStore.fetchVisibleForSky(newId, 18)
-    rebuildStars()
+  (newId) => {
+    stellarSystemsStore.fetchVisibleForSky(newId, 18)
+    // rebuildStars déclenché par le watch sur visibleForSky.length à chaque passe
   }
 )
 

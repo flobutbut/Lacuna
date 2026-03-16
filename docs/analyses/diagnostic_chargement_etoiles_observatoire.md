@@ -97,3 +97,11 @@ Effet attendu : **temps jusqu’au premier affichage** fortement réduit ; l’a
 | Rechargements répétés | Cache de `visibleForSky` par système courant |
 
 Une **stratégie de chargement progressif** (4.1 + 4.2) est la voie la plus efficace pour améliorer la réactivité perçue sans changer fondamentalement le modèle de données ni les RPC.
+
+---
+
+## 6. Implémentation (2026-03-15)
+
+- **Chargement progressif** : SkyCanvas n’attend plus la fin de `fetchVisibleForSky`. Après `ensureStoresLoaded`, un premier `rebuildStars()` affiche tout de suite les étoiles (source `list` ou fallback procédural). Puis `fetchVisibleForSky()` et `fetchConstellationLines()` sont lancés en arrière-plan. À chaque mise à jour de `visibleForSky` (passe 1, 2, 3), le watch sur `visibleForSky.length` appelle `rebuildStars()` : le ciel se remplit progressivement.
+- **Constellations découplées** : `fetchConstellationLines()` n’est plus dans un `await Promise.all`. Les étoiles s’affichent dès le premier frame ; les lignes de constellation apparaissent quand leur chargement est terminé.
+- **Changement de système** : le watch sur `currentSystemId` lance `fetchVisibleForSky(newId, 18)` sans await ; le watch sur `visibleForSky.length` gère les `rebuildStars()` à chaque passe.

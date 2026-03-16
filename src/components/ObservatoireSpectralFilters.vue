@@ -7,7 +7,7 @@ import { useShipStore } from '@/stores/ship'
 import { useSignauxStore } from '@/stores/signaux'
 import { useObservationsStore } from '@/stores/observations'
 import { filterBySpectralBand } from '@/lib/spectralBands'
-import { xyzToRaDec } from '@/lib/stellarProjection'
+import { xyzToRaDec, raDecToVector } from '@/lib/stellarProjection'
 import AppSelect from '@/components/AppSelect.vue'
 
 const ui = useUIStore()
@@ -18,6 +18,8 @@ const signauxStore = useSignauxStore()
 const obsStore = useObservationsStore()
 const searchQuery = ref('')
 const searchInputRef = ref(null)
+const searchExpanded = ref(false)
+let searchCollapseTimeout = null
 /** Tous les systèmes correspondant à la requête actuelle */
 const searchMatches = ref([])
 /** Index du résultat affiché (0 = premier) */
@@ -54,7 +56,99 @@ function computeSignalMatches() {
   })
 }
 
+/** Constellations dont le nom (latin, fr ou abbr) contient la requête */
+function computeConstellationMatches() {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return []
+  const lines = stellarStore.constellationLines || []
+  const byAbbr = new Map()
+  for (const seg of lines) {
+    const abbr = seg.constellation_abbr || ''
+    if (!byAbbr.has(abbr)) {
+      const c = seg.constellations || {}
+      byAbbr.set(abbr, {
+        type: 'constellation',
+        abbr,
+        name: c.name_latin || abbr,
+        nameFr: c.name_fr || c.name_latin || abbr,
+        starIds: new Set(),
+      })
+    }
+    byAbbr.get(abbr).starIds.add(seg.star_from)
+    byAbbr.get(abbr).starIds.add(seg.star_to)
+  }
+  return [...byAbbr.values()].filter((c) => {
+    const name = (c.name || '').toLowerCase()
+    const nameFr = (c.nameFr || '').toLowerCase()
+    const abbr = (c.abbr || '').toLowerCase()
+    return name.includes(q) || nameFr.includes(q) || abbr.includes(q)
+  })
+}
+
+/** Coordonnées x,y,z d'un système (conversion ra/dec + distance si besoin) */
+function getSystemXyz(system) {
+  const coords = system?.coordinates || {}
+  if (coords.x != null || coords.y != null || coords.z != null) {
+    return { x: coords.x ?? 0, y: coords.y ?? 0, z: coords.z ?? 0 }
+  }
+  const ra = ((coords.ra ?? 0) * Math.PI) / 180
+  const dec = ((coords.dec ?? 0) * Math.PI) / 180
+  const d = parseFloat(system?.distance) || 1
+  return {
+    x: d * Math.cos(dec) * Math.cos(ra),
+    y: d * Math.cos(dec) * Math.sin(ra),
+    z: d * Math.sin(dec),
+  }
+}
+
+function goToConstellation(constellationMatch) {
+  ui.clearSearchedStarId()
+  const pool = stellarStore.forSky()
+  const fullList = stellarStore.list
+  const viewerSystem = pool.find((s) => s.id === shipStore.currentSystemId) || fullList.find((s) => s.id === shipStore.currentSystemId)
+  const viewerCoords = viewerSystem?.coordinates ?? { x: 0, y: 0, z: 0 }
+  const vx = viewerCoords.x ?? 0
+  const vy = viewerCoords.y ?? 0
+  const vz = viewerCoords.z ?? 0
+  let sumX = 0
+  let sumY = 0
+  let sumZ = 0
+  let n = 0
+  for (const starId of constellationMatch.starIds) {
+    const system = pool.find((s) => s.id === starId) || fullList.find((s) => s.id === starId)
+    if (!system) continue
+    const xyz = getSystemXyz(system)
+    const dx = (xyz.x ?? 0) - vx
+    const dy = (xyz.y ?? 0) - vy
+    const dz = (xyz.z ?? 0) - vz
+    const { ra, dec } = xyzToRaDec(dx, dy, dz)
+    const v = raDecToVector(ra, dec)
+    sumX += v.x
+    sumY += v.y
+    sumZ += v.z
+    n += 1
+  }
+  if (n === 0) {
+    ui.showNotification('Constellation sans étoiles trouvées dans le catalogue', 3000)
+    return
+  }
+  const len = Math.sqrt(sumX * sumX + sumY * sumY + sumZ * sumZ)
+  if (len < 1e-6) {
+    ui.showNotification('Impossible de calculer le centre de la constellation', 3000)
+    return
+  }
+  const centerRa = (Math.atan2(sumY, sumX) * 180) / Math.PI
+  const centerDec = (Math.asin(Math.max(-1, Math.min(1, sumZ / len))) * 180) / Math.PI
+  ui.setTargetViewDirectionValue({ ra: centerRa, dec: centerDec })
+  const label = constellationMatch.nameFr || constellationMatch.name || constellationMatch.abbr
+  ui.showNotification(`Vue centrée sur ${label}`, 2000)
+}
+
 function goToMatch(match) {
+  if (match?.type === 'constellation') {
+    goToConstellation(match)
+    return
+  }
   const coords = match.coordinates || {}
   const viewerSystem = stellarStore.list.find((s) => s.id === shipStore.currentSystemId)
   const viewerCoords = viewerSystem?.coordinates ?? { x: 0, y: 0, z: 0 }
@@ -88,17 +182,19 @@ async function searchStar() {
   }
   const systemMatches = await computeMatches()
   const signalMatches = computeSignalMatches()
+  const constellationMatches = computeConstellationMatches()
   ui.setSignalSearchMatchIds(signalMatches.map((s) => s.id))
-  if (systemMatches.length === 0 && signalMatches.length === 0) {
+  const allMatches = [...systemMatches, ...constellationMatches]
+  if (allMatches.length === 0 && signalMatches.length === 0) {
     searchMatches.value = []
     ui.clearSearchedStarId()
-    ui.showNotification('Aucun système ni signal trouvé pour « ' + searchQuery.value.trim() + ' »', 3000)
+    ui.showNotification('Aucun système, constellation ni signal trouvé pour « ' + searchQuery.value.trim() + ' »', 3000)
     return
   }
-  if (systemMatches.length > 0) {
-    searchMatches.value = systemMatches
+  if (allMatches.length > 0) {
+    searchMatches.value = allMatches
     currentMatchIndex.value = 0
-    goToMatch(systemMatches[0])
+    goToMatch(allMatches[0])
   } else {
     searchMatches.value = []
     ui.clearSearchedStarId()
@@ -136,6 +232,48 @@ async function toggleExoplanetFilter() {
 
 const hasSearch = computed(() => !!searchQuery.value.trim())
 const hasMultipleMatches = computed(() => searchMatches.value.length > 1)
+const isSearchMinified = computed(() => !searchExpanded.value && !hasSearch.value)
+
+function expandSearch() {
+  if (searchCollapseTimeout) {
+    clearTimeout(searchCollapseTimeout)
+    searchCollapseTimeout = null
+  }
+  searchExpanded.value = true
+}
+
+function onSearchBodyAfterEnter() {
+  if (searchExpanded.value) searchInputRef.value?.focus()
+}
+
+function onSearchBlur() {
+  searchCollapseTimeout = setTimeout(() => {
+    if (!hasSearch.value) searchExpanded.value = false
+    searchCollapseTimeout = null
+  }, 200)
+}
+
+function onSearchFocus() {
+  if (searchCollapseTimeout) {
+    clearTimeout(searchCollapseTimeout)
+    searchCollapseTimeout = null
+  }
+  searchExpanded.value = true
+}
+
+function onClearClick() {
+  if (hasSearch.value) {
+    clearSearch()
+    if (searchCollapseTimeout) {
+      clearTimeout(searchCollapseTimeout)
+      searchCollapseTimeout = null
+    }
+    searchInputRef.value?.focus()
+  } else {
+    searchExpanded.value = false
+    searchInputRef.value?.blur()
+  }
+}
 const matchLabel = computed(() => {
   if (searchMatches.value.length <= 1) return ''
   return `${currentMatchIndex.value + 1}/${searchMatches.value.length}`
@@ -144,7 +282,7 @@ const matchLabel = computed(() => {
 function onGlobalKeydown(e) {
   if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
     e.preventDefault()
-    searchInputRef.value?.focus()
+    expandSearch()
     return
   }
   if (e.key === 'Escape') {
@@ -207,54 +345,76 @@ onUnmounted(() => {
         Constellations
       </button>
     </div>
-    <div class="spectral-search">
-      <input
-        ref="searchInputRef"
-        v-model="searchQuery"
-        type="text"
-        class="spectral-search__input"
-        placeholder="Nom, ID, spectral... (/)"
-        @keydown.enter="searchStar"
-      />
-      <template v-if="hasMultipleMatches">
+    <div class="spectral-search" :class="{ 'spectral-search--minified': isSearchMinified }">
+      <Transition name="spectral-search-swap" mode="out-in" @after-enter="onSearchBodyAfterEnter">
         <button
+          v-if="isSearchMinified"
+          key="trigger"
           type="button"
-          class="spectral-search__nav"
-          aria-label="Résultat précédent"
-          title="Résultat précédent"
-          @click="prevMatch"
+          class="spectral-search__trigger"
+          aria-label="Rechercher un système"
+          title="Rechercher (/)"
+          @click="expandSearch"
         >
-          ‹
+          <span class="spectral-search__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+          </span>
         </button>
-        <span class="spectral-search__count">{{ matchLabel }}</span>
-        <button
-          type="button"
-          class="spectral-search__nav"
-          aria-label="Résultat suivant"
-          title="Résultat suivant"
-          @click="nextMatch"
-        >
-          ›
-        </button>
-      </template>
-      <button
-        v-if="hasSearch"
-        type="button"
-        class="spectral-search__clear"
-        aria-label="Effacer"
-        @click="clearSearch"
-      >
-        ×
-      </button>
-      <button
-        v-if="!hasMultipleMatches"
-        type="button"
-        class="spectral-search__go"
-        title="Centrer sur l'étoile"
-        @click="searchStar"
-      >
-        →
-      </button>
+        <div v-else key="body" class="spectral-search__body">
+          <input
+            ref="searchInputRef"
+            v-model="searchQuery"
+            type="text"
+            class="spectral-search__input"
+            placeholder="Système, constellation... (/)"
+            @keydown.enter="searchStar"
+            @focus="onSearchFocus"
+            @blur="onSearchBlur"
+          />
+          <template v-if="hasMultipleMatches">
+            <button
+              type="button"
+              class="spectral-search__nav"
+              aria-label="Résultat précédent"
+              title="Résultat précédent"
+              @click="prevMatch"
+            >
+              ‹
+            </button>
+            <span class="spectral-search__count">{{ matchLabel }}</span>
+            <button
+              type="button"
+              class="spectral-search__nav"
+              aria-label="Résultat suivant"
+              title="Résultat suivant"
+              @click="nextMatch"
+            >
+              ›
+            </button>
+          </template>
+          <button
+            v-if="!hasMultipleMatches"
+            type="button"
+            class="spectral-search__go"
+            title="Centrer sur l'étoile"
+            @click="searchStar"
+          >
+            →
+          </button>
+          <button
+            type="button"
+            class="spectral-search__clear"
+            :aria-label="hasSearch ? 'Effacer' : 'Fermer la recherche'"
+            :title="hasSearch ? 'Effacer' : 'Fermer'"
+            @click="onClearClick"
+          >
+            ×
+          </button>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -294,15 +454,75 @@ onUnmounted(() => {
   background: var(--color-cyan-hover);
 }
 
-/* Barre recherche minifiée */
+/* Barre recherche : minifiée (icône) ou étendue + animations */
 .spectral-search {
   display: flex;
   align-items: stretch;
   border: var(--border-width) solid var(--border-default);
+  min-width: 0;
+  overflow: hidden;
+  transition: width var(--transition-smooth);
+}
+.spectral-search--minified {
+  width: 40px;
+}
+.spectral-search:not(.spectral-search--minified) {
+  width: 340px;
+}
+.spectral-search-swap-enter-active,
+.spectral-search-swap-leave-active {
+  transition: opacity var(--transition-smooth), transform var(--transition-smooth);
+}
+.spectral-search-swap-leave-from {
+  opacity: 1;
+  transform: scale(1);
+}
+.spectral-search-swap-leave-to {
+  opacity: 0;
+  transform: scale(0.98);
+}
+.spectral-search-swap-enter-from {
+  opacity: 0;
+  transform: scale(0.98);
+}
+.spectral-search-swap-enter-to {
+  opacity: 1;
+  transform: scale(1);
+}
+.spectral-search__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--transition-base), background-color var(--transition-base);
+}
+.spectral-search__trigger:hover {
+  color: var(--color-cyan);
+  background: var(--color-cyan-subtle);
+}
+.spectral-search__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.spectral-search__icon svg {
+  flex-shrink: 0;
+}
+.spectral-search__body {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  width: 100%;
 }
 .spectral-search__input {
+  flex: 1;
   min-width: 140px;
-  width: 180px;
   padding: var(--space-2) var(--space-3);
   font-size: var(--text-sm);
   font-family: var(--font-mono);

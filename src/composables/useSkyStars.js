@@ -76,7 +76,7 @@ function projectStarsFromDb(filteredEntries, viewerCoords = { x: 0, y: 0, z: 0 }
       visited: visitedIds.has(s.id),
       star: s,
       opacityTarget: opacity,
-      opacityCurrent: opacity,
+      opacityCurrent: 0,
       brightnessMultiplier,
       colorOverride,
     }
@@ -104,6 +104,8 @@ function initStars() {
       dist: (Math.random() * 200 + 2).toFixed(1),
       spectral: ['G2V', 'K5V', 'M3V', 'F8V', 'A5V', 'M0V', 'G8V'][Math.floor(Math.random() * 7)],
       visited: i < 3,
+      opacityTarget: 1,
+      opacityCurrent: 0,
     })
   }
   return arr

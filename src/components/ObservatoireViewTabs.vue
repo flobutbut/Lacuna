@@ -11,8 +11,14 @@ const TABS = [
 </script>
 
 <template>
-  <div class="observatoire-tabs">
-    <div class="observatoire-tabs__buttons">
+  <div
+    class="observatoire-tabs"
+    :class="{ 'observatoire-tabs--full-width': ui.observatoireViewMode === 'system' || (ui.observatoireViewMode === 'sky' && !ui.observatoireTilesVisible) }"
+  >
+    <div
+      class="observatoire-tabs__buttons"
+      :class="{ 'observatoire-tabs__buttons--over-star': ui.observatoireViewMode === 'system' }"
+    >
       <button
         v-for="t in TABS"
         :key="t.id"
@@ -44,10 +50,26 @@ const TABS = [
   gap: var(--space-4);
   z-index: 20;
   pointer-events: auto;
+  transition: left var(--transition-base), right var(--transition-base);
+}
+
+.observatoire-tabs--full-width {
+  left: var(--sidebar-offset);
+  right: var(--sidebar-offset);
 }
 .observatoire-tabs__buttons {
   display: flex;
   gap: 0;
+}
+
+.observatoire-tabs__buttons--over-star .observatoire-tabs__btn {
+  background: var(--color-panel);
+}
+.observatoire-tabs__buttons--over-star .observatoire-tabs__btn:hover {
+  background: var(--color-panel);
+}
+.observatoire-tabs__buttons--over-star .observatoire-tabs__btn--active {
+  background: var(--color-panel-solid);
 }
 .observatoire-tabs__filters {
   flex-shrink: 0;
