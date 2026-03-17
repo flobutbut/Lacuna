@@ -35,6 +35,7 @@ Lacuna/
 │   │   ├── PageJournal.vue
 │   │   ├── PageDrake.vue
 │   │   ├── PagePopulation.vue
+│   │   ├── PageConceptionEtoiles.vue   # Vue 3D étoiles (conception, /conception-etoiles)
 │   │   └── ...
 │   ├── stores/
 │   │   ├── supabase.js      # Store Supabase
@@ -53,6 +54,8 @@ Lacuna/
 │   │   ├── NavTabButton.vue (barre navigation — onglets modules)
 │   │   ├── InstrumentButton.vue (grille boutons carrés — Laboratoire, réutilisable)
 │   │   ├── TravelWidget.vue, NotificationToast.vue
+│   │   ├── conception/
+│   │   │   └── Stars3DCanvas.vue       # Vue 3D Three.js (conception)
 │   │   ├── lab/
 │   │   │   ├── LabReportSpectrogram.vue       # Sortie spectrogramme (analyseur spectral)
 │   │   │   ├── LabReportStructureTemporelle.vue  # Forme d'onde + autocorrélation (structure temporelle)
@@ -65,6 +68,7 @@ Lacuna/
 │   │   └── panels/          # (legacy — contenu migré vers views/)
 │   ├── composables/         # Logique réutilisable (Vue)
 │   │   ├── useSkyStars.js   # Construction liste étoiles (DB / fallback) — Observatoire, projection x/y/z → ra/dec
+│   │   ├── useStars3DConception.js  # Vue 3D conception — barycentre, points 3D
 │   │   └── useStoreReady.js # ensureStoresLoaded() — chargement stores au montage
 │   ├── constants/           # Constantes partagées
 │   │   ├── objectTypes.js   # OBJECT_TYPE_LABELS (affichage Observatoire, Laboratoire)
@@ -122,6 +126,10 @@ Lacuna/
 │   ├── config/              # Configuration (i18n, traces)
 │   │   ├── LACUNA_I18N_SETTINGS.md
 │   │   └── LACUNA_TRACES.md
+│   ├── procedural/          # Génération procédurale (modèle, planètes, traces)
+│   │   ├── LACUNA_PROCEDURAL_DATA_MODEL.md
+│   │   ├── LACUNA_PROCEDURAL_PLANETS.md
+│   │   └── LACUNA_PROCEDURAL_TRACES.md
 │   ├── analyses/            # Analyses et diagnostics
 │   ├── architecture/        # Schémas et architecture
 │   └── assets/              # Ressources (SVG, maquettes)

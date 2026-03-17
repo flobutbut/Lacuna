@@ -10,6 +10,19 @@ import { filterBySpectralBand } from '@/lib/spectralBands'
 import { xyzToRaDec, raDecToVector } from '@/lib/stellarProjection'
 import AppSelect from '@/components/AppSelect.vue'
 
+const props = defineProps({
+  /** Mode conception (vue 3D) : utilise v-model, émet focus-star au lieu de centrer la vue 2D */
+  standalone: { type: Boolean, default: false },
+  /** Filtre spectral (v-model en standalone) */
+  spectralFilter: { type: String, default: 'visible' },
+  /** Filtre exoplanètes (v-model en standalone) */
+  exoplanetFilter: { type: Boolean, default: false },
+  /** Lignes constellation (v-model en standalone) */
+  constellationsEnabled: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['update:spectralFilter', 'update:exoplanetFilter', 'update:constellationsEnabled', 'focus-star'])
+
 const ui = useUIStore()
 const stellarStore = useStellarSystemsStore()
 const systemObjectsStore = useSystemObjectsStore()
@@ -31,6 +44,32 @@ const FILTERS = [
   { id: 'uv', label: 'UV', title: 'Ultraviolet (U) — étoiles chaudes O, B, A' },
   { id: 'r', label: 'R', title: 'Rouge (R) — géantes, intermédiaire' },
 ]
+
+/**
+ * Parse une chaîne en coordonnées célestes (ra, dec).
+ * Formats : "217.5 -62.7", "217 -62", "14.5 -62" (14.5h si ≤24), "14 30 -62" (14h30m -62°)
+ * @returns {{ ra: number, dec: number } | null}
+ */
+function parseCoordinates(str) {
+  const s = str.trim().replace(/[h°d'"]/gi, ' ')
+  const parts = s.split(/[\s,;]+/).map((p) => parseFloat(p)).filter((n) => !Number.isNaN(n))
+  if (parts.length < 2) return null
+  let ra
+  let dec
+  if (parts.length >= 3 && parts[0] >= 0 && parts[0] <= 24 && parts[1] >= 0 && parts[1] < 60 && parts[2] >= -90 && parts[2] <= 90) {
+    ra = (parts[0] + parts[1] / 60) * 15
+    dec = parts[2]
+  } else if (parts.length >= 4 && parts[0] <= 24 && parts[2] >= -90 && parts[2] <= 90) {
+    ra = (parts[0] + (parts[1] || 0) / 60) * 15
+    dec = Math.sign(parts[2]) * (Math.abs(parts[2]) + (parts[3] || 0) / 60)
+  } else {
+    ra = parts[0]
+    dec = Math.max(-90, Math.min(90, parts[1]))
+    if (ra >= 0 && ra <= 24) ra = ra * 15
+    else if (ra < 0 || ra > 360) return null
+  }
+  return { ra: ((ra % 360) + 360) % 360, dec: Math.max(-90, Math.min(90, dec)) }
+}
 
 /**
  * Recherche systèmes : interroge Supabase par name et id (case-insensitive, contains).
@@ -145,6 +184,10 @@ function goToConstellation(constellationMatch) {
 }
 
 function goToMatch(match) {
+  if (props.standalone && match?.type !== 'constellation') {
+    emit('focus-star', match)
+    return
+  }
   if (match?.type === 'constellation') {
     goToConstellation(match)
     return
@@ -157,38 +200,55 @@ function goToMatch(match) {
   const dz = (coords.z ?? 0) - (viewerCoords.z ?? 0)
   const { ra, dec } = xyzToRaDec(dx, dy, dz)
   const letter = (match.spectral_type || '').toUpperCase()[0]
-  const band = letter === 'L' || letter === 'T' || letter === 'Y' ? 'ir' : ui.spectralFilter
+  const band = letter === 'L' || letter === 'T' || letter === 'Y' ? 'ir' : (props.standalone ? props.spectralFilter : ui.spectralFilter)
   if (letter === 'L' || letter === 'T' || letter === 'Y') {
-    ui.setSpectralFilter('ir')
+    if (props.standalone) emit('update:spectralFilter', 'ir')
+    else ui.setSpectralFilter('ir')
   }
   ui.setSearchedStarId(match.id)
   ui.setTargetViewDirectionValue({ ra, dec })
   const raw = stellarStore.forSky().filter((s) => s.id !== 'SOL')
   const filtered = filterBySpectralBand(raw, band)
+  const exoFilter = props.standalone ? props.exoplanetFilter : ui.exoplanetFilter
   if (!filtered.some((f) => f.star?.id === match.id)) {
     ui.showNotification('Trop loin pour voir cette étoile — vue centrée sur la zone', 4000)
-  } else if (ui.exoplanetFilter && !systemObjectsStore.hasExoplanets(match.id)) {
+  } else if (exoFilter && !systemObjectsStore.hasExoplanets(match.id)) {
     ui.showNotification('Système sans exoplanètes connues — masqué par le filtre', 3000)
   }
 }
 
 async function searchStar() {
-  const q = searchQuery.value.trim().toLowerCase()
+  const q = searchQuery.value.trim()
   if (!q) {
     searchMatches.value = []
-    ui.clearSearchedStarId()
-    ui.clearSignalSearchMatchIds()
+    if (!props.standalone) {
+      ui.clearSearchedStarId()
+      ui.clearSignalSearchMatchIds()
+    }
+    return
+  }
+  const coords = parseCoordinates(q)
+  if (coords) {
+    if (!props.standalone) {
+      ui.clearSearchedStarId()
+      ui.clearSignalSearchMatchIds()
+      searchMatches.value = []
+      ui.setTargetViewDirectionValue({ ra: coords.ra, dec: coords.dec })
+      ui.showNotification(`Vue centrée sur α ${coords.ra.toFixed(1)}° δ ${coords.dec >= 0 ? '+' : ''}${coords.dec.toFixed(1)}°`, 2000)
+    } else {
+      searchMatches.value = []
+    }
     return
   }
   const systemMatches = await computeMatches()
-  const signalMatches = computeSignalMatches()
-  const constellationMatches = computeConstellationMatches()
-  ui.setSignalSearchMatchIds(signalMatches.map((s) => s.id))
+  const signalMatches = props.standalone ? [] : computeSignalMatches()
+  const constellationMatches = props.standalone ? [] : computeConstellationMatches()
+  if (!props.standalone) ui.setSignalSearchMatchIds(signalMatches.map((s) => s.id))
   const allMatches = [...systemMatches, ...constellationMatches]
   if (allMatches.length === 0 && signalMatches.length === 0) {
     searchMatches.value = []
-    ui.clearSearchedStarId()
-    ui.showNotification('Aucun système, constellation ni signal trouvé pour « ' + searchQuery.value.trim() + ' »', 3000)
+    if (!props.standalone) ui.clearSearchedStarId()
+    ui.showNotification('Aucun système, constellation ni signal trouvé pour « ' + q + ' »', 3000)
     return
   }
   if (allMatches.length > 0) {
@@ -197,9 +257,9 @@ async function searchStar() {
     goToMatch(allMatches[0])
   } else {
     searchMatches.value = []
-    ui.clearSearchedStarId()
+    if (!props.standalone) ui.clearSearchedStarId()
   }
-  if (signalMatches.length > 0) {
+  if (!props.standalone && signalMatches.length > 0) {
     ui.showNotification(`${signalMatches.length} signal${signalMatches.length > 1 ? 'ux' : ''} correspondent`, 2000)
   }
 }
@@ -219,15 +279,27 @@ function nextMatch() {
 function clearSearch() {
   searchQuery.value = ''
   searchMatches.value = []
-  ui.clearSearchedStarId()
-  ui.clearSignalSearchMatchIds()
+  if (!props.standalone) {
+    ui.clearSearchedStarId()
+    ui.clearSignalSearchMatchIds()
+  }
 }
 
 async function toggleExoplanetFilter() {
-  if (!ui.exoplanetFilter) {
+  const current = props.standalone ? props.exoplanetFilter : ui.exoplanetFilter
+  if (!current) {
     await systemObjectsStore.fetchSystemIdsWithExoplanets()
   }
-  ui.toggleExoplanetFilter()
+  if (props.standalone) {
+    emit('update:exoplanetFilter', !props.exoplanetFilter)
+  } else {
+    ui.toggleExoplanetFilter()
+  }
+}
+
+function onSpectralFilterChange(v) {
+  if (props.standalone) emit('update:spectralFilter', v)
+  else ui.setSpectralFilter(v)
 }
 
 const hasSearch = computed(() => !!searchQuery.value.trim())
@@ -303,7 +375,7 @@ function onGlobalKeydown(e) {
 }
 
 watch(searchQuery, (q) => {
-  if (!q?.trim()) ui.clearSignalSearchMatchIds()
+  if (!q?.trim() && !props.standalone) ui.clearSignalSearchMatchIds()
 })
 
 onMounted(() => {
@@ -318,29 +390,40 @@ onUnmounted(() => {
   <div class="spectral-bar">
     <div class="spectral-filters">
       <AppSelect
-        :model-value="ui.spectralFilter"
+        :model-value="standalone ? spectralFilter : ui.spectralFilter"
         :options="FILTERS"
         value-key="id"
         label-key="label"
         aria-label="Filtre spectral"
         title="Bande spectrale"
-        @update:model-value="ui.setSpectralFilter"
+        @update:model-value="onSpectralFilterChange"
       />
       <button
         type="button"
         class="spectral-filters__btn"
-        :class="{ 'spectral-filters__btn--active': ui.exoplanetFilter }"
+        :class="{ 'spectral-filters__btn--active': standalone ? exoplanetFilter : ui.exoplanetFilter }"
         title="N'afficher que les systèmes avec exoplanètes connues"
         @click="toggleExoplanetFilter"
       >
         Exoplanètes
       </button>
       <button
+        v-if="!standalone"
         type="button"
         class="spectral-filters__btn"
         :class="{ 'spectral-filters__btn--active': ui.constellationsEnabled }"
         title="Afficher les lignes de constellation"
         @click="ui.toggleConstellationsEnabled"
+      >
+        Constellations
+      </button>
+      <button
+        v-if="standalone"
+        type="button"
+        class="spectral-filters__btn"
+        :class="{ 'spectral-filters__btn--active': constellationsEnabled }"
+        title="Afficher les lignes de constellation (3D)"
+        @click="emit('update:constellationsEnabled', !constellationsEnabled)"
       >
         Constellations
       </button>
@@ -369,7 +452,7 @@ onUnmounted(() => {
             v-model="searchQuery"
             type="text"
             class="spectral-search__input"
-            placeholder="Système, constellation... (/)"
+            placeholder="Système, constellation, coordonnées… (/)"
             @keydown.enter="searchStar"
             @focus="onSearchFocus"
             @blur="onSearchBlur"

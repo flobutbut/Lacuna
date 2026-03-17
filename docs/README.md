@@ -8,13 +8,14 @@ Organisation du dossier de documentation par catégories.
 
 | Dossier | Contenu |
 |---------|---------|
-| **reference/** | Documentation principale — Technique, Backend, Status, Fonctionnelle |
-| **design/** | Design system, spécifications UI (LACUNA_UI) |
-| **conception/** | Vision, GDD, hypothèses, arcs narratifs |
-| **features/** | Spécifications fonctionnelles par fonctionnalité (instruments Laboratoire, etc.) |
-| **config/** | Configuration — i18n, traces, conventions |
-| **analyses/** | Analyses techniques, diagnostics, rapports |
-| **architecture/** | Schémas, propositions, mapping DB |
+| **reference/** | Documentation de référence — Technique, Backend, Status, Fonctionnelle (état projet, stack, règles métier, schéma DB) |
+| **conception/** | Game design — GDD, arcs, lore, scénarios, physique du voyage, hypothèses, vision |
+| **procedural/** | Génération procédurale — modèle de données, planètes, traces (seed, field_sources, lazy generation) |
+| **design/** | Design system, spécifications UI (LACUNA_UI, composants) |
+| **features/** | Spécifications par feature — Laboratoire (instruments), extrapolation instrumentale, notifications |
+| **config/** | Configuration et catalogues — i18n, catalogue des traces (LACUNA_TRACES) |
+| **architecture/** | Schémas techniques, mapping DB, propositions (Interface-DB-mapping, Observatoire, secteurs) |
+| **analyses/** | Analyses techniques, diagnostics, rapports d’import |
 | **assets/** | Ressources — SVG, maquettes HTML, JSON |
 
 ## Documents de référence

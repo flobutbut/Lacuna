@@ -28,55 +28,36 @@
     pointer-events: none;
 }
 
-/* ── Crosshair central ── */
+/* ── Crosshair central (centre de vue Observatoire) ── */
 .center-cross {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
-    opacity: 0.15;
+    opacity: 0.35;
 }
 
+.cc-h,
 .center-cross__h {
     position: absolute;
-    width: 8px;
+    width: 14px;
     height: 1px;
-    background: var(--color-cyan);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    background: var(--color-cyan);
 }
 
+.cc-v,
 .center-cross__v {
     position: absolute;
     width: 1px;
-    height: 8px;
-    background: var(--color-cyan);
+    height: 14px;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-}
-
-/* Alias maquette */
-.cc-h {
-    position: absolute;
-    width: 8px;
-    height: 1px;
     background: var(--color-cyan);
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.cc-v {
-    position: absolute;
-    width: 1px;
-    height: 8px;
-    background: var(--color-cyan);
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
 }
 
 /* ── UI Layer (conteneur principal des éléments d'interface) ── */

@@ -49,7 +49,7 @@ export const useStellarSystemsStore = defineStore('stellarSystems', () => {
     }
     const { data, error } = await supabase
       .from('stellar_systems')
-      .select('id, name, spectral_type, distance, age, planets, habitable_zone, anomaly_level, coordinates')
+      .select('id, name, spectral_type, distance, age, planets, habitable_zone, anomaly_level, coordinates, luminosity, color_index')
       .order('distance', { ascending: true })
     if (error) {
       console.warn('[stellarSystems]', error.message)

@@ -5,11 +5,18 @@ import InstrumentsBar from '@/components/InstrumentsBar.vue'
 import NotificationToast from '@/components/NotificationToast.vue'
 
 const route = useRoute()
+const isConceptionLayout = route.meta.conceptionLayout === true
 </script>
 
 <template>
-  <div class="lacuna-app" :class="{ 'route-observatoire': route.name === 'observatoire' }">
-    <AppHeader />
+  <div
+    class="lacuna-app"
+    :class="{
+      'route-observatoire': route.name === 'observatoire',
+      'route-conception': isConceptionLayout,
+    }"
+  >
+    <AppHeader v-if="!isConceptionLayout" />
     <main class="lacuna-main">
       <RouterView v-slot="{ Component }">
         <Transition name="fade" mode="out-in">
@@ -17,7 +24,7 @@ const route = useRoute()
         </Transition>
       </RouterView>
     </main>
-    <InstrumentsBar />
+    <InstrumentsBar v-if="!isConceptionLayout" />
     <NotificationToast />
   </div>
 </template>
@@ -29,6 +36,10 @@ const route = useRoute()
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+}
+
+.lacuna-app.route-conception {
+  grid-template-rows: 1fr;
 }
 
 .lacuna-main {

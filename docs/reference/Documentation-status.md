@@ -12,7 +12,7 @@
 |-----------|--------|-------|
 | **Git** | ✅ Initialisé | Remote GitHub configuré |
 | **Supabase** | ✅ Configuré | Schéma appliqué, seed exécuté |
-| **Documentation** | ✅ Créée | Technique, Backend, Status, Fonctionnelle, Interface-DB-mapping, LACUNA_I18N_SETTINGS |
+| **Documentation** | ✅ Créée | Technique, Backend, Status, Fonctionnelle, Interface-DB-mapping, LACUNA_I18N_SETTINGS ; conception : LACUNA_GDD, LACUNA_ARCS, LACUNA_LORE, LACUNA_SCENARIOS, LACUNA_PHYSICS ; config : LACUNA_TRACES ; procédural (docs/procedural/) : LACUNA_PROCEDURAL_DATA_MODEL, LACUNA_PROCEDURAL_PLANETS, LACUNA_PROCEDURAL_TRACES ; features : LACUNA_LABORATOIRE_INSTRUMENTS, LACUNA_INSTRUMENTAL_EXTRAPOLATION, LACUNA_NOTIFICATIONS, LACUNA_VUE_3D_ETOILES_CONCEPTION |
 | **Maquette UI** | ✅ Migrée | Composants Vue |
 | **Intégration Vue** | ✅ Faite | Ciel, Header, Panels, Instruments |
 | **Auth** | ⏳ À faire | Supabase Auth |
@@ -70,6 +70,7 @@
 - [x] Page Population — 3 onglets (Générations, Génération actuelle, Registre des Raisons)
 - [x] Page Systèmes — plan ARCA SVG, menu 1:1 avec 9 groupes (plasma-shield, bumper-shield, population-quarters, fission-reactors, thermal-radiators, fuel-tanks, propulsion, comms, navigation), highlight sur le plan, overlays par groupe
 - [ ] Galaxie procédurale
+- [x] Vue 3D étoiles (conception) — `/conception-etoiles`, Three.js, barycentre origine, zoom/dézoom, recherche + focus
 
 ---
 
@@ -130,3 +131,4 @@
 | Mars 2026 | stellar_import — Option --fix-ids pour réimport ciblé (Sirius, PROXIMA, ROSS128, TAU_CETI). Correction champs NULL (apparent_magnitude, luminosity, coordinates x/y/z) : migration 00016 ajoutée après import initial. Script check_systems.py pour diagnostic. LACUNA_ID_MAP étendu (gl-gl-71 → TAU_CETI), LACUNA_DISPLAY_NAMES pour noms préférés. |
 | Mars 2026 | Migration 00020 — Correction SOL (coordinates x/y/z = 0, apparent_magnitude -26.74, luminosity 1.0). Sol exclu de l'import HYG (dist=0) ; nécessaire pour afficher Sol quand le joueur stationne ailleurs. Règle d'affichage : le système courant (current_system_id) est toujours masqué du ciel — doc LACUNA_UI clarifiée. |
 | Mars 2026 | Recherche "tau" / tooltip "Gliese" — Diagnostic : doublon gl-gl-71 (HYG) + TAU_CETI (seed) à la même position. Suppression gl-gl-71 (migration 00021). Scripts diagnose_names.py, check_duplicate_systems.py. |
+| Mars 2026 | Vue 3D étoiles (conception) — Page /conception-etoiles (hors interface jeu), Three.js + OrbitControls, barycentre comme origine, zoom/dézoom, recherche + focus caméra. useStars3DConception, Stars3DCanvas, design system. |

@@ -32,7 +32,31 @@ function generateStarName() {
   return `${p} ${n}`
 }
 
-/** Projette les étoiles filtrées — inclut opacityTarget, brightnessMultiplier, colorOverride.
+/**
+ * Calcule le barycentre des étoiles (moyenne des positions x,y,z).
+ * Utilisé par la vue 3D conception comme origine.
+ */
+export function computeBarycentre(stars) {
+  let sx = 0, sy = 0, sz = 0, n = 0
+  for (const s of stars) {
+    if (s.id === 'SOL') continue
+    let coords = s.coordinates || {}
+    if (coords.x == null && coords.ra != null) {
+      const ra = (coords.ra ?? 0) * (Math.PI / 180)
+      const dec = (coords.dec ?? 0) * (Math.PI / 180)
+      const d = parseFloat(s.distance) || 1
+      coords = { x: d * Math.cos(dec) * Math.cos(ra), y: d * Math.cos(dec) * Math.sin(ra), z: d * Math.sin(dec) }
+    }
+    if (coords.x == null) continue
+    sx += coords.x ?? 0
+    sy += coords.y ?? 0
+    sz += coords.z ?? 0
+    n++
+  }
+  return n === 0 ? { x: 0, y: 0, z: 0 } : { x: sx / n, y: sy / n, z: sz / n }
+}
+
+/** Projette les étoiles filtrées — inclut opacityTarget, brightnessMultiplier, colorOverride, dx/dy/dz (3D).
  * visitedIds : Set des system_id visités (carte) — si fourni, visited reflète map_nodes */
 function projectStarsFromDb(filteredEntries, viewerCoords = { x: 0, y: 0, z: 0 }, visitedIds = new Set()) {
   if (!filteredEntries || filteredEntries.length === 0) return null
@@ -64,6 +88,9 @@ function projectStarsFromDb(filteredEntries, viewerCoords = { x: 0, y: 0, z: 0 }
       id: s.id,
       ra,
       dec,
+      dx,
+      dy,
+      dz,
       r,
       brightness: baseBrightness,
       twinkle: (i * 0.7) % (Math.PI * 2),
@@ -83,17 +110,28 @@ function projectStarsFromDb(filteredEntries, viewerCoords = { x: 0, y: 0, z: 0 }
   }).filter(Boolean)
 }
 
-function initStars() {
+function initStars(viewerCoords = { x: 0, y: 0, z: 0 }) {
   const arr = []
+  const vx = viewerCoords.x ?? 0
+  const vy = viewerCoords.y ?? 0
+  const vz = viewerCoords.z ?? 0
   for (let i = 0; i < STAR_COUNT; i++) {
     const ra = Math.random() * 360
     const dec = (Math.random() - 0.5) * 180
+    const dist = Math.random() * 200 + 2
+    const rad = Math.PI / 180
+    const dx = dist * Math.cos(dec * rad) * Math.cos(ra * rad) - vx
+    const dy = dist * Math.cos(dec * rad) * Math.sin(ra * rad) - vy
+    const dz = dist * Math.sin(dec * rad) - vz
     const isBright = Math.random() < 0.04
     const isAnomaly = i < 4
     arr.push({
       id: `proc-${i}`,
       ra,
       dec,
+      dx,
+      dy,
+      dz,
       r: isBright ? Math.random() * 1.8 + 0.8 : Math.random() * 0.9 + 0.2,
       brightness: Math.random() * 0.6 + 0.3,
       twinkle: Math.random() * Math.PI * 2,
@@ -101,7 +139,7 @@ function initStars() {
       isAnomaly,
       anomalyPhase: Math.random() * Math.PI * 2,
       name: generateStarName(),
-      dist: (Math.random() * 200 + 2).toFixed(1),
+      dist: dist.toFixed(1),
       spectral: ['G2V', 'K5V', 'M3V', 'F8V', 'A5V', 'M0V', 'G8V'][Math.floor(Math.random() * 7)],
       visited: i < 3,
       opacityTarget: 1,
@@ -136,7 +174,7 @@ export function useSkyStars(spectralFilterRef, exoplanetFilterRef) {
     const visitedIds = mapStore.visitedSystemIds ?? new Set()
     const projected = projectStarsFromDb(entries, viewerCoords, visitedIds)
     if (projected && projected.length > 0) return projected
-    return initStars()
+    return initStars(viewerCoords)
   }
 
   return { buildStarsFromDb, updateStarBandParams }

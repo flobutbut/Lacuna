@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-11 15:11*
+*Dernière modification : 2026-03-15 17:30*
 
 # LACUNA — Catalogue des Traces
 *Version 0.9 — Mars 2026*
@@ -35,6 +35,16 @@
 ## 1. Grammaire des traces
 
 ### 1.1 Définition
+
+**Distinction anomalie / trace**
+
+Une **anomalie** est ce que les instruments détectent lors de l'analyse d'un système ou d'un objet — un écart entre les données et les modèles connus. Elle existe indépendamment du joueur.
+
+Une **trace** est ce que le joueur construit : il interprète une ou plusieurs anomalies, leur donne du sens, et les formalise dans le module Traces. La même anomalie peut donner naissance à des traces radicalement différentes selon les joueurs qui l'ont analysée.
+
+Le jeu retourne des anomalies. Le joueur crée des traces.
+
+---
 
 Une trace est un **écart entre ce que les modèles prédisent et ce que les données montrent**, détecté lors de l'analyse d'un objet physique.
 

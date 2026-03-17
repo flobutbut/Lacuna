@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { toPhysicalUnits, toLuminosityAndHz } from '@/lib/systemObjectConverters'
@@ -29,6 +29,8 @@ const MAX_BODY_DIAMETER_PX = 128
 const MIN_DISTANCE_AU = 0.001
 
 const size = ref(320)
+/** true une fois la taille du container lue après passage à la vue orbitale — évite le clignotement (viewBox 320 → taille réelle) */
+const orbitViewReady = ref(false)
 
 /** Progression eased de l'animation one-shot (0 à 1) */
 const orbitProgressEased = ref(0)
@@ -330,7 +332,8 @@ watch(
 // One-shot au changement de système ; arrêter le mode continu si actif
 watch(
   () => [props.systemId, props.loading, planetsWithSize.value.length],
-  ([systemId, loading, planetCount]) => {
+  async ([systemId, loading, planetCount]) => {
+    if (loading) orbitViewReady.value = false
     stopOrbitAnimation()
     stopContinuousOrbitAnimation()
     isPlaying.value = false
@@ -338,7 +341,21 @@ watch(
     orbitProgressEased.value = 0
     orbitPhaseContinuous.value = 0
     if (systemId && !loading && planetCount > 0) {
-      runOrbitAnimation()
+      orbitViewReady.value = false
+      await nextTick()
+      if (containerRef.value) {
+        const rect = containerRef.value.getBoundingClientRect()
+        const w = rect.width || 320
+        const h = rect.height || 280
+        const s = Math.min(w, h) || 320
+        size.value = Math.max(2 * MAX_BODY_DIAMETER_PX, s)
+      }
+      orbitViewReady.value = true
+      requestAnimationFrame(() => {
+        runOrbitAnimation()
+      })
+    } else {
+      orbitViewReady.value = false
     }
   },
   { immediate: true }
@@ -373,7 +390,7 @@ onBeforeUnmount(() => {
     <div v-if="!systemId" class="carte-orbital__empty">
       Sélectionnez un système.
     </div>
-    <div v-else-if="loading" class="carte-orbital__empty">
+    <div v-else-if="loading || !orbitViewReady" class="carte-orbital__empty">
       Chargement…
     </div>
     <template v-else>

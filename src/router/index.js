@@ -51,6 +51,12 @@ const router = createRouter({
       component: () => import('@/views/PageSystemes.vue'),
       meta: { title: 'Systèmes vaisseau' },
     },
+    {
+      path: '/conception-etoiles',
+      name: 'conception-etoiles',
+      component: () => import('@/views/PageConceptionEtoiles.vue'),
+      meta: { title: 'Vue 3D étoiles (conception)', conceptionLayout: true },
+    },
   ],
 })
 

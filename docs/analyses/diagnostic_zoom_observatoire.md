@@ -67,14 +67,16 @@ Aucune nouvelle spatialisation physique : on ne change pas les coordonnées 3D n
 
 ### 3.4 Éléments du rendu
 
-| Élément | Dépendance FOV | Action |
-|--------|----------------|--------|
-| Étoiles | `projectStarInFov` | Passer FOV variable, culling et scale adaptés automatiquement. |
-| Constellations | Positions projetées des étoiles (même projection) | Dès que les positions sont calculées avec le bon FOV, les segments suivent. |
-| Nébuleuses | `projectNebulaShape` → `projectStarInFov` | Idem : passer le FOV dans la chaîne d’appels. |
-| Signaux | Projection (ra, dec) → écran | Utiliser le même FOV pour cohérence. |
-| Grille / Voie lactée | Actuellement indépendantes du FOV | Optionnel : adapter l’échelle ou la densité au FOV pour un rendu plus naturel (sinon la grille peut paraître trop dense en zoom). |
-| Bordure spectrale, réticule, azimuth | Écran ou direction uniquement | Pas d’impact direct. |
+
+| Élément                              | Dépendance FOV                                    | Action                                                                                                                            |
+| ------------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Étoiles                              | `projectStarInFov`                                | Passer FOV variable, culling et scale adaptés automatiquement.                                                                    |
+| Constellations                       | Positions projetées des étoiles (même projection) | Dès que les positions sont calculées avec le bon FOV, les segments suivent.                                                       |
+| Nébuleuses                           | `projectNebulaShape` → `projectStarInFov`         | Idem : passer le FOV dans la chaîne d’appels.                                                                                     |
+| Signaux                              | Projection (ra, dec) → écran                      | Utiliser le même FOV pour cohérence.                                                                                              |
+| Grille / Voie lactée                 | Actuellement indépendantes du FOV                 | Optionnel : adapter l’échelle ou la densité au FOV pour un rendu plus naturel (sinon la grille peut paraître trop dense en zoom). |
+| Bordure spectrale, réticule, azimuth | Écran ou direction uniquement                     | Pas d’impact direct.                                                                                                              |
+
 
 ### 3.5 UX et contrôle du zoom
 
@@ -85,16 +87,19 @@ Aucune nouvelle spatialisation physique : on ne change pas les coordonnées 3D n
 
 ## 4. Synthèse faisabilité
 
-| Thème | Zoom FOV seul | Zoom « télescope » (FOV + magnitude) |
-|-------|----------------|--------------------------------------|
-| Étoiles visibles | Culling par angle ; même liste. | Liste enrichie au zoom (fetch mag plus profonde) ; plus d’étoiles affichées dans le cône. |
-| Base de données | Aucun impact. | Pas de changement de schéma ; appels RPC avec `p_magnitude_limit` plus élevé. |
-| Chargement | Inchangé. | Complément ou re-fetch quand zoom > seuil ; fusion dans `visibleForSky` ; attention au volume (pagination / paliers). |
-| Spatialisation / projection | FOV paramétrable, propagé partout. | Idem. |
-| Rendu | FOV passé à tous les appels de projection. | Idem. |
-| Performance | Moins d’étoiles dessinées en zoom (culling). | Plus d’étoiles en mémoire et dessinées en zoom ; coût maîtrisé par chargement à la demande. |
+
+| Thème                       | Zoom FOV seul                                | Zoom « télescope » (FOV + magnitude)                                                                                  |
+| --------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Étoiles visibles            | Culling par angle ; même liste.              | Liste enrichie au zoom (fetch mag plus profonde) ; plus d’étoiles affichées dans le cône.                             |
+| Base de données             | Aucun impact.                                | Pas de changement de schéma ; appels RPC avec `p_magnitude_limit` plus élevé.                                         |
+| Chargement                  | Inchangé.                                    | Complément ou re-fetch quand zoom > seuil ; fusion dans `visibleForSky` ; attention au volume (pagination / paliers). |
+| Spatialisation / projection | FOV paramétrable, propagé partout.           | Idem.                                                                                                                 |
+| Rendu                       | FOV passé à tous les appels de projection.   | Idem.                                                                                                                 |
+| Performance                 | Moins d’étoiles dessinées en zoom (culling). | Plus d’étoiles en mémoire et dessinées en zoom ; coût maîtrisé par chargement à la demande.                           |
+
 
 **Conclusion** : l’intégration d’un zoom est **faisable** avec deux niveaux possibles :
 
 1. **Zoom « vue seule »** (FOV variable) : pas de changement de données ni de RPC. On paramètre le FOV et on le propage à la projection. En zoomant on dessine moins d’étoiles (culling), en dézoomant elles réapparaissent.
 2. **Zoom « télescope »** (FOV + magnitude) : en plus du FOV, on associe une **magnitude limite plus profonde** quand l’utilisateur zoome, et on (re)charge ou complète `visibleForSky` via `get_visible_systems` avec un `p_magnitude_limit` plus élevé. Ainsi on voit **plus d’étoiles** en zoomant, conformément à la réalité technique d’un instrument qui révèle les objets faibles. Le coût est un volume de données plus important et des appels RPC supplémentaires au zoom ; un chargement par paliers ou à la demande permet de maîtriser la charge.
+

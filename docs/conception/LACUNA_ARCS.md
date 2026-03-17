@@ -1,7 +1,7 @@
 *Dernière modification : 2026-03-10 15:11*
 
 # LACUNA — Arcs de Design
-*Version 0.1 — Mars 2026*
+*Version 0.2 — Mars 2026*
 
 > Ce document décrit les **dynamiques de long terme** qui structurent l'expérience sur des semaines ou des mois de jeu. Ces arcs de design sont distincts des scénarios narratifs (`LACUNA_SCENARIOS.md`) : ils ne racontent pas une histoire de traces — ils décrivent comment le temps, la population et les décisions de cap transforment l'expérience de jeu sur la durée.
 
@@ -11,7 +11,8 @@
 
 1. [Arc Générationnel](#1-arc-générationnel)
 2. [Arc Colonies](#2-arc-colonies)
-3. [Interconnexions](#3-interconnexions)
+3. [Arc Sociologique](#3-arc-sociologique)
+4. [Interconnexions](#4-interconnexions)
 
 ---
 
@@ -20,6 +21,7 @@
 | Version | Date | Modifications |
 |---------|------|---------------|
 | 0.1 | Mars 2026 | Document initial — fusion de LACUNA_ARC_GENERATIONNEL.md (v0.1) et LACUNA_ARC_COLONIES.md (v0.1), ajout section Interconnexions |
+| 0.2 | Mars 2026 | Suppression doublon Arc Colonies, ajout Arc Sociologique (placeholder), mise à jour numérotation |
 
 ---
 
@@ -282,6 +284,9 @@ Tous les points de bascule culturels sont franchis et irréversibles. La populat
 
 À la sortie de l'orbite, le joueur ne retrouve pas "sa" population. Il rencontre une civilisation. Elle est à traiter comme une découverte — avec les mêmes outils d'interprétation que les traces extraterrestres. Ce qui s'est passé à bord pendant ces 4,6 millions d'années est **la plus grande lacuna interne du jeu** — inaccessible même au joueur lui-même.
 
+
+## 2. Arc Colonies
+
 *Documentation interne — issu de LACUNA_ARC_COLONIES.md*
 *Statut : cadre posé — mécanique à explorer*
 
@@ -414,7 +419,55 @@ Cet arc n'introduit pas de nouvelles mécaniques. Il utilise ce qui existe :
 
 ---
 
-## 3. Interconnexions
+
+## 3. Arc Sociologique
+
+*Statut : à documenter — point de bascule S1 défini, contenu manquant*
+
+> Cet arc décrit les dynamiques sociales internes au vaisseau qui émergent sur le long terme — factions, fractures, gouvernance. Il est distinct de l'Arc Générationnel (qui décrit l'évolution culturelle et génétique dans le temps) et de l'Arc Colonies (qui décrit la séparation physique d'un groupe).
+
+---
+
+### 3.1 Point d'entrée — S1
+
+Le point de bascule **S1** marque l'entrée dans le domaine sociologique. Il est défini dans `LACUNA_ARCS.md` §1.10 comme :
+
+> Déclenché par : ressource contrainte + décision contestée + mémoire déjà affaiblie.
+
+S1 n'est pas irréversible — mais il ouvre une dynamique qui peut le devenir selon les choix du joueur.
+
+---
+
+### 3.2 Ce que cet arc est
+
+Une mécanique de long terme qui traduit les tensions internes de la population en **courants sociaux visibles** dans l'interface — le module Système social (UI.md §4). Ces courants ne sont pas des factions à gérer comme une ressource. Ce sont des textures narratives qui colorent les interprétations et les événements populationnels.
+
+---
+
+### 3.3 Éléments connus
+
+| Élément | Source | Statut |
+|---------|--------|--------|
+| Point de bascule S1 | `LACUNA_ARCS.md` §1.10 | Défini |
+| Module Système social (UI) | `LACUNA_UI.md` §4 | Spécifié — Courants actifs, Registre des Raisons |
+| Registre des Raisons | `LACUNA_LORE.md` §6 | Documenté |
+| Mécanique de factions | — | **Non documentée** |
+| Conditions de résolution / aggravation | — | **Non documentées** |
+| Lien avec la dérive culturelle (L1, L2, M1…) | `LACUNA_ARCS.md` §1.10 | Partiel |
+
+---
+
+### 3.4 À développer
+
+- Définir ce qu'est un "courant social" mécaniquement — comment il naît, comment il évolue, comment il disparaît
+- Définir les conditions d'aggravation vers une faction irréversible
+- Définir le lien entre S1 et les points de bascule culturels (L2 langue fracturée, M2 sacralisation)
+- Spécifier ce que le joueur peut faire — ou ne pas faire — face à un courant social actif
+- Déterminer si une faction peut se séparer du vaisseau (lien avec Arc Colonies)
+
+---
+
+## 4. Interconnexions
 
 Les deux arcs ne sont pas parallèles — ils se croisent naturellement à plusieurs points.
 

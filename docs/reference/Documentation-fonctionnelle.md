@@ -2,7 +2,7 @@
 
 # LACUNA — Documentation fonctionnelle
 
-*Synthèse des règles métier — Référence : GDD v0.1*
+*Synthèse des règles métier — Référence : GDD v0.3 — LACUNA_GDD.md, LACUNA_TRACES.md*
 
 ---
 
@@ -14,7 +14,7 @@ LACUNA est une simulation d'exploration galactique **persistante, asynchrone et 
 - **Solitude réelle** — Pas de communication directe entre joueurs
 - **Ambiguïté irréductible** — Pas de bonne réponse unique
 - **Science ancrée** — Références réelles (WOW!, Oumuamua, Bennu...)
-- **Temps long** — Voyages en temps réel (1 al = 1 seconde)
+- **Temps long** — Voyages en temps réel ; durée joueur par compression non-linéaire (ex. Proxima 1 h, bord galaxie 90 j). Voir LACUNA_GDD §2 et §5, `transit.js`.
 - **Émergence** — Cosmologie construite par les joueurs
 
 ---
@@ -22,10 +22,11 @@ LACUNA est une simulation d'exploration galactique **persistante, asynchrone et 
 ## Objets principaux
 
 ### Vaisseau
-- 1 par joueur, persistant
-- États : `IDLE`, `IN_TRANSIT`, `ARRIVED`, `DAMAGED`
-- Systèmes : propulsion, coque, bouclier, observatoire, survie
-- Carburant : He³, deutérium
+- 1 par joueur, persistant (tables `ships`, `ship_systems`)
+- États : `IDLE`, `IN_TRANSIT`, `ARRIVED`, `DAMAGED` (champ `travel_state`)
+- Systèmes : propulsion, coque, bouclier plasma, observatoire, réservoir, alimentation, atmosphère, médical
+- Carburant : He³, deutérium (tonnes en base ; affichage en ratio)
+- Position : système courant (`current_system_id`), pas de coordonnées x/y/z en base
 
 ### Population
 - Effectif, génération, âge moyen
