@@ -37,3 +37,15 @@ export function getStarSvgPath(spectralType) {
   const letter = getSpectralLetter(spectralType)
   return STAR_SVG_PATHS[letter] ?? starM
 }
+
+/**
+ * URL d'icône étoile pour un nœud carte (node + map systemId → stellar).
+ * @param {{ systemId: string }} node - Nœud carte
+ * @param {Record<string, { spectral_type?: string }>} stellarBySystemId - Map systemId → objet stellar
+ * @returns {string} URL du SVG
+ */
+export function getStarIconUrlForNode(node, stellarBySystemId) {
+  const stellar = stellarBySystemId?.[node?.systemId]
+  const spectralType = stellar?.spectral_type ?? 'M'
+  return getStarSvgPath(spectralType)
+}

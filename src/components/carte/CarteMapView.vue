@@ -5,7 +5,7 @@ import { useShipStore } from '@/stores/ship'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useCarteMapProjection } from '@/composables/useCarteMapProjection'
 import { useCarteMapPanZoom } from '@/composables/useCarteMapPanZoom'
-import { getStarSvgPath } from '@/assets/illustrations/stars'
+import { getStarIconUrlForNode } from '@/assets/illustrations/stars'
 
 const props = defineProps({
   selectedSystemId: { type: String, default: null },
@@ -66,12 +66,6 @@ const edges = computed(() => {
   }
   return result
 })
-
-function getStarIconUrl(node) {
-  const stellar = stellarBySystemId.value[node.systemId]
-  const spectralType = stellar?.spectral_type ?? 'M'
-  return getStarSvgPath(spectralType)
-}
 
 /** systemId ayant au moins une arête = visité */
 const visitedSystemIds = computed(() => {
@@ -138,7 +132,7 @@ function onSelectSystem(systemId) {
           >
             <image
               class="carte-projected__node-icon"
-              :href="getStarIconUrl(node)"
+              :href="getStarIconUrlForNode(node, stellarBySystemId)"
               x="-0.5"
               y="-0.5"
               width="1"

@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as d3 from 'd3'
 import { generateVolumetricData } from '@/lib/volumetricData'
+import { interpolateCyanAmber } from '@/lib/labColors'
 
 const props = defineProps({
   obsId: { type: String, default: '' },
@@ -19,16 +20,6 @@ let volumetricData = null
 const heatmapSize = 260
 const cutHeight = 80
 const margin = { top: 8, right: 40, bottom: 24, left: 8 }
-
-/** Gradient cyan (#00b4c8) → amber (#e8a020) conforme design system */
-function interpolateCyanAmber(t) {
-  const cyan = { r: 0, g: 180, b: 200 }
-  const amber = { r: 232, g: 160, b: 32 }
-  const r = cyan.r + (amber.r - cyan.r) * t
-  const g = cyan.g + (amber.g - cyan.g) * t
-  const b = cyan.b + (amber.b - cyan.b) * t
-  return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`
-}
 
 function render() {
   if (!containerRef.value || !heatmapRef.value || !cutRef.value) return

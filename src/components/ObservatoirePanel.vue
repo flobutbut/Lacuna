@@ -5,6 +5,7 @@ import { useUIStore } from '@/stores/ui'
 import { useObservationsStore } from '@/stores/observations'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
+import { buildObservationPayload } from '@/lib/observationPayload'
 import AppModal from '@/components/AppModal.vue'
 import ModalCell from '@/components/ModalCell.vue'
 
@@ -54,17 +55,16 @@ watch(
 )
 
 function addObservationPayload(body) {
-  const name = `${getBodyDisplayName(body)} · ${OBJECT_TYPE_LABELS[body.type]}`
-  const needsOrbit = body.type === 'ATMOSPHERE' || (body.type === 'PLANETE' && (body.has_atmosphere !== false))
-  return {
-    name,
-    type: body.type,
-    system: ui.selectedStar?.name ?? '—',
-    system_id: ui.selectedStar?.id ?? null,
-    distance: ui.selectedStar?.dist ?? '—',
-    coords: '—',
-    niveau: needsOrbit ? obsStore.NIVEAUX.ORBITE : obsStore.NIVEAUX.SYSTEME,
-  }
+  return buildObservationPayload(
+    body,
+    {
+      systemName: ui.selectedStar?.name ?? '—',
+      systemId: ui.selectedStar?.id ?? null,
+      distance: ui.selectedStar?.dist ?? '—',
+      displayName: getBodyDisplayName(body),
+    },
+    obsStore.NIVEAUX
+  )
 }
 
 function addObservation(body) {

@@ -2,7 +2,10 @@
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
+import { radiusToDiameterPx as radiusToDiameterPxFromLib } from '@/lib/bodyRadius'
 import { toPhysicalUnits, toLuminosityAndHz } from '@/lib/systemObjectConverters'
+import { orbitEase } from '@/lib/animationUtils'
+import { distanceAuToPx as distanceAuToPxFromLib } from '@/lib/orbitalUtils'
 import { getPlanetSvgPathForObject } from '@/assets/illustrations/planets'
 import { getStarSvgPath } from '@/assets/illustrations/stars'
 
@@ -55,11 +58,6 @@ const minOrbitalPeriodDays = computed(() => {
     .filter((x) => x != null && x > 0)
   return periods.length > 0 ? Math.min(...periods) : 1
 })
-
-/** Ease-out uniquement : ralentissement en fin de course, pas d'accélération au début */
-function orbitEase(t) {
-  return 1 - (1 - t) ** 3
-}
 
 function runOrbitAnimation() {
   const startTime = performance.now()
@@ -170,19 +168,15 @@ const maxBodyRadius = computed(() =>
   allBodyRadii.value.length > 0 ? Math.max(...allBodyRadii.value) : 11
 )
 
-/** Diamètre corps : astre le plus petit → 16px, le plus gros → 128px, échelle log10(1+x) */
+/** Diamètre corps (px) — délègue à lib/bodyRadius */
 function radiusToDiameterPx(radiusEarth) {
-  const r = Number(radiusEarth)
-  if (!Number.isFinite(r) || r <= 0) return MIN_BODY_DIAMETER_PX
-  const minR = minBodyRadius.value
-  const maxR = maxBodyRadius.value
-  if (maxR <= minR) return (MIN_BODY_DIAMETER_PX + MAX_BODY_DIAMETER_PX) / 2
-  const logMin = Math.log10(1 + minR)
-  const logMax = Math.log10(1 + maxR)
-  const logRange = Math.max(0.001, logMax - logMin)
-  const t = Math.max(0, Math.min(1, (Math.log10(1 + r) - logMin) / logRange))
-  const px = Math.round(MIN_BODY_DIAMETER_PX + t * (MAX_BODY_DIAMETER_PX - MIN_BODY_DIAMETER_PX))
-  return Math.max(MIN_BODY_DIAMETER_PX, Math.min(MAX_BODY_DIAMETER_PX, px))
+  return radiusToDiameterPxFromLib(
+    radiusEarth,
+    minBodyRadius.value,
+    maxBodyRadius.value,
+    MIN_BODY_DIAMETER_PX,
+    MAX_BODY_DIAMETER_PX
+  )
 }
 
 const center = computed(() => size.value / 2)
@@ -218,18 +212,15 @@ const maxDistanceAu = computed(() => {
   return d.length > 0 ? Math.max(...d, 1) : 1
 })
 
-/** Distance orbitale (AU) → rayon px. Échelle log. Min = au-delà de l'étoile, max = 128px */
+/** Distance (UA) → rayon px — délègue à lib/orbitalUtils */
 function distanceAuToPx(distanceAu) {
-  if (distanceAu == null || distanceAu < 0) return orbitStartPx.value
-  const d = Math.max(distanceAu, MIN_DISTANCE_AU)
-  const minD = minDistanceAu.value
-  const maxD = maxDistanceAu.value
-  if (maxD <= minD) return orbitStartPx.value
-  const logMin = Math.log10(1 + minD)
-  const logMax = Math.log10(1 + maxD)
-  const logRange = Math.max(0.001, logMax - logMin)
-  const t = Math.max(0, Math.min(1, (Math.log10(1 + d) - logMin) / logRange))
-  return orbitStartPx.value + t * orbitTrackWidth.value
+  return distanceAuToPxFromLib(
+    distanceAu,
+    orbitStartPx.value,
+    minDistanceAu.value,
+    maxDistanceAu.value,
+    orbitTrackWidth.value
+  )
 }
 
 const starSvgPath = computed(() =>

@@ -8,6 +8,7 @@ import { useShipStore } from '@/stores/ship'
 import { useNebulasStore } from '@/stores/nebulas'
 import { useMapNodesStore } from '@/stores/mapNodes'
 import { projectStarInFov, xyzToRaDec } from '@/lib/stellarProjection'
+import { distanceToSegment, lerpAngle } from '@/lib/geometry'
 import { getSystemXyz } from '@/lib/stellarCoordinates'
 import { drawCurvedGrid, drawMilkyWay, drawNebulas, drawStars, drawSignals, drawSpectralBorder, drawConstellationLines } from '@/lib/skyRenderers'
 import { useSkyStars } from '@/composables/useSkyStars'
@@ -21,17 +22,6 @@ const { spectralFilter, exoplanetFilter, searchedStarId, constellationsEnabled }
 
 const CONSTELLATION_HOVER_THRESHOLD = 12
 
-function distanceToSegment(px, py, x1, y1, x2, y2) {
-  const dx = x2 - x1
-  const dy = y2 - y1
-  const len2 = dx * dx + dy * dy
-  if (len2 === 0) return Math.hypot(px - x1, py - y1)
-  let t = ((px - x1) * dx + (py - y1) * dy) / len2
-  t = Math.max(0, Math.min(1, t))
-  const projX = x1 + t * dx
-  const projY = y1 + t * dy
-  return Math.hypot(px - projX, py - projY)
-}
 const signauxStore = useSignauxStore()
 const stellarSystemsStore = useStellarSystemsStore()
 const shipStore = useShipStore()
@@ -115,11 +105,6 @@ function onSpectralFilterChange() {
   } else {
     rebuildStars()
   }
-}
-
-function lerpAngle(a, b, t) {
-  let d = ((b - a + 540) % 360) - 180
-  return a + d * t
 }
 
 let ctx = null

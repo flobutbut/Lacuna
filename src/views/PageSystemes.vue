@@ -7,6 +7,7 @@ import NavMenuItem from '@/components/NavMenuItem.vue'
 import AppModal from '@/components/AppModal.vue'
 import Divider from '@/components/Divider.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
+import { formatNumber } from '@/lib/formatUtils'
 
 const shipStore = useShipStore()
 const activeSection = ref(null)
@@ -157,10 +158,6 @@ const history = ref([
   { gen: 1, date: '2194-11-19', event: 'Dégradation propulsion — usure MTF', delta: -0.12, system: 'propulsion' },
 ])
 
-function formatNum(n) {
-  return new Intl.NumberFormat('fr-FR').format(n)
-}
-
 const modalTitle = computed(() => {
   const item = SYSTEMS_MENU_ITEMS.find((m) => m.id === activeSection.value)
   return item?.label ?? ''
@@ -257,11 +254,11 @@ function closeOverlay() {
             <Divider variant="solid" tight />
             <div class="sw-row"><span class="sw-key">Écart</span><span class="sw-val">+{{ ship.ageGap }} ans</span></div>
             <Divider variant="solid" tight />
-            <div class="sw-row"><span class="sw-key">Masse sèche</span><span class="sw-val">{{ formatNum(ship.dryMass) }} t</span></div>
+            <div class="sw-row"><span class="sw-key">Masse sèche</span><span class="sw-val">{{ formatNumber(ship.dryMass) }} t</span></div>
             <Divider variant="solid" tight />
-            <div class="sw-row"><span class="sw-key">Capacité</span><span class="sw-val">{{ formatNum(ship.capacity) }} personnes</span></div>
+            <div class="sw-row"><span class="sw-key">Capacité</span><span class="sw-val">{{ formatNumber(ship.capacity) }} personnes</span></div>
             <Divider variant="solid" tight />
-            <div class="sw-row"><span class="sw-key">Population actuelle</span><span class="sw-val">{{ formatNum(ship.population) }}</span></div>
+            <div class="sw-row"><span class="sw-key">Population actuelle</span><span class="sw-val">{{ formatNumber(ship.population) }}</span></div>
             <Divider variant="solid" tight />
             <div class="sw-row"><span class="sw-key">Génération</span><span class="sw-val">{{ ship.generation }}</span></div>
           </div>
@@ -319,12 +316,12 @@ function closeOverlay() {
             <p class="sw-desc">He³ et deutérium ne sont pas en boucle fermée — consommation par voyage (Tsiolkovsky).</p>
             <Divider variant="solid" tight />
             <div class="sys-indicator-block">
-              <div class="sw-row"><span class="sw-key">He³</span><span class="sw-val">{{ formatNum(he3.current) }} t / {{ formatNum(he3.max) }} t · {{ (he3.pct * 100).toFixed(1) }}%</span></div>
+              <div class="sw-row"><span class="sw-key">He³</span><span class="sw-val">{{ formatNumber(he3.current) }} t / {{ formatNumber(he3.max) }} t · {{ (he3.pct * 100).toFixed(1) }}%</span></div>
               <ProgressBar :value="he3.pct" color="cyan" />
             </div>
             <Divider variant="solid" tight />
             <div class="sys-indicator-block">
-              <div class="sw-row"><span class="sw-key">Deutérium</span><span class="sw-val">{{ formatNum(deuterium.current) }} t / {{ formatNum(deuterium.max) }} t · {{ (deuterium.pct * 100).toFixed(1) }}%</span></div>
+              <div class="sw-row"><span class="sw-key">Deutérium</span><span class="sw-val">{{ formatNumber(deuterium.current) }} t / {{ formatNumber(deuterium.max) }} t · {{ (deuterium.pct * 100).toFixed(1) }}%</span></div>
               <ProgressBar :value="deuterium.pct" color="cyan" />
             </div>
             <Divider variant="solid" tight />

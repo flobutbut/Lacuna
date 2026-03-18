@@ -47,3 +47,24 @@ export function getRadiusEarth(obj) {
   }
   return radiusFromMassEarth(obj.mass_earth ?? 0.5)
 }
+
+/**
+ * Rayon (R⊕) → diamètre affichage (px) avec échelle log10(1+x) entre min et max.
+ * @param {number} radiusEarth - Rayon en rayons terrestres
+ * @param {number} minBodyRadius - Borne min R⊕ de l'échelle
+ * @param {number} maxBodyRadius - Borne max R⊕ de l'échelle
+ * @param {number} minDiameterPx - Diamètre px minimum (ex. 16)
+ * @param {number} maxDiameterPx - Diamètre px maximum (ex. 128)
+ * @returns {number}
+ */
+export function radiusToDiameterPx(radiusEarth, minBodyRadius, maxBodyRadius, minDiameterPx, maxDiameterPx) {
+  const r = Number(radiusEarth)
+  if (!Number.isFinite(r) || r <= 0) return minDiameterPx
+  if (maxBodyRadius <= minBodyRadius) return (minDiameterPx + maxDiameterPx) / 2
+  const logMin = Math.log10(1 + minBodyRadius)
+  const logMax = Math.log10(1 + maxBodyRadius)
+  const logRange = Math.max(0.001, logMax - logMin)
+  const t = Math.max(0, Math.min(1, (Math.log10(1 + r) - logMin) / logRange))
+  const px = Math.round(minDiameterPx + t * (maxDiameterPx - minDiameterPx))
+  return Math.max(minDiameterPx, Math.min(maxDiameterPx, px))
+}

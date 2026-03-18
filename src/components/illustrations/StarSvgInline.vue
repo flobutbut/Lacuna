@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { getSpectralLetter } from '@/lib/starClassification'
 import starO from '@/assets/illustrations/stars/star-O.svg?raw'
 import starB from '@/assets/illustrations/stars/star-B.svg?raw'
 import starA from '@/assets/illustrations/stars/star-A.svg?raw'
@@ -32,15 +33,8 @@ const props = defineProps({
   spectralType: { type: String, default: 'G2V' },
 })
 
-function getLetter(st) {
-  if (!st || typeof st !== 'string') return 'M'
-  const u = st.toUpperCase()
-  if (u.startsWith('PSR') || u.includes('PULSAR')) return 'PULSAR'
-  return SVGS[u[0]] ? u[0] : 'M'
-}
-
 const svgContent = computed(() => {
-  const letter = getLetter(props.spectralType)
+  const letter = getSpectralLetter(props.spectralType)
   return SVGS[letter] ?? starM
 })
 </script>

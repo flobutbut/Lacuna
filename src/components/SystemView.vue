@@ -13,6 +13,9 @@ import {
   toVisualParams,
   toLuminosityAndHz,
 } from '@/lib/systemObjectConverters'
+import { getSpectralLetterFromObject } from '@/lib/starClassification'
+import { distanceAuToPx as distanceAuToPxFromLib } from '@/lib/orbitalUtils'
+import { ringSizeForPlanet } from '@/lib/ringUtils'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 /** Référence : diamètre de la plus petite planète du système */
@@ -21,19 +24,6 @@ const MIN_PLANET_DIAMETER_PX = 4
 const ORBITAL_TRACK_WIDTH_PX = 1200
 /** Distance min (UA) pour le log — évite log(0), ex. Mercure 0.39 ou systèmes compacts */
 const MIN_DISTANCE_AU = 0.01
-/** Anneaux : facteur × rayon planète (doit être > 1 pour dépasser la planète) */
-const RING_FACTOR = 1.5
-/** Anneaux : épaisseur minimale (px) pour visibilité */
-const RING_STROKE_MIN_PX = 3
-
-/** Dimensions des anneaux indexées sur la taille de la planète */
-function ringSizeForPlanet(diameterPx) {
-  const radius = diameterPx / 2
-  const ringRadius = Math.max(10, radius * RING_FACTOR)
-  const stroke = Math.max(RING_STROKE_MIN_PX, diameterPx * 0.15)
-  return { radius: ringRadius, stroke, size: Math.ceil((ringRadius + stroke) * 2) }
-}
-
 const shipStore = useShipStore()
 const stellarStore = useStellarSystemsStore()
 const systemObjectsStore = useSystemObjectsStore()
@@ -53,13 +43,7 @@ const star = computed(() =>
   objects.value.find((o) => o.type === 'STAR' || o.type === 'PULSAR')
 )
 
-function getSpectralLetter(obj) {
-  if (!obj) return 'M'
-  if (obj.type === 'PULSAR') return 'PULSAR'
-  const st = (obj.spectral_type || '').toUpperCase()
-  return /^[OBAFGKM][0-9]?/.test(st) ? st[0] : st[0] || 'M'
-}
-const starSpectralLetter = computed(() => getSpectralLetter(star.value))
+const starSpectralLetter = computed(() => getSpectralLetterFromObject(star.value))
 
 const planets = computed(() =>
   objects.value.filter((o) =>
@@ -83,7 +67,6 @@ const planetsWithDistance = computed(() => {
 const luminosityAndHz = computed(() =>
   toLuminosityAndHz(star.value, stellarSystem.value)
 )
-const luminosity = computed(() => luminosityAndHz.value.luminosity)
 const hzLimits = computed(() => ({
   inner: luminosityAndHz.value.hzInner,
   outer: luminosityAndHz.value.hzOuter,
@@ -128,19 +111,15 @@ const minDistanceAu = computed(() => {
 /** Offset (px) depuis le centre du Soleil — première planète juste après le disque solaire */
 const orbitStartPx = computed(() => starSizePx.value / 2 + 24)
 
-/**
- * Convertit distance (UA) en position px depuis le centre du Soleil — échelle logarithmique.
- * Garantit que la planète la plus proche est au-delà du disque solaire.
- */
+/** Convertit distance (UA) en position px — délègue à lib/orbitalUtils */
 function distanceAuToPx(distanceAu) {
-  if (distanceAu == null || distanceAu < 0) return orbitStartPx.value
-  const d = Math.max(distanceAu, 0.001)
-  const logD = Math.log10(1 + d)
-  const logMin = Math.log10(1 + minDistanceAu.value)
-  const logMax = Math.log10(1 + maxDistance.value)
-  if (logMax <= logMin) return orbitStartPx.value
-  const t = (logD - logMin) / (logMax - logMin)
-  return orbitStartPx.value + t * ORBITAL_TRACK_WIDTH_PX
+  return distanceAuToPxFromLib(
+    distanceAu,
+    orbitStartPx.value,
+    minDistanceAu.value,
+    maxDistance.value,
+    ORBITAL_TRACK_WIDTH_PX
+  )
 }
 
 
@@ -232,11 +211,6 @@ const contentInnerWidthPx = computed(() =>
   (hasOrbitalData.value && planetsWithDistance.value.length
     ? orbitalTrackWidthPx.value + 80
     : 400)
-)
-
-/** Largeur totale du contenu scrollable (inclut l'offset gauche) */
-const scrollContentWidthPx = computed(() =>
-  viewOriginOffsetPx.value + contentInnerWidthPx.value
 )
 
 /** Centre des orbites (Soleil) en px depuis la gauche du layout-inner */

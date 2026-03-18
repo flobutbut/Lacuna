@@ -21,6 +21,27 @@ export function formatDate(iso, options = {}) {
   return d.toLocaleDateString('fr-FR', opts)
 }
 
+/**
+ * Nombre → chaîne formatée français (séparateurs de milliers).
+ * @param {number|string|null|undefined} n - Valeur à formater
+ * @param {Object} [options] - Options Intl.NumberFormat + fallback si n invalide
+ * @param {string} [options.fallback='—'] - Retour si n null/undefined/NaN
+ * @returns {string}
+ */
+export function formatNumber(n, options = {}) {
+  const { fallback = '—', ...intlOpts } = options
+  const num = Number(n)
+  if (n == null || Number.isNaN(num)) return fallback
+  return new Intl.NumberFormat('fr-FR', intlOpts).format(num)
+}
+
+/** Tendance effectif ('up'|'down'|'stable') → symbole (↗ ↘ →) */
+export function formatEffectifTrend(trend) {
+  if (trend === 'up') return '↗'
+  if (trend === 'down') return '↘'
+  return '→'
+}
+
 /** Pourcentage (0–1) → classe CSS barre (bar-green, bar-amber, bar-red) */
 export function barClass(pct) {
   if (pct >= 0.8) return 'bar-green'
@@ -92,4 +113,10 @@ export function formatRaDec(ra, dec) {
   const decDeg = Math.floor(decAbs)
   const decMin = Math.floor((decAbs - decDeg) * 60)
   return `α ${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s  δ ${decSign}${decDeg}° ${String(decMin).padStart(2, '0')}′`
+}
+
+/** Nom d'observation pour un signal — aligné création (SignalModal) / recherche (store) */
+export function formatSignalObservationName(signal) {
+  if (!signal) return ''
+  return `${signal.frequency} · azimut ${signal.azimuth}°`
 }

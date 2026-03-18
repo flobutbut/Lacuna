@@ -6,29 +6,29 @@ Audit des fonctions définies dans `<script setup>` des composants et vues (`src
 
 ## FICHIER : src/components/SkyCanvas.vue
 
-- → Fonction : `distanceToSegment(px, py, x1, y1, x2, y2)` — calcul pur (distance point–segment), pas de refs ni DOM — appartient à **lib/** (ex. `lib/geometry.js` ou `lib/mathUtils.js`)
-- → Fonction : `lerpAngle(a, b, t)` — calcul pur (interpolation d’angle en degrés), pas de refs — appartient à **lib/** (ex. `lib/formatUtils.js` ou `lib/mathUtils.js`)
+- → ✅ Fonction : `distanceToSegment(px, py, x1, y1, x2, y2)` — calcul pur (distance point–segment), pas de refs ni DOM — appartient à **lib/** (ex. `lib/geometry.js` ou `lib/mathUtils.js`)
+- → ✅ Fonction : `lerpAngle(a, b, t)` — calcul pur (interpolation d’angle en degrés), pas de refs — appartient à **lib/** (ex. `lib/formatUtils.js` ou `lib/mathUtils.js`)
 
 ---
 
 ## FICHIER : src/components/SystemView.vue
 
-- → Fonction : `ringSizeForPlanet(diameterPx)` — calcul pur (rayon, stroke, size des anneaux à partir du diamètre), pas de refs — appartient à **lib/** (ex. `lib/ringUtils.js` ou `lib/orbitalUtils.js`)
-- → Fonction : `getSpectralLetter(obj)` — logique dérivée de `lib/starClassification.getSpectralLetter` (qui prend une chaîne) ; variante prenant un objet (type, spectral_type) — réutiliser ou étendre **lib/starClassification.js**
-- → Fonction : `distanceAuToPx(distanceAu)` — logique pure si les bornes et largeur de piste sont passées en arguments (orbitStartPx, minDistanceAu, maxDistance, largeur) — pourrait être **lib/orbitalUtils.js** ou **lib/systemObjectConverters.js**
+- → ✅ Fonction : `ringSizeForPlanet(diameterPx)` — calcul pur (rayon, stroke, size des anneaux à partir du diamètre), pas de refs — appartient à **lib/** (ex. `lib/ringUtils.js` ou `lib/orbitalUtils.js`)
+- → ✅ Fonction : `getSpectralLetter(obj)` — logique dérivée de `lib/starClassification.getSpectralLetter` (qui prend une chaîne) ; variante prenant un objet (type, spectral_type) — réutiliser ou étendre **lib/starClassification.js**
+- → ✅ Fonction : `distanceAuToPx(distanceAu)` — logique pure si les bornes et largeur de piste sont passées en arguments (orbitStartPx, minDistanceAu, maxDistance, largeur) — pourrait être **lib/orbitalUtils.js** ou **lib/systemObjectConverters.js**
 
 ---
 
 ## FICHIER : src/components/carte/CarteMapView.vue
 
-- → Fonction : `getStarIconUrl(node)` — si on passait en argument la map `stellarBySystemId` (ou `spectralType`), calcul pur (node + stellar → URL) — logique partageable dans **lib/** (ex. avec `getStarSvgPath`) ou **composable** pour la carte
+- → ✅ Fonction : `getStarIconUrl(node)` — si on passait en argument la map `stellarBySystemId` (ou `spectralType`), calcul pur (node + stellar → URL) — logique partageable dans **lib/** (ex. avec `getStarSvgPath`) ou **composable** pour la carte
 
 ---
 
 ## FICHIER : src/components/carte/CarteOrbitalView.vue
 
-- → Fonction : `orbitEase(t)` — calcul pur (ease-out cubique : `1 - (1 - t)^3`), pas de refs — appartient à **lib/** (ex. `lib/animationUtils.js` ou `lib/formatUtils.js`)
-- → Fonction : `radiusToDiameterPx(radiusEarth)` — logique pure si `minBodyRadius`, `maxBodyRadius` et constantes sont passés en arguments — pourrait être **lib/bodyRadius.js** ou **lib/orbitalUtils.js**
+- → ✅ Fonction : `orbitEase(t)` — calcul pur (ease-out cubique : `1 - (1 - t)^3`), pas de refs — appartient à **lib/** (ex. `lib/animationUtils.js` ou `lib/formatUtils.js`)
+- → ✅ Fonction : `radiusToDiameterPx(radiusEarth)` — logique pure si `minBodyRadius`, `maxBodyRadius` et constantes sont passés en arguments — pourrait être **lib/bodyRadius.js** ou **lib/orbitalUtils.js**
 - → Fonction : `distanceAuToPx(distanceAu)` — idem SystemView : logique pure avec paramètres explicites — **lib/orbitalUtils.js**
 
 ---
@@ -89,7 +89,7 @@ Audit des fonctions définies dans `<script setup>` des composants et vues (`src
 
 ## FICHIER : src/views/PagePopulation.vue
 
-- → Fonction : `formatEffectifTrend(trend)` — mapping pur ('up'|'down'|'stable' → symbole), pas de refs — **lib/formatUtils.js**
+- → ✅ Fonction : `formatEffectifTrend(trend)` — mapping pur ('up'|'down'|'stable' → symbole), pas de refs — **lib/formatUtils.js**
 
 ---
 

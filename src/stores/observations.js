@@ -7,9 +7,13 @@ import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 import { getOrCreateSessionId } from '@/lib/session'
+import { formatSignalObservationName } from '@/lib/formatUtils'
 
 const OBS_STATES = { PENDING: 'En attente', RUNNING: 'Analyse en cours', DONE: 'Analysé' }
 const NIVEAUX = { PASSIF: 'Passif', SYSTEME: 'Système', ORBITE: 'Orbite proche', CONTACT: 'Contact' }
+
+const OBSERVATIONS_SELECT_COLUMNS =
+  'id, type, system_id, system_display, name, state, niveau, coords, distance, support, structure, duration_sec, date, anomalous'
 
 function dbToObs(row) {
   return {
@@ -79,7 +83,7 @@ export const useObservationsStore = defineStore('observations', () => {
     const sessionId = getOrCreateSessionId()
     const { data, error } = await supabase
       .from('observations')
-      .select('id, type, system_id, system_display, name, state, niveau, coords, distance, support, structure, duration_sec, date, anomalous')
+      .select(OBSERVATIONS_SELECT_COLUMNS)
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false })
     if (error) {
@@ -106,7 +110,7 @@ export const useObservationsStore = defineStore('observations', () => {
   /** Trouve une observation SIGNAL correspondant au signal (même name = fréquence · azimut) */
   function findObservationForSignal(signal) {
     if (!signal) return null
-    const expectedName = `${signal.frequency} · azimut ${signal.azimuth}°`
+    const expectedName = formatSignalObservationName(signal)
     return list.value.find(
       (o) => o.type === 'SIGNAL' && o.name === expectedName
     ) ?? null
@@ -156,7 +160,7 @@ export const useObservationsStore = defineStore('observations', () => {
     const { data, error } = await supabase
       .from('observations')
       .insert(obsToDb(payload, sessionId))
-      .select('id, type, system_id, system_display, name, state, niveau, coords, distance, support, structure, duration_sec, date, anomalous')
+      .select(OBSERVATIONS_SELECT_COLUMNS)
       .single()
 
     if (error) {

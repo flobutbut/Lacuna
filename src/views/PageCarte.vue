@@ -9,7 +9,8 @@ import { useObservationsStore } from '@/stores/observations'
 import { useLabReportsStore } from '@/stores/labReports'
 import { useUIStore } from '@/stores/ui'
 import { OBJECT_TYPE_LABELS, COMPOSITION_LABELS } from '@/constants/objectTypes'
-import { getStarClassLabel } from '@/lib/starClassification'
+import { buildObservationPayload } from '@/lib/observationPayload'
+import { formatDistanceLy, getStarClassLabel } from '@/lib/starClassification'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { toPhysicalUnits, toLuminosityAndHz } from '@/lib/systemObjectConverters'
 import StarSvgInline from '@/components/illustrations/StarSvgInline.vue'
@@ -201,19 +202,18 @@ function onSelectStar(starObj) {
   selectedStar.value = starObj ?? null
 }
 
-/** Payload observation (aligné sur ObservatoirePanel.addObservationPayload) */
+/** Payload observation — délègue à lib/observationPayload */
 function addObservationPayload(body, systemName, systemId, distance) {
-  const name = `${body.name} · ${OBJECT_TYPE_LABELS[body.type] ?? 'Corps planétaire'}`
-  const needsOrbit = body.type === 'ATMOSPHERE' || (body.type === 'PLANETE' && (body.has_atmosphere !== false))
-  return {
-    name,
-    type: body.type,
-    system: systemName ?? '—',
-    system_id: systemId ?? null,
-    distance: distance ?? '—',
-    coords: '—',
-    niveau: needsOrbit ? obsStore.NIVEAUX.ORBITE : obsStore.NIVEAUX.SYSTEME,
-  }
+  return buildObservationPayload(
+    body,
+    {
+      systemName,
+      systemId,
+      distance,
+      displayName: body.name ?? '—',
+    },
+    obsStore.NIVEAUX
+  )
 }
 
 /** Corps + étoile système (pour payload / find) — planète ou étoile sélectionnée */
@@ -673,7 +673,7 @@ watch(carteViewMode, (mode) => {
               </template>
               <div class="sw-row">
                 <span class="sw-key">Distance</span>
-                <span class="sw-val">{{ selectedStellar?.distance ?? '—' }} al</span>
+                <span class="sw-val">{{ formatDistanceLy(selectedStellar?.distance) }}</span>
               </div>
             </div>
           </div>
@@ -706,7 +706,7 @@ watch(carteViewMode, (mode) => {
               </div>
               <div class="sw-row">
                 <span class="sw-key">Distance</span>
-                <span class="sw-val">{{ selectedStellar?.distance ?? '—' }} al</span>
+                <span class="sw-val">{{ formatDistanceLy(selectedStellar?.distance) }}</span>
               </div>
               <div v-if="selectedStellar?.coordinates" class="sw-row">
                 <span class="sw-key">Coordonnées</span>

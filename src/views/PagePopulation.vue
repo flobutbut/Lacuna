@@ -5,6 +5,7 @@ import { useSupabaseStore } from '@/stores/supabase'
 import { POPULATION_MENU_ITEMS } from '@/constants/menus'
 import NavMenuItem from '@/components/NavMenuItem.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
+import { formatEffectifTrend, formatNumber } from '@/lib/formatUtils'
 
 const supabaseStore = useSupabaseStore()
 const activeTab = ref('current')
@@ -55,12 +56,6 @@ const reasons = ref([
     count: null,
   },
 ])
-
-function formatEffectifTrend(trend) {
-  if (trend === 'up') return '↗'
-  if (trend === 'down') return '↘'
-  return '→'
-}
 
 async function fetchPopulation() {
   if (!supabaseStore.isConfigured()) return
@@ -124,7 +119,7 @@ fetchPopulation()
         <div class="pop-indicator">
           <div class="pop-indicator__row">
             <span class="pop-indicator__label">Effectif</span>
-            <span class="pop-indicator__val">{{ currentGen.effectif.toLocaleString('fr-FR') }} {{ formatEffectifTrend(currentGen.effectifTrend) }}</span>
+            <span class="pop-indicator__val">{{ formatNumber(currentGen.effectif) }} {{ formatEffectifTrend(currentGen.effectifTrend) }}</span>
           </div>
         </div>
 

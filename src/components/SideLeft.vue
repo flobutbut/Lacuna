@@ -6,19 +6,14 @@ import { useUIStore } from '@/stores/ui'
 import ObservationCard from '@/components/ObservationCard.vue'
 import { formatRelativeTime } from '@/lib/formatUtils'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
+import { getSupportLabel } from '@/constants/signaux'
 
 const signauxStore = useSignauxStore()
 const obsStore = useObservationsStore()
 const ui = useUIStore()
 
-const SUPPORT_LABELS = { GRAVITATIONNEL: 'Grav', GAMMA_X: 'γ/X', EM_RADIO: 'EM' }
-
 function isSignalInLab(signal) {
   return !!obsStore.findObservationForSignal(signal)
-}
-
-function supportLabel(support) {
-  return SUPPORT_LABELS[support] ?? support ?? '—'
 }
 
 const signalsToShow = computed(() =>
@@ -76,7 +71,7 @@ onUnmounted(() => {
         :title="`${s.frequency} · azimut ${s.azimuth}°`"
         title-variant="signal"
         :rows="[formatRelativeTime(s.createdAt, { prefix: 'Reçu ', precise: true })]"
-        :badge="supportLabel(s.support)"
+        :badge="getSupportLabel(s.support)"
         :progress="{ pct: s.lifetimePct, variant: 'amber' }"
         :state="s.remainingMs <= 0 ? 'expired' : ui.signalSearchMatchIds.has(s.id) ? 'highlight' : 'idle'"
         dismiss-label="Ignorer"

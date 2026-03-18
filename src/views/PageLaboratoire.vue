@@ -10,6 +10,7 @@ import { useShipStore } from '@/stores/ship'
 import { useMapNodesStore } from '@/stores/mapNodes'
 import { useUIStore } from '@/stores/ui'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
+import { getSupportLabel } from '@/constants/signaux'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import LabReportSpectrogram from '@/components/lab/LabReportSpectrogram.vue'
 import LabReportStructureTemporelle from '@/components/lab/LabReportStructureTemporelle.vue'
@@ -40,7 +41,6 @@ const ui = useUIStore()
 const OBS_STATES = { PENDING: 'En attente', RUNNING: 'Analyse en cours', DONE: 'Analysé' }
 
 const NIVEAUX = { PASSIF: 'Passif', SYSTEME: 'Système', ORBITE: 'Orbite proche', CONTACT: 'Contact' }
-const SIGNAL_SUPPORTS = { EM_RADIO: 'EM radio', GAMMA_X: 'Gamma/X', GRAVITATIONNEL: 'Gravitationnel' }
 
 /**
  * Instruments du Laboratoire — Réf. LACUNA_LABORATOIRE_INSTRUMENTS.md
@@ -444,7 +444,7 @@ onUnmounted(() => {
             :title="obs.name"
             :title-variant="obs.type === 'SIGNAL' ? 'signal' : 'default'"
             :rows="[
-              `${OBJECT_TYPE_LABELS[obs.type === 'STAR' ? 'ETOILE' : obs.type === 'PLANET' ? 'PLANETE' : obs.type] ?? obs.type}${obs.type === 'SIGNAL' && obs.support ? ` (${SIGNAL_SUPPORTS[obs.support] ?? obs.support})` : ''} · ${obs.system}`,
+              `${OBJECT_TYPE_LABELS[obs.type === 'STAR' ? 'ETOILE' : obs.type === 'PLANET' ? 'PLANETE' : obs.type] ?? obs.type}${obs.type === 'SIGNAL' && obs.support ? ` (${getSupportLabel(obs.support, 'long')})` : ''} · ${obs.system}`,
               obs.date,
             ]"
             :state="selectedId === obs.id ? 'selected' : getObservationState(obs)"
@@ -480,7 +480,7 @@ onUnmounted(() => {
               <template v-if="selectedObs.type === 'SIGNAL'">
                 <div class="lab-selected__meta-row">
                   <span class="sw-key">Support</span>
-                  <span class="sw-val">{{ SIGNAL_SUPPORTS[selectedObs.support] ?? selectedObs.support ?? 'EM radio' }}</span>
+                  <span class="sw-val">{{ getSupportLabel(selectedObs.support, 'long') }}</span>
                 </div>
                 <div class="lab-selected__meta-row lab-selected__meta-row--type">
                   <span class="sw-key">Type</span>

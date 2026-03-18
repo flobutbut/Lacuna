@@ -104,3 +104,20 @@ export function getRingCircleAttrs(geometry, options = {}) {
     opacity,
   }
 }
+
+/** Anneaux : facteur × rayon planète (doit être > 1 pour dépasser la planète) */
+const RING_FACTOR = 1.5
+/** Anneaux : épaisseur minimale (px) pour visibilité */
+const RING_STROKE_MIN_PX = 3
+
+/**
+ * Dimensions des anneaux pour rendu (rayon, stroke, size) à partir du diamètre planète en px.
+ * @param {number} diameterPx - Diamètre du disque planétaire en px
+ * @returns {{ radius: number, stroke: number, size: number }}
+ */
+export function ringSizeForPlanet(diameterPx) {
+  const radius = diameterPx / 2
+  const ringRadius = Math.max(10, radius * RING_FACTOR)
+  const stroke = Math.max(RING_STROKE_MIN_PX, diameterPx * 0.15)
+  return { radius: ringRadius, stroke, size: Math.ceil((ringRadius + stroke) * 2) }
+}

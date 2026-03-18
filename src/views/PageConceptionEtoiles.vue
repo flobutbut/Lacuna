@@ -6,7 +6,8 @@ import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { useShipStore } from '@/stores/ship'
 import { useStarSelection } from '@/composables/useStarSelection'
 import { useStars3DConception } from '@/composables/useStars3DConception'
-import { getStarClassLabel, getStarTypeForFilter } from '@/lib/starClassification'
+import { formatDistanceLy, getStarClassLabel, getStarTypeForFilter } from '@/lib/starClassification'
+import { formatNumber } from '@/lib/formatUtils'
 import ObservatoireSpectralFilters from '@/components/ObservatoireSpectralFilters.vue'
 import Stars3DCanvas from '@/components/conception/Stars3DCanvas.vue'
 
@@ -192,7 +193,7 @@ load()
           </div>
           <div v-if="stellarStore.conceptionLoading" class="sw-row">
             <div class="sw-key">Catalogue</div>
-            <div class="sw-val">Chargement… {{ (stellarStore.conceptionForSky ?? []).length.toLocaleString('fr-FR') }} systèmes</div>
+            <div class="sw-val">Chargement… {{ formatNumber((stellarStore.conceptionForSky ?? []).length) }} systèmes</div>
           </div>
           <div v-else-if="stellarStore.conceptionFullyLoaded && stellarStore.conceptionForSky?.length" class="sw-row">
             <div class="sw-key">Catalogue</div>
@@ -216,7 +217,7 @@ load()
             </div>
             <div class="sw-row">
               <div class="sw-key">Distance</div>
-              <div class="sw-val">{{ selectedStellar?.distance ?? selectedStar.star?.distance ?? selectedStar.dist ?? '—' }} al</div>
+              <div class="sw-val">{{ formatDistanceLy(selectedStellar?.distance ?? selectedStar.star?.distance ?? selectedStar.dist) }}</div>
             </div>
             <div v-if="selectedExoplanetCount != null" class="sw-row">
               <div class="sw-key">Exoplanètes</div>

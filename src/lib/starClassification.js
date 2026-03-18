@@ -36,6 +36,16 @@ export function getSpectralLetter(spectralType) {
   return m ? m[1] : 'M'
 }
 
+/**
+ * Lettre spectrale depuis un objet (ex. system_object) avec type et spectral_type.
+ * Si type === 'PULSAR', retourne 'PULSAR' ; sinon délègue à getSpectralLetter(spectral_type).
+ */
+export function getSpectralLetterFromObject(obj) {
+  if (!obj) return 'M'
+  if (obj.type === 'PULSAR') return 'PULSAR'
+  return getSpectralLetter(obj.spectral_type || '')
+}
+
 /** Labels par lettre / type — source unique pour tuile et filtre type */
 const STAR_TYPE_LABELS = {
   O: 'Étoile bleue',

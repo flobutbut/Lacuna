@@ -6,6 +6,7 @@ import { useObservationsStore } from '@/stores/observations'
 import AppModal from '@/components/AppModal.vue'
 import Divider from '@/components/Divider.vue'
 import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
+import { formatSignalObservationName } from '@/lib/formatUtils'
 
 const router = useRouter()
 const ui = useUIStore()
@@ -14,7 +15,7 @@ const obsStore = useObservationsStore()
 
 function signalToObsPayload(s) {
   if (!s) return null
-  const name = `${s.frequency} · azimut ${s.azimuth}°`
+  const name = formatSignalObservationName(s)
   return {
     name,
     type: 'SIGNAL',
