@@ -69,9 +69,13 @@ Lacuna/
 │   ├── composables/         # Logique réutilisable (Vue)
 │   │   ├── useSkyStars.js   # Construction liste étoiles (DB / fallback) — Observatoire, projection x/y/z → ra/dec
 │   │   ├── useStars3DConception.js  # Vue 3D conception — barycentre, points 3D
+│   │   ├── useStellarSearch.js      # Recherche systèmes/constellations/signaux — Observatoire + Vue 3D conception
+│   │   ├── useStarTooltipData.js    # Données tooltip étoile (distance, exoplanètes, etc.) — StarTooltip
+│   │   ├── useStarSelection.js     # Sélection étoile (recherche + clic) — Observatoire et Vue 3D
 │   │   └── useStoreReady.js # ensureStoresLoaded() — chargement stores au montage
 │   ├── constants/           # Constantes partagées
 │   │   ├── objectTypes.js   # OBJECT_TYPE_LABELS (affichage Observatoire, Laboratoire)
+│   │   ├── starDisplay.js   # Couleurs highlight (HIGHLIGHT_CYAN_*, HIGHLIGHT_3D_SIZE_MULT) — design system
 │   │   └── menus.js         # SYSTEMS_MENU_ITEMS, POPULATION_MENU_ITEMS, INSTRUMENTS, TRACE_ICONS
 │   ├── lib/
 │   │   ├── supabase.js      # Client Supabase
@@ -83,7 +87,10 @@ Lacuna/
 │   │   ├── ringUtils.js     # Anneaux planétaires (km → px)
 │   │   ├── habitableZone.js # Zone habitable (Kopparapu)
 │   │   ├── stellarProjection.js  # Projection stéréographique FOV 120° (ra/dec ↔ écran), xyzToRaDec (x/y/z → direction céleste)
-│   │   ├── skyRenderers.js  # Rendu canvas ciel (Milky Way, grille, nébuleuses, étoiles, signaux)
+│   │   ├── stellarCoordinates.js # parseCoordinates(), getSystemXyz() — parse chaîne → ra/dec, coords xyz
+│   │   ├── starSpriteTexture.js  # createCircleSpriteTexture(), getCircleSpriteTexture() — sprites circulaires 3D
+│   │   ├── constellationSegments.js # getVisibleConstellationSegments() — filtrage segments (2D/3D)
+│   │   ├── skyRenderers.js  # Rendu canvas ciel (Milky Way, grille, nébuleuses, étoiles, signaux) — utilise starDisplay
 │   │   ├── labLineChart.js     # Utilitaire D3 partagé (courbes temps×amplitude)
 │   │   ├── spectrogramData.js  # Génération données spectrogramme / structure temporelle
 │   │   ├── spectreEnergetiqueData.js  # Spectre énergétique (gamma/X)
@@ -222,6 +229,17 @@ cd stellar_import && python3 check_systems.py           # Vérifier champs stell
 - **`@/`** → `./src/` (Vite + jsconfig)
 - **Node** : ^20.19.0 ou >=22.12.0
 - **Gestionnaire** : Yarn
+
+### Paramètres de transit (temps joueur)
+
+Le temps joueur d'un voyage est calculé côté client à partir de la courbe physique (`LACUNA_PHYSICS.md`) et d'un facteur d'échelle :
+
+- **`VITE_TRANSIT_TIME_SCALE`** (optionnel, côté Vite) :
+  - `1` → respecte les durées documents (Proxima ≈ 1h joueur, bord opposé ≈ 90 jours),
+  - `0.00138889` (valeur par défaut dans `.env.example`) → **mode test** (Proxima ≈ 5s joueur, même courbe comprimée),
+  - toute autre valeur > 0 applique la même loi puissance en la contractant ou l'étirant.
+
+En l'absence de variable d'environnement, le client utilise la valeur de test `5 / 3600` pour faciliter le prototypage.
 
 ## Commandes
 

@@ -12,7 +12,7 @@ Organisation du dossier de documentation par catégories.
 | **conception/** | Game design — GDD, arcs, lore, scénarios, physique du voyage, hypothèses, vision |
 | **procedural/** | Génération procédurale — modèle de données, planètes, traces (seed, field_sources, lazy generation) |
 | **design/** | Design system, spécifications UI (LACUNA_UI, composants) |
-| **features/** | Spécifications par feature — Laboratoire (instruments), extrapolation instrumentale, notifications |
+| **features/** | Spécifications par feature — Laboratoire (instruments), extrapolation instrumentale, notifications ; TODOs (Transit, Carte Map) |
 | **config/** | Configuration et catalogues — i18n, catalogue des traces (LACUNA_TRACES) |
 | **architecture/** | Schémas techniques, mapping DB, propositions (Interface-DB-mapping, Observatoire, secteurs) |
 | **analyses/** | Analyses techniques, diagnostics, rapports d’import |

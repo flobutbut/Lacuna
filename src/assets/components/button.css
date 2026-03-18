@@ -82,7 +82,7 @@
     gap: var(--space-3);
     padding: var(--space-4) var(--space-8);
     border: var(--border-width) solid var(--color-cyan);
-    background: var(--color-cyan-hover);
+    background: var(--color-panel-solid);
     color: var(--color-cyan);
     font-family: var(--font-mono);
     font-size: var(--text-base);
@@ -114,7 +114,7 @@
     gap: var(--space-3);
     padding: var(--space-3) var(--space-6);
     border: var(--border-width) solid var(--border-default);
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--color-panel-solid);
     color: var(--color-muted);
     font-family: var(--font-mono);
     font-size: var(--text-sm);

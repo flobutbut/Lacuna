@@ -28,6 +28,7 @@ export const INSTRUMENTS = [
   { id: 'drake', path: '/drake', icon: 'N', label: 'Drake' },
   { id: 'population', path: '/population', icon: '⊕', label: 'Population' },
   { id: 'systemes', path: '/systemes', icon: '⚙', label: 'Systèmes' },
+  { id: 'conception-etoiles', path: '/conception-etoiles', icon: '✧', label: 'Vue 3D étoiles' },
 ]
 
 /** Menu Population — onglets */

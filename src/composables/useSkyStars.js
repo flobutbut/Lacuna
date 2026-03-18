@@ -7,7 +7,9 @@
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { useMapNodesStore } from '@/stores/mapNodes'
+import { useShipStore } from '@/stores/ship'
 import { getPoolForBandFilters, getStarBandParamsOrZero, luminosityToBaseBrightness, luminosityToRadiusMultiplier } from '@/lib/spectralBands'
+import { matchesStarTypeFilter } from '@/lib/starClassification'
 import { xyzToRaDec } from '@/lib/stellarProjection'
 
 const STAR_COUNT = 1800
@@ -57,12 +59,15 @@ export function computeBarycentre(stars) {
 }
 
 /** Projette les étoiles filtrées — inclut opacityTarget, brightnessMultiplier, colorOverride, dx/dy/dz (3D).
- * visitedIds : Set des system_id visités (carte) — si fourni, visited reflète map_nodes */
-function projectStarsFromDb(filteredEntries, viewerCoords = { x: 0, y: 0, z: 0 }, visitedIds = new Set()) {
+ * visitedIds : Set des system_id visités (carte) — si fourni, visited reflète map_nodes
+ * options.excludeSystemId : si défini, exclut ce système (règle Observatoire)
+ * options.includeViewerSystem : si true, n'applique pas l'exclusion (Vue 3D conception) */
+function projectStarsFromDb(filteredEntries, viewerCoords = { x: 0, y: 0, z: 0 }, visitedIds = new Set(), options = {}) {
+  const { excludeSystemId = null, includeViewerSystem = false } = options
   if (!filteredEntries || filteredEntries.length === 0) return null
   return filteredEntries.map((entry, i) => {
     const { star: s, opacity, brightnessMultiplier, colorOverride } = entry
-    if (s.id === 'SOL') return null
+    if (!includeViewerSystem && excludeSystemId && s.id === excludeSystemId) return null
     let coords = s.coordinates || {}
     if (coords.x == null && coords.ra != null) {
       const ra = (coords.ra ?? 0) * (Math.PI / 180)
@@ -152,12 +157,15 @@ function initStars(viewerCoords = { x: 0, y: 0, z: 0 }) {
 /**
  * @param {import('vue').Ref<string>} spectralFilterRef
  * @param {import('vue').Ref<boolean>} [exoplanetFilterRef] - Filtre exoplanètes (systèmes avec planètes connues)
+ * @param {{ includeViewerSystem?: boolean, useConceptionSource?: boolean }} [opts] - includeViewerSystem: true pour Vue 3D ; useConceptionSource: true pour utiliser conceptionForSky (catalogue complet) si disponible
  * @returns {{ buildStarsFromDb: (viewerCoords?: object) => Array, updateStarBandParams: (starList: Array, band: string) => void }}
  */
-export function useSkyStars(spectralFilterRef, exoplanetFilterRef) {
+export function useSkyStars(spectralFilterRef, exoplanetFilterRef, opts = {}) {
+  const { includeViewerSystem = false, useConceptionSource = false, typeFilterRef = null } = opts
   const stellarSystemsStore = useStellarSystemsStore()
   const systemObjectsStore = useSystemObjectsStore()
   const mapStore = useMapNodesStore()
+  const shipStore = useShipStore()
 
   /**
    * @param {object} [viewerCoords]
@@ -165,14 +173,36 @@ export function useSkyStars(spectralFilterRef, exoplanetFilterRef) {
    */
   function buildStarsFromDb(viewerCoords = { x: 0, y: 0, z: 0 }, options = {}) {
     const band = spectralFilterRef.value
-    const raw = stellarSystemsStore.forSky().filter((s) => s.id !== 'SOL')
+    const conception = stellarSystemsStore.conceptionForSky ?? []
+    const useConception = useConceptionSource && Array.isArray(conception) && conception.length > 0
+
+    let raw
+    const viewerSystemId = shipStore.currentSystemId ?? 'SOL'
+
+    if (useConception) {
+      raw = [...conception]
+      if (includeViewerSystem && !raw.some((s) => s.id === viewerSystemId)) {
+        const viewer = stellarSystemsStore.list.find((s) => s.id === viewerSystemId)
+        if (viewer) raw = [viewer, ...raw]
+      }
+    } else {
+      const excludeId = includeViewerSystem ? null : viewerSystemId
+      raw = excludeId ? stellarSystemsStore.forSky(true, { excludeSystemId: excludeId }) : stellarSystemsStore.forSky(false)
+      if (!excludeId && includeViewerSystem && !raw.some((s) => s.id === viewerSystemId)) {
+        const viewer = stellarSystemsStore.list.find((s) => s.id === viewerSystemId)
+        if (viewer) raw = [viewer, ...raw]
+      }
+    }
+    if (typeFilterRef?.value && typeFilterRef.value !== 'all') {
+      raw = raw.filter((s) => matchesStarTypeFilter(s, typeFilterRef.value))
+    }
     const pool = getPoolForBandFilters(raw)
     let entries = pool.map((star) => ({ star, ...getStarBandParamsOrZero(star, band) }))
     if (exoplanetFilterRef?.value && !options.skipExoplanetFilter) {
       entries = entries.filter((e) => systemObjectsStore.hasExoplanets(e.star.id))
     }
     const visitedIds = mapStore.visitedSystemIds ?? new Set()
-    const projected = projectStarsFromDb(entries, viewerCoords, visitedIds)
+    const projected = projectStarsFromDb(entries, viewerCoords, visitedIds, { excludeSystemId: viewerSystemId, includeViewerSystem })
     if (projected && projected.length > 0) return projected
     return initStars(viewerCoords)
   }

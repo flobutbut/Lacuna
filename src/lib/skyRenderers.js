@@ -5,6 +5,7 @@
 
 import { projectStarInFov, projectNebulaShape } from './stellarProjection'
 import { resolveStarColor } from './spectralBands'
+import { HIGHLIGHT_CYAN_RGBA, HIGHLIGHT_CYAN_RGBA_SOFT, HIGHLIGHT_VISITED_RGBA } from '@/constants/starDisplay'
 
 const TRANSITION_SPEED = 0.032 // ~0.5s à 60fps
 
@@ -90,10 +91,6 @@ export function drawNebulas(ctx, nebulas, raView, decView, w, h, viewerCoords = 
   })
 }
 
-const LOG_THROTTLE_MS = 1000
-let _lastLog = 0
-let _lastCtxLog = 0
-
 /** Lignes de constellation — cyan atténué, réutilise positions projetées.
  * @param {CanvasRenderingContext2D} ctx
  * @param {Array<{star_from:string, star_to:string, constellation_abbr:string}>} lines
@@ -122,29 +119,6 @@ export function drawConstellationLines(ctx, lines, projectedPositions, w, h, opa
  * @param {Map<string, {x:number, y:number}>} [projectedPositions] - si fourni, réutilise au lieu de recalculer
  */
 export function drawStars(ctx, starList, raView, decView, w, h, selectedStar, searchedStarId, projectedPositions) {
-  if (Date.now() - _lastCtxLog > LOG_THROTTLE_MS) {
-    _lastCtxLog = Date.now()
-    console.log('[drawStars] ctx', {
-      globalAlpha: ctx.globalAlpha,
-      canvasWidth: ctx.canvas?.width,
-      canvasHeight: ctx.canvas?.height,
-    })
-  }
-
-  const cx = w / 2
-  const cy = h / 2
-  let targetStar = starList.find((s) => (s.name || s.id || '').toLowerCase().includes('sirius'))
-  if (!targetStar) {
-    let minD2 = Infinity
-    starList.forEach((s) => {
-      const pos = projectedPositions ? projectedPositions.get(s.id) : projectStarInFov(s.ra, s.dec, raView, decView, w, h)
-      if (pos) {
-        const d2 = (pos.x - cx) ** 2 + (pos.y - cy) ** 2
-        if (d2 < minD2) { minD2 = d2; targetStar = s }
-      }
-    })
-  }
-
   starList.forEach((s) => {
     const pos = projectedPositions
       ? projectedPositions.get(s.id)
@@ -168,22 +142,6 @@ export function drawStars(ctx, starList, raView, decView, w, h, selectedStar, se
 
     const fillStyleMain = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`
     const fillStyleHalo = s.r > 1.2 ? `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha * 0.08})` : null
-
-    if (s === targetStar && Date.now() - _lastLog > LOG_THROTTLE_MS) {
-      _lastLog = Date.now()
-      console.log('[drawStars]', targetStar.name || targetStar.id, {
-        luminosity: s.star?.luminosity,
-        baseBrightness: s.brightness,
-        brightnessMultiplier: mult,
-        flicker,
-        opacityCurrent: opacity,
-        rawAlpha,
-        alpha,
-        r: s.r,
-        fillStyle: fillStyleMain,
-        fillStyleHalo,
-      })
-    }
 
     if (s.isAnomaly) {
       s.anomalyPhase += 0.03
@@ -209,22 +167,35 @@ export function drawStars(ctx, starList, raView, decView, w, h, selectedStar, se
       ctx.fill()
     }
 
+    const isCapTarget = s.isCapTarget === true
     const isHighlighted = s === selectedStar || s.id === searchedStarId
-    if (isHighlighted) {
+
+    if (isCapTarget) {
+      ctx.beginPath()
+      ctx.arc(pos.x, pos.y, s.r + 9, 0, Math.PI * 2)
+      ctx.strokeStyle = 'rgba(232,160,32,0.9)'
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.arc(pos.x, pos.y, s.r + 7, 0, Math.PI * 2)
+      ctx.strokeStyle = 'rgba(232,160,32,0.45)'
+      ctx.lineWidth = 2
+      ctx.stroke()
+    } else if (isHighlighted) {
       ctx.beginPath()
       ctx.arc(pos.x, pos.y, s.r + 8, 0, Math.PI * 2)
-      ctx.strokeStyle = 'rgba(0,180,200,0.9)'
+      ctx.strokeStyle = HIGHLIGHT_CYAN_RGBA
       ctx.lineWidth = 1.5
       ctx.stroke()
       ctx.beginPath()
       ctx.arc(pos.x, pos.y, s.r + 6, 0, Math.PI * 2)
-      ctx.strokeStyle = 'rgba(0,180,200,0.25)'
+      ctx.strokeStyle = HIGHLIGHT_CYAN_RGBA_SOFT
       ctx.lineWidth = 2
       ctx.stroke()
     } else if (s.visited) {
       ctx.beginPath()
       ctx.arc(pos.x, pos.y, s.r + 3, 0, Math.PI * 2)
-      ctx.strokeStyle = 'rgba(0,180,200,0.3)'
+      ctx.strokeStyle = HIGHLIGHT_VISITED_RGBA
       ctx.lineWidth = 0.5
       ctx.stroke()
     }

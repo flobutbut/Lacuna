@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-14 15:11*
+*Dernière modification : 2026-03-18*
 
 # LACUNA — Documentation Backend
 
@@ -67,7 +67,13 @@ supabase/
 │   ├── 00022_map_nodes_anon_policy.sql
 │   ├── 00023_seed_coordinates_xyz_verify.sql
 │   ├── 00024_drop_obsolete_get_visible_systems.sql
-│   └── 00025_constellations_support.sql
+│   ├── 00025_constellations_support.sql
+│   ├── 00026_procedural_data_model.sql
+│   ├── 00027_nasa_planets_data_source_and_field_sources.sql
+│   ├── 00028_nasa_planets_field_sources_name_designation.sql
+│   ├── 00029_get_systems_for_conception.sql
+│   ├── 00030_conception_add_star_object_type.sql
+│   └── 00031_ship_transit_rls_and_travels.sql
 └── seed.sql             # Données initiales (systèmes, traces, objets, system_objects)
 ```
 
@@ -91,6 +97,7 @@ constellations
 ships
     ├── populations
     ├── ship_traces
+    ├── ship_travels (historique des voyages)
     ├── interpretations (ship_id, anonyme)
     ├── logbook_entries
     ├── map_nodes / map_edges
@@ -131,6 +138,8 @@ Systèmes stellaires (ciel Observatoire).
 | apparent_magnitude | DECIMAL | Magnitude apparente depuis Sol — HYG mag |
 | has_magnetic_field | BOOLEAN | Champ magnétique détecté |
 | constellation_abbr | TEXT | Code IAU 3 lettres (ORI, CEN, UMA, CYG...) — source HYG colonne con |
+| field_sources | JSONB | Traçabilité des sources par champ (HYG, NASA, EXTRAPOLATED, PROCEDURAL...) — réf. LACUNA_PROCEDURAL_DATA_MODEL |
+| chemical_region_id | TEXT | Région chimique galactique (extrapolation) |
 | created_at | TIMESTAMPTZ | |
 
 #### `system_objects`
@@ -180,6 +189,13 @@ Objets composant un système (étoiles, planètes, disques).
 | emission_frequency_hz | DECIMAL | PULSAR | Fréquence période (ex. 1,3 Hz pour PSR B1919+21) |
 | emission_direction | TEXT | émetteurs | omni, beam (faisceau) |
 | attributes | JSONB | | Données extensibles |
+| field_sources | JSONB | | Traçabilité des sources par champ (réf. LACUNA_PROCEDURAL_DATA_MODEL) |
+| data_source | TEXT | | NASA, PROCEDURAL, LACUNA, PLAYER, EXTRAPOLATED |
+| density_profile | JSONB | | Profil de densité extrapolé (couches internes) |
+| thermal_map | JSONB | | Carte thermique extrapolée |
+| magnetic_field | JSONB | | Champ magnétique extrapolé |
+| surface_composition | JSONB | | Composition de surface extrapolée |
+| sample_analysis | JSONB | | Analyse d'échantillon extrapolée |
 | created_at | TIMESTAMPTZ | | |
 
 #### `nebulas`
@@ -324,7 +340,26 @@ Vaisseaux joueurs (1 par user). Nom personnalisable par l'utilisateur.
 | position | JSONB | Coordonnées (legacy) |
 | travel_state | ship_travel_state | IDLE, IN_TRANSIT, ARRIVED, DAMAGED |
 | travel_destination | TEXT FK | → stellar_systems |
-| systems, fuel | — | *Voir ship_systems* |
+| travel_departure_at | TIMESTAMPTZ | Départ transit (pour calcul progression) |
+| travel_arrival_at | TIMESTAMPTZ | Arrivée prévue (pour completeTransit) |
+| systems, fuel | — | *Déplacés dans ship_systems (migration 00007)* |
+
+#### `ship_travels`
+Historique des trajets : un enregistrement par voyage terminé (pour retracer la route).
+
+| Colonne | Type | Description |
+|---------|------|--------------|
+| id | UUID PK | |
+| ship_id | UUID FK | → ships (ON DELETE CASCADE) |
+| voyage_number | INT | Numéro de voyage (aligné sur ships.voyage après arrivée) |
+| origin_system_id | TEXT FK | → stellar_systems |
+| destination_system_id | TEXT FK | → stellar_systems |
+| departure_at | TIMESTAMPTZ | Heure de départ |
+| arrival_at | TIMESTAMPTZ | Heure d'arrivée |
+| distance_al | DOUBLE PRECISION | Distance en al (optionnel) |
+| created_at | TIMESTAMPTZ | |
+
+Création : migration 00031. Remplie à chaque `completeTransit()` côté store ship.
 
 #### `ship_systems`
 Aspect technique du vaisseau. 1:1 avec ships.
@@ -441,8 +476,14 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00023 | Conversion ra/dec → x/y/z pour systèmes seed sans coordonnées cartésiennes |
 | 00024 | Drop fonctions obsolètes get_visible_systems (surcharges) |
 | 00025 | Constellations : stellar_systems.constellation_abbr, table constellations (88 IAU), constellation_lines (stick-figures) |
+| 00026 | Modèle procédural : stellar_systems (field_sources, chemical_region_id), system_objects (field_sources, data_source, density_profile, thermal_map, magnetic_field, surface_composition, sample_analysis) |
+| 00027 | Planètes NASA : data_source = 'NASA' et field_sources pour champs orbitaux/physiques |
+| 00028 | field_sources NASA : name, designation, confirmation_status, mass_earth, radius_earth sur system_objects |
+| 00029 | RPC get_systems_for_conception : systèmes avec coordonnées, paginé (Vue 3D conception) |
+| 00030 | get_systems_for_conception : colonne object_type (STAR, PULSAR, NEUTRON_STAR, MAGNETAR depuis system_objects) |
+| 00031 | Transit : policy Anon can update prototype ship (ships), table ship_travels + RLS (anon insert/read prototype, users manage own) |
 
-**Application** : `supabase db reset` (local) ou `apply_migration` (MCP).
+**Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
 ### RPC `get_visible_systems` (migration 00009)
 
@@ -461,6 +502,22 @@ RETURNS TABLE(id, name, spectral_type, distance, age, planets, habitable_zone, a
 - **Magnitude apparente** : si viewer = SOL → `apparent_magnitude` (HYG) si renseigné ; sinon M_abs + 5×log₁₀(d/10). Si viewer ≠ SOL → toujours calculée (M_abs + 5×log₁₀(d/10)) car HYG = vue depuis Sol.
 - **spectral_type_to_absolute_magnitude** : fallback pour étoiles procédurales sans `apparent_magnitude` (réf. Schmidt-Kaler, Pecaut & Mamajek).
 
+### RPC `get_systems_for_conception` (migrations 00029, 00030)
+
+Systèmes pour la Vue 3D conception (catalogue, filtres côté client). Pas de filtre magnitude ni viewer.
+
+```sql
+get_systems_for_conception(
+  p_limit  INT DEFAULT 10000,
+  p_offset INT DEFAULT 0
+)
+RETURNS TABLE(id, name, spectral_type, distance, age, planets, habitable_zone, anomaly_level,
+              coordinates, apparent_magnitude, luminosity, color_index, object_type)
+```
+
+- **object_type** : type de l'objet principal du système (STAR, PULSAR, NEUTRON_STAR, MAGNETAR) depuis `system_objects`, premier par `sort_order`.
+- Utilisée par le store `stellarSystems` pour chargement paginé (Page Conception Étoiles).
+
 ---
 
 ## 6. RLS (Row Level Security)
@@ -469,6 +526,10 @@ RETURNS TABLE(id, name, spectral_type, distance, age, planets, habitable_zone, a
 |-------|-----------|-------|
 | ships | Users can manage own ship | auth.uid() = user_id |
 | ships | Anon can read prototype ship | user_id IS NULL (lecture anon sans auth) |
+| ships | Anon can update prototype ship | user_id IS NULL (UPDATE pour transit, voyage — migration 00031) |
+| ship_travels | Anon can insert prototype ship travels | ship_id = vaisseau prototype (user_id NULL) |
+| ship_travels | Anon can read prototype ship travels | idem |
+| ship_travels | Users can manage own ship travels | ship_id IN (ships où user_id = auth.uid()) |
 | ship_systems | Users can read own ship_systems | Via ship (user ou prototype) |
 | populations | Users can manage own population | Via ship |
 | ship_traces | Users can manage own ship_traces | Via ship |
@@ -510,13 +571,14 @@ RETURNS TABLE(id, name, spectral_type, distance, age, planets, habitable_zone, a
 
 | Store Pinia | Table(s) | Opérations |
 |-------------|----------|------------|
-| stellarSystems | stellar_systems, constellation_lines | SELECT stellar_systems (RPC get_visible_systems). SELECT constellation_lines pour dessiner stick-figures. Fusion naines brunes L/T/Y pour filtre IR. |
+| stellarSystems | stellar_systems, constellation_lines | SELECT stellar_systems (RPC get_visible_systems pour Observatoire ; get_systems_for_conception pour Vue 3D conception). SELECT constellation_lines pour stick-figures. Fusion naines brunes L/T/Y pour filtre IR. |
 | nebulas | nebulas | SELECT (formes étendues, IR-only). SkyCanvas projection ellipse/polygone. |
 | systemObjects | system_objects | SELECT par system_id (corps Observatoire) |
 | observations | observations | SELECT, INSERT, UPDATE (state), DELETE. Filtre session_id |
 | traces (PageArtefacts) | traces, interpretations | SELECT traces, interpretations. INSERT interpretation. DELETE interpretation |
 | traces (tracesStore) | — | Mémoire (playerTraces, formalisation) — à brancher sur ship_traces |
 | signaux | — | Mémoire uniquement (éphémère) |
+| ship | ships, ship_travels | SELECT ships (prototype ou user). UPDATE ships (transit : travel_state, current_system_id, voyage, travel_*). INSERT ship_travels à chaque arrivée (completeTransit). |
 | supabase | Client | isConfigured() |
 
 ---
@@ -529,6 +591,7 @@ RETURNS TABLE(id, name, spectral_type, distance, age, planets, habitable_zone, a
 |----------|-------------|
 | VITE_SUPABASE_URL | URL du projet Supabase |
 | VITE_SUPABASE_ANON_KEY | Clé anon publique |
+| VITE_TRANSIT_TIME_SCALE | Facteur de durée transit (ex. 0.00138889 ≈ 5 s pour Proxima). Voir Documentation-technique.md. |
 
 ### Commandes Supabase
 

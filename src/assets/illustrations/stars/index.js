@@ -3,6 +3,7 @@
  * Mapping spectral_type (première lettre) → URL du SVG
  */
 
+import { getSpectralLetter } from '@/lib/starClassification'
 import starO from './star-O.svg'
 import starB from './star-B.svg'
 import starA from './star-A.svg'
@@ -35,15 +36,4 @@ export const STAR_SVG_PATHS = {
 export function getStarSvgPath(spectralType) {
   const letter = getSpectralLetter(spectralType)
   return STAR_SVG_PATHS[letter] ?? starM
-}
-
-/** Lettre principale depuis spectral_type */
-export function getSpectralLetter(spectralType) {
-  if (!spectralType || typeof spectralType !== 'string') return 'M'
-  const upper = spectralType.toUpperCase()
-  if (upper.startsWith('PSR') || upper.includes('PULSAR') || upper.includes('NEUTRON') || upper.includes('MAGNETAR')) {
-    return 'PULSAR'
-  }
-  const letter = upper[0]
-  return STAR_SVG_PATHS[letter] ? letter : 'M'
 }

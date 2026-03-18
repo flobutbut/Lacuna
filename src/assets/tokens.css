@@ -25,6 +25,7 @@
 
   /* ── Couleurs de statut ── */
   --color-green:           #40a870;
+  --color-green-bright:     #5dd99a;  /* Vert plus lumineux (transits, accents) */
   --color-red:             #c84040;
   --color-violet:          #a855f7;
   --color-violet-dim:      rgba(168, 85, 247, 0.5);

@@ -23,6 +23,15 @@ const currentSystemName = computed(() => {
   return sys?.name ?? '—'
 })
 
+const transitHeaderLabel = computed(() => {
+  if (!shipStore.isInTransit) return null
+  const origin = currentSystemName.value
+  const destSys = stellarStore.list.find((s) => s.id === shipStore.travelDestination)
+  const destName = destSys?.name ?? shipStore.travelDestination ?? '—'
+  const pct = Math.round(shipStore.transitProgress * 100)
+  return `${origin} → ${destName} — ${pct}%`
+})
+
 onMounted(async () => {
   await ensureStoresLoaded(shipStore, stellarStore, drakeStore)
 })
@@ -39,7 +48,15 @@ onMounted(async () => {
 
     <div class="header__center">
       <div class="header__ship-name">{{ shipStore.name }} — VOYAGE {{ shipStore.voyage }}</div>
-      <div class="header__system-name">{{ currentSystemName }}</div>
+      <div
+        v-if="transitHeaderLabel"
+        class="header__system-name header__system-name--transit"
+      >
+        {{ transitHeaderLabel }}
+      </div>
+      <div v-else class="header__system-name">
+        {{ currentSystemName }}
+      </div>
     </div>
 
     <div class="header__right">

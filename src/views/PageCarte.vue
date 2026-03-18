@@ -8,13 +8,15 @@ import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { useObservationsStore } from '@/stores/observations'
 import { useLabReportsStore } from '@/stores/labReports'
 import { useUIStore } from '@/stores/ui'
-import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
+import { OBJECT_TYPE_LABELS, COMPOSITION_LABELS } from '@/constants/objectTypes'
+import { getStarClassLabel } from '@/lib/starClassification'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { toPhysicalUnits, toLuminosityAndHz } from '@/lib/systemObjectConverters'
 import StarSvgInline from '@/components/illustrations/StarSvgInline.vue'
 import PlanetSvgInline from '@/components/illustrations/PlanetSvgInline.vue'
 import CarteSystemCard from '@/components/carte/CarteSystemCard.vue'
 import CarteOrbitalView from '@/components/carte/CarteOrbitalView.vue'
+import CarteMap3D from '@/components/carte/CarteMap3D.vue'
 
 const router = useRouter()
 const mapStore = useMapNodesStore()
@@ -33,11 +35,16 @@ const selectedStar = ref(null)
 /** True pendant le chargement des objets du système sélectionné (évite données vides/incomplètes) */
 const detailsLoading = ref(false)
 
+/** Onglet vue Carte : 'system' (vue orbitale) | 'map' (vue 3D, comme Conception) */
+const carteViewMode = ref('system')
+
+
 // Charger les stores (vaisseau avant carte : mapStore.fetch() a besoin de ship.id)
 onMounted(async () => {
   ui.clearCarteHasNew()
   await ensureStoresLoaded(shipStore, stellarStore)
   await ensureStoresLoaded(mapStore)
+  await shipStore.fetchTravels()
   await systemObjectsStore.fetchAll()
   await obsStore.fetch()
   await labReportsStore.fetchForObservations(obsStore.list.map((o) => o.id))
@@ -167,6 +174,16 @@ const selectedSystemPlanetCount = computed(() => {
   return stellar?.planets != null ? Number(stellar.planets) : 0
 })
 
+/** Liste des planètes/lunes du système (sans l’étoile) pour le drill-down */
+const systemBodiesForAnalyser = computed(() => {
+  const systemId = selectedSystemId.value
+  if (!systemId) return []
+  const objs = systemObjectsStore.getForSystem(systemId) ?? []
+  return objs
+    .filter((o) => o.type !== 'STAR')
+    .sort((a, b) => (a.designation || a.name || '').localeCompare(b.designation || b.name || ''))
+})
+
 // Sélection système
 function selectSystem(systemId) {
   selectedSystemId.value = systemId
@@ -225,6 +242,12 @@ const animatingKey = ref(null)
 async function analyser() {
   const { body, star } = getSelectedBodyAndStar()
   if (!body || !star) return
+  await analyserForBodyPayload(body, star)
+}
+
+/** Logique commune : trouve ou crée l'observation puis ouvre le laboratoire */
+async function analyserForBodyPayload(body, star) {
+  if (!body || !star) return
   const bodyLabel = OBJECT_TYPE_LABELS[body.type] ?? 'Corps planétaire'
   const existing = obsStore.findObservationForBody(body, star, bodyLabel)
   if (existing) {
@@ -236,6 +259,99 @@ async function analyser() {
   )
   ui.setLabHasNew(true)
   router.push({ path: '/laboratoire', query: { select: obsId } })
+}
+
+/** Lance l'analyse pour un objet system_objects (depuis la liste des astres du système) */
+async function analyserForBody(bodyObj) {
+  const systemId = selectedSystemId.value
+  if (!systemId || !bodyObj) return
+  const stellar = stellarBySystemId.value[systemId]
+  const systemName = stellar?.name ?? systemId
+  const star = { id: systemId, name: systemName, dist: stellar?.distance ?? '—' }
+  const body = systemObjectsStore.toBodyFormat(bodyObj, systemName)
+  await analyserForBodyPayload(body, star)
+}
+
+/** Analyser l’étoile du système (depuis la section header du drill-down) */
+async function analyserForStar() {
+  const systemId = selectedSystemId.value
+  if (!systemId) return
+  const stellar = selectedStellar.value
+  if (!stellar) return
+  const systemName = stellar.name ?? systemId
+  const starRef = { id: systemId, name: systemName, dist: stellar.distance ?? '—' }
+  const starBody = systemObjectsStore.toBodyFormat(
+    { type: 'STAR', id: systemId, designation: systemId, name: systemName, spectral_type: stellar.spectral_type },
+    systemName
+  )
+  await analyserForBodyPayload(starBody, starRef)
+}
+
+/** Ouvre le widget transit pour fixer le cap vers le système sélectionné */
+function fixerCapCarte() {
+  const systemId = selectedSystemId.value
+  const stellar = selectedStellar.value
+  if (!systemId || !stellar) return
+  if (shipStore.currentSystemId === systemId) {
+    ui.showNotification('Vous êtes déjà dans ce système', 3000)
+    return
+  }
+  ui.selectStar({
+    id: systemId,
+    name: stellar.name ?? systemId,
+    dist: stellar.distance ?? '—',
+    spectral: getStarClassLabel(stellar.spectral_type) || '—',
+  })
+}
+
+/** Ajouter au laboratoire pour un astre donné (liste drill-down) */
+function addOnlyForBody(bodyObj) {
+  const systemId = selectedSystemId.value
+  if (!systemId || !bodyObj) return
+  const stellar = stellarBySystemId.value[systemId]
+  const systemName = stellar?.name ?? systemId
+  const star = { id: systemId, name: systemName, dist: stellar?.distance ?? '—' }
+  const body = systemObjectsStore.toBodyFormat(bodyObj, systemName)
+  if (obsStore.findObservationForBody(body, star, OBJECT_TYPE_LABELS[body.type] ?? 'Corps planétaire')) return
+  const key = `${star.name}-${body.id}`
+  animatingKey.value = key
+  setTimeout(() => {
+    obsStore.addObservation(addObservationPayload(body, star.name, star.id, star.dist))
+    ui.setLabHasNew(true)
+    animatingKey.value = null
+  }, 350)
+}
+
+function isAddedForBody(bodyObj) {
+  const systemId = selectedSystemId.value
+  if (!systemId || !bodyObj) return false
+  const stellar = stellarBySystemId.value[systemId]
+  const systemName = stellar?.name ?? systemId
+  const star = { id: systemId, name: systemName, dist: stellar?.distance ?? '—' }
+  const body = systemObjectsStore.toBodyFormat(bodyObj, systemName)
+  return !!obsStore.findObservationForBody(body, star, OBJECT_TYPE_LABELS[body.type] ?? 'Corps planétaire')
+}
+
+function isAnimatingForBody(bodyObj) {
+  const systemId = selectedSystemId.value
+  if (!systemId || !bodyObj) return false
+  const stellar = stellarBySystemId.value[systemId]
+  const systemName = stellar?.name ?? systemId
+  const star = { id: systemId, name: systemName, dist: stellar?.distance ?? '—' }
+  const body = systemObjectsStore.toBodyFormat(bodyObj, systemName)
+  return animatingKey.value === `${star.name}-${body.id}`
+}
+
+/** Libellé type planète (composition) pour affichage liste */
+function planetTypeLabelForBody(body) {
+  return COMPOSITION_LABELS[body?.composition_type] ?? OBJECT_TYPE_LABELS.PLANETE ?? 'Corps'
+}
+
+/** Position orbitale pour affichage (désignation ou demi-grand axe) */
+function orbitPositionLabel(body) {
+  if (body?.designation) return body.designation
+  if (body?.orbital_semi_major_axis_au != null) return `${Number(body.orbital_semi_major_axis_au).toFixed(2)} UA`
+  return '—'
 }
 
 /** Ajouter au laboratoire sans naviguer (comme ObservatoirePanel.addOnly) */
@@ -288,6 +404,21 @@ watch(
   { immediate: true, deep: true }
 )
 
+// S'assurer que le système sélectionné existe dans stellarStore.list (cas : ajouté via recherche directe)
+async function ensureStellarForSelectedSystem(systemId) {
+  if (!systemId) return
+  if (stellarBySystemId.value[systemId]) return
+  // Recherche directe dans Supabase via le store existant
+  const results = await stellarStore.searchSystems(systemId, { excludeSystemId: null }).catch(() => [])
+  if (Array.isArray(results) && results.length > 0) {
+    const existingIds = new Set(stellarStore.list.map((s) => s.id))
+    const toAdd = results.filter((s) => s?.id && !existingIds.has(s.id))
+    if (toAdd.length > 0) {
+      stellarStore.list.push(...toAdd)
+    }
+  }
+}
+
 // Charger les objets du système quand on sélectionne (toujours fetch : cache peut être partiel)
 watch(
   selectedSystemId,
@@ -298,6 +429,7 @@ watch(
     }
     detailsLoading.value = true
     try {
+      await ensureStellarForSelectedSystem(systemId)
       await systemObjectsStore.fetchForSystem(systemId)
     } finally {
       detailsLoading.value = false
@@ -315,6 +447,23 @@ watch(
     }
   }
 )
+
+// En passant à l'onglet Map : repasser au système parent si une planète était sélectionnée. Pas de chargement global — la vue 3D n'affiche que les nœuds carte (déjà en store).
+watch(carteViewMode, (mode) => {
+  if (mode === 'map') {
+    if (selectedPlanet.value || selectedStar.value) {
+      selectedPlanet.value = null
+      selectedStar.value = null
+    }
+    // Charger les coordonnées stellaires uniquement pour les nœuds carte qui manquent (pas toute la base)
+    const nodes = mapStore.nodes ?? []
+    for (const node of nodes) {
+      if (!stellarBySystemId.value[node.systemId]) {
+        ensureStellarForSelectedSystem(node.systemId).catch(() => {})
+      }
+    }
+  }
+})
 </script>
 
 <template>
@@ -363,27 +512,53 @@ watch(
         </div>
       </div>
 
-      <!-- Colonne centrale : vue orbitale du système sélectionné -->
+      <!-- Colonne centrale : onglets System / Map puis vue orbitale ou projetée -->
       <div class="carte-map-col">
-        <div class="carte-map-container carte-map-container--orbital">
-          <div v-if="mapStore.nodes.length === 0" class="carte-map-empty">
-            Aucun système sur la carte. Ajoutez-en depuis l'Observatoire ou le Laboratoire.
-          </div>
-          <CarteOrbitalView
-            v-else
-            :system-id="selectedSystemId"
-            :system-name="stellarBySystemId[selectedSystemId]?.name"
-            :spectral-type="stellarBySystemId[selectedSystemId]?.spectral_type ?? 'G2V'"
-            :star-selected="!!selectedStar"
-            :selected-planet-id="selectedPlanet ? (selectedPlanet.designation || selectedPlanet.id) : null"
-            :loading="detailsLoading"
-            @select-planet="onSelectPlanet"
-            @select-star="onSelectStar($event)"
+        <div class="carte-tabs">
+          <button
+            type="button"
+            class="carte-tabs__btn"
+            :class="{ 'carte-tabs__btn--active': carteViewMode === 'system' }"
+            @click="carteViewMode = 'system'"
+          >
+            System
+          </button>
+          <button
+            type="button"
+            class="carte-tabs__btn"
+            :class="{ 'carte-tabs__btn--active': carteViewMode === 'map' }"
+            @click="carteViewMode = 'map'"
+          >
+            Map
+          </button>
+        </div>
+        <div class="carte-map-container carte-map-container--orbital" :class="{ 'carte-map-container--3d': carteViewMode === 'map' }">
+          <CarteMap3D
+            v-if="carteViewMode === 'map'"
+            :focus-star-id="selectedSystemId"
+            @focus-star="selectSystem"
+            @clear-focus="selectSystem(null)"
           />
+          <template v-if="carteViewMode !== 'map'">
+            <div v-if="mapStore.nodes.length === 0" class="carte-map-empty">
+              Aucun système sur la carte. Ajoutez-en depuis l'Observatoire ou le Laboratoire.
+            </div>
+            <CarteOrbitalView
+              v-else
+              :system-id="selectedSystemId"
+              :system-name="stellarBySystemId[selectedSystemId]?.name"
+              :spectral-type="stellarBySystemId[selectedSystemId]?.spectral_type ?? 'G2V'"
+              :star-selected="!!selectedStar"
+              :selected-planet-id="selectedPlanet ? (selectedPlanet.designation || selectedPlanet.id) : null"
+              :loading="detailsLoading"
+              @select-planet="onSelectPlanet"
+              @select-star="onSelectStar($event)"
+            />
+          </template>
         </div>
       </div>
 
-      <!-- Colonne droite : détails système ou planète -->
+      <!-- Colonne droite : détails système ou planète (cachée en vue 3D Map si besoin, ou gardée pour cohérence) -->
       <div class="carte-details-col">
         <div v-if="!selectedSystemId" class="carte-details-empty">
           Sélectionnez un système dans la liste.
@@ -526,8 +701,8 @@ watch(
             <div class="carte-details__name">{{ selectedStellar?.name ?? selectedSystemId }}</div>
             <div class="carte-details__meta">
               <div class="sw-row">
-                <span class="sw-key">Type spectral</span>
-                <span class="sw-val">{{ selectedStellar?.spectral_type ?? '—' }}</span>
+                <span class="sw-key">Type</span>
+                <span class="sw-val">{{ (getStarClassLabel(selectedStellar?.spectral_type) || selectedStellar?.spectral_type) ?? '—' }}</span>
               </div>
               <div class="sw-row">
                 <span class="sw-key">Distance</span>
@@ -556,6 +731,57 @@ watch(
               <div v-if="mapStore.nodeBySystemId[selectedSystemId]?.tracesFound > 0" class="sw-row">
                 <span class="sw-key">Traces</span>
                 <span class="sw-val">{{ mapStore.nodeBySystemId[selectedSystemId].tracesFound }}</span>
+              </div>
+            </div>
+            <div class="carte-detail-actions">
+              <button type="button" class="btn btn-primary" @click="analyserForStar">
+                Analyser
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                :disabled="shipStore.currentSystemId === selectedSystemId"
+                @click="fixerCapCarte"
+              >
+                Fixer le cap
+              </button>
+            </div>
+          </div>
+
+          <div v-if="systemBodiesForAnalyser.length > 0" class="carte-details__section">
+            <div class="carte-details__section-title sw-title">Astres du système</div>
+            <div class="carte-system-bodies">
+              <div
+                v-for="body in systemBodiesForAnalyser"
+                :key="body.designation || body.id"
+                class="carte-system-body"
+              >
+                <div class="carte-system-body__top">
+                  <div class="carte-system-body__icon">
+                    <PlanetSvgInline :planet="body" :diameter="32" />
+                  </div>
+                  <div class="carte-system-body__info">
+                    <div class="carte-system-body__name sw-val">{{ body.name || body.designation || 'Corps' }}</div>
+                    <div class="carte-system-body__meta">
+                      <span class="carte-system-body__type">{{ planetTypeLabelForBody(body) }}</span>
+                      <span class="carte-system-body__orbit">{{ orbitPositionLabel(body) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="carte-system-body__actions">
+                  <button type="button" class="btn btn-primary carte-system-body__btn" @click="analyserForBody(body)">
+                    Analyser
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary observatoire-body__add-btn"
+                    :class="{ 'observatoire-body__add-btn--animating': isAnimatingForBody(body), 'observatoire-body__add-btn--added': isAddedForBody(body) }"
+                    :disabled="isAddedForBody(body)"
+                    @click="addOnlyForBody(body)"
+                  >
+                    {{ isAddedForBody(body) ? 'Ajouté' : 'Ajouter au laboratoire' }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

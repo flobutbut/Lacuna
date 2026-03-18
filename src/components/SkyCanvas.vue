@@ -7,12 +7,15 @@ import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useShipStore } from '@/stores/ship'
 import { useNebulasStore } from '@/stores/nebulas'
 import { useMapNodesStore } from '@/stores/mapNodes'
-import { projectStarInFov } from '@/lib/stellarProjection'
+import { projectStarInFov, xyzToRaDec } from '@/lib/stellarProjection'
+import { getSystemXyz } from '@/lib/stellarCoordinates'
 import { drawCurvedGrid, drawMilkyWay, drawNebulas, drawStars, drawSignals, drawSpectralBorder, drawConstellationLines } from '@/lib/skyRenderers'
 import { useSkyStars } from '@/composables/useSkyStars'
+import { useStarSelection } from '@/composables/useStarSelection'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const ui = useUIStore()
+const { selectStar: selectStarForFocus } = useStarSelection({ mode: 'observatoire' })
 const nebulasStore = useNebulasStore()
 const { spectralFilter, exoplanetFilter, searchedStarId, constellationsEnabled } = storeToRefs(ui)
 
@@ -49,28 +52,60 @@ const LERP_SPEED = 0.05
 const { buildStarsFromDb, updateStarBandParams } = useSkyStars(spectralFilter, exoplanetFilter)
 
 function getViewerCoords() {
-  const viewerSystem = stellarSystemsStore.list.find((s) => s.id === shipStore.currentSystemId)
-  const coords = viewerSystem?.coordinates ?? { x: 0, y: 0, z: 0 }
-  return coords
+  // Pendant un transit, on utilise une position interpolée entre système courant et destination
+  const currentId = shipStore.currentSystemId
+  const destId = shipStore.travelDestination
+  const isTransit = shipStore.isInTransit && destId && shipStore.travelDepartureAt && shipStore.travelArrivalAt
+
+  const currentSystem = stellarSystemsStore.list.find((s) => s.id === currentId)
+  const currentCoords = currentSystem ? getSystemXyz(currentSystem) : { x: 0, y: 0, z: 0 }
+
+  if (!isTransit) {
+    return currentCoords
+  }
+
+  const destSystem = stellarSystemsStore.list.find((s) => s.id === destId)
+  const destCoords = destSystem ? getSystemXyz(destSystem) : null
+  if (!destCoords) {
+    // Si la destination n'est pas connue dans le catalogue actuel, rester au système courant
+    return currentCoords
+  }
+
+  const depMs = new Date(shipStore.travelDepartureAt).getTime()
+  const arrMs = new Date(shipStore.travelArrivalAt).getTime()
+  const now = Date.now()
+  let t = 0
+  if (arrMs > depMs) {
+    t = (now - depMs) / (arrMs - depMs)
+  }
+  if (t < 0) t = 0
+  if (t > 1) t = 1
+  // Profil d'avancement légèrement ease-in-out pour adoucir l'animation
+  const eased = t <= 0 ? 0 : t >= 1 ? 1 : 3 * t * t - 2 * t * t * t
+
+  return {
+    x: currentCoords.x + (destCoords.x - currentCoords.x) * eased,
+    y: currentCoords.y + (destCoords.y - currentCoords.y) * eased,
+    z: currentCoords.z + (destCoords.z - currentCoords.z) * eased,
+  }
 }
 
 function rebuildStars() {
-  if (canvasEl) {
-    const coords = getViewerCoords()
-    const prevList = stars.value
-    const nextList = buildStarsFromDb(coords) ?? []
-    nextList.forEach((s) => {
-      const prev = prevList.find((p) => p.id === s.id)
-      if (prev != null && prev.opacityCurrent != null) {
-        s.opacityCurrent = prev.opacityCurrent
-      }
-    })
-    stars.value = nextList
-    if (exoplanetFilter.value && constellationsEnabled.value) {
-      starsForConstellations.value = buildStarsFromDb(coords, { skipExoplanetFilter: true }) ?? []
-    } else {
-      starsForConstellations.value = []
+  if (!canvasEl) return
+  const coords = getViewerCoords()
+  const prevList = stars.value
+  const nextList = buildStarsFromDb(coords) ?? []
+  nextList.forEach((s) => {
+    const prev = prevList.find((p) => p.id === s.id)
+    if (prev != null && prev.opacityCurrent != null) {
+      s.opacityCurrent = prev.opacityCurrent
     }
+  })
+  stars.value = nextList
+  if (exoplanetFilter.value && constellationsEnabled.value) {
+    starsForConstellations.value = buildStarsFromDb(coords, { skipExoplanetFilter: true }) ?? []
+  } else {
+    starsForConstellations.value = []
   }
 }
 
@@ -90,6 +125,17 @@ function lerpAngle(a, b, t) {
 let ctx = null
 let animId = null
 
+function recenterOnTransitTarget() {
+  if (!shipStore.isInTransit || !shipStore.travelDestination) return
+  const destId = shipStore.travelDestination
+  const star = stars.value.find((s) => s.id === destId)
+  if (!star) return
+  const ra = star.ra
+  const dec = star.dec
+  // On ne met à jour que la cible : la vue courante va interpoler progressivement
+  ui.setTargetViewDirectionValue({ ra, dec })
+}
+
 function draw(canvas, starsRef) {
   if (!canvas || !ctx) return
   const starList = starsRef.value
@@ -107,6 +153,7 @@ function draw(canvas, starsRef) {
   }
 
   const vd = ui.viewDirection?.value ?? ui.viewDirection
+  const viewerCoords = getViewerCoords()
   const band = spectralFilter.value
 
   ctx.clearRect(0, 0, w, h)
@@ -117,13 +164,36 @@ function draw(canvas, starsRef) {
     drawNebulas(ctx, nebulasStore.forSky('ir'), vd.ra, vd.dec, w, h, getViewerCoords())
   }
 
-  const selected = ui.selectedStar
+  let selected = ui.selectedStar
   const now = Date.now()
   const activeSignals = signauxStore.list.filter((s) => now - s.createdAt < s.lifetimeMs)
 
+  // Pendant un transit, marquer la destination comme cible de cap (highlight spécifique)
+  if (shipStore.isInTransit && shipStore.travelDestination) {
+    const destId = shipStore.travelDestination
+    starList.forEach((s) => {
+      s.isCapTarget = s.id === destId
+    })
+  } else {
+    starList.forEach((s) => {
+      s.isCapTarget = false
+    })
+  }
+
   const projectedPositions = new Map()
   starList.forEach((s) => {
-    const pos = projectStarInFov(s.ra, s.dec, vd.ra, vd.dec, w, h)
+    let ra = s.ra
+    let dec = s.dec
+    if (s.star && s.star.coordinates) {
+      const coords = s.star.coordinates
+      const dx = (coords.x ?? 0) - (viewerCoords.x ?? 0)
+      const dy = (coords.y ?? 0) - (viewerCoords.y ?? 0)
+      const dz = (coords.z ?? 0) - (viewerCoords.z ?? 0)
+      const res = xyzToRaDec(dx, dy, dz)
+      ra = res.ra
+      dec = res.dec
+    }
+    const pos = projectStarInFov(ra, dec, vd.ra, vd.dec, w, h)
     if (pos) projectedPositions.set(s.id, pos)
   })
 
@@ -156,6 +226,18 @@ function screenToCanvas(e, canvas) {
 }
 
 function handleMouseMove(e, starList, canvas) {
+  // Ne pas déclencher de hover/tooltip du ciel quand on interagit avec l'UI (recherche, menus, etc.)
+  const t = e?.target
+  if (t && typeof t.closest === 'function') {
+    if (t.closest('.spectral-bar') || t.closest('.spectral-search') || t.closest('.star-ac-menu')) {
+      ui.setReticuleVisible(false)
+      ui.hoveredStar = null
+      ui.setHoveredSignal(null)
+      ui.setHoveredConstellation(null)
+      return
+    }
+  }
+
   const vd = ui.viewDirection?.value ?? ui.viewDirection
   if (isPanning.value) {
     const dx = (e.clientX - lastPanPos.value.x) * PAN_SENSITIVITY
@@ -309,8 +391,11 @@ function handleClick() {
   const s = ui.hoveredStar
   if (s) {
     ui.selectStar(s)
+    selectStarForFocus(s)
+    ui.setTargetViewDirectionValue({ ra: s.ra, dec: s.dec })
   } else {
     ui.selectStar(null)
+    selectStarForFocus(null)
   }
 }
 
@@ -449,6 +534,13 @@ onUnmounted(() => {
     >
       CATALOGUE EN COURS…
     </div>
+    <div v-if="shipStore.isInTransit" class="sky-transit-overlay">
+      <div class="sky-transit-box" @click.stop="recenterOnTransitTarget">
+        <div class="sky-transit-line sky-transit-line--primary">
+          {{ shipStore.currentTransitPhase || 'IN_TRANSIT' }}
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -475,5 +567,36 @@ onUnmounted(() => {
   color: var(--color-muted);
   opacity: 0.4;
   font-family: var(--font-mono);
+}
+
+.sky-transit-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.sky-transit-box {
+  min-width: 220px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-amber);
+  text-align: center;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+  transform: translateY(-40px);
+  pointer-events: auto;
+}
+
+.sky-transit-line--primary {
+  text-transform: uppercase;
+  color: var(--color-amber);
 }
 </style>

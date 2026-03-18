@@ -1,14 +1,19 @@
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, watch, onMounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
+import { useShipStore } from '@/stores/ship'
+import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { useMapNodesStore } from '@/stores/mapNodes'
 import { computeTransit, formatDuration, formatDureeSimulee } from '@/lib/transit'
+import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import AppModal from '@/components/AppModal.vue'
 import Divider from '@/components/Divider.vue'
 import ModalCell from '@/components/ModalCell.vue'
 
 const ui = useUIStore()
+const shipStore = useShipStore()
+const stellarStore = useStellarSystemsStore()
 const systemObjectsStore = useSystemObjectsStore()
 const mapStore = useMapNodesStore()
 
@@ -22,6 +27,10 @@ watch(
   },
   { immediate: true }
 )
+
+onMounted(async () => {
+  await ensureStoresLoaded(shipStore, stellarStore)
+})
 
 const isOnMap = computed(() => ui.selectedStar ? mapStore.isOnMap(ui.selectedStar.id) : false)
 
@@ -57,9 +66,43 @@ function analyser() {
   ui.openObservatoire()
 }
 
-function fixerCap() {
+async function fixerCap() {
   if (!ui.selectedStar) return
-  ui.showNotification(`CAP FIXÉ — ${ui.selectedStar.name} — ${ui.selectedStar.dist} al`)
+  if (shipStore.isInTransit) {
+    ui.showNotification('Transit déjà en cours — attendez l’arrivée avant de fixer un nouveau cap', 4000)
+    return
+  }
+  if (!shipStore.ship) {
+    ui.showNotification('Vaisseau non chargé — réessayez dans une seconde', 4000)
+    return
+  }
+  const star = ui.selectedStar
+  // S'assurer que la destination existe côté DB (résolution dynamique si besoin)
+  let targetSystem = stellarStore.list.find((s) => s.id === star.id)
+  if (!targetSystem) {
+    const results = await stellarStore.searchSystems(star.id, { excludeSystemId: shipStore.currentSystemId })
+    if (Array.isArray(results) && results.length > 0) {
+      // Fusionner dans la liste locale sans doublon
+      const existing = stellarStore.list.slice()
+      const byId = new Map(existing.map((s) => [s.id, s]))
+      for (const sys of results) {
+        if (sys?.id && !byId.has(sys.id)) byId.set(sys.id, sys)
+      }
+      stellarStore.list = Array.from(byId.values())
+      targetSystem = results.find((s) => s.id === star.id) || Array.from(byId.values()).find((s) => s.id === star.id)
+    }
+  }
+  if (!targetSystem) {
+    ui.showNotification('Impossible de fixer un cap vers ce système (aucune entrée trouvée dans le catalogue ARCA).', 5000)
+    return
+  }
+  const meta = star.dist ? computeTransit(star.dist) : null
+  const result = await shipStore.startTransit(star.id, star.dist, meta ?? undefined)
+  if (!result) {
+    ui.showNotification('Impossible de lancer le transit (vaisseau non chargé ou erreur Supabase)', 5000)
+    return
+  }
+  ui.showNotification(`CAP FIXÉ — ${star.name} — ${star.dist} al — transit en cours`, 4000)
   ui.selectStar(null)
 }
 
@@ -150,8 +193,18 @@ function close() {
       <button type="button" class="btn btn-primary" @click="analyser">
         [ANALYSER]
       </button>
-      <button type="button" class="btn btn-primary" @click="fixerCap">
-        [FIXER CAP]
+      <button
+        type="button"
+        class="btn btn-primary"
+        :disabled="shipStore.isInTransit && shipStore.currentTransitPhase !== 'COASTING'"
+        @click="fixerCap"
+      >
+        <span v-if="shipStore.isInTransit && shipStore.currentTransitPhase !== 'COASTING'">
+          [CAP VERROUILLÉ — MANŒUVRE]
+        </span>
+        <span v-else>
+          [FIXER CAP]
+        </span>
       </button>
     </template>
   </AppModal>

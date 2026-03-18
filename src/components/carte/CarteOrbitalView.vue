@@ -123,7 +123,7 @@ const stellarSystem = computed(() =>
 )
 
 const objects = computed(() =>
-  systemObjectsStore.getForSystem(props.systemId)
+  systemObjectsStore.getForSystem(props.systemId) ?? []
 )
 
 const star = computed(() =>
@@ -340,22 +340,30 @@ watch(
     continuousPhaseHolds.value = false
     orbitProgressEased.value = 0
     orbitPhaseContinuous.value = 0
-    if (systemId && !loading && planetCount > 0) {
+
+    // Si aucun système sélectionné ou en cours de chargement, on reste en état "vide/chargement".
+    if (!systemId || loading) {
       orbitViewReady.value = false
-      await nextTick()
-      if (containerRef.value) {
-        const rect = containerRef.value.getBoundingClientRect()
-        const w = rect.width || 320
-        const h = rect.height || 280
-        const s = Math.min(w, h) || 320
-        size.value = Math.max(2 * MAX_BODY_DIAMETER_PX, s)
-      }
-      orbitViewReady.value = true
+      return
+    }
+
+    // Calculer la taille du conteneur une fois les données prêtes, même sans planètes.
+    orbitViewReady.value = false
+    await nextTick()
+    if (containerRef.value) {
+      const rect = containerRef.value.getBoundingClientRect()
+      const w = rect.width || 320
+      const h = rect.height || 280
+      const s = Math.min(w, h) || 320
+      size.value = Math.max(2 * MAX_BODY_DIAMETER_PX, s)
+    }
+    orbitViewReady.value = true
+
+    // Lancer l'animation orbitale uniquement s'il y a au moins une planète à animer.
+    if (planetCount > 0) {
       requestAnimationFrame(() => {
         runOrbitAnimation()
       })
-    } else {
-      orbitViewReady.value = false
     }
   },
   { immediate: true }
@@ -529,9 +537,6 @@ onBeforeUnmount(() => {
           </g>
         </g>
       </svg>
-      <div v-if="planetsWithDistance.length === 0 && systemId" class="carte-orbital__no-planets">
-        Aucune planète connue.
-      </div>
     </template>
   </div>
 </template>

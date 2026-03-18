@@ -22,6 +22,10 @@ export const useStellarSystemsStore = defineStore('stellarSystems', () => {
   const skyFullyLoaded = ref(false)
   /** Segments stick-figure (star_from, star_to, constellation_abbr) pour dessiner les constellations */
   const constellationLines = ref([])
+  /** Systèmes pour Vue 3D conception (RPC get_systems_for_conception, chargement paginé) */
+  const conceptionForSky = ref([])
+  const conceptionLoading = ref(false)
+  const conceptionFullyLoaded = ref(false)
 
   async function fetchConstellationLines() {
     const supabaseStore = useSupabaseStore()
@@ -152,19 +156,58 @@ export const useStellarSystemsStore = defineStore('stellarSystems', () => {
     return visibleForSky.value
   }
 
-  /** Systèmes pour projection ciel : visibles si RPC a retourné des résultats, sinon liste complète (exclut SOL).
+  /**
+   * Charge les systèmes pour la Vue 3D conception (tous avec coordonnées, paginé).
+   * RPC get_systems_for_conception — pas de filtre magnitude ni viewer.
+   */
+  async function fetchConceptionStars() {
+    const supabaseStore = useSupabaseStore()
+    if (!supabaseStore.isConfigured()) {
+      conceptionForSky.value = []
+      conceptionFullyLoaded.value = false
+      return []
+    }
+    conceptionLoading.value = true
+    conceptionForSky.value = []
+    // Supabase client limite les réponses à 1000 lignes par requête (y compris RPC)
+    const PAGE = 1000
+    let offset = 0
+    while (true) {
+      const { data: page, error } = await supabase.rpc('get_systems_for_conception', {
+        p_limit: PAGE,
+        p_offset: offset,
+      })
+      if (error) {
+        console.warn('[stellarSystems] get_systems_for_conception:', error.message)
+        break
+      }
+      if (!page || page.length === 0) break
+      conceptionForSky.value = _mergeWithoutDuplicates(conceptionForSky.value, page)
+      offset += PAGE
+      if (page.length < PAGE) break
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+    conceptionLoading.value = false
+    conceptionFullyLoaded.value = true
+    return conceptionForSky.value
+  }
+
+  /** Systèmes pour projection ciel : visibles si RPC a retourné des résultats, sinon liste complète.
+   * Compat: ancien param `excludeSol=true` (exclut SOL).
+   * Nouveau: `options.excludeSystemId` pour exclure le système courant (viewer) selon contexte.
    * Fusionne les naines brunes (L/T/Y) — invisibles en optique mais visibles en IR — pour le filtre spectral. */
-  function forSky(excludeSol = true) {
+  function forSky(excludeSol = true, options = {}) {
+    const excludeSystemId = options?.excludeSystemId ?? (excludeSol ? 'SOL' : null)
     let base = visibleForSky.value.length > 0 ? visibleForSky.value : list.value
     const ids = new Set(base.map((s) => s.id))
     const brownDwarfs = list.value.filter((s) => /^[LTY]/.test(s.spectral_type || ''))
     brownDwarfs.forEach((b) => {
-      if (!ids.has(b.id) && (b.id !== 'SOL' || !excludeSol)) {
+      if (!ids.has(b.id) && (!excludeSystemId || b.id !== excludeSystemId)) {
         base = [...base, b]
         ids.add(b.id)
       }
     })
-    return excludeSol ? base.filter((s) => s.id !== 'SOL') : base
+    return excludeSystemId ? base.filter((s) => s.id !== excludeSystemId) : base
   }
 
   /**
@@ -174,14 +217,15 @@ export const useStellarSystemsStore = defineStore('stellarSystems', () => {
    * @param {string} q - Chaîne de recherche (sera trim + lower)
    * @returns {Promise<Array>} Systèmes correspondants (id, name, coordinates, spectral_type, distance, etc.)
    */
-  async function searchSystems(q) {
+  async function searchSystems(q, options = {}) {
+    const { excludeSystemId = null } = options
     const qClean = String(q ?? '').trim().toLowerCase()
     if (!qClean) return []
     const supabaseStore = useSupabaseStore()
     if (!supabaseStore.isConfigured()) {
       // Fallback : recherche dans list
       return list.value.filter((s) => {
-        if (s.id === 'SOL') return false
+        if (excludeSystemId && s.id === excludeSystemId) return false
         const name = (s.name ?? '').toLowerCase()
         const id = (s.id ?? '').toLowerCase()
         return name.includes(qClean) || id.includes(qClean)
@@ -189,13 +233,14 @@ export const useStellarSystemsStore = defineStore('stellarSystems', () => {
     }
     const escaped = qClean.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')
     const pattern = `%${escaped}%`
-    const { data, error } = await supabase
+    let query = supabase
       .from('stellar_systems')
       .select('id, name, spectral_type, distance, coordinates, apparent_magnitude, luminosity, color_index')
-      .neq('id', 'SOL')
       .or(`name.ilike.${pattern},id.ilike.${pattern}`)
       .order('distance', { ascending: true })
       .limit(50)
+    if (excludeSystemId) query = query.neq('id', excludeSystemId)
+    const { data, error } = await query
     if (error) {
       console.warn('[stellarSystems] searchSystems:', error.message)
       return []
@@ -226,9 +271,13 @@ export const useStellarSystemsStore = defineStore('stellarSystems', () => {
     skyLoadingPass2,
     skyLoadingPass3,
     skyFullyLoaded,
+    conceptionForSky,
+    conceptionLoading,
+    conceptionFullyLoaded,
     constellationLines,
     fetch,
     fetchVisibleForSky,
+    fetchConceptionStars,
     fetchConstellationLines,
     searchSystems,
     forSky,

@@ -60,6 +60,10 @@
     letter-spacing: var(--tracking-wide);
 }
 
+.header__system-name--transit {
+    color: var(--color-amber);
+}
+
 .header__right {
     display: flex;
     align-items: center;
