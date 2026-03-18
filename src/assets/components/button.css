@@ -74,7 +74,10 @@
     background: var(--color-amber);
 }
 
-/* ══ Bouton primary ══ */
+/* ══ Boutons d'action (alignés sur le select : fond panel peu opaque) ══
+   Default = var(--color-panel) ; états hover/active déclinés par variant. */
+
+/* Primary */
 .btn-primary {
     display: inline-flex;
     align-items: center;
@@ -82,7 +85,7 @@
     gap: var(--space-3);
     padding: var(--space-4) var(--space-8);
     border: var(--border-width) solid var(--color-cyan);
-    background: var(--color-panel-solid);
+    background: var(--color-panel);
     color: var(--color-cyan);
     font-family: var(--font-mono);
     font-size: var(--text-base);
@@ -98,7 +101,7 @@
 }
 
 .btn-primary:active {
-    background: var(--color-cyan-dim);
+    background: var(--color-cyan-hover);
 }
 
 .btn-primary:disabled {
@@ -106,7 +109,7 @@
     cursor: not-allowed;
 }
 
-/* ══ Bouton secondary ══ */
+/* Secondary */
 .btn-secondary {
     display: inline-flex;
     align-items: center;
@@ -114,7 +117,7 @@
     gap: var(--space-3);
     padding: var(--space-3) var(--space-6);
     border: var(--border-width) solid var(--border-default);
-    background: var(--color-panel-solid);
+    background: var(--color-panel);
     color: var(--color-muted);
     font-family: var(--font-mono);
     font-size: var(--text-sm);
@@ -127,10 +130,25 @@
 .btn-secondary:hover {
     color: var(--color-white);
     border-color: var(--border-bright);
-    background: var(--color-cyan-subtle);
+    background: var(--color-cyan-glow);
 }
 
-/* ══ Bouton ghost ══ */
+.btn-secondary:active {
+    background: var(--color-cyan-hover);
+}
+
+.btn-secondary:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.btn-secondary.is-active {
+    color: var(--color-cyan);
+    border-color: var(--color-cyan-dim);
+    background: var(--color-cyan-active);
+}
+
+/* Ghost */
 .btn-ghost {
     display: inline-flex;
     align-items: center;
@@ -138,7 +156,7 @@
     gap: var(--space-3);
     padding: var(--space-4) var(--space-8);
     border: var(--border-width) solid var(--border-default);
-    background: transparent;
+    background: var(--color-panel);
     color: var(--color-muted);
     font-family: var(--font-mono);
     font-size: var(--text-base);
@@ -151,7 +169,11 @@
 .btn-ghost:hover {
     color: var(--color-white);
     border-color: var(--border-bright);
-    background: var(--color-cyan-subtle);
+    background: var(--color-cyan-glow);
+}
+
+.btn-ghost:active {
+    background: var(--color-cyan-hover);
 }
 
 .btn-ghost:disabled {
@@ -159,7 +181,13 @@
     cursor: not-allowed;
 }
 
-/* ══ Bouton amber (warning actions) ══ */
+.btn-ghost.is-active {
+    color: var(--color-cyan);
+    border-color: var(--color-cyan-dim);
+    background: var(--color-cyan-active);
+}
+
+/* Amber (warning) */
 .btn-amber {
     display: inline-flex;
     align-items: center;
@@ -167,7 +195,7 @@
     gap: var(--space-3);
     padding: var(--space-4) var(--space-8);
     border: var(--border-width) solid var(--color-amber-dim);
-    background: var(--color-amber-glow);
+    background: var(--color-panel);
     color: var(--color-amber);
     font-family: var(--font-mono);
     font-size: var(--text-base);
@@ -178,8 +206,17 @@
 }
 
 .btn-amber:hover {
-    background: var(--color-amber-dim);
+    background: var(--color-amber-glow);
     color: var(--color-white);
+}
+
+.btn-amber:active {
+    background: var(--color-amber-dim);
+}
+
+.btn-amber:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
 }
 
 /* ══ Bouton close (fermeture panel) ══ */

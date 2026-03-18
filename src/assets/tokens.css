@@ -18,6 +18,7 @@
   --color-cyan-glow:       rgba(0, 180, 200, 0.15);
   --color-cyan-subtle:     rgba(0, 180, 200, 0.05);
   --color-cyan-hover:      rgba(0, 180, 200, 0.08);
+  --color-cyan-active:     rgba(0, 180, 200, 0.22);
 
   --color-amber:           #e8a020;
   --color-amber-dim:       rgba(232, 160, 32, 0.4);

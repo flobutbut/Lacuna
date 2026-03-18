@@ -252,8 +252,8 @@ onUnmounted(() => {
       />
       <button
         type="button"
-        class="spectral-filters__btn"
-        :class="{ 'spectral-filters__btn--active': standalone ? exoplanetFilter : ui.exoplanetFilter }"
+        class="btn btn-secondary"
+        :class="{ 'is-active': standalone ? exoplanetFilter : ui.exoplanetFilter }"
         title="N'afficher que les systèmes avec exoplanètes connues"
         @click="toggleExoplanetFilter"
       >
@@ -262,8 +262,8 @@ onUnmounted(() => {
       <button
         v-if="!standalone"
         type="button"
-        class="spectral-filters__btn"
-        :class="{ 'spectral-filters__btn--active': ui.constellationsEnabled }"
+        class="btn btn-secondary"
+        :class="{ 'is-active': ui.constellationsEnabled }"
         title="Afficher les lignes de constellation"
         @click="ui.toggleConstellationsEnabled"
       >
@@ -272,8 +272,8 @@ onUnmounted(() => {
       <button
         v-if="standalone"
         type="button"
-        class="spectral-filters__btn"
-        :class="{ 'spectral-filters__btn--active': constellationsEnabled }"
+        class="btn btn-secondary"
+        :class="{ 'is-active': constellationsEnabled }"
         title="Afficher les lignes de constellation (3D)"
         @click="emit('update:constellationsEnabled', !constellationsEnabled)"
       >
@@ -282,8 +282,8 @@ onUnmounted(() => {
       <button
         v-if="standalone"
         type="button"
-        class="spectral-filters__btn"
-        :class="{ 'spectral-filters__btn--active': transitsEnabled }"
+        class="btn btn-secondary"
+        :class="{ 'is-active': transitsEnabled }"
         title="Afficher les trajets (systèmes visités dans l'ordre)"
         @click="emit('update:transitsEnabled', !transitsEnabled)"
       >
@@ -368,34 +368,13 @@ onUnmounted(() => {
 .spectral-filters__select--type {
   min-width: 240px;
 }
-.spectral-filters__btn {
-  padding: var(--space-4) var(--space-8);
-  font-size: var(--text-sm);
-  font-family: var(--font-mono);
-  letter-spacing: var(--tracking-normal);
-  text-transform: uppercase;
-  color: var(--color-muted);
-  background: transparent;
-  border: var(--border-width) solid var(--border-default);
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-.spectral-filters__btn:hover {
-  color: var(--color-white);
-  border-color: var(--border-bright);
-  background: var(--color-cyan-subtle);
-}
-.spectral-filters__btn--active {
-  color: var(--color-cyan);
-  border-color: var(--color-cyan-dim);
-  background: var(--color-cyan-hover);
-}
 
-/* Barre recherche : minifiée (icône) ou étendue + animations */
+/* Barre recherche : alignée sur select / boutons (panel, hover glow) */
 .spectral-search {
   display: flex;
   align-items: stretch;
   border: var(--border-width) solid var(--border-default);
+  background: var(--color-panel);
   min-width: 0;
   overflow: hidden;
   transition: width var(--transition-smooth);
@@ -445,7 +424,7 @@ onUnmounted(() => {
 }
 .spectral-search__trigger:hover {
   color: var(--color-cyan);
-  background: var(--color-cyan-subtle);
+  background: var(--color-cyan-glow);
 }
 .spectral-search__icon {
   display: flex;
@@ -486,12 +465,13 @@ onUnmounted(() => {
   border: none;
   border-left: var(--border-width) solid var(--border-default);
   cursor: pointer;
-  transition: color var(--transition-base);
+  transition: color var(--transition-base), background-color var(--transition-base);
 }
 .spectral-search__clear:hover,
 .spectral-search__go:hover,
 .spectral-search__nav:hover {
   color: var(--color-cyan);
+  background: var(--color-cyan-glow);
 }
 .spectral-search__count {
   padding: 0 var(--space-2);

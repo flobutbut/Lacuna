@@ -32,7 +32,7 @@
 .ds-select:hover:not(:disabled) {
   color: var(--color-white);
   border-color: var(--border-bright);
-  background-color: var(--color-cyan-subtle);
+  background-color: var(--color-cyan-glow);
 }
 
 .ds-select:focus-visible {
@@ -107,17 +107,17 @@
 }
 
 .ds-select-option:hover {
-  background: var(--color-cyan-subtle);
+  background: var(--color-cyan-glow);
   color: var(--color-cyan);
 }
 
 .ds-select-option--selected {
   color: var(--color-cyan);
-  background: var(--color-cyan-hover);
+  background: var(--color-cyan-active);
 }
 
 .ds-select-option--selected:hover {
-  background: var(--color-cyan-subtle);
+  background: var(--color-cyan-glow);
 }
 
 /* Transition ouverture */

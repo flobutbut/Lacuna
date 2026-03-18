@@ -23,8 +23,8 @@ const TABS = [
         v-for="t in TABS"
         :key="t.id"
         type="button"
-        class="observatoire-tabs__btn"
-        :class="{ 'observatoire-tabs__btn--active': ui.observatoireViewMode === t.id }"
+        class="btn btn-secondary"
+        :class="{ 'is-active': ui.observatoireViewMode === t.id }"
         @click="ui.setObservatoireViewMode(t.id)"
       >
         {{ t.label }}
@@ -62,48 +62,30 @@ const TABS = [
   gap: 0;
 }
 
-.observatoire-tabs__buttons--over-star .observatoire-tabs__btn {
-  background: var(--color-panel);
-}
-.observatoire-tabs__buttons--over-star .observatoire-tabs__btn:hover {
-  background: var(--color-panel);
-}
-.observatoire-tabs__buttons--over-star .observatoire-tabs__btn--active {
-  background: var(--color-panel-solid);
-}
-.observatoire-tabs__filters {
-  flex-shrink: 0;
-}
-.observatoire-tabs__btn {
-  padding: var(--space-4) var(--space-8);
-  font-size: var(--text-sm);
-  font-family: var(--font-mono);
-  letter-spacing: var(--tracking-normal);
-  text-transform: uppercase;
-  color: var(--color-muted);
-  background: transparent;
-  border: var(--border-width) solid var(--border-default);
+.observatoire-tabs__buttons .btn {
   border-left: none;
-  cursor: pointer;
-  transition: all var(--transition-base);
 }
-.observatoire-tabs__btn:first-child {
+.observatoire-tabs__buttons .btn:first-child {
   border-left: var(--border-width) solid var(--border-default);
   border-top-left-radius: var(--border-radius-sm);
   border-bottom-left-radius: var(--border-radius-sm);
 }
-.observatoire-tabs__btn:last-child {
+.observatoire-tabs__buttons .btn:last-child {
   border-top-right-radius: var(--border-radius-sm);
   border-bottom-right-radius: var(--border-radius-sm);
 }
-.observatoire-tabs__btn:hover {
-  color: var(--color-white);
-  border-color: var(--border-bright);
-  background: var(--color-cyan-subtle);
+
+.observatoire-tabs__buttons--over-star .btn {
+  background: var(--color-panel);
 }
-.observatoire-tabs__btn--active {
-  color: var(--color-cyan);
-  border-color: var(--color-cyan-dim);
-  background: var(--color-cyan-hover);
+.observatoire-tabs__buttons--over-star .btn:hover {
+  background: var(--color-panel);
+}
+.observatoire-tabs__buttons--over-star .btn.is-active {
+  background: var(--color-panel-solid);
+}
+
+.observatoire-tabs__filters {
+  flex-shrink: 0;
 }
 </style>

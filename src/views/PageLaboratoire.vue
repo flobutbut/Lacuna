@@ -370,8 +370,8 @@ onUnmounted(() => {
               v-for="opt in filterOptionsVisible"
               :key="opt.id"
               type="button"
-              class="lab-filter-btn"
-              :class="{ 'lab-filter-btn--active': filterType === opt.id }"
+              class="btn btn-secondary"
+              :class="{ 'is-active': filterType === opt.id }"
               @click="filterType = opt.id"
             >
               {{ opt.label }}

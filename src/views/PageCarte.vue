@@ -16,9 +16,9 @@ import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { toPhysicalUnits, toLuminosityAndHz } from '@/lib/systemObjectConverters'
 import StarSvgInline from '@/components/illustrations/StarSvgInline.vue'
 import PlanetSvgInline from '@/components/illustrations/PlanetSvgInline.vue'
-import CarteSystemCard from '@/components/carte/CarteSystemCard.vue'
 import CarteOrbitalView from '@/components/carte/CarteOrbitalView.vue'
 import CarteMap3D from '@/components/carte/CarteMap3D.vue'
+import AppCard from '@/components/AppCard.vue'
 
 const router = useRouter()
 const mapStore = useMapNodesStore()
@@ -463,37 +463,40 @@ watch(carteViewMode, (mode) => {
           Aucun système. Ajoutez-en depuis l'Observatoire ou le Laboratoire.
         </div>
         <div v-else class="carte-systems__list">
-          <CarteSystemCard
+          <AppCard
             v-if="currentSystemItem"
             :key="currentSystemItem.systemId"
-            :system-id="currentSystemItem.systemId"
-            :name="currentSystemItem.name"
-            :spectral-type="currentSystemItem.spectralType"
-            :exoplanet-count="currentSystemItem.exoplanetCount"
+            :title="currentSystemItem.name || currentSystemItem.systemId"
+            :subtitle="currentSystemItem.exoplanetCount === 0 ? 'Aucune exoplanète' : currentSystemItem.exoplanetCount === 1 ? '1 exoplanète' : `${currentSystemItem.exoplanetCount} exoplanètes`"
+            :status="'Système actuel'"
             :badge="currentSystemItem.tracesFound > 0 ? currentSystemItem.tracesFound : ''"
-            :state="selectedSystemId === currentSystemItem.systemId ? 'selected' : 'idle'"
             :dismissable="false"
-            :visited="!!currentSystemItem.visitedAt"
-            :is-current="true"
+            :clickable="true"
+            :selected="selectedSystemId === currentSystemItem.systemId"
             @click="selectSystem(currentSystemItem.systemId)"
-            @dismiss="removeFromMap(currentSystemItem.systemId)"
-          />
+          >
+            <template #icon>
+              <StarSvgInline :spectral-type="currentSystemItem.spectralType" />
+            </template>
+          </AppCard>
           <div v-if="otherSystemsList.length > 0" class="carte-systems__others" :class="{ 'carte-systems__others--spaced': currentSystemItem }">
-            <CarteSystemCard
+            <AppCard
               v-for="node in otherSystemsList"
               :key="node.systemId"
-              :system-id="node.systemId"
-              :name="node.name"
-              :spectral-type="node.spectralType"
-              :exoplanet-count="node.exoplanetCount"
+              :title="node.name || node.systemId"
+              :subtitle="node.exoplanetCount === 0 ? 'Aucune exoplanète' : node.exoplanetCount === 1 ? '1 exoplanète' : `${node.exoplanetCount} exoplanètes`"
+              :status="node.visitedAt ? 'Visitée' : ''"
               :badge="node.tracesFound > 0 ? node.tracesFound : ''"
-              :state="selectedSystemId === node.systemId ? 'selected' : 'idle'"
               :dismissable="!node.visitedAt"
-              :visited="!!node.visitedAt"
-              :is-current="false"
+              :clickable="true"
+              :selected="selectedSystemId === node.systemId"
               @click="selectSystem(node.systemId)"
               @dismiss="removeFromMap(node.systemId)"
-            />
+            >
+              <template #icon>
+                <StarSvgInline :spectral-type="node.spectralType" />
+              </template>
+            </AppCard>
           </div>
         </div>
       </div>
@@ -737,38 +740,35 @@ watch(carteViewMode, (mode) => {
           <div v-if="systemBodiesForAnalyser.length > 0" class="carte-details__section">
             <div class="carte-details__section-title sw-title">Astres du système</div>
             <div class="carte-system-bodies">
-              <div
+              <AppCard
                 v-for="body in systemBodiesForAnalyser"
                 :key="body.designation || body.id"
-                class="carte-system-body"
               >
-                <div class="carte-system-body__top">
-                  <div class="carte-system-body__icon">
-                    <PlanetSvgInline :planet="body" :diameter="32" />
-                  </div>
-                  <div class="carte-system-body__info">
-                    <div class="carte-system-body__name sw-val">{{ body.name || body.designation || 'Corps' }}</div>
-                    <div class="carte-system-body__meta">
-                      <span class="carte-system-body__type">{{ planetTypeLabelForBody(body) }}</span>
-                      <span class="carte-system-body__orbit">{{ orbitPositionLabel(body) }}</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="carte-system-body__actions">
-                  <button type="button" class="btn btn-primary carte-system-body__btn" @click="analyserForBody(body)">
+                <template #icon>
+                  <PlanetSvgInline :planet="body" :diameter="32" />
+                </template>
+                <template #title>
+                  {{ body.name || body.designation || 'Corps' }}
+                </template>
+                <template #subtitle>
+                  <span>{{ planetTypeLabelForBody(body) }}</span>
+                  <span>{{ orbitPositionLabel(body) }}</span>
+                </template>
+                <template #actions>
+                  <button type="button" class="btn btn-secondary" @click="analyserForBody(body)">
                     Analyser
                   </button>
                   <button
                     type="button"
-                    class="btn btn-primary observatoire-body__add-btn"
+                    class="btn btn-secondary observatoire-body__add-btn"
                     :class="{ 'observatoire-body__add-btn--animating': isAnimatingForBody(body), 'observatoire-body__add-btn--added': isAddedForBody(body) }"
                     :disabled="isAddedForBody(body)"
                     @click="addOnlyForBody(body)"
                   >
                     {{ isAddedForBody(body) ? 'Ajouté' : 'Ajouter au laboratoire' }}
                   </button>
-                </div>
-              </div>
+                </template>
+              </AppCard>
             </div>
           </div>
 

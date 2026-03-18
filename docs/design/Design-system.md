@@ -31,9 +31,10 @@ Le design system LACUNA repose sur :
 | `--color-cyan` | `#00b4c8` | Accent principal, titres |
 | `--color-cyan-dim` | `rgba(0, 180, 200, 0.5)` | Accent atténué |
 | `--color-cyan-muted` | `#5eb8c4` | Accent discret |
-| `--color-cyan-glow` | `rgba(0, 180, 200, 0.15)` | Hover, fond léger |
+| `--color-cyan-glow` | `rgba(0, 180, 200, 0.15)` | Hover boutons / select |
 | `--color-cyan-subtle` | `rgba(0, 180, 200, 0.05)` | Hover très léger |
-| `--color-cyan-hover` | `rgba(0, 180, 200, 0.08)` | États actifs |
+| `--color-cyan-hover` | `rgba(0, 180, 200, 0.08)` | :active (clic) |
+| `--color-cyan-active` | `rgba(0, 180, 200, 0.22)` | Toggle sélectionné (.is-active) |
 | `--color-amber` | `#e8a020` | Alertes, anomalies |
 | `--color-amber-dim` | `rgba(232, 160, 32, 0.4)` | Amber atténué |
 | `--color-green` | `#40a870` | Succès, valeurs OK |
@@ -313,7 +314,7 @@ Bouton d'instrument en grille (3×N, **carrés**). Réutilisable. Utilisé par l
 | `.btn-instrument` | Bouton barre instruments |
 | `.btn-close` | Fermeture panel |
 
-**États** : `:hover`, `:disabled`, `.active` (instrument)
+**États** : `:hover`, `:active`, `:disabled`, `.is-active` (toggle sélectionné — secondary/ghost), `.active` (instrument)
 
 ---
 
