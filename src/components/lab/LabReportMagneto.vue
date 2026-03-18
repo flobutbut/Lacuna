@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as d3 from 'd3'
-import { generateMagnetoData } from '@/lib/magnetoData'
+import { formatB, generateMagnetoData } from '@/lib/magnetoData'
 import { interpolateCyanAmber } from '@/lib/labColors'
 
 const props = defineProps({
@@ -20,11 +20,6 @@ let magnetoData = null
 const mapSize = 200
 const profileHeight = 90
 const margin = { top: 8, right: 44, bottom: 24, left: 8 }
-
-function formatB(n) {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)} µT`
-  return `${Math.round(n)} nT`
-}
 
 function render() {
   if (!containerRef.value || !mapRef.value || !profileRef.value) return

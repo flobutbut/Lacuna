@@ -113,6 +113,6 @@
 .nav-menu-item--icon-green .nav-menu-item__icon { color: var(--color-green); }
 .nav-menu-item--icon-amber .nav-menu-item__icon { color: var(--color-amber); }
 .nav-menu-item--icon-signal .nav-menu-item__icon { color: var(--color-signal); }
-.nav-menu-item--icon-bumper .nav-menu-item__icon { color: #7ab0cc; }
-.nav-menu-item--icon-comms .nav-menu-item__icon { color: #4488aa; }
-.nav-menu-item--icon-nav .nav-menu-item__icon { color: #336655; }
+.nav-menu-item--icon-bumper .nav-menu-item__icon { color: var(--color-cyan-muted); }
+.nav-menu-item--icon-comms .nav-menu-item__icon { color: var(--color-cyan-muted); }
+.nav-menu-item--icon-nav .nav-menu-item__icon { color: var(--color-green); }

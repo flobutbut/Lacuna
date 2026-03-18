@@ -8,8 +8,9 @@ import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { useObservationsStore } from '@/stores/observations'
 import { useLabReportsStore } from '@/stores/labReports'
 import { useUIStore } from '@/stores/ui'
-import { OBJECT_TYPE_LABELS, COMPOSITION_LABELS } from '@/constants/objectTypes'
+import { OBJECT_TYPE_LABELS, COMPOSITION_LABELS, planetTypeLabel } from '@/constants/objectTypes'
 import { buildObservationPayload } from '@/lib/observationPayload'
+import { formatCoordinates } from '@/lib/formatUtils'
 import { formatDistanceLy, getStarClassLabel } from '@/lib/starClassification'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { toPhysicalUnits, toLuminosityAndHz } from '@/lib/systemObjectConverters'
@@ -130,13 +131,6 @@ const selectedStellar = computed(() =>
 )
 
 /** Type DB planète → libellé affichage (design system : libellés français) */
-function planetTypeLabel(obj) {
-  if (!obj?.type) return '—'
-  if (obj.type === 'MOON') return 'Lune'
-  const map = { PLANET: 'PLANETE', MINOR_BODY: 'MINEUR' }
-  return OBJECT_TYPE_LABELS[map[obj.type]] ?? obj.type
-}
-
 /** Unités physiques pour la planète sélectionnée */
 const selectedPlanetPhysics = computed(() =>
   selectedPlanet.value ? toPhysicalUnits(selectedPlanet.value) : null
@@ -156,14 +150,6 @@ const selectedStarLumHz = computed(() => {
 })
 
 /** Format coordonnées système pour affichage */
-function formatCoordinates(stellar) {
-  const c = stellar?.coordinates
-  if (!c) return '—'
-  if (typeof c === 'object' && c.ra != null && c.dec != null) return `α ${c.ra}° δ ${c.dec}°`
-  if (typeof c === 'object' && c.x != null) return `x ${c.x?.toFixed(2)} y ${c.y?.toFixed(2)} z ${c.z?.toFixed(2)}`
-  return typeof c === 'string' ? c : '—'
-}
-
 /** Nombre de planètes/lunes du système sélectionné (system_objects, sinon stellar.planets) */
 const selectedSystemPlanetCount = computed(() => {
   const id = selectedSystemId.value

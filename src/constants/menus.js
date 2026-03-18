@@ -49,3 +49,8 @@ export const TRACE_ICONS = {
   PHYSICAL_ARTIFACT: '◈',
   PLAYER_TRACE: '✦',
 }
+
+/** Type trace → icône (défaut ◈) */
+export function getTraceIcon(type) {
+  return TRACE_ICONS[type] ?? '◈'
+}

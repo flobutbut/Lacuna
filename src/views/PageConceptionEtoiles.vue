@@ -238,7 +238,7 @@ load()
           </template>
           <div v-else class="sw-row">
             <div class="sw-key">—</div>
-            <div class="sw-val" style="color: var(--color-muted)">Aucune</div>
+            <div class="sw-val text-muted">Aucune</div>
           </div>
         </div>
       </div>
@@ -317,7 +317,7 @@ load()
   left: 50%;
   transform: translateX(-50%);
   padding: var(--space-2) var(--space-4);
-  background: rgba(6, 14, 28, 0.85);
+  background: var(--color-panel);
   border: 1px solid var(--border-default);
   border-radius: var(--border-radius-md);
 }

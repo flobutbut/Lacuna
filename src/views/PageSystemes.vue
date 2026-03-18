@@ -175,7 +175,7 @@ function closeOverlay() {
       <!-- Colonne gauche : menu -->
       <div class="sys-menu-col">
         <h1 class="page-title">Systèmes</h1>
-        <div class="panel-section-title" style="margin-bottom: var(--space-6)">
+        <div class="panel-section-title mb-6">
           Tableau de bord ARCA
         </div>
         <NavMenuItem
@@ -362,7 +362,7 @@ function closeOverlay() {
                 <div class="sw-key sys-history-item__meta">GÉN. {{ h.gen }} — {{ h.date }}</div>
                 <div class="sys-history-item__event">
                   {{ h.event }}
-                  <span class="sw-val" :class="h.delta > 0 ? 'ok' : 'warn'" style="margin-left: var(--space-2)">
+                  <span class="sw-val ml-2" :class="h.delta > 0 ? 'ok' : 'warn'">
                     {{ h.delta > 0 ? '+' : '' }}{{ h.delta }} {{ h.system }}
                   </span>
                 </div>

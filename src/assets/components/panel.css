@@ -15,6 +15,30 @@
     display: block;
 }
 
+/* Position variants (replace inline styles) */
+.panel-overlay--right {
+    top: 60px;
+    right: 220px;
+}
+
+.panel-overlay--left {
+    top: 60px;
+    left: 220px;
+}
+
+.panel-overlay--center {
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Section block with top border (margin + border + padding) */
+.panel-section-wrap {
+    margin-top: var(--space-6);
+    border-top: var(--border-width) solid var(--border-default);
+    padding-top: var(--space-5);
+}
+
 /* ── Panel box ── */
 .panel-box {
     background: var(--color-panel);

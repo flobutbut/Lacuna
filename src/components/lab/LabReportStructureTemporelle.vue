@@ -6,6 +6,7 @@ import {
   computeAutocorrelation,
   seedFromObsId,
 } from '@/lib/spectrogramData'
+import { downsample } from '@/lib/arrayUtils'
 import { renderLineChart } from '@/lib/labLineChart'
 
 const props = defineProps({
@@ -22,17 +23,6 @@ const autocorrRef = ref(null)
 let resizeObserver = null
 
 const WAVEFORM_MAX_POINTS = 800
-
-function downsample(data, maxPoints) {
-  if (data.length <= maxPoints) return data
-  const step = data.length / maxPoints
-  const out = []
-  for (let i = 0; i < maxPoints; i++) {
-    const idx = Math.floor(i * step)
-    out.push(data[idx])
-  }
-  return out
-}
 
 function render() {
   if (!containerRef.value || !waveformRef.value || !autocorrRef.value) return

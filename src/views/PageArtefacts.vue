@@ -6,7 +6,7 @@ import { useSupabaseStore } from '@/stores/supabase'
 import { useTracesStore } from '@/stores/traces'
 import { useUIStore } from '@/stores/ui'
 import { formatDate } from '@/lib/formatUtils'
-import { TRACE_ICONS } from '@/constants/menus'
+import { getTraceIcon } from '@/constants/menus'
 import NavMenuItem from '@/components/NavMenuItem.vue'
 
 const supabaseStore = useSupabaseStore()
@@ -30,10 +30,6 @@ const submittingInterpretation = ref(false)
 const deletingId = ref(null)
 
 const selectedId = computed(() => selectedTrace.value?.id)
-
-function getTraceIcon(type) {
-  return TRACE_ICONS[type] ?? '◈'
-}
 
 const immutableTraces = ref([])
 
@@ -174,7 +170,7 @@ watch(artefacts, ensureSelection, { immediate: true })
       <!-- Colonne gauche : grille -->
       <div class="artifacts-grid-col">
         <h1 class="page-title">Artefacts</h1>
-        <div class="panel-section-title" style="margin-bottom: var(--space-6)">
+        <div class="panel-section-title mb-6">
           {{ artefacts.length }} trace{{ artefacts.length > 1 ? 's' : '' }} collectée{{ artefacts.length > 1 ? 's' : '' }}
         </div>
         <div class="artifact-grid">
@@ -209,7 +205,7 @@ watch(artefacts, ensureSelection, { immediate: true })
 
           <div class="artifact-interpretations">
             <div class="artifact-interpretations__title">Interprétations</div>
-            <div v-if="loadingInterpretations" class="artifact-interpretation" style="color: var(--color-muted)">
+            <div v-if="loadingInterpretations" class="artifact-interpretation text-muted">
               Chargement…
             </div>
             <div
@@ -238,7 +234,7 @@ watch(artefacts, ensureSelection, { immediate: true })
                 </button>
               </div>
             </div>
-            <div v-if="!loadingInterpretations && interpretations.length === 0" class="artifact-interpretation" style="color: var(--color-muted)">
+            <div v-if="!loadingInterpretations && interpretations.length === 0" class="artifact-interpretation text-muted">
               Aucune interprétation pour l’instant.
             </div>
 

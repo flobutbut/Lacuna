@@ -545,10 +545,10 @@ onUnmounted(() => {
 }
 .sky-loading-indicator {
   position: absolute;
-  bottom: 12px;
-  left: 12px;
-  font-size: 9px;
-  letter-spacing: 2px;
+  bottom: var(--space-6);
+  left: var(--space-6);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
   color: var(--color-muted);
   opacity: 0.4;
   font-family: var(--font-mono);

@@ -115,6 +115,15 @@ export function formatRaDec(ra, dec) {
   return `α ${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s  δ ${decSign}${decDeg}° ${String(decMin).padStart(2, '0')}′`
 }
 
+/** Coordonnées stellar (ra/dec ou x,y,z) → chaîne affichable */
+export function formatCoordinates(stellar) {
+  const c = stellar?.coordinates
+  if (!c) return '—'
+  if (typeof c === 'object' && c.ra != null && c.dec != null) return `α ${c.ra}° δ ${c.dec}°`
+  if (typeof c === 'object' && c.x != null) return `x ${c.x?.toFixed(2)} y ${c.y?.toFixed(2)} z ${c.z?.toFixed(2)}`
+  return typeof c === 'string' ? c : '—'
+}
+
 /** Nom d'observation pour un signal — aligné création (SignalModal) / recherche (store) */
 export function formatSignalObservationName(signal) {
   if (!signal) return ''

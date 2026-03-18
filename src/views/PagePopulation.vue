@@ -94,7 +94,7 @@ fetchPopulation()
       <!-- Colonne gauche : menu -->
       <div class="pop-menu-col">
         <h1 class="page-title">Population</h1>
-        <div class="panel-section-title" style="margin-bottom: var(--space-6)">
+        <div class="panel-section-title mb-6">
           Mémoire de la civilisation embarquée
         </div>
         <NavMenuItem

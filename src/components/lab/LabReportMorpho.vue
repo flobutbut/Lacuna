@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as d3 from 'd3'
-import { generateMorphoData } from '@/lib/morphoData'
+import { generateMorphoData, getShapePath } from '@/lib/morphoData'
 import { interpolateCyanAmber } from '@/lib/labColors'
 
 const props = defineProps({
@@ -21,30 +21,6 @@ const shapeSize = 180
 const thermalSize = 200
 const margin = { top: 8, right: 44, bottom: 24, left: 8 }
 
-function getShapePath(shape) {
-  const cx = shapeSize / 2
-  const cy = shapeSize / 2
-  const r = Math.min(cx, cy) - 8
-  if (shape.type === 'elongated' || shape.type === 'irregular') {
-    const ratio = shape.aspectRatio
-    const rx = r
-    const ry = Math.max(4, r / ratio)
-    return `M ${cx - rx},${cy} A ${rx},${ry} 0 0 1 ${cx + rx},${cy} A ${rx},${ry} 0 0 1 ${cx - rx},${cy} Z`
-  }
-  if (shape.type === 'faceted') {
-    const n = shape.facets || 6
-    const points = []
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2 - Math.PI / 2
-      points.push(`${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`)
-    }
-    return `M ${points.join(' L ')} Z`
-  }
-  const rx = r * (0.9 + (shape.aspectRatio - 1) * 0.3)
-  const ry = r * 1.1
-  return `M ${cx - rx},${cy} A ${rx},${ry} 0 0 1 ${cx + rx},${cy} A ${rx},${ry} 0 0 1 ${cx - rx},${cy} Z`
-}
-
 function render() {
   if (!containerRef.value || !shapeRef.value || !thermalRef.value) return
 
@@ -61,6 +37,9 @@ function render() {
 
   const colorScale = d3.scaleSequential((t) => interpolateCyanAmber(t)).domain([min, max])
 
+  const fillCyanSubtle = getComputedStyle(document.documentElement).getPropertyValue('--color-cyan-subtle').trim() || 'rgba(0,180,200,0.05)'
+  const fontSizeXs = getComputedStyle(document.documentElement).getPropertyValue('--text-xs').trim() || '9px'
+
   // ── Modèle de forme (silhouette) ──
   d3.select(shapeRef.value).selectAll('*').remove()
   const shapeSvg = d3
@@ -73,8 +52,8 @@ function render() {
 
   gShape
     .append('path')
-    .attr('d', getShapePath(shape))
-    .attr('fill', 'rgba(0,180,200,0.15)')
+    .attr('d', getShapePath(shape, shapeSize))
+    .attr('fill', fillCyanSubtle)
     .attr('stroke', 'var(--color-cyan)')
     .attr('stroke-width', 1.5)
 
@@ -82,7 +61,7 @@ function render() {
     .append('text')
     .attr('x', margin.left + 8)
     .attr('y', margin.top + 14)
-    .attr('font-size', '9px')
+    .attr('font-size', fontSizeXs)
     .attr('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text(`L/l ≈ ${params.elongation} · ${params.symetrie}`)
@@ -142,7 +121,7 @@ function render() {
     .append('text')
     .attr('x', legendX)
     .attr('y', legendY - 2)
-    .attr('font-size', '9px')
+    .attr('font-size', fontSizeXs)
     .attr('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text(`${Math.round(min)} K`)
@@ -152,7 +131,7 @@ function render() {
     .attr('x', legendX + legendWidth)
     .attr('y', legendY - 2)
     .attr('text-anchor', 'end')
-    .attr('font-size', '9px')
+    .attr('font-size', fontSizeXs)
     .attr('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text(`${Math.round(max)} K`)

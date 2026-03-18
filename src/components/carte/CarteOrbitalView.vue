@@ -624,7 +624,7 @@ onBeforeUnmount(() => {
 }
 
 .carte-orbital__hz-band {
-  fill: rgba(0, 180, 200, 0.12);
+  fill: var(--color-cyan-subtle);
 }
 
 .carte-orbital__body-img {

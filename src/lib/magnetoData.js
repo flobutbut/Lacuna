@@ -120,3 +120,9 @@ export function generateMagnetoData(opts = {}) {
     params: { dipoleTilt: Math.round(dipoleTilt), Bmax: Math.round(max) },
   }
 }
+
+/** Champ magnétique (nT) → chaîne affichable "X nT" ou "X.X µT" */
+export function formatB(n) {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)} µT`
+  return `${Math.round(n)} nT`
+}

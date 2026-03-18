@@ -683,7 +683,7 @@ onBeforeUnmount(() => {
   vector-effect: non-scaling-stroke;
 }
 .system-view__hz-band {
-  fill: rgba(0, 180, 200, 0.12);
+  fill: var(--color-cyan-subtle);
 }
 .system-view__orbit--planet {
   stroke: var(--color-muted);
@@ -775,7 +775,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-1);
 }
 .system-view__planet-center {
   position: relative;
@@ -829,15 +829,15 @@ onBeforeUnmount(() => {
 }
 .system-view__scale-mark {
   width: 1px;
-  height: 8px;
+  height: var(--space-4);
   background: var(--color-muted);
   opacity: 0.7;
 }
 .system-view__scale-label {
-  font-size: 10px;
+  font-size: var(--text-sm);
   color: var(--color-muted);
   font-family: var(--font-mono);
-  margin-top: 2px;
+  margin-top: var(--space-1);
   white-space: nowrap;
 }
 .system-view__grid {

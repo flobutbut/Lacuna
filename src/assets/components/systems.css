@@ -29,7 +29,7 @@
 .sys-blueprint-header {
   flex-shrink: 0;
   padding: var(--space-5) var(--space-8);
-  background-color: #04080f;
+  background-color: var(--color-bg);
   border-bottom: var(--border-width) solid var(--border-default);
   text-align: center;
 }
@@ -61,7 +61,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #04080f;
+  background-color: var(--color-bg);
   background-image:
     linear-gradient(to right, rgba(21, 42, 80, 0.3) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(21, 42, 80, 0.3) 1px, transparent 1px);
@@ -85,7 +85,7 @@
 .sys-blueprint-footer {
   flex-shrink: 0;
   padding: var(--space-5) var(--space-8);
-  background-color: #04080f;
+  background-color: var(--color-bg);
   border-top: var(--border-width) solid var(--border-default);
 }
 

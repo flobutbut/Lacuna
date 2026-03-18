@@ -89,3 +89,33 @@ export function generateMorphoData(opts = {}) {
     params,
   }
 }
+
+/**
+ * Objet shape (type, aspectRatio, facets) → attribut d d'un path SVG.
+ * @param {object} shape - { type: 'elongated'|'irregular'|'faceted'|'spheroid', aspectRatio: number, facets?: number }
+ * @param {number} [shapeSize=180] - Taille du canvas en px
+ * @returns {string}
+ */
+export function getShapePath(shape, shapeSize = 180) {
+  const cx = shapeSize / 2
+  const cy = shapeSize / 2
+  const r = Math.min(cx, cy) - 8
+  if (shape.type === 'elongated' || shape.type === 'irregular') {
+    const ratio = shape.aspectRatio
+    const rx = r
+    const ry = Math.max(4, r / ratio)
+    return `M ${cx - rx},${cy} A ${rx},${ry} 0 0 1 ${cx + rx},${cy} A ${rx},${ry} 0 0 1 ${cx - rx},${cy} Z`
+  }
+  if (shape.type === 'faceted') {
+    const n = shape.facets || 6
+    const points = []
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 - Math.PI / 2
+      points.push(`${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`)
+    }
+    return `M ${points.join(' L ')} Z`
+  }
+  const rx = r * (0.9 + (shape.aspectRatio - 1) * 0.3)
+  const ry = r * 1.1
+  return `M ${cx - rx},${cy} A ${rx},${ry} 0 0 1 ${cx + rx},${cy} A ${rx},${ry} 0 0 1 ${cx - rx},${cy} Z`
+}

@@ -41,6 +41,19 @@
     color: var(--color-red);
 }
 
+/* ── Spacing (margin) ── */
+.mb-4 {
+    margin-bottom: var(--space-4);
+}
+
+.mb-6 {
+    margin-bottom: var(--space-6);
+}
+
+.ml-2 {
+    margin-left: var(--space-2);
+}
+
 /* ── Typographie ── */
 .font-mono {
     font-family: var(--font-mono);

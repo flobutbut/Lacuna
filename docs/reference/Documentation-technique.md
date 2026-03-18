@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-15 15:11*
+*Dernière modification : 2026-03-18 (corrections suite AUDIT_doc_technique.md)*
 
 # LACUNA — Documentation technique
 
@@ -42,7 +42,15 @@ Lacuna/
 │   │   ├── stellarSystems.js # Systèmes stellaires (ciel Observatoire)
 │   │   ├── systemObjects.js  # Objets des systèmes (étoiles, planètes, disques)
 │   │   ├── ship.js           # Vaisseau (ARCA, current_system_id, systems, fuel)
-│   │   └── counter.js       # Store exemple
+│   │   ├── observations.js  # File d'observations Laboratoire (persisté Supabase ou mémoire)
+│   │   ├── ui.js            # Panels, notifications, tooltip, étoile/corps sélectionné, réticule
+│   │   ├── mapNodes.js      # Nœuds et arêtes carte (map_nodes, map_edges)
+│   │   ├── signaux.js       # Signaux captés (récepteur Observatoire), table signals
+│   │   ├── labReports.js    # Rapports d'analyse Laboratoire (lab_reports)
+│   │   ├── nebulas.js       # Nébuleuses (nuages IR)
+│   │   ├── drake.js         # Équation de Drake (drake_equation)
+│   │   ├── traces.js        # Traces joueur (complément traces immuables, Artefacts)
+│   │   └── counter.js       # Store exemple (code mort — non importé)
 │   ├── components/          # Composants Vue
 │   │   ├── AppHeader.vue
 │   │   ├── SkyCanvas.vue
@@ -64,22 +72,32 @@ Lacuna/
 │   │   │   ├── LabReportGravimetrique.vue     # Modèle sources + résidus (gravimétrique)
 │   │   │   ├── LabReportSpectreStellaire.vue  # Spectre + courbe de lumière
 │   │   │   ├── LabReportOrbital.vue           # Diagramme orbital + paramètres (a, e, i, P)
-│   │   │   └── LabReportAtmosphere.vue        # Profil moléculaire (spectromètre atmosphérique)
+│   │   │   ├── LabReportAtmosphere.vue        # Profil moléculaire (spectromètre atmosphérique)
+│   │   │   ├── LabReportMagneto.vue          # Champ magnétique (magnétomètre)
+│   │   │   ├── LabReportMorpho.vue           # Scanner morphologique (formes)
+│   │   │   └── LabReportVolumetrique.vue     # Analyse volumétrique
 │   │   └── panels/          # (legacy — contenu migré vers views/)
 │   ├── composables/         # Logique réutilisable (Vue)
+│   │   ├── useCameraFocusAnimation.js  # Animation caméra/OrbitControls vers position cible — Stars3DCanvas, CarteMap3D
+│   │   ├── useCarteMapPanZoom.js       # Pan/zoom carte (viewBox, positions, système sélectionné)
+│   │   ├── useCarteMapProjection.js    # Projection noeuds carte (positions écran depuis stellarBySystemId)
 │   │   ├── useSkyStars.js   # Construction liste étoiles (DB / fallback) — Observatoire, projection x/y/z → ra/dec
 │   │   ├── useStars3DConception.js  # Vue 3D conception — barycentre, points 3D
 │   │   ├── useStellarSearch.js      # Recherche systèmes/constellations/signaux — Observatoire + Vue 3D conception
+│   │   ├── useStarHighlight.js     # Sprite highlight étoile (taille, scale) — Observatoire 3D
 │   │   ├── useStarTooltipData.js    # Données tooltip étoile (distance, exoplanètes, etc.) — StarTooltip
 │   │   ├── useStarSelection.js     # Sélection étoile (recherche + clic) — Observatoire et Vue 3D
-│   │   └── useStoreReady.js # ensureStoresLoaded() — chargement stores au montage
+│   │   ├── useStarSvgTexture.js    # Texture SVG par type spectral — Carte 3D
+│   │   ├── useStoreReady.js # ensureStoresLoaded() — chargement stores au montage
+│   │   └── useViewerSystemPolicy.js # Système courant (viewer) + exclusion ciel/recherche selon contexte (observatoire vs conception3d)
 │   ├── constants/           # Constantes partagées
 │   │   ├── objectTypes.js   # OBJECT_TYPE_LABELS (affichage Observatoire, Laboratoire)
 │   │   ├── starDisplay.js   # Couleurs highlight (HIGHLIGHT_CYAN_*, HIGHLIGHT_3D_SIZE_MULT) — design system
 │   │   └── menus.js         # SYSTEMS_MENU_ITEMS, POPULATION_MENU_ITEMS, INSTRUMENTS, TRACE_ICONS
 │   ├── lib/
 │   │   ├── supabase.js      # Client Supabase
-│   │   ├── formatUtils.js   # Formatage (barWidth, formatDate, formatRelativeTime, barClass, valClass, formatRaDec)
+│   │   ├── formatUtils.js   # Formatage (barWidth, formatDate, formatNumber, formatRelativeTime, barClass, valClass, formatRaDec, formatSignalObservationName)
+│   │   ├── observationPayload.js  # Payload observation (buildObservationPayload, getBodyDisplayName, getStarOnlyBody, signalToObsPayload) — ObservatoirePanel, PageCarte, SignalModal
 │   │   ├── astroConstants.js   # Constantes astronomiques (R⊕, M⊕, UA, R☉/R⊕, etc.)
 │   │   ├── systemObjectConverters.js  # Conversion DB → physiques (km, kg) / visuels (px) — couche unique sortie base
 │   │   ├── bodyRadius.js    # Rayon en R⊕ (depuis mass_earth / mass_stellar)
@@ -102,7 +120,7 @@ Lacuna/
 │   ├── router/
 │   │   └── index.js         # Routes Vue Router
 │   └── assets/
-│       ├── main.css         # Styles globaux
+│       ├── main.css         # Convention uniquement (non importé ; styles réels : tokens, base, etc.)
 │       ├── tokens.css       # Design tokens (couleurs, typo, espacements)
 │       ├── base.css
 │       ├── layers.css
@@ -111,8 +129,7 @@ Lacuna/
 │       └── components/      # CSS modulaires (artifact, bar, journal, panel...)
 ├── supabase/
 │   ├── config.toml          # Config Supabase CLI
-│   ├── migrations/
-│   │   └── 00001_initial_schema.sql
+│   ├── migrations/          # Nombreux fichiers (*.sql, 00001 à 00031…), liste à jour dans Documentation-backend.md
 │   └── seed.sql             # Données initiales (traces immuables + systèmes prototype)
 ├── docs/
 │   ├── reference/           # Documentation principale
@@ -174,12 +191,15 @@ Résumé : Supabase (PostgreSQL). Tables principales : `stellar_systems`, `syste
 
 **Documentation complète** : `docs/design/Design-system.md` — tokens, composants (AppModal, ModalCell, NavMenuItem, NavTabButton, InstrumentButton), utilitaires (sw-row, sw-key, sw-val), règles d'usage.
 
-**Règle impérative :** Tous les fichiers CSS sont importés **directement dans `main.js`**. Ne jamais utiliser `@import` dans un fichier CSS pour importer d'autres CSS — Vite ignore les changements et le HMR ne fonctionne pas.
+**Règle impérative :** Tous les fichiers CSS **utilisés par l'app** sont importés directement dans `main.js`. Le fichier `main.css` (s'il existe) est une référence de convention uniquement et n'est pas chargé. Ne jamais utiliser `@import` dans un fichier CSS pour importer d'autres **fichiers CSS locaux** — Vite ignore les changements et le HMR ne fonctionne pas. Les `@import` vers des URLs externes (ex. polices Google dans `base.css`) sont admis.
 
 | Fichier | Rôle |
 |---------|------|
 | `tokens.css` | Variables `:root` (couleurs, typo, espacements, layout) |
 | `base.css` | Reset, fonts, styles de base |
+| `animations.css` | Animations keyframes |
+| `layers.css` | Z-index / couches |
+| `utilities.css` | Classes utilitaires (marges, couleurs texte, etc.) |
 | `app-modal.css` | AppModal, ModalCell |
 | `components/*.css` | Styles par composant (widget, panel, header, etc.) |
 

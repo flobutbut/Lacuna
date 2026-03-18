@@ -5,7 +5,7 @@ import { useUIStore } from '@/stores/ui'
 import { useObservationsStore } from '@/stores/observations'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
-import { buildObservationPayload } from '@/lib/observationPayload'
+import { buildObservationPayload, getBodyDisplayName as getBodyDisplayNameFromLib, getStarOnlyBody } from '@/lib/observationPayload'
 import AppModal from '@/components/AppModal.vue'
 import ModalCell from '@/components/ModalCell.vue'
 
@@ -14,17 +14,9 @@ const ui = useUIStore()
 const obsStore = useObservationsStore()
 const systemObjectsStore = useSystemObjectsStore()
 
-/** Nom d'affichage : nom propre prioritaire, sinon système + désignation */
+/** Nom d'affichage — délègue à lib/observationPayload */
 function getBodyDisplayName(body) {
-  const sysName = ui.selectedStar?.name ?? ''
-  const fallback = body.designation ? `${sysName} ${body.designation}` : sysName || '—'
-  return body.name || fallback
-}
-
-/** Corps synthétique pour l'étoile seule — utilisé quand le système n'a pas d'objets en base */
-function getStarOnlyBody(star) {
-  if (!star) return []
-  return [{ id: 'star', name: star.name, type: 'ETOILE', anomaly: star.isAnomaly ? 78 : 8 }]
+  return getBodyDisplayNameFromLib(body, ui.selectedStar?.name ?? '')
 }
 
 const bodies = computed(() => {
@@ -34,7 +26,14 @@ const bodies = computed(() => {
   const systemId = star.id
   const dbObjects = systemId ? systemObjectsStore.getForSystem(systemId) : []
   if (dbObjects.length > 0) {
-    return dbObjects.map((obj) => systemObjectsStore.toBodyFormat(obj, star.name))
+    const formatted = dbObjects.map((obj) => systemObjectsStore.toBodyFormat(obj, star.name))
+    // Déduplication par id (évite exoplanètes en double si la source renvoie des doublons)
+    const seen = new Set()
+    return formatted.filter((b) => {
+      if (seen.has(b.id)) return false
+      seen.add(b.id)
+      return true
+    })
   }
   return getStarOnlyBody(star)
 })

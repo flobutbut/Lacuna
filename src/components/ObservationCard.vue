@@ -106,7 +106,7 @@ function onDismiss(e) {
 
 .observation-card--state-highlight {
   border-color: var(--color-amber);
-  box-shadow: 0 0 0 1px rgba(232, 160, 32, 0.4);
+  box-shadow: 0 0 0 1px var(--color-amber-dim);
 }
 
 .observation-card__dismiss {

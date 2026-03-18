@@ -6,31 +6,12 @@ import { useObservationsStore } from '@/stores/observations'
 import AppModal from '@/components/AppModal.vue'
 import Divider from '@/components/Divider.vue'
 import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
-import { formatSignalObservationName } from '@/lib/formatUtils'
+import { signalToObsPayload } from '@/lib/observationPayload'
 
 const router = useRouter()
 const ui = useUIStore()
 const signauxStore = useSignauxStore()
 const obsStore = useObservationsStore()
-
-function signalToObsPayload(s) {
-  if (!s) return null
-  const name = formatSignalObservationName(s)
-  return {
-    name,
-    type: 'SIGNAL',
-    support: s.support ?? 'EM_RADIO',
-    structure: s.structure ?? 'non uniforme',
-    system: '—',
-    system_id: null,
-    distance: s.distanceEst ?? '—',
-    coords: '—',
-    date: s.receivedAt,
-    niveau: obsStore.NIVEAUX.PASSIF,
-    durationSec: s.durationSec ?? 72,
-    anomalous: s.anomalous ?? false,
-  }
-}
 
 function close() {
   ui.closeSignalModal()
@@ -45,7 +26,7 @@ async function analyser() {
     router.push({ path: '/laboratoire', query: { select: existing.id } })
     return
   }
-  const payload = signalToObsPayload(s)
+  const payload = signalToObsPayload(s, obsStore.NIVEAUX)
   if (!payload) return
   const obsId = await obsStore.addObservation(payload)
   signauxStore.removeSignal(s.id)
@@ -57,7 +38,7 @@ async function analyser() {
 async function ajouterAuLabo() {
   const s = ui.selectedSignal
   if (!s || obsStore.findObservationForSignal(s)) return
-  const payload = signalToObsPayload(s)
+  const payload = signalToObsPayload(s, obsStore.NIVEAUX)
   if (!payload) return
   await obsStore.addObservation(payload)
   signauxStore.removeSignal(s.id)

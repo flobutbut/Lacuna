@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-13 15:11*
+*Dernière modification : 2026-03-18*
 
 # LACUNA — Design System
 
@@ -417,6 +417,21 @@ Liste déroulante native stylée avec les tokens du design system (couleurs, bor
 
 ---
 
+### 3.15 Classes utilitaires (utilities.css)
+
+Fichier : `src/assets/utilities.css` — classes réutilisables (marges, couleurs texte, typo). À privilégier pour éviter les styles inline.
+
+| Classe | Usage |
+|--------|-------|
+| `.text-muted`, `.text-cyan`, `.text-amber`, `.text-green`, `.text-red`, `.text-white` | Couleur de texte |
+| `.text-ok`, `.text-warn`, `.text-crit` | Statuts sémantiques (vert, ambre, rouge) |
+| `.mb-4`, `.mb-6`, `.ml-2` | Marges (var(--space-*)) |
+| `.font-mono`, `.text-upper`, `.text-xs` … `.text-4xl` | Typographie |
+| `.gap-1` … `.gap-10` | Gap flex/grid |
+| `.flex`, `.flex-col`, `.flex-center`, `.items-center` | Flexbox |
+
+---
+
 ## 4. Règles d'usage
 
 ### 4.1 Modales
@@ -456,7 +471,7 @@ Liste déroulante native stylée avec les tokens du design system (couleurs, bor
 
 ### 4.5 CSS
 
-- **Import** : Tous les CSS dans `main.js` (pas de `@import` dans les fichiers CSS — HMR cassé)
+- **Import** : Tous les fichiers CSS **utilisés par l'app** sont importés dans `main.js`. Le fichier `main.css` (s'il existe) est une référence de convention uniquement et n'est pas chargé. Ne pas utiliser `@import` vers d'**autres fichiers CSS locaux** (HMR cassé). Les `@import` vers des URLs externes (ex. polices dans `base.css`) sont admis.
 - **Nouveau fichier** : L'ajouter dans `main.js`
 - **Tokens** : Toujours utiliser les variables, jamais de valeurs en dur
 
@@ -468,6 +483,9 @@ Liste déroulante native stylée avec les tokens du design system (couleurs, bor
 |---------|------|
 | `tokens.css` | Variables `:root` |
 | `base.css` | Reset, fonts, scrollbar |
+| `animations.css` | Animations keyframes |
+| `layers.css` | Z-index / couches |
+| `utilities.css` | Classes utilitaires (marges, couleurs texte, typo) |
 | `app-modal.css` | AppModal, ModalCell |
 | `divider.css` | Divider |
 | `nav-menu-item.css` | NavMenuItem (menu, slot) |
@@ -479,7 +497,7 @@ Liste déroulante native stylée avec les tokens du design system (couleurs, bor
 | `observatoire.css` | Sections modales, signal-modal, observatoire-body |
 | `notification.css` | Toast, travel-widget content |
 | `bar.css` | Barres de progression |
-| `panel.css` | Panels génériques |
+| `panel.css` | Panels génériques ; variantes de positionnement (.panel-overlay--right, --left, --center) ; .panel-section-wrap |
 
 ---
 

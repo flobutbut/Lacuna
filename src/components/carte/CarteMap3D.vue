@@ -179,7 +179,7 @@ function buildPointsMesh() {
     const material = new THREE.PointsMaterial({
       size: STAR_SPRITE_BASE_SIZE,
       map: circleTexture,
-      color: 0xffffff,
+      color: getComputedStyle(document.documentElement).getPropertyValue('--color-white').trim() || '#e2eaef',
       sizeAttenuation: true,
       transparent: true,
       opacity: 0.95,
@@ -240,7 +240,8 @@ function initThree() {
   const width = containerRef.value.clientWidth
   const height = containerRef.value.clientHeight
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x03060d)
+  const bgHex = getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim() || '#03060d'
+  scene.background = new THREE.Color(bgHex)
   camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 10000)
   camera.position.set(
     BASE_CAMERA_DISTANCE,

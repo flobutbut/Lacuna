@@ -18,7 +18,7 @@ const ui = useUIStore()
         <button type="button" class="panel-close btn-close" @click="ui.closePanel(id)">✕</button>
       </div>
       <div class="panel-body">
-        <p class="panel-section-title" style="color: var(--color-muted)">
+        <p class="panel-section-title text-muted">
           Module en cours de développement.
         </p>
       </div>

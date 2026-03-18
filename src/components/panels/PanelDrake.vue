@@ -17,9 +17,8 @@ const terms = [
 
 <template>
   <div
-    class="panel-overlay"
+    class="panel-overlay panel-overlay--center"
     :class="{ open: ui.activePanel === 'drake' }"
-    style="top: 60px; left: 50%; transform: translateX(-50%)"
   >
     <div class="panel-box panel-box--lg">
       <div class="panel-header">

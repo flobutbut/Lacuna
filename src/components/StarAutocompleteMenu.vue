@@ -47,12 +47,12 @@ const hasItems = computed(() => Array.isArray(props.items) && props.items.length
 <style scoped>
 .star-ac-menu {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + var(--space-3));
   left: 0;
   right: 0;
   background: rgba(3, 6, 13, 0.98);
   border: var(--border-width) solid var(--border-default);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 var(--space-6) 30px rgba(0, 0, 0, 0.35);
   max-height: 320px;
   overflow: auto;
   z-index: 10;
@@ -99,7 +99,7 @@ const hasItems = computed(() => Array.isArray(props.items) && props.items.length
   line-height: 1.1;
 }
 .star-ac-menu__meta {
-  margin-top: 2px;
+  margin-top: var(--space-1);
   font-size: var(--text-xs);
   color: var(--color-muted);
   display: flex;

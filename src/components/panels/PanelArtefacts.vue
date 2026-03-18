@@ -15,17 +15,14 @@ function onArtefactClick(notif) {
 </script>
 
 <template>
-  <div class="panel-overlay" :class="{ open: ui.activePanel === 'art' }" style="top: 60px; right: 220px">
+  <div class="panel-overlay panel-overlay--right" :class="{ open: ui.activePanel === 'art' }">
     <div class="panel-box">
       <div class="panel-header">
         <div class="panel-title">Collection d'Artefacts</div>
         <button type="button" class="panel-close btn-close" @click="ui.closePanel('art')">✕</button>
       </div>
       <div class="panel-body">
-        <div
-          class="panel-section-title"
-          style="margin-bottom: 12px"
-        >
+        <div class="panel-section-title mb-6">
           3 artefacts collectés — 2 non interprétés
         </div>
         <div class="artifact-grid">

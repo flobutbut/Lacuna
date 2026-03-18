@@ -26,7 +26,7 @@ const entries = [
 </script>
 
 <template>
-  <div class="panel-overlay" :class="{ open: ui.activePanel === 'log' }" style="top: 60px; left: 220px">
+  <div class="panel-overlay panel-overlay--left" :class="{ open: ui.activePanel === 'log' }">
     <div class="panel-box">
       <div class="panel-header">
         <div class="panel-title">Journal de Bord</div>

@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-15 15:11*
+*Dernière modification : 2026-03-18*
 
 # LACUNA — Documentation fonctionnelle
 
@@ -68,19 +68,20 @@ Observer le ciel → Sélectionner un système → Analyser (optionnel)
 - **Ciel** : Interface principale (étoiles, hover, clic)
 - **Indicateurs gauche** : Systèmes vaisseau (propulsion, carburant, coque...)
 - **Indicateurs droite** : Population, dernière trace
-- **Barre instruments** : 8 modules (Observatoire, Carte, Artefacts, Laboratoire, Journal, Drake, Population, Systèmes)
+- **Barre instruments** : 9 modules (Observatoire, Carte, Laboratoire, Artefacts, Journal, Drake, Population, Systèmes, Vue 3D étoiles)
 
-### Modules (panels overlay)
+### Modules (contenu par route / page)
 | Module | Contenu |
 |--------|---------|
 | Observatoire | Détail système, traces, scan, fixer cap |
 | Carte | Systèmes visités, routes parcourues |
-| Artefacts | Grille traces collectées |
 | Laboratoire | Analyse données brutes |
+| Artefacts | Grille traces collectées |
 | Journal | Fil chronologique, écriture |
 | Drake | Termes, historique N |
 | Population | État civilisation |
 | Systèmes | État technique vaisseau |
+| Conception étoiles | Vue 3D étoiles (conception) |
 
 ---
 

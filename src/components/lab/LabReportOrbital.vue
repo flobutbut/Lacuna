@@ -219,7 +219,7 @@ watch(
   padding: var(--space-1) var(--space-2);
   text-align: left;
   border-bottom: 1px solid var(--color-muted);
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-ghost);
 }
 .lab-orbital__table th {
   color: var(--color-white);

@@ -12,6 +12,7 @@ import { loadStarSvgTextureForSpectralType } from '@/composables/useStarSvgTextu
 import { getSpectralLetter } from '@/lib/starClassification'
 import {
   COLOR_GREEN_BRIGHT_HEX,
+  HIGHLIGHT_CYAN_HEX,
   STAR_SPRITE_BASE_SIZE,
   STAR_SPRITE_MIN_PIXELS,
 } from '@/constants/starDisplay'
@@ -71,7 +72,8 @@ function initThree() {
   const height = containerRef.value.clientHeight
 
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x03060d)
+  const bgHex = getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim() || '#03060d'
+  scene.background = new THREE.Color(bgHex)
 
   camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 10000)
   camera.position.set(BASE_CAMERA_DISTANCE, BASE_CAMERA_DISTANCE * 0.5, BASE_CAMERA_DISTANCE)

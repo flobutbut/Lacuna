@@ -4,6 +4,7 @@
  * Trigger + liste déroulante custom stylée avec les tokens du design system.
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { getValue as getOptionValue, getLabel as getOptionLabel } from '@/lib/optionUtils'
 
 const props = defineProps({
   /** Valeur sélectionnée (v-model) */
@@ -36,16 +37,8 @@ const selectedOption = computed(() =>
   props.options.find((o) => (o[props.valueKey] ?? o) === props.modelValue)
 )
 const selectedLabel = computed(() =>
-  selectedOption.value ? (selectedOption.value[props.labelKey] ?? selectedOption.value) : ''
+  selectedOption.value ? getOptionLabel(selectedOption.value, props.labelKey) : ''
 )
-
-function getValue(opt) {
-  return opt[props.valueKey] ?? opt
-}
-
-function getLabel(opt) {
-  return opt[props.labelKey] ?? opt
-}
 
 function open() {
   if (props.disabled) return
@@ -67,7 +60,7 @@ function toggle() {
 }
 
 function select(opt) {
-  emit('update:modelValue', getValue(opt))
+  emit('update:modelValue', getOptionValue(opt, props.valueKey))
   close()
 }
 
@@ -115,16 +108,16 @@ onUnmounted(() => {
       >
         <button
           v-for="opt in options"
-          :key="getValue(opt)"
+          :key="getOptionValue(opt, valueKey)"
           type="button"
           role="option"
-          :aria-selected="getValue(opt) === modelValue"
+          :aria-selected="getOptionValue(opt, valueKey) === modelValue"
           :title="opt.title"
           class="ds-select-option"
-          :class="{ 'ds-select-option--selected': getValue(opt) === modelValue }"
+          :class="{ 'ds-select-option--selected': getOptionValue(opt, valueKey) === modelValue }"
           @click="select(opt)"
         >
-          {{ getLabel(opt) }}
+          {{ getOptionLabel(opt, labelKey) }}
         </button>
       </div>
     </Transition>

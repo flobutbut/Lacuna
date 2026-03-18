@@ -36,17 +36,17 @@ function resetToOrigin() {
   transform: translateX(-50%);
   z-index: 20;
   pointer-events: auto;
-  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  font-family: var(--font-mono);
   font-size: 12px;
   color: rgba(204, 221, 232, 0.75);
   letter-spacing: 0.04em;
   background: none;
   border: none;
-  padding: 6px 12px;
+  padding: var(--space-3) var(--space-6);
   cursor: pointer;
   transition: color 0.2s;
 }
 .observatoire-azimuth:hover {
-  color: rgba(204, 221, 232, 1);
+  color: var(--color-white);
 }
 </style>

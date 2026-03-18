@@ -167,7 +167,7 @@ function onDismiss(e) {
 }
 
 .carte-system-card__main {
-  padding-right: 4px;
+  padding-right: var(--space-2);
   min-width: 0;
 }
 
