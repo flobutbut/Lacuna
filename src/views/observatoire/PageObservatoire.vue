@@ -1,7 +1,14 @@
 <script setup>
-import { computed, onMounted, onUnmounted, provide } from 'vue'
+import { computed, onMounted, onUnmounted, provide, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { useUIStore } from '@/stores/ui'
+import { useShipStore } from '@/stores/ship'
+import { useSignauxStore } from '@/stores/signaux'
+import { supabase } from '@/lib/supabase'
+import { ensureStoresLoaded } from '@/composables/useStoreReady'
+import { useGalacticPosition } from '@/composables/useGalacticPosition'
+import { useRadarNoise } from '@/composables/useRadarNoise'
 import { useRadarSpectrogram } from '@/composables/useRadarSpectrogram'
 import SkyCanvas from '@/components/SkyCanvas.vue'
 import RadarView from './RadarView.vue'
@@ -21,10 +28,25 @@ import ConstellationTooltip from '@/components/ConstellationTooltip.vue'
 
 const route = useRoute()
 const ui = useUIStore()
+const shipStore = useShipStore()
+const signauxStore = useSignauxStore()
+const { radarPaused, radarFrequencyBand } = storeToRefs(ui)
+const { activePulsarSignals } = storeToRefs(signauxStore)
 const isSkyMode = computed(() => ui.observatoireViewMode === 'sky')
 const isRadarMode = computed(() => ui.observatoireViewMode === 'radar')
 
-const radarSpectrogram = useRadarSpectrogram()
+const { galacticLatitude } = useGalacticPosition()
+
+const { getNoiseSample } = useRadarNoise(
+  radarFrequencyBand,
+  galacticLatitude,
+  activePulsarSignals
+)
+
+const radarSpectrogram = useRadarSpectrogram(
+  radarPaused,
+  getNoiseSample
+)
 provide('radarSpectrogram', radarSpectrogram)
 
 function onKeydown(e) {
@@ -35,9 +57,38 @@ function onKeydown(e) {
   ui.toggleObservatoireTiles()
 }
 
-onMounted(() => {
+async function callComputePulsarSignals() {
+  const shipId = shipStore.ship?.id
+  const sessionId = signauxStore.sessionId
+  const band = ui.radarFrequencyBand ?? 'L'
+  if (!shipId || !sessionId) return
+
+  const { data, error } = await supabase.rpc(
+    'compute_pulsar_signals',
+    {
+      p_ship_id: shipId,
+      p_band: band,
+      p_session_id: sessionId,
+    }
+  )
+  if (error) {
+    console.warn('[radar] compute_pulsar_signals:', error.message)
+    return
+  }
+  if (data?.inserted > 0) {
+    await signauxStore.fetch()
+  }
+}
+
+onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
   radarSpectrogram.start()
+  await ensureStoresLoaded(signauxStore, shipStore)
+  await callComputePulsarSignals()
+})
+
+watch(radarFrequencyBand, () => {
+  callComputePulsarSignals()
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
@@ -48,7 +99,7 @@ onUnmounted(() => {
 <template>
   <div class="page-observatoire">
     <SkyCanvas v-show="isSkyMode" />
-    <RadarView v-if="isRadarMode" />
+    <RadarView v-show="isRadarMode" />
     <SystemView v-show="!isSkyMode && !isRadarMode" />
     <div v-if="!isSkyMode && !isRadarMode" class="vignette" />
     <div v-if="!isSkyMode && !isRadarMode" class="scanlines" />

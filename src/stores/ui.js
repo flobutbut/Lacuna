@@ -49,8 +49,8 @@ export const useUIStore = defineStore('ui', () => {
   const observatoireViewMode = ref('sky')
   /** Tuiles latérales (SideLeft, SideRight) en vue ciel profond — raccourci [@] pour masquer */
   const observatoireTilesVisible = ref(true)
-  /** Bande de fréquences Radar : '408' | '1420' | etc. */
-  const radarFrequencyBand = ref('1420')
+  /** Bande de fréquences Radar : 'P' | 'L' | 'X' | 'G' */
+  const radarFrequencyBand = ref('L')
   /** Radar en pause (n'acquiert plus de données) */
   const radarPaused = ref(false)
   /** Radar en mode enregistrement */

@@ -22,13 +22,14 @@ function dbToSignal(row) {
   const att = row.attributes ?? {}
   const capturedAt = row.captured_at ? new Date(row.captured_at).getTime() : Date.now()
   const receivedAt = att.receivedAt ?? `2341-${new Date(row.captured_at).toISOString().slice(5, 10)}`
+  const distanceEst = att.distanceEst ?? (att.distance_al != null ? `~${att.distance_al} al` : null)
   return {
     id: row.id,
     frequency: formatFrequency(row.frequency_hz) || att.frequency || '1420 MHz',
     sourceName: att.sourceName ?? null,
     azimuth: att.azimuth ?? 0,
     elevation: att.elevation ?? 0,
-    distanceEst: att.distanceEst ?? null,
+    distanceEst,
     receivedAt,
     durationSec: row.duration_sec ?? 72,
     polarization: att.polarization ?? 'circulaire',
@@ -37,6 +38,15 @@ function dbToSignal(row) {
     support: row.support ?? 'EM_RADIO',
     createdAt: capturedAt,
     lifetimeMs: LIFETIME_MS,
+    sourceType: row.source_type ?? 'UNKNOWN',
+    band: att.band ?? null,
+    fluxRelative: att.flux_relative ?? null,
+    pulsePeriodS: att.pulse_period_s ?? null,
+    isPeriodic: att.is_periodic ?? false,
+    sourceSystemId: row.source_system_id ?? null,
+    frequencyHz: row.frequency_hz
+      ? Number(row.frequency_hz)
+      : null,
   }
 }
 
@@ -89,6 +99,8 @@ export const useSignauxStore = defineStore('signaux', () => {
   const list = ref([])
   const loaded = ref(false)
 
+  const sessionId = computed(() => getOrCreateSessionId())
+
   const listWithRemaining = computed(() => {
     const now = Date.now()
     return list.value.map((s) => {
@@ -98,6 +110,14 @@ export const useSignauxStore = defineStore('signaux', () => {
       return { ...s, remainingMs: remaining, lifetimePct: pct }
     })
   })
+
+  const activePulsarSignals = computed(() =>
+    list.value.filter(s =>
+      s.sourceType === 'PULSAR' &&
+      s.fluxRelative != null &&
+      s.frequencyHz != null
+    )
+  )
 
   async function cloneSeedDemoSignals(sessionId, shipId) {
     const { data: demo } = await supabase
@@ -139,7 +159,7 @@ export const useSignauxStore = defineStore('signaux', () => {
     const sessionId = getOrCreateSessionId()
     const { data, error } = await supabase
       .from('signals')
-      .select('id, source_type, source_object_id, source_event_id, frequency_hz, support, duration_sec, captured_at, attributes')
+      .select('id, source_type, source_object_id, source_event_id, source_system_id, frequency_hz, support, duration_sec, captured_at, attributes')
       .eq('session_id', sessionId)
       .order('captured_at', { ascending: false })
     if (error) {
@@ -250,7 +270,9 @@ export const useSignauxStore = defineStore('signaux', () => {
   return {
     list,
     listWithRemaining,
+    activePulsarSignals,
     loaded,
+    sessionId,
     fetch,
     addSignal,
     removeSignal,

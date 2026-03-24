@@ -6,7 +6,7 @@
 import { ref, onMounted, onUnmounted, watch, inject, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUIStore } from '@/stores/ui'
-import { computeSpectrogramColumn } from '@/lib/spectrogramData'
+import { computeSpectrogramColumn, SAMPLE_RATE } from '@/lib/spectrogramData'
 import * as d3 from 'd3'
 
 const emit = defineEmits(['signal-selected'])
@@ -15,6 +15,7 @@ const radarSpectrogram = inject('radarSpectrogram')
 const {
   tickCount,
   getBufferSnapshot,
+  getBufferSnapshotAt,
   spectrogramSpec,
   WINDOW_SIZE,
   HISTORY_SIZE,
@@ -167,11 +168,12 @@ function prefillOffscreens() {
   writeCol = Math.min(numCols, HISTORY_SIZE) % HISTORY_SIZE
 }
 
-function appendColumn() {
-  const snapshot = getBufferSnapshot(WINDOW_SIZE)
-  if (!snapshot || snapshot.length < WINDOW_SIZE || !specOffscreen || !intOffscreen) return
+function appendColumnFromSnapshot(snapshot) {
+  if (!snapshot || snapshot.length < WINDOW_SIZE
+      || !specOffscreen || !intOffscreen) return
 
-  const { magnitudes, intensity } = computeSpectrogramColumn(snapshot, FREQ_BINS)
+  const { magnitudes, intensity } =
+    computeSpectrogramColumn(snapshot, FREQ_BINS)
   if (!magnitudes.length) return
 
   for (const m of magnitudes) {
@@ -182,19 +184,28 @@ function appendColumn() {
   const intH = intOffscreen.height
   const innerH = specH - margin.top - margin.bottom
   const intInnerH = intH - margin.top - margin.bottom
-
   const specCtx = specOffscreen.getContext('2d')
   const intCtx = intOffscreen.getContext('2d')
 
   for (let row = 0; row < FREQ_BINS; row++) {
     const val = Math.min(1, Math.max(0, magnitudes[row] / norm))
     specCtx.fillStyle = colorScale(val)
-    specCtx.fillRect(writeCol, margin.top + row * (innerH / FREQ_BINS), 1, Math.ceil(innerH / FREQ_BINS) + 1)
+    specCtx.fillRect(
+      writeCol,
+      margin.top + row * (innerH / FREQ_BINS),
+      1,
+      Math.ceil(innerH / FREQ_BINS) + 1
+    )
   }
   const barH = Math.max(1, intensity * intInnerH)
   intCtx.fillStyle = getCssVar('--color-cyan')
   intCtx.fillRect(writeCol, intH - margin.bottom - barH, 1, barH)
   writeCol = (writeCol + 1) % HISTORY_SIZE
+}
+
+function appendColumn() {
+  const snapshot = getBufferSnapshot(WINDOW_SIZE)
+  appendColumnFromSnapshot(snapshot)
 }
 
 function drawViewport() {
@@ -246,21 +257,24 @@ function drawViewport() {
   }
 
   // Axe X : intervalles de temps ronds (30s, 1min, 5min selon zoom)
-  for (let i = 0; i <= innerW; i += INTERVAL_TICKS) {
-    const col = (writeCol - i + HISTORY_SIZE * 10) % HISTORY_SIZE
-    const distFromRight = i
-    const xPos = margin.left + innerW - distFromRight
+  for (let i = 0; i < HISTORY_SIZE; i += INTERVAL_TICKS) {
+    const xPos = margin.left + innerW - i + Math.round(currentScrollOffset)
     if (xPos < margin.left || xPos > margin.left + innerW) continue
-    const secondsAgo = i * TICK_MS / 1000
-    const label = secondsAgo < 60
-      ? '-' + Math.round(secondsAgo) + 's'
-      : '-' + Math.round(secondsAgo / 60) + 'min'
+    const totalSeconds = Math.round(i * TICK_MS / 1000)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    const label = minutes === 0
+      ? `-${String(seconds).padStart(2, '0')}s`
+      : seconds === 0
+        ? `-${minutes}:00`
+        : `-${minutes}:${String(seconds).padStart(2, '0')}`
     for (const { ctx, canvasH } of [
       { ctx: specCtx, canvasH: specCanvas.height },
       { ctx: intCtx, canvasH: intCanvas.height },
     ]) {
-      ctx.globalAlpha = 0.2
+      ctx.globalAlpha = 0.15
       ctx.strokeStyle = getCssVar('--color-muted')
+      ctx.lineWidth = 1
       ctx.beginPath()
       ctx.moveTo(xPos, margin.top)
       ctx.lineTo(xPos, canvasH - margin.bottom)
@@ -268,8 +282,8 @@ function drawViewport() {
       ctx.globalAlpha = 1
       ctx.fillStyle = getCssVar('--color-muted')
       ctx.font = '10px monospace'
-      ctx.textAlign = 'left'
-      ctx.fillText(label, xPos + 2, canvasH - 4)
+      ctx.textAlign = 'center'
+      ctx.fillText(label, xPos, canvasH - 4)
     }
   }
 
@@ -566,6 +580,8 @@ onMounted(async () => {
   renderLoop()
 
   resizeObserver = new ResizeObserver(() => {
+    // Ne rien faire si la vue est masquée (v-show → display:none → offsetParent null)
+    if (!containerRef.value?.offsetParent) return
     updateHeights()
     if (!isInitialized) return
     const specCanvas = spectrogramCanvasRef.value
@@ -629,6 +645,21 @@ onUnmounted(() => {
 
 watch(radarPaused, () => {
   if (!radarPaused.value) {
+    const missed = tickCount.value - lastRenderedTick
+    const toFill = Math.min(missed, HISTORY_SIZE)
+
+    // Rejouer les colonnes manquantes dans l'ordre
+    // du plus ancien au plus récent
+    for (let i = toFill - 1; i >= 0; i--) {
+      // offset en échantillons depuis la fin du buffer
+      const offsetSamples = i * Math.floor(SAMPLE_RATE * TICK_MS / 1000)
+      const snapshot = getBufferSnapshotAt(offsetSamples, WINDOW_SIZE)
+      if (!snapshot) continue
+      appendColumnFromSnapshot(snapshot)
+    }
+
+    lastRenderedTick = tickCount.value
+    currentScrollOffset = 0
     targetScrollOffset = 0
     ui.setRadarSelectionMode(null)
     clearSelection()

@@ -20,7 +20,7 @@ function seededRandom(s) {
   }
 }
 
-export function useRadarSpectrogram() {
+export function useRadarSpectrogram(radarPausedRef, getNoiseSample) {
   const startTimeMs = ref(0)
   const tickCount = ref(0)
 
@@ -31,21 +31,10 @@ export function useRadarSpectrogram() {
   let tickInterval = null
 
   function generateChunk(durationMs) {
-    const samples = Math.floor((durationMs / 1000) * SAMPLE_RATE)
-    const rng = seededRandom(seed)
-    const amplitude = 60000
-    const freqHz = 10 + (seed % 8)
-    const twoPi = 2 * Math.PI
-    const chunk = []
-    const base = totalSamplesWritten
-    for (let i = 0; i < samples; i++) {
-      const tSec = (base + i) / SAMPLE_RATE
-      const tone = amplitude * Math.sin(twoPi * freqHz * tSec)
-      const noise = (rng() - 0.5) * 2 * amplitude * 0.12
-      chunk.push(Math.round(tone + noise))
-    }
+    const sampleCount = Math.floor((durationMs / 1000) * SAMPLE_RATE)
+    const raw = getNoiseSample(sampleCount, seed, totalSamplesWritten)
     seed = (seed * 1103515245 + 12345) & 0x7fffffff
-    return chunk
+    return Array.from(raw)
   }
 
   function writeToBuffer(amplitudes) {
@@ -83,6 +72,25 @@ export function useRadarSpectrogram() {
     }
   }
 
+  function getBufferSnapshotFromPos(startPos, size) {
+    const result = new Float32Array(size)
+    for (let i = 0; i < size; i++) {
+      const pos = (startPos + i) % BUFFER_SIZE
+      result[i] = buffer[pos]
+    }
+    return result
+  }
+
+  function getBufferSnapshotAt(offsetFromEnd, size) {
+    // offsetFromEnd : combien d'échantillons
+    // avant la fin du buffer (0 = les plus récents)
+    const total = totalSamplesWritten
+    if (total < size) return null
+    const endPos = total - offsetFromEnd
+    if (endPos < size) return null
+    return getBufferSnapshotFromPos(endPos - size, size)
+  }
+
   function getBufferSnapshot(n) {
     const count = Math.min(n, totalSamplesWritten)
     if (count <= 0) return []
@@ -110,6 +118,7 @@ export function useRadarSpectrogram() {
   return {
     tickCount,
     getBufferSnapshot,
+    getBufferSnapshotAt,
     start,
     stop,
     durationSec,

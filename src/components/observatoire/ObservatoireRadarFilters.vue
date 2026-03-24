@@ -9,13 +9,11 @@ import AppSelect from '@/components/AppSelect.vue'
 const ui = useUIStore()
 const { radarFrequencyBand, radarPaused, radarRecording } = storeToRefs(ui)
 
-const FREQUENCY_BANDS = [
-  { id: '408', label: '408 MHz' },
-  { id: '1420', label: '1420 MHz' },
-  { id: '1420.4', label: '1420.4 MHz (HI)' },
-  { id: '1665', label: '1665 MHz (OH)' },
-  { id: '50', label: '50 MHz' },
-  { id: '100', label: '100 MHz' },
+const BANDS = [
+  { value: 'P', label: 'P — 150–400 MHz' },
+  { value: 'L', label: 'L — 1000–1800 MHz' },
+  { value: 'X', label: 'X — 2–10 GHz' },
+  { value: 'G', label: 'γ — > 10 keV' },
 ]
 </script>
 
@@ -43,11 +41,9 @@ const FREQUENCY_BANDS = [
     </button>
     <AppSelect
       :model-value="radarFrequencyBand"
-      :options="FREQUENCY_BANDS"
-      value-key="id"
+      :options="BANDS"
+      value-key="value"
       label-key="label"
-      aria-label="Bande de fréquences"
-      title="Bande de fréquences radar"
       class="radar-filters__select"
       @update:model-value="ui.setRadarFrequencyBand"
     />
