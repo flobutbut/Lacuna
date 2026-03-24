@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-18*
+*Dernière modification : 2026-03-15*
 
 # LACUNA — Documentation fonctionnelle
 
@@ -73,7 +73,7 @@ Observer le ciel → Sélectionner un système → Analyser (optionnel)
 ### Modules (contenu par route / page)
 | Module | Contenu |
 |--------|---------|
-| Observatoire | Détail système, traces, scan, fixer cap |
+| Observatoire | Ciel / Système / Radar — Détail système, traces, scan, fixer cap. **Vue Radar** : spectrogramme temps réel + courbe d'intensité, pause (scroll + sélection zone), retour au live |
 | Carte | Systèmes visités, routes parcourues |
 | Laboratoire | Analyse données brutes |
 | Artefacts | Grille traces collectées |
@@ -82,6 +82,21 @@ Observer le ciel → Sélectionner un système → Analyser (optionnel)
 | Population | État civilisation |
 | Systèmes | État technique vaisseau |
 | Conception étoiles | Vue 3D étoiles (conception) |
+
+---
+
+## Vue Radar (Observatoire)
+
+Mode alternatif au Ciel/Système — visualisation temps réel des signaux captés.
+
+| Comportement | Description |
+|--------------|-------------|
+| **LIVE** | Défilement automatique, contenu le plus récent à droite |
+| **Pause** | Défilement stoppé ; scroll horizontal (molette) pour parcourir l'historique ; sélection de zone (col×bin) pour analyse au Laboratoire |
+| **Retour au LIVE** | Bouton affiché dès que l'utilisateur a scrollé — clic → easing vers le live |
+| **Sélection** | En pause, glisser sur le spectrogramme pour délimiter une zone ; relâcher → émission `signal-selected` (startCol, endCol, startBin, endBin) |
+
+Référence technique : `Documentation-technique.md` § Vue Radar.
 
 ---
 

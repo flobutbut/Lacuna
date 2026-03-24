@@ -683,7 +683,7 @@ onBeforeUnmount(() => {
   vector-effect: non-scaling-stroke;
 }
 .system-view__hz-band {
-  fill: var(--color-cyan-subtle);
+  fill: var(--color-cyan-hz-band);
 }
 .system-view__orbit--planet {
   stroke: var(--color-muted);

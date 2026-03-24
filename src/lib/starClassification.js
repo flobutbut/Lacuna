@@ -75,12 +75,14 @@ export function getStarClassLabel(spectralType) {
 
 /**
  * Type pour le filtre (Vue conception) — filtre par type spectral uniquement.
- * PSR = pulsar (spectral_type ou id/name commençant par PSR), sinon lettre spectrale (O…M, L, T, Y, D).
- * @param {{ spectral_type?: string, id?: string, name?: string }} star
+ * PSR = pulsar (object_type PULSAR, spectral_type/id/name commençant par PSR), sinon lettre spectrale.
+ * @param {{ spectral_type?: string, id?: string, name?: string, object_type?: string }} star
  * @returns {string} 'O' | 'B' | … | 'M' | 'L' | 'T' | 'Y' | 'D' | 'PULSAR'
  */
 export function getStarTypeForFilter(star) {
   if (!star) return 'M'
+  const objType = String(star.object_type ?? '').trim().toUpperCase()
+  if (objType === 'PULSAR' || objType === 'NEUTRON_STAR' || objType === 'MAGNETAR') return 'PULSAR'
   const id = String(star.id ?? '').trim().toUpperCase()
   const name = String(star.name ?? '').trim().toUpperCase()
   if (id.startsWith('PSR') || name.startsWith('PSR ')) return 'PULSAR'

@@ -33,6 +33,7 @@ Le design system LACUNA repose sur :
 | `--color-cyan-muted` | `#5eb8c4` | Accent discret |
 | `--color-cyan-glow` | `rgba(0, 180, 200, 0.15)` | Hover boutons / select |
 | `--color-cyan-subtle` | `rgba(0, 180, 200, 0.05)` | Hover très léger |
+| `--color-cyan-hz-band` | `rgba(0, 180, 200, 0.2)` | Zone habitable (bande SVG) |
 | `--color-cyan-hover` | `rgba(0, 180, 200, 0.08)` | :active (clic) |
 | `--color-cyan-active` | `rgba(0, 180, 200, 0.22)` | Toggle sélectionné (.is-active) |
 | `--color-amber` | `#e8a020` | Alertes, anomalies |
@@ -166,7 +167,7 @@ Modal réutilisable avec structure header / content / footer. Toutes les modales
 </AppModal>
 ```
 
-**Utilisation** : SignalModal, TravelWidget, ObservatoirePanel, PageSystemes (position `top-right`)
+**Utilisation** : SignalModal, TravelWidget, ObservatoirePanel, PageSystemes (position `top-right`), DepartureConfirmation (vue confirmation départ — titre dynamique, footer btn-ghost + btn-primary)
 
 ---
 

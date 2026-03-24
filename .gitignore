@@ -2,6 +2,10 @@
 logs
 *.log
 
+# Sauvegardes DB (dumps SQL)
+backups/
+supabase/dumps_critiques/*.sql
+
 # Stellar import (progression reprise)
 import_progress.json
 npm-debug.log*

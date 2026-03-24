@@ -106,8 +106,10 @@ field_sources jsonb DEFAULT '{}'::jsonb
 | `"GAIA"` | Catalogue Gaia DR3 | ★★★★★ |
 | `"NASA"` | NASA Exoplanet Archive | ★★★★★ |
 | `"SIMBAD"` | Base SIMBAD/CDS Strasbourg | ★★★★☆ |
+| `"ATNF"` | ATNF Pulsar Catalogue | ★★★★☆ |
 | `"HYG"` | HYG Database v4 | ★★★★☆ |
 | `"MANUAL"` | Saisi dans le backoffice | ★★★☆☆ |
+| `"COMPUTED"` | Dérivé depuis coordonnées (ex. constellation depuis x/y/z) | ★★★☆☆ |
 | `"EXTRAPOLATED"` | Calculé depuis propriétés connues | ★★☆☆☆ |
 | `"PROCEDURAL"` | Généré depuis le seed | ★☆☆☆☆ |
 
@@ -168,14 +170,14 @@ Lors d'un import ou d'une mise à jour, la source entrante est comparée
 à la source existante. La source la plus fiable gagne.
 
 ```
-JWST = GAIA = NASA > SIMBAD = HYG > MANUAL > EXTRAPOLATED > PROCEDURAL
+JWST = GAIA = NASA > SIMBAD = HYG > MANUAL = COMPUTED > EXTRAPOLATED > PROCEDURAL
 ```
 
 ```python
 SOURCE_PRIORITY = {
     "JWST": 100, "GAIA": 100, "NASA": 100,
-    "SIMBAD": 80, "HYG": 80,
-    "MANUAL": 60,
+    "SIMBAD": 80, "ATNF": 80, "HYG": 80,
+    "MANUAL": 60, "COMPUTED": 60,  # Dérivé depuis coordonnées
     "EXTRAPOLATED": 30,
     "PROCEDURAL": 10,
 }
@@ -287,8 +289,24 @@ Exécuter dans cet ordre avant tout script de génération.
 ```sql
 ALTER TABLE public.stellar_systems
   ADD COLUMN IF NOT EXISTS field_sources      jsonb DEFAULT '{}'::jsonb,
-  ADD COLUMN IF NOT EXISTS chemical_region_id text;
+  ADD COLUMN IF NOT EXISTS chemical_region_id text,
+  ADD COLUMN IF NOT EXISTS object_type        text  DEFAULT 'STAR'
+    CHECK (object_type IN ('STAR', 'WHITE_DWARF', 'NEUTRON_STAR', 'PULSAR', 'MAGNETAR', 'BLACK_HOLE'));
 ```
+
+**object_type** : type de l'objet principal du système. Valeurs : STAR (défaut), WHITE_DWARF, NEUTRON_STAR, PULSAR, MAGNETAR, BLACK_HOLE. Source SIMBAD pour les objets exotiques (import `simbad_exotic_import.py`).
+
+**attributes** (stellar_systems, migration 00033) : données extensibles. Pour les pulsars, contient les paramètres ATNF (source `atnf_pulsar_patch.py`) :
+- `pulse_period_s` — période de rotation (s)
+- `pulse_period_ms` — période en millisecondes
+- `rotation_frequency_hz` — fréquence de rotation (Hz)
+- `magnetic_field_gauss` — champ magnétique de surface (Gauss)
+- `emission_width_w50_ms` — largeur du pulse à 50 % (proxy du cône d'émission)
+- `emission_width_w10_ms` — largeur du pulse à 10 %
+- `characteristic_age_yr` — âge caractéristique (années)
+- `pulsar_type` — type (MSP, AXP, SGR, etc.)
+
+Ces champs alimentent la mécanique de détection directionnelle : W50 / P0 × 360° donne le demi-angle du cône d'émission en degrés.
 
 ---
 

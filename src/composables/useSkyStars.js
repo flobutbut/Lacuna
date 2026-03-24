@@ -196,7 +196,8 @@ export function useSkyStars(spectralFilterRef, exoplanetFilterRef, opts = {}) {
     if (typeFilterRef?.value && typeFilterRef.value !== 'all') {
       raw = raw.filter((s) => matchesStarTypeFilter(s, typeFilterRef.value))
     }
-    const pool = getPoolForBandFilters(raw)
+    // Vue conception : ne pas filtrer par magnitude (catalogue complet). Observatoire : limiter à mag ≤ 15.
+    const pool = useConception ? raw : getPoolForBandFilters(raw)
     let entries = pool.map((star) => ({ star, ...getStarBandParamsOrZero(star, band) }))
     if (exoplanetFilterRef?.value && !options.skipExoplanetFilter) {
       entries = entries.filter((e) => systemObjectsStore.hasExoplanets(e.star.id))

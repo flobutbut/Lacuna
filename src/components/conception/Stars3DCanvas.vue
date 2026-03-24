@@ -10,12 +10,8 @@ import { animateFocusTo, animateTargetTo } from '@/composables/useCameraFocusAni
 import { getVisibleConstellationSegments } from '@/lib/constellationSegments'
 import { loadStarSvgTextureForSpectralType } from '@/composables/useStarSvgTexture'
 import { getSpectralLetter } from '@/lib/starClassification'
-import {
-  COLOR_GREEN_BRIGHT_HEX,
-  HIGHLIGHT_CYAN_HEX,
-  STAR_SPRITE_BASE_SIZE,
-  STAR_SPRITE_MIN_PIXELS,
-} from '@/constants/starDisplay'
+import { HIGHLIGHT_CYAN_HEX, STAR_SPRITE_BASE_SIZE, STAR_SPRITE_MIN_PIXELS } from '@/constants/starDisplay'
+import { buildTransitLinesMesh } from '@/composables/useTransitLines3d'
 
 const props = defineProps({
   /** ID de l'étoile à focus (caméra se déplace vers elle) */
@@ -131,9 +127,6 @@ function pickStarAtMouse(event) {
 
 // Opacité des segments de constellation dans la vue 3D de conception.
 const CONSTELLATION_OPACITY = 0.5
-// Couleur et opacité des segments de transits (trajets visités) — token vert lumineux.
-const TRANSIT_LINE_COLOR = COLOR_GREEN_BRIGHT_HEX
-const TRANSIT_LINE_OPACITY = 0.8
 
 const circleTexture = getCircleSpriteTexture()
 
@@ -259,29 +252,9 @@ function buildConstellationLinesMesh() {
   return new THREE.LineSegments(geometry, material)
 }
 
-function buildTransitLinesMesh() {
+function buildTransitLinesMeshLocal() {
   if (!props.transitsEnabled || !props.transitsSegments?.length) return null
-  const positionsById = constellationPositionsById.value
-  if (!positionsById || !(positionsById instanceof Map)) return null
-
-  const vertices = []
-  for (const { fromId, toId } of props.transitsSegments) {
-    const from = positionsById.get(fromId)
-    const to = positionsById.get(toId)
-    if (!from || !to) continue
-    vertices.push(from.x, from.y, from.z)
-    vertices.push(to.x, to.y, to.z)
-  }
-  if (vertices.length === 0) return null
-
-  const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
-  const material = new THREE.LineBasicMaterial({
-    color: TRANSIT_LINE_COLOR,
-    transparent: true,
-    opacity: TRANSIT_LINE_OPACITY,
-  })
-  return new THREE.LineSegments(geometry, material)
+  return buildTransitLinesMesh(props.transitsSegments, constellationPositionsById.value)
 }
 
 function updatePoints() {
@@ -324,7 +297,7 @@ function updatePoints() {
   if (constellationLinesMesh) {
     scene.add(constellationLinesMesh)
   }
-  transitLinesMesh = buildTransitLinesMesh()
+  transitLinesMesh = buildTransitLinesMeshLocal()
   if (transitLinesMesh) {
     scene.add(transitLinesMesh)
   }

@@ -118,11 +118,15 @@ export function toVisualParams(obj, ctx, options = {}) {
  * @returns {{ luminosity: number, hzInner: number, hzOuter: number }}
  */
 export function toLuminosityAndHz(star, stellarSystem) {
-  const lum = star?.mass_stellar
-    ? luminosityFromMass(star.mass_stellar)
-    : luminosityFromSpectralType(
-        star?.spectral_type ?? stellarSystem?.spectral_type ?? 'G2V'
-      )
+  const dbLum = stellarSystem?.luminosity
+  const lum =
+    dbLum != null && Number.isFinite(Number(dbLum))
+      ? Number(dbLum)
+      : star?.mass_stellar
+        ? luminosityFromMass(star.mass_stellar)
+        : luminosityFromSpectralType(
+            star?.spectral_type ?? stellarSystem?.spectral_type ?? 'G2V'
+          )
   const hz = habitableZoneLimits(lum)
   return { luminosity: lum, hzInner: hz.inner, hzOuter: hz.outer }
 }

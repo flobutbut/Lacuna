@@ -41,13 +41,25 @@ export const useUIStore = defineStore('ui', () => {
   const searchedStarId = ref(null)
   /** IDs des signaux correspondant à la recherche (pour surligner dans SideLeft) */
   const signalSearchMatchIds = ref(new Set())
-  /** Vue Observatoire : 'sky' | 'system' */
+  /** Cap fixé en attente de confirmation — { id, name, dist, distanceLy, spectral_type, transitMeta } */
+  const pendingDeparture = ref(null)
+  /** Vue de confirmation du départ (ALLUMER LES MOTEURS) ouverte */
+  const departureConfirmationOpen = ref(false)
+  /** Vue Observatoire : 'sky' | 'radar' | 'system' */
   const observatoireViewMode = ref('sky')
   /** Tuiles latérales (SideLeft, SideRight) en vue ciel profond — raccourci [@] pour masquer */
   const observatoireTilesVisible = ref(true)
+  /** Bande de fréquences Radar : '408' | '1420' | etc. */
+  const radarFrequencyBand = ref('1420')
+  /** Radar en pause (n'acquiert plus de données) */
+  const radarPaused = ref(false)
+  /** Radar en mode enregistrement */
+  const radarRecording = ref(false)
+  /** Mode sélection Radar en pause : 'zone' | 'period' | null. Zone présélectionné. */
+  const radarSelectionMode = ref('zone')
 
   function setObservatoireViewMode(mode) {
-    if (['sky', 'system'].includes(mode)) {
+    if (['sky', 'radar', 'system'].includes(mode)) {
       observatoireViewMode.value = mode
       if (mode === 'sky') {
         selectedStar.value = null
@@ -63,6 +75,23 @@ export const useUIStore = defineStore('ui', () => {
 
   function clearSearchedStarId() {
     searchedStarId.value = null
+  }
+
+  function setPendingDeparture(payload) {
+    pendingDeparture.value = payload ? { ...payload } : null
+  }
+
+  function clearPendingDeparture() {
+    pendingDeparture.value = null
+  }
+
+  function openDepartureConfirmation() {
+    departureConfirmationOpen.value = true
+  }
+
+  function closeDepartureConfirmation() {
+    departureConfirmationOpen.value = false
+    pendingDeparture.value = null
   }
 
   function setSignalSearchMatchIds(ids) {
@@ -105,6 +134,22 @@ export const useUIStore = defineStore('ui', () => {
 
   function toggleObservatoireTiles() {
     observatoireTilesVisible.value = !observatoireTilesVisible.value
+  }
+
+  function setRadarFrequencyBand(band) {
+    if (band) radarFrequencyBand.value = band
+  }
+
+  function toggleRadarPaused() {
+    radarPaused.value = !radarPaused.value
+  }
+
+  function toggleRadarRecording() {
+    radarRecording.value = !radarRecording.value
+  }
+
+  function setRadarSelectionMode(mode) {
+    radarSelectionMode.value = mode === 'zone' || mode === 'period' ? mode : null
   }
 
   function toggleConstellationsEnabled() {
@@ -262,6 +307,12 @@ export const useUIStore = defineStore('ui', () => {
     searchedStarId,
     setSearchedStarId,
     clearSearchedStarId,
+    pendingDeparture,
+    departureConfirmationOpen,
+    setPendingDeparture,
+    clearPendingDeparture,
+    openDepartureConfirmation,
+    closeDepartureConfirmation,
     signalSearchMatchIds,
     setSignalSearchMatchIds,
     clearSignalSearchMatchIds,
@@ -269,5 +320,13 @@ export const useUIStore = defineStore('ui', () => {
     setObservatoireViewMode,
     observatoireTilesVisible,
     toggleObservatoireTiles,
+    radarFrequencyBand,
+    setRadarFrequencyBand,
+    radarPaused,
+    radarRecording,
+    toggleRadarPaused,
+    toggleRadarRecording,
+    radarSelectionMode,
+    setRadarSelectionMode,
   }
 })

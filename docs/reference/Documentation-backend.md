@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-18*
+*Dernière modification : 2026-03-16*
 
 # LACUNA — Documentation Backend
 
@@ -13,12 +13,13 @@
 3. [Schéma — tables et relations](#3-schéma--tables-et-relations)
 4. [Types ENUM](#4-types-enum)
 5. [Migrations](#5-migrations)
-6. [RLS (Row Level Security)](#6-rls-row-level-security)
-7. [Seed et données prototype](#7-seed-et-données-prototype)
-8. [Mapping Store ↔ Table](#8-mapping-store--table)
-9. [Configuration](#9-configuration)
-10. [Scripts d'import (stellar_import)](#10-scripts-dimport-stellar_import)
-11. [Références design](#11-références-design)
+6. [Convention de nommage des IDs stellaires](#6-convention-de-nommage-des-ids-stellaires)
+7. [RLS (Row Level Security)](#7-rls-row-level-security)
+8. [Seed et données prototype](#8-seed-et-données-prototype)
+9. [Mapping Store ↔ Table](#9-mapping-store--table)
+10. [Configuration](#10-configuration)
+11. [Scripts d'import (stellar_import)](#11-scripts-dimport-stellar_import)
+12. [Références design](#12-références-design)
 
 ---
 
@@ -73,7 +74,9 @@ supabase/
 │   ├── 00028_nasa_planets_field_sources_name_designation.sql
 │   ├── 00029_get_systems_for_conception.sql
 │   ├── 00030_conception_add_star_object_type.sql
-│   └── 00031_ship_transit_rls_and_travels.sql
+│   ├── 00031_ship_transit_rls_and_travels.sql
+│   ├── 00032_stellar_systems_object_type.sql
+│   └── 00033_stellar_systems_attributes.sql
 └── seed.sql             # Données initiales (systèmes, traces, objets, system_objects)
 ```
 
@@ -124,8 +127,9 @@ Systèmes stellaires (ciel Observatoire).
 
 | Colonne | Type | Description |
 |---------|------|-------------|
-| id | TEXT PK | Identifiant (SOL, PROXIMA, ROSS128...) |
+| id | TEXT PK | Identifiant — convention slug minuscules-tirets (§6) |
 | name | TEXT | Nom affiché |
+| object_type | TEXT | STAR (défaut), WHITE_DWARF, NEUTRON_STAR, PULSAR, MAGNETAR, BLACK_HOLE — source SIMBAD |
 | spectral_type | TEXT | G2V, M5.5V, K2V... |
 | distance | DECIMAL | Distance en al depuis Sol |
 | age | DECIMAL | Âge en Ga |
@@ -138,7 +142,8 @@ Systèmes stellaires (ciel Observatoire).
 | apparent_magnitude | DECIMAL | Magnitude apparente depuis Sol — HYG mag |
 | has_magnetic_field | BOOLEAN | Champ magnétique détecté |
 | constellation_abbr | TEXT | Code IAU 3 lettres (ORI, CEN, UMA, CYG...) — source HYG colonne con |
-| field_sources | JSONB | Traçabilité des sources par champ (HYG, NASA, EXTRAPOLATED, PROCEDURAL...) — réf. LACUNA_PROCEDURAL_DATA_MODEL |
+| field_sources | JSONB | Traçabilité des sources par champ (HYG, NASA, ATNF, EXTRAPOLATED, PROCEDURAL...) — réf. LACUNA_PROCEDURAL_DATA_MODEL |
+| attributes | JSONB | Données extensibles — pulsars : pulse_period_s, magnetic_field_gauss, emission_width_w50_ms (source ATNF) |
 | chemical_region_id | TEXT | Région chimique galactique (extrapolation) |
 | created_at | TIMESTAMPTZ | |
 
@@ -180,6 +185,7 @@ Objets composant un système (étoiles, planètes, disques).
 | magnetic_field_detected | BOOLEAN | | Champ magnétique — Magnétomètre |
 | disk_inner_radius_au | DECIMAL | DEBRIS_DISK | |
 | disk_outer_radius_au | DECIMAL | | |
+| disk_mass_earth | DECIMAL | DEBRIS_DISK | Masse du disque (M⊕) |
 | disk_structure | TEXT | | RINGS, DEPLETION_ZONES, ASYMMETRIC, DENSE |
 | disk_density_factor | DECIMAL | | Ex. 10× Tau Ceti |
 | confirmation_status | ENUM | | CONFIRMED, DEBATED, UNCONFIRMED |
@@ -482,6 +488,8 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00029 | RPC get_systems_for_conception : systèmes avec coordonnées, paginé (Vue 3D conception) |
 | 00030 | get_systems_for_conception : colonne object_type (STAR, PULSAR, NEUTRON_STAR, MAGNETAR depuis system_objects) |
 | 00031 | Transit : policy Anon can update prototype ship (ships), table ship_travels + RLS (anon insert/read prototype, users manage own) |
+| 00032 | stellar_systems : colonne object_type (STAR, WHITE_DWARF, NEUTRON_STAR, PULSAR, MAGNETAR, BLACK_HOLE) — import SIMBAD |
+| 00033 | stellar_systems : colonne attributes (jsonb) pour paramètres pulsars ATNF (pulse_period_s, magnetic_field_gauss, etc.) |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
@@ -520,7 +528,45 @@ RETURNS TABLE(id, name, spectral_type, distance, age, planets, habitable_zone, a
 
 ---
 
-## 6. RLS (Row Level Security)
+## 6. Convention de nommage des IDs stellaires
+
+Les IDs de `stellar_systems` suivent des règles strictes pour éviter les doublons lors des imports futurs.
+
+### Règle générale — slug minuscules-tirets
+
+Tout hostname ou nom d'étoile est transformé selon :
+1. Passage en minuscules
+2. Remplacement de tout caractère non alphanumérique par `-`
+3. Suppression des tirets en début et fin
+
+Ex : `"Barnard's Star"` → `barnards-star`
+Ex : `"HD 40307"` → `hd-40307`
+Ex : `"GJ 1061"` → `gj-1061`
+
+### Exception 1 — Le `+` astronomique est conservé
+
+Les désignations BD+, 2MASS J+, WD+ contiennent un `+` qui a une signification astronomique (déclinaison positive). Il est conservé tel quel dans l'ID.
+
+Ex : `"BD+05 4868 A"` → `bd+05-4868-a` ✓
+Ex : `"BD+05 4868 A"` → `bd-05-4868-a` ✗
+
+### Exception 2 — Le point décimal est supprimé
+
+Les identifiants Gliese avec point décimal (`GJ 508.2`) sont slugifiés en supprimant le point, pas en le remplaçant par un tiret.
+
+Ex : `"GJ 508.2"` → `gj-5082` ✓
+Ex : `"GJ 508.2"` → `gj-508-2` ✗
+
+### Priorité des sources pour la construction de l'ID
+
+En cas de conflit entre sources, l'ID retenu suit cet ordre :
+1. **HYG** — slug du champ `proper` ou `gl`
+2. **NASA** — slug du `hostname`
+3. **MANUAL** — jamais ; les entrées manuelles doivent adopter la convention HYG/NASA
+
+---
+
+## 7. RLS (Row Level Security)
 
 | Table | Politique | Accès |
 |-------|-----------|-------|
@@ -550,7 +596,7 @@ RETURNS TABLE(id, name, spectral_type, distance, age, planets, habitable_zone, a
 
 ---
 
-## 7. Seed et données prototype
+## 8. Seed et données prototype
 
 **Fichier** : `supabase/seed.sql`
 
@@ -567,7 +613,7 @@ RETURNS TABLE(id, name, spectral_type, distance, age, planets, habitable_zone, a
 
 ---
 
-## 8. Mapping Store ↔ Table
+## 9. Mapping Store ↔ Table
 
 | Store Pinia | Table(s) | Opérations |
 |-------------|----------|------------|
@@ -583,7 +629,7 @@ RETURNS TABLE(id, name, spectral_type, distance, age, planets, habitable_zone, a
 
 ---
 
-## 9. Configuration
+## 10. Configuration
 
 ### Variables d'environnement
 
@@ -601,9 +647,36 @@ supabase db reset     # Migrations + seed
 supabase stop         # Arrêter local
 ```
 
+### Sauvegarde base de données
+
+Sauvegarde de la base Supabase distante vers un fichier SQL.
+
+| Méthode | Commande |
+|---------|----------|
+| **Yarn** | `yarn backup:db` |
+| **Script** | `./scripts/backup-db.sh` |
+
+**Prérequis** (au choix) :
+1. **Projet lié** : `npx supabase link --project-ref utdzobspxeecxauwnkve` puis `SUPABASE_DB_PASSWORD` dans `.env`
+2. **URL directe** : `SUPABASE_DB_URL=postgresql://postgres:[PASSWORD]@db.utdzobspxeecxauwnkve.supabase.co:5432/postgres` dans `.env`
+
+Le mot de passe DB se récupère dans Dashboard Supabase → Project Settings → Database.
+
+**Sortie** : `backups/dump_YYYYMMDD_HHMMSS.sql` (dossier `backups/` ignoré par git)
+
+### pg_dump tables critiques (dans le repo)
+
+Dump ciblé des tables de référence vers `supabase/dumps_critiques/` (versionné).
+
+| Commande | `yarn dump:critiques` |
+|----------|------------------------|
+| **Tables** | stellar_systems, system_objects, constellations, constellation_lines, traces |
+| **Sortie** | `supabase/dumps_critiques/dump_critiques_YYYYMMDD.sql` |
+| **Prérequis** | `SUPABASE_DB_URL` dans `.env`, `pg_dump` installé (brew install libpq) |
+
 ---
 
-## 10. Scripts d'import (stellar_import)
+## 11. Scripts d'import (stellar_import)
 
 Import des données stellaires et constellationnelles vers Supabase. Requiert `.env` (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY ou SUPABASE_*).
 
@@ -617,11 +690,33 @@ stellar_import/
 ├── upsert_systems.py       # Upsert stellar_systems (LACUNA_ID_MAP, résolution hostname)
 ├── upsert_objects.py       # Upsert system_objects (planètes), update habitable_zone
 ├── complete_hyg_fields.py  # Complète champs manquants (coordinates x/y/z, mag, lum, con→constellation_abbr)
+├── hyg_patch.py            # Patch HYG : constellation_abbr, luminosity, color_index + field_sources (--dry-run/--apply)
+├── nasa_age_patch.py       # Patch NASA : age (Ga) depuis Exoplanet Archive st_age
+├── nasa_systems_import.py  # Import systèmes NASA manquants (stellar_systems + system_objects)
+├── constellation_patch.py  # Patch constellation_abbr depuis x/y/z (RA/Dec → IAU astropy)
+├── coords_patch.py         # Patch coordinates depuis NASA TAP (RA/Dec sy_dist → x/y/z)
+├── luminosity_patch.py     # Extrapole luminosity depuis spectral_type (EXTRAPOLATED, table calibrée HYG)
+├── gaia_patch.py           # Gaia DR3 : color_index (bp_rp), age (estimation HR), teff dans attributes
+├── dedup_stellar_systems.py # Supprime doublons stellar_systems (MANUAL vs HYG/NASA, artefacts +/-, transfert champs, FK)
+├── dedup_system_objects.py  # Supprime doublons system_objects (même system_id+designation, cat A/B, score complétude)
+├── jwst_atmospheres_patch.py # Import compositions atmosphériques (données curées, source JWST)
+├── simbad_exotic_import.py   # Import objets exotiques SIMBAD (WD max 500 + parallaxe ; PSR/NS/BH/Magnetar sans filtre plx)
+├── atnf_pulsar_patch.py      # Patch pulsars : coordonnées, distance, attributes (P0, BSURF, W50, AGE) depuis ATNF Catalogue
+├── resolve_conflicts.py      # Rapport résolution conflits NASA (default_flag=1) vs doublons en base
+├── verify_hd_aliases.py      # Vérifie mapping aliases HD (hostname NASA ↔ IDs base)
+├── verify_hd_hyg.py          # Vérifie cohérence HD entre HYG et base
+├── verify_hd_nasa.py         # Vérifie cohérence HD entre NASA Exoplanet Archive et base
+├── hyg_planets_import.py     # Import planètes depuis HYG (référence complémentaire)
+├── query_hd_system_objects.py # Requêtes système par ID HD
+├── source_existing_data.py   # Utilitaires lecture données existantes (base)
 ├── populate_constellations.py  # 88 constellations IAU + constellation_lines (source constellation.shapes.iau.txt)
 ├── check_systems.py        # Vérifie champs (apparent_magnitude, coordinates, luminosity) pour ids
 ├── check_duplicate_systems.py # Détecte doublons HYG/LACUNA
 ├── diagnose_names.py       # Diagnostique mapping noms DB ↔ HYG
 ├── diagnose_nasa_planets.py # Diagnostique planètes NASA
+├── analyze_unmatched_hyg.py # Analyse IDs Supabase non matchés dans HYG
+├── nasa_systems_by_distance.py # Systèmes NASA par distance (&lt; 500 al)
+├── analyze_nasa_age_matching.py # Croise hostnames non matchés / NASA sans âge
 ├── report.py               # Génère import_report.md
 └── supabase_client.py      # Client Supabase (.env)
 ```
@@ -640,6 +735,8 @@ cd stellar_import && python3 main.py                    # Import complet HYG + N
 cd stellar_import && python3 main.py --nasa-only        # NASA uniquement (planètes)
 cd stellar_import && python3 main.py --fix-ids sirius proxima-centauri tau-ceti   # Réimport ciblé (force mise à jour)
 cd stellar_import && python3 complete_hyg_fields.py     # Compléter coordinates, constellation_abbr, mag, lum
+cd stellar_import && python3 hyg_patch.py [--apply]     # Patch champs manquants (con, lum, ci) + field_sources
+cd stellar_import && python3 nasa_age_patch.py [--apply] # Patch age (Ga) depuis NASA
 cd stellar_import && python3 populate_constellations.py # 88 constellations + segments
 cd stellar_import && python3 populate_constellations.py --truncate   # Vider constellation_lines puis repeupler
 cd stellar_import && python3 populate_constellations.py --lines-only UMi   # Segments pour une constellation
@@ -657,7 +754,7 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 
 ---
 
-## 11. Références design
+## 12. Références design
 
 | Document | Section | Contenu lié |
 |----------|---------|-------------|
@@ -665,6 +762,14 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 | LACUNA_LABORATOIRE_INSTRUMENTS | §7, §9 | Types d'objets, matrices instrument |
 | LACUNA_UI | §3, §4 | Modules, contenu Collection |
 | LACUNA_GDD | §5 | Système social, vaisseau |
+
+---
+
+## Changelog
+
+| Date | Modifications |
+|------|---------------|
+| 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |
 
 ---
 

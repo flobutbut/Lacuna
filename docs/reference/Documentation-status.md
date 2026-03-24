@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-14 15:11*
+*Dernière modification : 2026-03-15*
 
 # LACUNA — État du projet
 
@@ -27,14 +27,24 @@
 - [x] Schéma SQL (migrations)
 - [x] RLS et policies
 - [x] Traces immuables (WOW, Oumuamua, Bennu + PROXIMA-001, BARNARD-001, ROSS128-001, EPSILON-001, TAU-CETI-001, GLIESE667-001)
-- [x] Systèmes stellaires prototype (9 de base) + ~90 systèmes étendus (Lalande 21185, TRAPPIST-1, 55 Cancri, Kepler-452, etc.) — données NASA/Wikipedia, coordonnées ra/dec. Base distante : 98 stellar_systems + 272 system_objects. Système solaire détaillé (Soleil + 8 planètes : Mercure→Neptune).
+- [x] Systèmes stellaires — Base distante (audit 2026-03-16) : **48 195** stellar_systems, **2 155** system_objects. Répartition stellar_systems par object_type : STAR 43 775, PULSAR 3 918, WHITE_DWARF 500, BLACK_HOLE 2. Répartition system_objects : PLANET 2 052, STAR 97, DEBRIS_DISK 4, NEUTRON_STAR 1. (PULSAR supprimé — migration 00035.) Système solaire détaillé (Soleil + 8 planètes : Mercure→Neptune).
 - [x] Support constellations — stellar_systems.constellation_abbr (HYG colonne con), table constellations (88 IAU), constellation_lines (stick-figures IAU). Migration 00025. Source : constellation.shapes.iau.txt (paires HR explicites). Scripts : complete_hyg_fields.py (con→constellation_abbr), populate_constellations.py (88 constellations + segments HR→stellar_systems via HYG).
+- [x] Patch HYG (hyg_patch.py) — 55 systèmes mis à jour (constellation_abbr, luminosity, color_index) depuis HYG v42.
+- [x] Patch NASA âge (nasa_age_patch.py) — 647 systèmes mis à jour (age en Ga) depuis NASA Exoplanet Archive st_age.
+- [x] Patch constellation (constellation_patch.py) — 363 systèmes mis à jour (constellation_abbr depuis x/y/z, IAU astropy).
+- [x] Patch coordonnées (coords_patch.py) — 651 systèmes mis à jour (coordinates x/y/z + constellation depuis NASA TAP).
+- [x] Déduplication stellar_systems (dedup_stellar_systems.py) — 37 doublons supprimés (43 813 → 43 776).
+- [x] Déduplication system_objects (dedup_system_objects.py) — 992 doublons supprimés (3 260 → 2 268).
+- [x] Résolution conflits (resolve_conflicts.py) — Rapport NASA default_flag=1 vs doublons en base (dry-run).
+- [x] Patch luminosity (luminosity_patch.py) — 367 systèmes (luminosité extrapolée depuis spectral_type, EXTRAPOLATED).
+- [x] Patch Gaia DR3 (gaia_patch.py) — ~4 944 systèmes (color_index bp_rp, age estimation HR, matching HIP + cone search).
+- [x] Patch ATNF (atnf_pulsar_patch.py) — 2 945 pulsars (coordinates, distance, attributes, age depuis ATNF Catalogue). Total 3 918 pulsars en base (stellar_systems.object_type).
 - [x] Table observations (file Laboratoire) — session_id pour prototype sans auth, persistée en base
 - [ ] Auth (inscription/connexion)
 - [x] Vaisseau prototype ARCA — current_system_id, store ship, Header/PageSystemes. Table ship_systems (systèmes, carburant, capacités).
 - [ ] Création vaisseau au premier login (avec auth)
 - [x] Modèle Option A validé — sources de signaux : objets émetteurs (PULSAR, NEUTRON_STAR, MAGNETAR) dans system_objects ; événements transients dans signal_events ; table signals. Doc backend mise à jour.
-- [x] Migrations Option A — migration 00005 (extension system_objects, signal_events, signals). Seed : système PSR_B1919 + pulsar PSR B1919+21.
+- [x] Migrations Option A — migration 00005 (extension system_objects, signal_events, signals). Seed : système PSR_B1919 (pulsar via stellar_systems.object_type, pas d'objet system_objects).
 - [x] Store signaux branché sur table signals (fetch + INSERT). Migration 00011 : colonne anomalous sur observations. Support dérivé depuis la source (SignalModal). Seed signaux démo (seed-demo), clonage à la première visite. captureFromSystemObjects() pour objets émetteurs du système courant.
 
 ### Frontend (Vue)
@@ -55,6 +65,7 @@
 - [x] Observatoire : recherche étoile (centrage + highlight)
 - [x] Unification coordonnées x/y/z — stellar_systems et nebulas en référentiel galactique (Sol à l'origine). Migration 00018. Projection ciel depuis viewerCoords (système courant).
 - [x] Observatoire : vue Ciel profond / Système (onglets) — vue Système : étoile (SVG), planètes (grille 3 col ou ordre orbital), zone habitable (Kopparapu)
+- [x] Observatoire : vue Radar — spectrogramme temps réel + courbe d'intensité, pause/scroll, sélection zone (col×bin), bouton RETOUR AU LIVE, reprise via visibilitychange
 
 ### Fonctionnalités
 - [ ] Onboarding (4 écrans GDD)
@@ -71,6 +82,20 @@
 - [x] Page Systèmes — plan ARCA SVG, menu 1:1 avec 9 groupes (plasma-shield, bumper-shield, population-quarters, fission-reactors, thermal-radiators, fuel-tanks, propulsion, comms, navigation), highlight sur le plan, overlays par groupe
 - [ ] Galaxie procédurale
 - [x] Vue 3D étoiles (conception) — `/conception-etoiles`, Three.js, barycentre origine, zoom/dézoom, recherche + focus
+
+---
+
+## Couverture des champs (base Supabase — 2026-03-16)
+
+| Champ | Table | Couverture |
+|-------|-------|------------|
+| color_index | stellar_systems | 87,3 % |
+| age | stellar_systems | 14,8 % |
+| luminosity | stellar_systems | 90,0 % |
+| constellation_abbr | stellar_systems | 100 % |
+| coordinates | stellar_systems | 100 % |
+| object_type | stellar_systems | 100 % |
+| atmosphere_composition | system_objects | 1,0 % |
 
 ---
 
@@ -135,3 +160,12 @@
 | Mars 2026 | Refactoring Observatoire / Vue 3D — constants/starDisplay.js, lib/stellarCoordinates.js, composables useStellarSearch et useStarTooltipData. ObservatoireSpectralFilters migré vers useStellarSearch. StarTooltip vers useStarTooltipData. skyRenderers et Stars3DCanvas utilisent starDisplay. |
 | Mars 2026 | Vue 3D conception — sprites circulaires (lib/starSpriteTexture.js), lignes constellation, désélection (bouton × et clic vide). useStellarSearch onClearFocus. lib/constellationSegments.js partagé. STAR_SPRITE_BASE_SIZE, STAR_SPRITE_MIN_PIXELS. |
 | Mars 2026 | Sélection manuelle étoile — useStarSelection (observatoire / standalone), clic étoile Vue 3D (raycast), clic étoile Observatoire (highlight + centrage). |
+| Mars 2026 | composables/useTransitLines3d.js — Lignes de transit 3D (LineSegments, opacité 0.45) extraites. CarteMap3D et Stars3DCanvas utilisent buildTransitLinesMesh(segments, positionsById). Documentation-technique.md mise à jour. |
+| 2026-03-19 | Patch stellaires appliqués — hyg_patch.py : 55. nasa_age_patch.py : 647 (age). constellation_patch.py : 363 (constellation). coords_patch.py : 651 (coordinates x/y/z depuis NASA TAP). Scripts utilitaires : analyze_unmatched_hyg.py, nasa_systems_by_distance.py, analyze_nasa_age_matching.py. |
+| 2026-03-20 | Déduplication stellar_systems — dedup_stellar_systems.py : 37 doublons supprimés (43 813 → 43 776), 73 champs transférés, 81 FK redirigées. |
+| 2026-03-20 | Déduplication system_objects — dedup_system_objects.py : 992 doublons supprimés (3 260 → 2 268), 34 conflits catégorie B loggés. |
+| 2026-03-20 | Patch luminosity — luminosity_patch.py : 367 systèmes (luminosité extrapolée depuis spectral_type). |
+| 2026-03-20 | Patch Gaia DR3 — gaia_patch.py : ~4 944 systèmes (color_index, age depuis Gaia DR3, matching HIP + cone search). |
+| 2026-03-21 | simbad_exotic_import.py : 4 419 créés (WD, PSR, BH) ; atnf_pulsar_patch.py : 2 945 pulsars. |
+| 2026-03-15 | Documentation Vue Radar — Documentation-technique (section RadarView), -status, -fonctionnelle. |
+| 2026-03-16 | Audit documentation — stats réelles : 48 195 stellar_systems, 2 155 system_objects ; couverture champs (color_index 87,3 %, age 14,8 %, luminosity 90 %, constellation/coords/object_type 100 %, atmosphere_composition 1 %) ; resolve_conflicts. |

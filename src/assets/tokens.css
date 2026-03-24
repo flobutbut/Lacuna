@@ -17,6 +17,7 @@
   --color-cyan-muted:      #5eb8c4;
   --color-cyan-glow:       rgba(0, 180, 200, 0.15);
   --color-cyan-subtle:     rgba(0, 180, 200, 0.05);
+  --color-cyan-hz-band:    rgba(0, 180, 200, 0.2);   /* Zone habitable — plus visible */
   --color-cyan-hover:      rgba(0, 180, 200, 0.08);
   --color-cyan-active:     rgba(0, 180, 200, 0.22);
 

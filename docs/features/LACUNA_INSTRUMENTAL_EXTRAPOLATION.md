@@ -44,10 +44,10 @@ Avant d'extrapoler, importer les données atmosphériques réelles disponibles.
 ### Sources réelles exploitables
 
 **NASA Exoplanet Archive — atmosphères détectées**
-URL : `https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,hostname,pl_atmoscomp+from+ps+where+default_flag=1+and+pl_atmoscomp+is+not+null&format=csv`
+*Note : la colonne `pl_atmoscomp` a été retirée de l'API NASA (2023+).*
+Le script `jwst_atmospheres_patch.py` utilise désormais un jeu de données curé (`jwst_atmospheres_data.json`) issu de la littérature.
 
-Couvre ~50 planètes avec détections JWST/Hubble confirmées. Champs utiles :
-- `pl_atmoscomp` : composition détectée (texte libre, à parser)
+Couvre ~50 planètes avec détections JWST/Hubble/Spitzer confirmées.
 
 **JWST Early Release Science — cas emblématiques**
 - WASP-39b : H₂O, CO₂, CO, SO₂, K détectés

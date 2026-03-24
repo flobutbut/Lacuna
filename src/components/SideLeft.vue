@@ -57,8 +57,8 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div v-if="ui.observatoireViewMode === 'sky'" class="side-widget side-widget--signaux">
-      <div class="sw-title" :class="{ 'sw-title--no-divider': signalsToShow.length > 0 }">Signaux captés</div>
+    <div v-if="ui.observatoireViewMode === 'sky' || ui.observatoireViewMode === 'radar'" class="side-widget side-widget--signaux">
+      <div class="sw-title" :class="{ 'sw-title--no-divider': signalsToShow.length > 0 }">Radar</div>
       <div v-if="signalsToShow.length === 0" class="signal-empty">
         Aucun signal.
       </div>

@@ -1,11 +1,13 @@
 <script setup>
 import { useUIStore } from '@/stores/ui'
 import ObservatoireSpectralFilters from '@/components/ObservatoireSpectralFilters.vue'
+import ObservatoireRadarFilters from '@/components/ObservatoireRadarFilters.vue'
 
 const ui = useUIStore()
 
 const TABS = [
   { id: 'sky', label: 'Ciel profond' },
+  { id: 'radar', label: 'Radar' },
   { id: 'system', label: 'Système' },
 ]
 </script>
@@ -13,11 +15,11 @@ const TABS = [
 <template>
   <div
     class="observatoire-tabs"
-    :class="{ 'observatoire-tabs--full-width': ui.observatoireViewMode === 'system' || (ui.observatoireViewMode === 'sky' && !ui.observatoireTilesVisible) }"
+    :class="{ 'observatoire-tabs--full-width': ui.observatoireViewMode === 'system' || ui.observatoireViewMode === 'radar' || (ui.observatoireViewMode === 'sky' && !ui.observatoireTilesVisible) }"
   >
     <div
       class="observatoire-tabs__buttons"
-      :class="{ 'observatoire-tabs__buttons--over-star': ui.observatoireViewMode === 'system' }"
+      :class="{ 'observatoire-tabs__buttons--over-star': ui.observatoireViewMode === 'system' || ui.observatoireViewMode === 'radar' }"
     >
       <button
         v-for="t in TABS"
@@ -30,7 +32,31 @@ const TABS = [
         {{ t.label }}
       </button>
     </div>
+    <div
+      v-if="ui.observatoireViewMode === 'radar' && ui.radarPaused"
+      class="observatoire-tabs__center"
+    >
+      <button
+        type="button"
+        class="btn btn-secondary"
+        :class="{ 'is-active': ui.radarSelectionMode === 'zone' }"
+        title="Sélectionner une zone (spectrogramme)"
+        @click="ui.setRadarSelectionMode(ui.radarSelectionMode === 'zone' ? null : 'zone')"
+      >
+        Zone
+      </button>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        :class="{ 'is-active': ui.radarSelectionMode === 'period' }"
+        title="Sélectionner une période (les deux graphiques)"
+        @click="ui.setRadarSelectionMode(ui.radarSelectionMode === 'period' ? null : 'period')"
+      >
+        Période
+      </button>
+    </div>
     <ObservatoireSpectralFilters v-if="ui.observatoireViewMode === 'sky'" class="observatoire-tabs__filters" />
+    <ObservatoireRadarFilters v-else-if="ui.observatoireViewMode === 'radar'" class="observatoire-tabs__filters" />
   </div>
 </template>
 
@@ -57,6 +83,7 @@ const TABS = [
   left: var(--sidebar-offset);
   right: var(--sidebar-offset);
 }
+
 .observatoire-tabs__buttons {
   display: flex;
   gap: 0;
@@ -85,6 +112,13 @@ const TABS = [
   background: var(--color-panel-solid);
 }
 
+.observatoire-tabs__center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2);
+}
 .observatoire-tabs__filters {
   flex-shrink: 0;
 }

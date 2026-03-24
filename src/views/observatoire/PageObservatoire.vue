@@ -1,8 +1,10 @@
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, provide } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUIStore } from '@/stores/ui'
+import { useRadarSpectrogram } from '@/composables/useRadarSpectrogram'
 import SkyCanvas from '@/components/SkyCanvas.vue'
+import RadarView from '@/components/RadarView.vue'
 import SystemView from '@/components/SystemView.vue'
 import ObservatoireViewTabs from '@/components/ObservatoireViewTabs.vue'
 import ObservatoireAzimuth from '@/components/ObservatoireAzimuth.vue'
@@ -11,6 +13,7 @@ import SideRight from '@/components/SideRight.vue'
 import Reticule from '@/components/Reticule.vue'
 import StarTooltip from '@/components/StarTooltip.vue'
 import TravelWidget from '@/components/TravelWidget.vue'
+import DepartureConfirmation from '@/components/DepartureConfirmation.vue'
 import ObservatoirePanel from '@/components/ObservatoirePanel.vue'
 import SignalModal from '@/components/SignalModal.vue'
 import SignalTooltip from '@/components/SignalTooltip.vue'
@@ -19,6 +22,10 @@ import ConstellationTooltip from '@/components/ConstellationTooltip.vue'
 const route = useRoute()
 const ui = useUIStore()
 const isSkyMode = computed(() => ui.observatoireViewMode === 'sky')
+const isRadarMode = computed(() => ui.observatoireViewMode === 'radar')
+
+const radarSpectrogram = useRadarSpectrogram()
+provide('radarSpectrogram', radarSpectrogram)
 
 function onKeydown(e) {
   if (e.key !== '@') return
@@ -28,20 +35,27 @@ function onKeydown(e) {
   ui.toggleObservatoireTiles()
 }
 
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+  radarSpectrogram.start()
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+  radarSpectrogram.stop()
+})
 </script>
 
 <template>
   <div class="page-observatoire">
     <SkyCanvas v-show="isSkyMode" />
-    <SystemView v-show="!isSkyMode" />
-    <div v-if="!isSkyMode" class="vignette" />
-    <div v-if="!isSkyMode" class="scanlines" />
+    <RadarView v-if="isRadarMode" />
+    <SystemView v-show="!isSkyMode && !isRadarMode" />
+    <div v-if="!isSkyMode && !isRadarMode" class="vignette" />
+    <div v-if="!isSkyMode && !isRadarMode" class="scanlines" />
     <div class="ui-layer">
       <ObservatoireViewTabs />
-      <SideLeft v-show="!isSkyMode || ui.observatoireTilesVisible" />
-      <SideRight v-show="!isSkyMode || ui.observatoireTilesVisible" />
+      <SideLeft v-show="(isSkyMode && ui.observatoireTilesVisible) || ui.observatoireViewMode === 'system'" />
+      <SideRight v-show="ui.observatoireViewMode === 'system' || (ui.observatoireViewMode === 'sky' && ui.observatoireTilesVisible)" />
       <Reticule v-if="isSkyMode" />
       <StarTooltip v-if="isSkyMode" />
       <SignalTooltip v-if="isSkyMode" />
@@ -52,6 +66,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       </div>
       <ObservatoireAzimuth v-if="isSkyMode" />
       <TravelWidget v-if="isSkyMode" />
+      <DepartureConfirmation v-if="isSkyMode" />
       <ObservatoirePanel v-if="ui.selectedStar && ui.observatoireOpen" />
       <SignalModal />
     </div>

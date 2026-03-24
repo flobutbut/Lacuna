@@ -41,13 +41,14 @@ const availableTypeFilterOptions = computed(() => {
       spectral_type: s.spectral_type ?? s.spectral ?? s.star?.spectral_type ?? s.star?.spectral,
       id: s.id,
       name: s.name,
+      object_type: s.object_type ?? s.star?.object_type,
     }
     const t = getStarTypeForFilter(starLike)
     if (t) present.add(t)
   }
 
-  // Ordre d'affichage UX : M, K, G, F, A, B, O, L, T, Y, D
-  const ORDER = ['M', 'K', 'G', 'F', 'A', 'B', 'O', 'L', 'T', 'Y', 'D']
+  // Ordre d'affichage UX : PULSAR en premier (objets exotiques), puis M, K, G, F, A, B, O, L, T, Y, D
+  const ORDER = ['PULSAR', 'M', 'K', 'G', 'F', 'A', 'B', 'O', 'L', 'T', 'Y', 'D']
   const options = []
   for (const code of ORDER) {
     if (!present.has(code)) continue

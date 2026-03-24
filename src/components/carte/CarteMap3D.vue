@@ -15,11 +15,8 @@ import { animateFocusTo, animateTargetTo } from '@/composables/useCameraFocusAni
 import { getSystemXyz } from '@/lib/stellarCoordinates'
 import { loadStarSvgTextureForSpectralType } from '@/composables/useStarSvgTexture'
 import { getSpectralLetter, getStarClassLabel } from '@/lib/starClassification'
-import {
-  COLOR_GREEN_BRIGHT_HEX,
-  STAR_SPRITE_BASE_SIZE,
-  STAR_SPRITE_MIN_PIXELS,
-} from '@/constants/starDisplay'
+import { STAR_SPRITE_BASE_SIZE, STAR_SPRITE_MIN_PIXELS } from '@/constants/starDisplay'
+import { buildTransitLinesMesh } from '@/composables/useTransitLines3d'
 import ObservatoireTooltip from '@/components/ObservatoireTooltip.vue'
 
 const props = defineProps({
@@ -36,7 +33,6 @@ const stellarStore = useStellarSystemsStore()
 
 const circleTexture = getCircleSpriteTexture()
 
-const TRANSIT_LINE_OPACITY = 0.8
 const BASE_CAMERA_DISTANCE = 80
 const CLICK_DRAG_THRESHOLD = 5
 let isFocusAnimating = false
@@ -212,27 +208,8 @@ function buildHighlightMesh() {
   return createHighlightSprite(p.x, p.y, p.z)
 }
 
-function buildTransitLinesMesh() {
-  const segs = transitsSegments.value
-  const posById = positionsById.value
-  if (!segs.length || !posById || !(posById instanceof Map)) return null
-  const vertices = []
-  for (const { fromId, toId } of segs) {
-    const from = posById.get(fromId)
-    const to = posById.get(toId)
-    if (!from || !to) continue
-    vertices.push(from.x, from.y, from.z)
-    vertices.push(to.x, to.y, to.z)
-  }
-  if (vertices.length === 0) return null
-  const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
-  const material = new THREE.LineBasicMaterial({
-    color: COLOR_GREEN_BRIGHT_HEX,
-    transparent: true,
-    opacity: TRANSIT_LINE_OPACITY,
-  })
-  return new THREE.LineSegments(geometry, material)
+function buildTransitLinesMeshLocal() {
+  return buildTransitLinesMesh(transitsSegments.value, positionsById.value)
 }
 
 function initThree() {
@@ -324,7 +301,7 @@ function updatePoints() {
   if (pointsMesh) scene.add(pointsMesh)
   highlightMesh = buildHighlightMesh()
   if (highlightMesh) scene.add(highlightMesh)
-  transitLinesMesh = buildTransitLinesMesh()
+  transitLinesMesh = buildTransitLinesMeshLocal()
   if (transitLinesMesh) scene.add(transitLinesMesh)
 }
 

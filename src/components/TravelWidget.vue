@@ -97,12 +97,17 @@ async function fixerCap() {
     return
   }
   const meta = star.dist ? computeTransit(star.dist) : null
-  const result = await shipStore.startTransit(star.id, star.dist, meta ?? undefined)
-  if (!result) {
-    ui.showNotification('Impossible de lancer le transit (vaisseau non chargé ou erreur Supabase)', 5000)
-    return
-  }
-  ui.showNotification(`CAP FIXÉ — ${star.name} — ${star.dist} al — transit en cours`, 4000)
+  // Ouvrir la vue de confirmation (ne pas lancer le transit ici)
+  ui.setPendingDeparture({
+    id: star.id,
+    name: star.name ?? star.id,
+    dist: star.dist,
+    distanceLy: parseFloat(star.dist) || 0,
+    spectral_type: targetSystem?.spectral_type ?? star.spectral ?? null,
+    transitMeta: meta ?? undefined,
+  })
+  ui.setSearchedStarId(star.id)
+  ui.openDepartureConfirmation()
   ui.selectStar(null)
 }
 

@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "seed:generate": "node scripts/generateExtendedSeed.js > supabase/seed_extended_systems.sql",
-    "import:stellar": "cd stellar_import && python main.py"
+    "import:stellar": "cd stellar_import && python main.py",
+    "backup:db": "./scripts/backup-db.sh",
+    "dump:critiques": "bash scripts/pg_dump_critiques.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",

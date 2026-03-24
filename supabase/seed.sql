@@ -153,10 +153,7 @@ VALUES ('HD44594', 'PLANET', 'b', 'HD 44594 b', 1, 45, 2.1);
 INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone)
 VALUES ('HD44594', 'PLANET', 'c', 'HD 44594 c', 2, 120, 1.5, true);
 
--- PSR_B1919 — Pulsar (trace PSR-001, LACUNA_TRACES §3). Premier pulsar découvert — initialement nommé LGM-1.
-INSERT INTO system_objects (system_id, type, designation, name, sort_order, emits_signals, emission_support, emission_pattern, emission_frequency_hz, emission_direction, confirmation_status)
-VALUES ('PSR_B1919', 'PULSAR', NULL, 'PSR B1919+21', 0, true, 'EM_RADIO', 'PERIODIC', 1.33, 'beam', 'CONFIRMED');
-
+-- PSR_B1919 : pulsar modélisé via stellar_systems.object_type (pas d'objet dans system_objects).
 -- GW_REGION_A — Binaire d'étoiles à neutrons (onde gravitationnelle). Réf. GW170817, LIGO/Virgo.
 INSERT INTO system_objects (system_id, type, designation, name, sort_order, emits_signals, emission_support, emission_pattern, emission_frequency_hz, emission_direction, confirmation_status)
 VALUES ('GW_REGION_A', 'NEUTRON_STAR', NULL, 'BNS GW-2341', 0, true, 'GRAVITATIONNEL', 'BURST', 0.02, 'omni', 'CONFIRMED');
@@ -590,12 +587,10 @@ VALUES
   ('GW_REGION_A', 'GW', NOW() - INTERVAL '8 hours', 16, '{"designation": "GW-2341-A", "chirp_mass_solar": 1.2, "distance_mpc": 130}'::jsonb);
 
 -- ── Signaux démo (session seed-demo : clonés à la première visite Observatoire) ──
--- 1. Permanent : pulsar (OBJECT)
+-- 1. Pulsar-like (UNKNOWN) — signal direction PSR B1919+21, sans lien system_object (pulsars via stellar_systems.object_type)
 INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
-SELECT 'OBJECT', so.id, NULL, 'seed-demo', '11111111-1111-1111-1111-111111111111', 1420000000, so.emission_support, 72,
-  '{"azimuth": 290, "elevation": 22, "receivedAt": "2341-04-12", "polarization": "linéaire", "structure": "pulsé régulier", "sourceName": "PSR B1919+21"}'::jsonb
-FROM system_objects so
-WHERE so.system_id = 'PSR_B1919' AND so.emits_signals = true;
+VALUES ('UNKNOWN', NULL, NULL, 'seed-demo', '11111111-1111-1111-1111-111111111111', 1420000000, 'EM_RADIO', 72,
+  '{"azimuth": 290, "elevation": 22, "receivedAt": "2341-04-12", "polarization": "linéaire", "structure": "pulsé régulier", "sourceName": "PSR B1919+21"}'::jsonb);
 
 -- 2. Ponctuel : GRB (EVENT) — sursaut gamma
 INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)

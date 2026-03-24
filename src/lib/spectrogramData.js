@@ -198,6 +198,77 @@ export function computeAutocorrelation(values, maxLag = 2000, downsample = 10) {
 }
 
 /**
+ * Calcule une seule colonne FFT (magnitudes) pour une fenêtre de signal.
+ * Utilisé pour le rendu incrémental (canvas Radar).
+ * @param {number[]} values - Fenêtre d'amplitudes (longueur 256 ou 64, puissance de 2)
+ * @param {number} freqBins
+ * @returns {{ magnitudes: number[], intensity: number }}
+ */
+export function computeSpectrogramColumn(values, freqBins) {
+  if (!values || values.length < 64) return { magnitudes: [], intensity: 0 }
+  const N = values.length
+  const mean = values.reduce((a, x) => a + x, 0) / N
+  const centered = values.map((x) => x - mean)
+
+  const re = centered.slice()
+  const im = new Array(N).fill(0)
+  _fftInPlace(re, im)
+  const scale = 1 / N
+  const maxK = Math.min(freqBins, (N >> 1) + 1)
+  const fftRow = []
+  for (let k = 0; k < maxK; k++) {
+    fftRow.push(Math.sqrt(re[k] * re[k] + im[k] * im[k]) * scale)
+  }
+  for (let k = maxK; k < freqBins; k++) fftRow.push(0)
+  const row = []
+  for (let r = freqBins - 1; r >= 0; r--) row.push(fftRow[r])
+
+  const maxMagnitude = row.length ? Math.max(...row) : 0
+  let intensity = row.reduce((s, v) => s + v, 0) / row.length || 0
+  if (maxMagnitude === 0) {
+    intensity = 0
+  } else {
+    intensity = Math.min(1, Math.max(0, intensity / maxMagnitude))
+  }
+  return { magnitudes: row, intensity }
+}
+
+function _fftInPlace(re, im) {
+  const N = re.length
+  const nbits = 31 - Math.clz32(N)
+  for (let i = 0; i < N; i++) {
+    let j = 0
+    let x = i
+    for (let b = 0; b < nbits; b++) {
+      j = (j << 1) | (x & 1)
+      x >>= 1
+    }
+    if (i < j) {
+      ;[re[i], re[j]] = [re[j], re[i]]
+      ;[im[i], im[j]] = [im[j], im[i]]
+    }
+  }
+  for (let len = 2; len <= N; len <<= 1) {
+    const half = len >> 1
+    const angle = (-2 * Math.PI) / len
+    for (let i = 0; i < N; i += len) {
+      for (let j = 0; j < half; j++) {
+        const k = i + j
+        const l = k + half
+        const wr = Math.cos(angle * j)
+        const wi = Math.sin(angle * j)
+        const tr = wr * re[l] - wi * im[l]
+        const ti = wr * im[l] + wi * re[l]
+        re[l] = re[k] - tr
+        im[l] = im[k] - ti
+        re[k] += tr
+        im[k] += ti
+      }
+    }
+  }
+}
+
+/**
  * Calcule la matrice spectrogramme (temps × fréquence) pour rendu D3 heatmap.
  * Résolution élevée : pas de limite pixel, adapté au zoom.
  * @param {Array<[number, number]>} data - [[timestamp_ms, amplitude], ...]
@@ -217,18 +288,20 @@ export function computeSpectrogramMatrix(data, sampleRate, durationSec, opts = {
   const windowSize = anomalous ? 64 : 256
   const timeSteps = opts.timeSteps ?? 450
   const freqBins = opts.freqBins ?? 96
-  const twoPi = 2 * Math.PI
 
-  function dftMagnitude(samples, k) {
-    let re = 0
-    let im = 0
-    const N = samples.length
-    for (let n = 0; n < N; n++) {
-      const angle = (-twoPi * k * n) / N
-      re += samples[n] * Math.cos(angle)
-      im += samples[n] * Math.sin(angle)
+  function fftMagnitudes(realSamples, numBins) {
+    const N = realSamples.length
+    const re = realSamples.slice()
+    const im = new Array(N).fill(0)
+    _fftInPlace(re, im)
+    const scale = 1 / N
+    const maxK = Math.min(numBins, (N >> 1) + 1)
+    const out = []
+    for (let k = 0; k < maxK; k++) {
+      out.push(Math.sqrt(re[k] * re[k] + im[k] * im[k]) * scale)
     }
-    return Math.sqrt(re * re + im * im) / N
+    for (let k = maxK; k < numBins; k++) out.push(0)
+    return out
   }
 
   const step = Math.max(1, Math.floor((values.length - windowSize) / timeSteps))
@@ -241,10 +314,10 @@ export function computeSpectrogramMatrix(data, sampleRate, durationSec, opts = {
     const window = values.slice(t, t + windowSize)
     const mean = window.reduce((a, x) => a + x, 0) / window.length
     const centered = window.map((x) => x - mean)
+    const fftRow = fftMagnitudes(centered, freqBins)
     const row = []
-    for (let k = 0; k < freqBins; k++) {
-      const m = dftMagnitude(centered, k)
-      row.push(m)
+    for (let r = freqBins - 1; r >= 0; r--) row.push(fftRow[r])
+    for (const m of row) {
       if (m > maxVal) maxVal = m
     }
     spectrogram.push(row)

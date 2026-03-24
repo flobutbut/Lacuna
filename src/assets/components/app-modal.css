@@ -31,7 +31,8 @@
   pointer-events: auto;
 }
 
-.app-modal__divider {
+/* Priorité sur .divider (divider.css chargé après) pour éviter marge verticale en double */
+.app-modal .app-modal__divider {
   margin: 0;
 }
 

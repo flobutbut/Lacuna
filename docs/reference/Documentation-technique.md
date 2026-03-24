@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-18 (corrections suite AUDIT_doc_technique.md)*
+*Dernière modification : 2026-03-15*
 
 # LACUNA — Documentation technique
 
@@ -62,6 +62,7 @@ Lacuna/
 │   │   ├── NavTabButton.vue (barre navigation — onglets modules)
 │   │   ├── InstrumentButton.vue (grille boutons carrés — Laboratoire, réutilisable)
 │   │   ├── TravelWidget.vue, NotificationToast.vue
+│   │   ├── RadarView.vue          # Vue Radar Observatoire — spectrogramme temps réel + courbe d'intensité
 │   │   ├── conception/
 │   │   │   └── Stars3DCanvas.vue       # Vue 3D Three.js (conception)
 │   │   ├── lab/
@@ -88,7 +89,10 @@ Lacuna/
 │   │   ├── useStarTooltipData.js    # Données tooltip étoile (distance, exoplanètes, etc.) — StarTooltip
 │   │   ├── useStarSelection.js     # Sélection étoile (recherche + clic) — Observatoire et Vue 3D
 │   │   ├── useStarSvgTexture.js    # Texture SVG par type spectral — Carte 3D
+│   │   ├── useTransitLines3d.js   # Lignes de transit 3D (LineSegments, opacité) — CarteMap3D, Stars3DCanvas
 │   │   ├── useStoreReady.js # ensureStoresLoaded() — chargement stores au montage
+│   │   ├── useDepartureConfirmation.js # Données vue confirmation départ (durée, générations, phrases) — DepartureConfirmation.vue
+│   │   ├── useRadarSpectrogram.js  # Spectrogramme Radar — buffer circulaire, tickCount, appendColumn — RadarView
 │   │   └── useViewerSystemPolicy.js # Système courant (viewer) + exclusion ciel/recherche selon contexte (observatoire vs conception3d)
 │   ├── constants/           # Constantes partagées
 │   │   ├── objectTypes.js   # OBJECT_TYPE_LABELS (affichage Observatoire, Laboratoire)
@@ -165,6 +169,8 @@ Lacuna/
 │   ├── upsert_systems.py    # Upsert stellar_systems
 │   ├── upsert_objects.py    # Upsert system_objects (planètes)
 │   ├── complete_hyg_fields.py   # Complète coordinates, constellation_abbr, mag, lum
+│   ├── hyg_patch.py            # Patch HYG : constellation_abbr, luminosity, color_index + field_sources
+│   ├── nasa_age_patch.py       # Patch NASA : age (Ga) depuis Exoplanet Archive
 │   ├── populate_constellations.py  # 88 constellations + constellation_lines (IAU shapes)
 │   ├── check_systems.py     # Vérifier champs stellar_systems
 │   ├── check_duplicate_systems.py # Détecte doublons HYG/LACUNA
@@ -225,6 +231,23 @@ Stack pour les rendus visuels des instruments (spectrogrammes, spectres, courbes
 
 Voir `docs/features/LACUNA_LABORATOIRE_INSTRUMENTS.md` §5 (formats de sortie) et § Annexe.
 
+## Vue Radar (Observatoire)
+
+Composant `RadarView.vue` — spectrogramme temps réel + courbe d'intensité, comportement type Twitch (LIVE / PAUSE + SCROLL / RETOUR AU LIVE).
+
+| Élément | Description |
+|---------|-------------|
+| **Composable** | `useRadarSpectrogram` — buffer circulaire (`HISTORY_SIZE` colonnes), `tickCount` (signal réactif), `getBufferSnapshot`, `appendColumn` |
+| **Rendu** | Canvas 2D — deux offscreens (spectrogramme, intensité), `drawViewport()` copie fenêtre glissante vers canvas visibles |
+| **Boucle rAF** | `renderLoop()` — `appendColumn` (jusqu'à 10 ticks/frame), easing `currentScrollOffset` vers `targetScrollOffset`, puis `drawViewport()`. En **pause** : la boucle ne planifie plus le prochain rAF. |
+| **Pause** | `ui.radarPaused` (Pinia) — arrête le défilement, active le scroll à la molette et la sélection de zone |
+| **Reprise** | `watch(radarPaused)` → `targetScrollOffset = 0`, `resumeRenderLoop()`. Sécurité : `visibilitychange` relance la boucle si l'onglet redevient visible et non en pause |
+| **Scroll** | En pause : `onWheel` modifie `targetScrollOffset` (scroll down = contenu plus récent) |
+| **Sélection** | Zone rectangulaire (col×bin) en pause — `emit('signal-selected', { startCol, endCol, startBin, endBin })` |
+| **Bouton LIVE** | Affiché quand `currentScrollOffset > LIVE_THRESHOLD` — clic → `targetScrollOffset = 0`, easing vers live |
+
+**Dépendances** : `spectrogramData.js` (`computeSpectrogramColumn`), D3 (`scaleSequential`, `interpolateViridis`), store `ui` (`radarPaused`, `radarSelectionMode`).
+
 **URL importante :** Toujours utiliser `http://localhost:5173/` (racine). La maquette `docs/assets/lacuna_interface.html` est redirigée vers `/` — elle a ses propres styles et ne charge pas l'app Vue.
 
 ## Import stellaires (stellar_import)
@@ -236,6 +259,8 @@ cd stellar_import && python3 main.py                    # Import complet HYG + N
 cd stellar_import && python3 main.py --nasa-only        # NASA uniquement
 cd stellar_import && python3 main.py --fix-ids sirius proxima-centauri tau-ceti   # Réimport ciblé
 cd stellar_import && python3 complete_hyg_fields.py     # Compléter coordinates, constellation_abbr, mag, lum
+cd stellar_import && python3 hyg_patch.py [--apply]     # Patch champs manquants (con, lum, ci) + field_sources
+cd stellar_import && python3 nasa_age_patch.py [--apply] # Patch age (Ga) depuis NASA
 cd stellar_import && python3 populate_constellations.py # 88 constellations + segments (--truncate pour vider)
 cd stellar_import && python3 check_systems.py           # Vérifier champs stellar_systems
 ```

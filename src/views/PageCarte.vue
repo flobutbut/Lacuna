@@ -12,6 +12,9 @@ import { OBJECT_TYPE_LABELS, COMPOSITION_LABELS, planetTypeLabel } from '@/const
 import { buildObservationPayload } from '@/lib/observationPayload'
 import { formatCoordinates } from '@/lib/formatUtils'
 import { formatDistanceLy, getStarClassLabel } from '@/lib/starClassification'
+import { computeTransit } from '@/lib/transit'
+import { getSystemXyz } from '@/lib/stellarCoordinates'
+import { xyzToRaDec } from '@/lib/stellarProjection'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { toPhysicalUnits, toLuminosityAndHz } from '@/lib/systemObjectConverters'
 import StarSvgInline from '@/components/illustrations/StarSvgInline.vue'
@@ -38,7 +41,34 @@ const selectedStar = ref(null)
 const detailsLoading = ref(false)
 
 /** Onglet vue Carte : 'system' (vue orbitale) | 'map' (vue 3D, comme Conception) */
-const carteViewMode = ref('system')
+const carteViewMode = ref('map')
+
+/** Filtre liste systèmes : 'all' | 'visited' | 'observed' */
+const systemListFilter = ref('all')
+
+const CARTE_FILTER_OPTIONS = [
+  { id: 'all', label: 'Tout' },
+  { id: 'visited', label: 'Visité' },
+  { id: 'observed', label: 'Observé' },
+]
+
+/** Liste des systèmes à afficher (current en premier si présent, puis autres, selon le filtre) */
+const displayedSystemsList = computed(() => {
+  const current = currentSystemItem.value
+  const others = otherSystemsList.value
+  const filter = systemListFilter.value
+  if (filter === 'all') {
+    return current ? [current, ...others] : others
+  }
+  if (filter === 'visited') {
+    const cur = current?.visitedAt ? [current] : []
+    const rest = others.filter((n) => n.visitedAt)
+    return [...cur, ...rest]
+  }
+  const cur = current && !current.visitedAt ? [current] : []
+  const rest = others.filter((n) => !n.visitedAt)
+  return [...cur, ...rest]
+})
 
 
 // Charger les stores (vaisseau avant carte : mapStore.fetch() a besoin de ship.id)
@@ -60,6 +90,12 @@ onMounted(async () => {
   const nodes = mapStore.nodes
   if (nodes?.length > 0) {
     await Promise.all(nodes.map((n) => systemObjectsStore.fetchForSystem(n.systemId)))
+  }
+  // Sélection par défaut : système actuel s'il est sur la carte, sinon premier de la liste
+  if (mapStore.nodes?.length > 0) {
+    selectedSystemId.value = (currentId && mapStore.isOnMap(currentId))
+      ? currentId
+      : mapStore.nodes[0].systemId
   }
 })
 
@@ -273,7 +309,7 @@ async function analyserForStar() {
   await analyserForBodyPayload(starBody, starRef)
 }
 
-/** Ouvre le widget transit pour fixer le cap vers le système sélectionné */
+/** Ouvre la vue de confirmation du départ (même comportement que [FIXER CAP] depuis l'Observatoire) */
 function fixerCapCarte() {
   const systemId = selectedSystemId.value
   const stellar = selectedStellar.value
@@ -282,12 +318,39 @@ function fixerCapCarte() {
     ui.showNotification('Vous êtes déjà dans ce système', 3000)
     return
   }
-  ui.selectStar({
+  if (shipStore.isInTransit) {
+    ui.showNotification('Transit déjà en cours — attendez l\'arrivée avant de fixer un nouveau cap', 4000)
+    return
+  }
+  if (!shipStore.ship) {
+    ui.showNotification('Vaisseau non chargé — réessayez dans une seconde', 4000)
+    return
+  }
+  const dist = stellar.distance ?? '—'
+  const distanceLy = parseFloat(dist) || 0
+  const meta = distanceLy > 0 ? computeTransit(dist) : null
+  ui.setPendingDeparture({
     id: systemId,
     name: stellar.name ?? systemId,
-    dist: stellar.distance ?? '—',
-    spectral: getStarClassLabel(stellar.spectral_type) || '—',
+    dist,
+    distanceLy,
+    spectral_type: stellar.spectral_type ?? null,
+    transitMeta: meta ?? undefined,
   })
+  ui.setSearchedStarId(systemId)
+  // Orienter la vue ciel vers la cible (comme depuis l'Observatoire)
+  const viewerSystem = stellarStore.list.find((s) => s.id === shipStore.currentSystemId)
+  const viewerXyz = viewerSystem ? getSystemXyz(viewerSystem) : { x: 0, y: 0, z: 0 }
+  const targetXyz = getSystemXyz(stellar)
+  const dx = (targetXyz.x ?? 0) - (viewerXyz.x ?? 0)
+  const dy = (targetXyz.y ?? 0) - (viewerXyz.y ?? 0)
+  const dz = (targetXyz.z ?? 0) - (viewerXyz.z ?? 0)
+  const { ra, dec } = xyzToRaDec(dx, dy, dz)
+  ui.setViewDirectionValue({ ra, dec })
+  ui.setTargetViewDirectionValue({ ra, dec })
+  ui.openDepartureConfirmation()
+  ui.setObservatoireViewMode('sky')
+  router.push({ name: 'observatoire' })
 }
 
 /** Ajouter au laboratoire pour un astre donné (liste drill-down) */
@@ -384,7 +447,9 @@ watch(
   () => mapStore.nodes,
   (nodes) => {
     if (nodes?.length > 0 && !selectedSystemId.value) {
-      selectedSystemId.value = nodes[0].systemId
+      const currentId = shipStore.currentSystemId
+      const currentOnMap = currentId && mapStore.isOnMap(currentId)
+      selectedSystemId.value = currentOnMap ? currentId : nodes[0].systemId
     }
   },
   { immediate: true, deep: true }
@@ -462,32 +527,28 @@ watch(carteViewMode, (mode) => {
         <div v-if="!hasSystemsOnMap" class="carte-systems-empty">
           Aucun système. Ajoutez-en depuis l'Observatoire ou le Laboratoire.
         </div>
-        <div v-else class="carte-systems__list">
-          <AppCard
-            v-if="currentSystemItem"
-            :key="currentSystemItem.systemId"
-            :title="currentSystemItem.name || currentSystemItem.systemId"
-            :subtitle="currentSystemItem.exoplanetCount === 0 ? 'Aucune exoplanète' : currentSystemItem.exoplanetCount === 1 ? '1 exoplanète' : `${currentSystemItem.exoplanetCount} exoplanètes`"
-            :status="'Système actuel'"
-            :badge="currentSystemItem.tracesFound > 0 ? currentSystemItem.tracesFound : ''"
-            :dismissable="false"
-            :clickable="true"
-            :selected="selectedSystemId === currentSystemItem.systemId"
-            @click="selectSystem(currentSystemItem.systemId)"
-          >
-            <template #icon>
-              <StarSvgInline :spectral-type="currentSystemItem.spectralType" />
-            </template>
-          </AppCard>
-          <div v-if="otherSystemsList.length > 0" class="carte-systems__others" :class="{ 'carte-systems__others--spaced': currentSystemItem }">
+        <template v-else>
+          <div class="carte-systems-filter">
+            <button
+              v-for="opt in CARTE_FILTER_OPTIONS"
+              :key="opt.id"
+              type="button"
+              class="btn btn-secondary"
+              :class="{ 'is-active': systemListFilter === opt.id }"
+              @click="systemListFilter = opt.id"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+          <div class="carte-systems__list">
             <AppCard
-              v-for="node in otherSystemsList"
+              v-for="node in displayedSystemsList"
               :key="node.systemId"
               :title="node.name || node.systemId"
               :subtitle="node.exoplanetCount === 0 ? 'Aucune exoplanète' : node.exoplanetCount === 1 ? '1 exoplanète' : `${node.exoplanetCount} exoplanètes`"
-              :status="node.visitedAt ? 'Visitée' : ''"
+              :status="currentSystemItem?.systemId === node.systemId ? 'Système actuel' : (node.visitedAt ? 'Visitée' : '')"
               :badge="node.tracesFound > 0 ? node.tracesFound : ''"
-              :dismissable="!node.visitedAt"
+              :dismissable="currentSystemItem?.systemId !== node.systemId && !node.visitedAt"
               :clickable="true"
               :selected="selectedSystemId === node.systemId"
               @click="selectSystem(node.systemId)"
@@ -498,7 +559,7 @@ watch(carteViewMode, (mode) => {
               </template>
             </AppCard>
           </div>
-        </div>
+        </template>
       </div>
 
       <!-- Colonne centrale : onglets System / Map puis vue orbitale ou projetée -->
@@ -507,18 +568,18 @@ watch(carteViewMode, (mode) => {
           <button
             type="button"
             class="carte-tabs__btn"
-            :class="{ 'carte-tabs__btn--active': carteViewMode === 'system' }"
-            @click="carteViewMode = 'system'"
-          >
-            System
-          </button>
-          <button
-            type="button"
-            class="carte-tabs__btn"
             :class="{ 'carte-tabs__btn--active': carteViewMode === 'map' }"
             @click="carteViewMode = 'map'"
           >
             Map
+          </button>
+          <button
+            type="button"
+            class="carte-tabs__btn"
+            :class="{ 'carte-tabs__btn--active': carteViewMode === 'system' }"
+            @click="carteViewMode = 'system'"
+          >
+            System
           </button>
         </div>
         <div class="carte-map-container carte-map-container--orbital" :class="{ 'carte-map-container--3d': carteViewMode === 'map' }">
