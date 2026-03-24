@@ -42,6 +42,9 @@ function dbToSignal(row) {
     band: att.band ?? null,
     fluxRelative: att.flux_relative ?? null,
     pulsePeriodS: att.pulse_period_s ?? null,
+    rotationFrequencyHz: att.rotation_frequency_hz
+      ? Number(att.rotation_frequency_hz)
+      : null,
     isPeriodic: att.is_periodic ?? false,
     sourceSystemId: row.source_system_id ?? null,
     frequencyHz: row.frequency_hz

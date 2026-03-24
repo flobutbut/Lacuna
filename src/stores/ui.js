@@ -57,6 +57,10 @@ export const useUIStore = defineStore('ui', () => {
   const radarRecording = ref(false)
   /** Mode sélection Radar en pause : 'zone' | 'period' | null. Zone présélectionné. */
   const radarSelectionMode = ref('zone')
+  /** Échelle temps spectrogramme radar : ms par colonne (10 | 100 | 1000 | 10000) */
+  const radarTimeScale = ref(100)
+  /** Seuil minimum flux_relative pour l'injection pulsars (0–1) */
+  const radarIntensityThreshold = ref(0)
 
   function setObservatoireViewMode(mode) {
     if (['sky', 'radar', 'system'].includes(mode)) {
@@ -150,6 +154,19 @@ export const useUIStore = defineStore('ui', () => {
 
   function setRadarSelectionMode(mode) {
     radarSelectionMode.value = mode === 'zone' || mode === 'period' ? mode : null
+  }
+
+  function setRadarTimeScale(ms) {
+    if ([10, 100, 1000, 10000].includes(Number(ms))) {
+      radarTimeScale.value = Number(ms)
+    }
+  }
+
+  function setRadarIntensityThreshold(val) {
+    const n = parseFloat(val)
+    if (!isNaN(n)) {
+      radarIntensityThreshold.value = Math.min(1, Math.max(0, n))
+    }
   }
 
   function toggleConstellationsEnabled() {
@@ -328,5 +345,9 @@ export const useUIStore = defineStore('ui', () => {
     toggleRadarRecording,
     radarSelectionMode,
     setRadarSelectionMode,
+    radarTimeScale,
+    setRadarTimeScale,
+    radarIntensityThreshold,
+    setRadarIntensityThreshold,
   }
 })
