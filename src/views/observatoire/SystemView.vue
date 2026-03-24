@@ -7,7 +7,7 @@ import { useUIStore } from '@/stores/ui'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
 import StarSvgInline from '@/components/illustrations/StarSvgInline.vue'
 import PlanetSvgInline from '@/components/illustrations/PlanetSvgInline.vue'
-import ObservatoireTooltip from '@/components/ObservatoireTooltip.vue'
+import ObservatoireTooltip from '@/components/observatoire/ObservatoireTooltip.vue'
 import {
   toPhysicalUnits,
   toVisualParams,

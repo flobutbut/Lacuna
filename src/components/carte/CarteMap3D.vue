@@ -17,7 +17,7 @@ import { loadStarSvgTextureForSpectralType } from '@/composables/useStarSvgTextu
 import { getSpectralLetter, getStarClassLabel } from '@/lib/starClassification'
 import { STAR_SPRITE_BASE_SIZE, STAR_SPRITE_MIN_PIXELS } from '@/constants/starDisplay'
 import { buildTransitLinesMesh } from '@/composables/useTransitLines3d'
-import ObservatoireTooltip from '@/components/ObservatoireTooltip.vue'
+import ObservatoireTooltip from '@/components/observatoire/ObservatoireTooltip.vue'
 
 const props = defineProps({
   /** ID du système à mettre en focus (caméra) */

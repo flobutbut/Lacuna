@@ -16,6 +16,7 @@ Organisation du dossier de documentation par catégories.
 | **config/** | Configuration et catalogues — i18n, catalogue des traces (LACUNA_TRACES) |
 | **architecture/** | Schémas techniques, mapping DB, propositions (Interface-DB-mapping, Observatoire, secteurs) |
 | **analyses/** | Analyses techniques, diagnostics, rapports d’import |
+| **audits/** | Audits de code (AUDIT_*), diagnostics ciblés (DIAGNOSTIC_*) |
 | **assets/** | Ressources — SVG, maquettes HTML, JSON |
 
 ## Documents de référence

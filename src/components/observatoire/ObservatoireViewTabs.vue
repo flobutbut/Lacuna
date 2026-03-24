@@ -1,7 +1,7 @@
 <script setup>
 import { useUIStore } from '@/stores/ui'
-import ObservatoireSpectralFilters from '@/components/ObservatoireSpectralFilters.vue'
-import ObservatoireRadarFilters from '@/components/ObservatoireRadarFilters.vue'
+import ObservatoireSpectralFilters from '@/components/observatoire/ObservatoireSpectralFilters.vue'
+import ObservatoireRadarFilters from '@/components/observatoire/ObservatoireRadarFilters.vue'
 
 const ui = useUIStore()
 

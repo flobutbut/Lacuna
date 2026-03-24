@@ -27,7 +27,7 @@ LACUNA_TO_HYG_KEYS = {
     "gliese667": ["gl-gl-667c", "gl-667c", "gliese 667 c"],
     "hd44594": ["hd-44594", "hd 44594"],
 }
-REPORT_FILE = ROOT / "docs" / "complete_hyg_report.md"
+REPORT_FILE = ROOT / "docs" / "analyses" / "complete_hyg_report.md"
 PAGE_SIZE = 1000
 
 

@@ -29,7 +29,9 @@ Lacuna/
 │   ├── App.vue              # Layout racine (Header, InstrumentsBar, RouterView)
 │   ├── views/               # Pages (une par module)
 │   │   ├── observatoire/
-│   │   │   └── PageObservatoire.vue   # Ciel + exploration
+│   │   │   ├── PageObservatoire.vue   # Ciel + exploration
+│   │   │   ├── RadarView.vue          # Spectrogramme temps réel + courbe d'intensité
+│   │   │   └── SystemView.vue         # Vue système (étoile + planètes, mode Observatoire)
 │   │   ├── PageCarte.vue
 │   │   ├── PageArtefacts.vue
 │   │   ├── PageJournal.vue
@@ -56,13 +58,15 @@ Lacuna/
 │   │   ├── SkyCanvas.vue
 │   │   ├── InstrumentsBar.vue
 │   │   ├── SideLeft.vue, SideRight.vue
-│   │   ├── Reticule.vue, ObservatoireTooltip.vue, StarTooltip.vue, SignalTooltip.vue
+│   │   ├── Reticule.vue, StarTooltip.vue, SignalTooltip.vue
 │   │   ├── ObservationCard.vue (cards signaux Observatoire + observations Laboratoire)
 │   │   ├── NavMenuItem.vue (menu Systèmes, Population — items pleine largeur ; grille Artefacts)
 │   │   ├── NavTabButton.vue (barre navigation — onglets modules)
 │   │   ├── InstrumentButton.vue (grille boutons carrés — Laboratoire, réutilisable)
 │   │   ├── TravelWidget.vue, NotificationToast.vue
-│   │   ├── RadarView.vue          # Vue Radar Observatoire — spectrogramme temps réel + courbe d'intensité
+│   │   ├── observatoire/          # Composants Observatoire (panel, filtres, tooltip)
+│   │   │   ├── ObservatoirePanel.vue, ObservatoireViewTabs.vue, ObservatoireTooltip.vue
+│   │   │   ├── ObservatoireSpectralFilters.vue, ObservatoireRadarFilters.vue, ObservatoireAzimuth.vue
 │   │   ├── conception/
 │   │   │   └── Stars3DCanvas.vue       # Vue 3D Three.js (conception)
 │   │   ├── lab/
@@ -134,7 +138,11 @@ Lacuna/
 ├── supabase/
 │   ├── config.toml          # Config Supabase CLI
 │   ├── migrations/          # Nombreux fichiers (*.sql, 00001 à 00031…), liste à jour dans Documentation-backend.md
+│   ├── dumps_critiques/     # Exports PostgreSQL critiques (voir README)
 │   └── seed.sql             # Données initiales (traces immuables + systèmes prototype)
+├── scripts/                 # Scripts Node/shell (hors stellar_import)
+│   ├── generateExtendedSeed.js   # Génère seed étendu (yarn seed:generate)
+│   ├── backup-db.sh, pg_dump_critiques.sh
 ├── docs/
 │   ├── reference/           # Documentation principale
 │   │   ├── Documentation-technique.md
@@ -177,7 +185,8 @@ Lacuna/
 │   ├── diagnose_names.py    # Diagnostique mapping noms
 │   ├── diagnose_nasa_planets.py   # Diagnostique planètes NASA
 │   ├── supabase_client.py   # Client Supabase (.env)
-│   └── report.py            # Rapport final (import_report.md)
+│   ├── report.py            # Rapport final (import_report.md dans stellar_import/)
+│   └── import_report.md     # Généré par main.py
 ├── Ressources/
 │   ├── hyg_v42.csv          # HYG Database (étoiles)
 │   └── constellation.shapes.iau.txt  # Paires HR pour segments constellations (IAU)

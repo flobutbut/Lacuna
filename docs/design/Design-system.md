@@ -337,7 +337,7 @@ Card cliquable pour signaux et observations.
 
 ### 3.10 ObservatoireTooltip
 
-**Fichier** : `src/components/ObservatoireTooltip.vue`
+**Fichier** : `src/components/observatoire/ObservatoireTooltip.vue`
 
 Tooltip unifié pour étoiles, signaux, corps.
 

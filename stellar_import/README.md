@@ -32,7 +32,7 @@ yarn import:stellar
 ## Progression et reprise
 
 - `import_progress.json` : progression (reprise automatique en cas d'interruption)
-- `import_report.md` : rapport final
+- `import_report.md` : rapport final (généré dans stellar_import/)
 - `import_errors.log` : erreurs détaillées
 
 ## Patch HYG (champs manquants)

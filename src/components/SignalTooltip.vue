@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useUIStore } from '@/stores/ui'
-import ObservatoireTooltip from '@/components/ObservatoireTooltip.vue'
+import ObservatoireTooltip from '@/components/observatoire/ObservatoireTooltip.vue'
 
 const ui = useUIStore()
 

@@ -8,7 +8,7 @@ import { useStarSelection } from '@/composables/useStarSelection'
 import { useStars3DConception } from '@/composables/useStars3DConception'
 import { formatDistanceLy, getStarClassLabel, getStarTypeForFilter } from '@/lib/starClassification'
 import { formatNumber } from '@/lib/formatUtils'
-import ObservatoireSpectralFilters from '@/components/ObservatoireSpectralFilters.vue'
+import ObservatoireSpectralFilters from '@/components/observatoire/ObservatoireSpectralFilters.vue'
 import Stars3DCanvas from '@/components/conception/Stars3DCanvas.vue'
 
 const stellarStore = useStellarSystemsStore()

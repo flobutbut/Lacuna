@@ -2,7 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { useUIStore } from '@/stores/ui'
 import { useStarTooltipData } from '@/composables/useStarTooltipData'
-import ObservatoireTooltip from '@/components/ObservatoireTooltip.vue'
+import ObservatoireTooltip from '@/components/observatoire/ObservatoireTooltip.vue'
 
 const ui = useUIStore()
 const { hoveredStar, reticulePosition } = storeToRefs(ui)

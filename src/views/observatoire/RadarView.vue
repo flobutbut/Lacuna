@@ -51,6 +51,10 @@ let isDragging = false
 let dragStartCol = null
 let dragStartBin = null
 
+let cursorX = null
+let cursorY = null
+let cursorChart = null
+
 const spectrogramHeight = ref(200)
 const intensityHeight = ref(100)
 const canvasWidth = ref(800)
@@ -271,6 +275,7 @@ function drawViewport() {
 
   drawAxes(specCanvas, intCanvas)
   drawSelection(specCanvas, intCanvas)
+  drawCrosshair(specCanvas, intCanvas)
 }
 
 function drawAxes(specCanvas, intCanvas) {
@@ -341,6 +346,53 @@ function drawSelection(specCanvas, intCanvas) {
   intCtx.strokeRect(leftPx, margin.top, rightPx - leftPx, intCanvas.height - margin.top - margin.bottom)
 }
 
+function drawCrosshair(specCanvas, intCanvas) {
+  if (selectionStartCol != null && selectionEndCol != null) return
+  if (cursorX == null || cursorChart == null) return
+  if (!radarPaused.value || !radarSelectionMode.value) return
+
+  const innerW = specCanvas.width - margin.left - margin.right
+  if (cursorX < margin.left || cursorX > margin.left + innerW) return
+
+  const specCtx = specCanvas.getContext('2d')
+  const intCtx = intCanvas.getContext('2d')
+  const muted = getCssVar('--color-muted')
+
+  specCtx.strokeStyle = muted
+  specCtx.globalAlpha = 0.5
+  specCtx.lineWidth = 1
+  intCtx.strokeStyle = muted
+  intCtx.globalAlpha = 0.5
+  intCtx.lineWidth = 1
+
+  specCtx.beginPath()
+  specCtx.moveTo(cursorX, 0)
+  specCtx.lineTo(cursorX, specCanvas.height)
+  specCtx.stroke()
+
+  intCtx.beginPath()
+  intCtx.moveTo(cursorX, 0)
+  intCtx.lineTo(cursorX, intCanvas.height)
+  intCtx.stroke()
+
+  if (cursorY != null) {
+    if (cursorChart === 'spec') {
+      specCtx.beginPath()
+      specCtx.moveTo(margin.left, cursorY)
+      specCtx.lineTo(specCanvas.width - margin.right, cursorY)
+      specCtx.stroke()
+    } else {
+      intCtx.beginPath()
+      intCtx.moveTo(margin.left, cursorY)
+      intCtx.lineTo(intCanvas.width - margin.right, cursorY)
+      intCtx.stroke()
+    }
+  }
+
+  specCtx.globalAlpha = 1
+  intCtx.globalAlpha = 1
+}
+
 function pxToCol(px) {
   const innerW = spectrogramCanvasRef.value
     ? spectrogramCanvasRef.value.width - margin.left - margin.right
@@ -360,19 +412,68 @@ function pxToBin(py, wrapHeight) {
   return Math.max(0, Math.min(FREQ_BINS - 1, bin))
 }
 
+function clearSelection() {
+  selectionStartCol = null
+  selectionEndCol = null
+  selectionStartBin = null
+  selectionEndBin = null
+}
+
+function isClickOutsideSelection(col, bin) {
+  if (selectionStartCol == null || selectionEndCol == null) return false
+  const minCol = Math.min(selectionStartCol, selectionEndCol)
+  const maxCol = Math.max(selectionStartCol, selectionEndCol)
+  if (col < minCol || col > maxCol) return true
+  if (radarSelectionMode.value === 'period') return false
+  if (selectionStartBin == null || selectionEndBin == null) return false
+  const minBin = Math.min(selectionStartBin, selectionEndBin)
+  const maxBin = Math.max(selectionStartBin, selectionEndBin)
+  return bin != null && (bin < minBin || bin > maxBin)
+}
+
 function onPointerDown(e, chart, py) {
   if (!radarPaused.value || !radarSelectionMode.value) return
   const rect = e.currentTarget.getBoundingClientRect()
   const px = e.clientX - rect.left
   const col = pxToCol(px)
   if (col == null) return
+  const bin = chart === 'spec' && py != null ? pxToBin(py, spectrogramHeight.value) : null
+  if (isClickOutsideSelection(col, bin)) {
+    clearSelection()
+    drawViewport()
+    return
+  }
   isDragging = true
   dragStartCol = col
-  dragStartBin = chart === 'spec' && py != null ? pxToBin(py, spectrogramHeight.value) : null
+  // Période : sélection temps uniquement (toute la hauteur). Zone : col×bin sur le spectrogramme.
+  if (radarSelectionMode.value === 'period') {
+    dragStartBin = null
+    selectionStartBin = null
+    selectionEndBin = null
+  } else {
+    dragStartBin = bin
+    selectionStartBin = dragStartBin
+    selectionEndBin = dragStartBin
+  }
   selectionStartCol = col
   selectionEndCol = col
-  selectionStartBin = dragStartBin
-  selectionEndBin = dragStartBin
+}
+
+function onCursorMove(e, chart) {
+  const rect = e.currentTarget.getBoundingClientRect()
+  cursorX = e.clientX - rect.left
+  cursorY = e.offsetY
+  cursorChart = chart
+  if (selectionStartCol == null || selectionEndCol == null) drawViewport()
+}
+
+function onCursorLeave(e) {
+  const wrap = chartsWrapRef.value
+  if (wrap && e.relatedTarget && wrap.contains(e.relatedTarget)) return
+  cursorX = null
+  cursorY = null
+  cursorChart = null
+  drawViewport()
 }
 
 function onPointerMove(e, chart, py) {
@@ -385,6 +486,7 @@ function onPointerMove(e, chart, py) {
   if (radarSelectionMode.value === 'zone' && chart === 'spec' && py != null) {
     selectionEndBin = pxToBin(py, spectrogramHeight.value)
   }
+  onCursorMove(e, chart)
   drawViewport()
 }
 
@@ -529,15 +631,20 @@ watch(radarPaused, () => {
   if (!radarPaused.value) {
     targetScrollOffset = 0
     ui.setRadarSelectionMode(null)
-    selectionStartCol = null
-    selectionEndCol = null
-    selectionStartBin = null
-    selectionEndBin = null
+    clearSelection()
     resumeRenderLoop()
   } else {
     targetScrollOffset = currentScrollOffset
     ui.setRadarSelectionMode('zone')
   }
+})
+
+watch(radarSelectionMode, () => {
+  clearSelection()
+  cursorX = null
+  cursorY = null
+  cursorChart = null
+  drawViewport()
 })
 </script>
 
@@ -561,7 +668,8 @@ watch(radarPaused, () => {
           v-if="radarPaused && (radarSelectionMode === 'period' || radarSelectionMode === 'zone')"
           class="radar-view__overlay"
           @pointerdown="(e) => onPointerDown(e, 'spec', e.offsetY)"
-          @pointermove="(e) => onPointerMove(e, 'spec', e.offsetY)"
+          @pointermove="(e) => { onPointerMove(e, 'spec', e.offsetY); if (!isDragging) onCursorMove(e, 'spec'); }"
+          @pointerleave="onCursorLeave"
           @pointerup="onPointerUp"
         />
       </div>
@@ -574,7 +682,8 @@ watch(radarPaused, () => {
           v-if="radarPaused && radarSelectionMode === 'period'"
           class="radar-view__overlay"
           @pointerdown="(e) => onPointerDown(e, 'intensity')"
-          @pointermove="(e) => onPointerMove(e, 'intensity')"
+          @pointermove="(e) => { onPointerMove(e, 'intensity'); if (!isDragging) onCursorMove(e, 'intensity'); }"
+          @pointerleave="onCursorLeave"
           @pointerup="onPointerUp"
         />
       </div>

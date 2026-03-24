@@ -717,7 +717,7 @@ stellar_import/
 ├── analyze_unmatched_hyg.py # Analyse IDs Supabase non matchés dans HYG
 ├── nasa_systems_by_distance.py # Systèmes NASA par distance (&lt; 500 al)
 ├── analyze_nasa_age_matching.py # Croise hostnames non matchés / NASA sans âge
-├── report.py               # Génère import_report.md
+├── report.py               # Génère stellar_import/import_report.md
 └── supabase_client.py      # Client Supabase (.env)
 ```
 

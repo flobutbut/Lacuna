@@ -31,7 +31,7 @@ from upsert_systems import (
 
 ROOT = Path(__file__).resolve().parent.parent
 PROGRESS_FILE = ROOT / "import_progress.json"
-REPORT_FILE = ROOT / "import_report.md"
+REPORT_FILE = ROOT / "stellar_import" / "import_report.md"
 ERRORS_FILE = ROOT / "import_errors.log"
 BATCH_SIZE = 500
 BATCH_PAUSE_MS = 200
