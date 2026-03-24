@@ -7,9 +7,8 @@ import { ref, computed } from 'vue'
 import { SAMPLE_RATE } from '@/lib/spectrogramData'
 
 const CHUNK_MS = 100
-const BUFFER_DURATION_SEC = 300
 const WINDOW_SIZE = 256
-const HISTORY_SIZE = 3600
+const HISTORY_SIZE = 7200
 const BUFFER_SIZE = WINDOW_SIZE * HISTORY_SIZE
 
 function seededRandom(s) {
@@ -60,8 +59,6 @@ export function useRadarSpectrogram() {
   function tick() {
     const now = Date.now()
     const elapsed = now - startTimeMs.value
-    const currentDurationSec = totalSamplesWritten / SAMPLE_RATE
-    if (currentDurationSec >= BUFFER_DURATION_SEC) return
     const targetSamples = Math.floor((elapsed / 1000) * SAMPLE_RATE)
     if (targetSamples > totalSamplesWritten) {
       const toAdd = Math.min(
