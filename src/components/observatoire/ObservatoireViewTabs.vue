@@ -1,9 +1,11 @@
 <script setup>
-import { useUIStore } from '@/stores/ui'
+import { useRadarStore } from '@/stores/radar'
+import { useObservatoireStore } from '@/stores/observatoire'
 import ObservatoireSpectralFilters from '@/components/observatoire/ObservatoireSpectralFilters.vue'
 import ObservatoireRadarFilters from '@/components/observatoire/ObservatoireRadarFilters.vue'
 
-const ui = useUIStore()
+const radarStore = useRadarStore()
+const observatoireStore = useObservatoireStore()
 
 const TABS = [
   { id: 'sky', label: 'Ciel profond' },
@@ -15,48 +17,48 @@ const TABS = [
 <template>
   <div
     class="observatoire-tabs"
-    :class="{ 'observatoire-tabs--full-width': ui.observatoireViewMode === 'system' || ui.observatoireViewMode === 'radar' || (ui.observatoireViewMode === 'sky' && !ui.observatoireTilesVisible) }"
+    :class="{ 'observatoire-tabs--full-width': observatoireStore.observatoireViewMode === 'system' || observatoireStore.observatoireViewMode === 'radar' || (observatoireStore.observatoireViewMode === 'sky' && !observatoireStore.observatoireTilesVisible) }"
   >
     <div
       class="observatoire-tabs__buttons"
-      :class="{ 'observatoire-tabs__buttons--over-star': ui.observatoireViewMode === 'system' || ui.observatoireViewMode === 'radar' }"
+      :class="{ 'observatoire-tabs__buttons--over-star': observatoireStore.observatoireViewMode === 'system' || observatoireStore.observatoireViewMode === 'radar' }"
     >
       <button
         v-for="t in TABS"
         :key="t.id"
         type="button"
         class="btn btn-secondary"
-        :class="{ 'is-active': ui.observatoireViewMode === t.id }"
-        @click="ui.setObservatoireViewMode(t.id)"
+        :class="{ 'is-active': observatoireStore.observatoireViewMode === t.id }"
+        @click="observatoireStore.setObservatoireViewMode(t.id)"
       >
         {{ t.label }}
       </button>
     </div>
     <div
-      v-if="ui.observatoireViewMode === 'radar' && ui.radarPaused"
+      v-if="observatoireStore.observatoireViewMode === 'radar' && radarStore.radarPaused"
       class="observatoire-tabs__center"
     >
       <button
         type="button"
         class="btn btn-secondary"
-        :class="{ 'is-active': ui.radarSelectionMode === 'zone' }"
+        :class="{ 'is-active': radarStore.radarSelectionMode === 'zone' }"
         title="Sélectionner une zone (spectrogramme)"
-        @click="ui.setRadarSelectionMode(ui.radarSelectionMode === 'zone' ? null : 'zone')"
+        @click="radarStore.setRadarSelectionMode(radarStore.radarSelectionMode === 'zone' ? null : 'zone')"
       >
         Zone
       </button>
       <button
         type="button"
         class="btn btn-secondary"
-        :class="{ 'is-active': ui.radarSelectionMode === 'period' }"
+        :class="{ 'is-active': radarStore.radarSelectionMode === 'period' }"
         title="Sélectionner une période (les deux graphiques)"
-        @click="ui.setRadarSelectionMode(ui.radarSelectionMode === 'period' ? null : 'period')"
+        @click="radarStore.setRadarSelectionMode(radarStore.radarSelectionMode === 'period' ? null : 'period')"
       >
         Période
       </button>
     </div>
-    <ObservatoireSpectralFilters v-if="ui.observatoireViewMode === 'sky'" class="observatoire-tabs__filters" />
-    <ObservatoireRadarFilters v-else-if="ui.observatoireViewMode === 'radar'" class="observatoire-tabs__filters" />
+    <ObservatoireSpectralFilters v-if="observatoireStore.observatoireViewMode === 'sky'" class="observatoire-tabs__filters" />
+    <ObservatoireRadarFilters v-else-if="observatoireStore.observatoireViewMode === 'radar'" class="observatoire-tabs__filters" />
   </div>
 </template>
 

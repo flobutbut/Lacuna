@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUIStore } from '@/stores/ui'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { useObservationsStore } from '@/stores/observations'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
@@ -10,18 +11,19 @@ import AppModal from '@/components/AppModal.vue'
 import ModalCell from '@/components/ModalCell.vue'
 
 const router = useRouter()
-const ui = useUIStore()
+const notificationsStore = useNotificationsStore()
+const observatoireStore = useObservatoireStore()
 const obsStore = useObservationsStore()
 const systemObjectsStore = useSystemObjectsStore()
 
 /** Nom d'affichage — délègue à lib/observationPayload */
 function getBodyDisplayName(body) {
-  return getBodyDisplayNameFromLib(body, ui.selectedStar?.name ?? '')
+  return getBodyDisplayNameFromLib(body, observatoireStore.selectedStar?.name ?? '')
 }
 
 const bodies = computed(() => {
-  if (ui.selectedBody) return [ui.selectedBody]
-  const star = ui.selectedStar
+  if (observatoireStore.selectedBody) return [observatoireStore.selectedBody]
+  const star = observatoireStore.selectedStar
   if (!star) return []
   const systemId = star.id
   const dbObjects = systemId ? systemObjectsStore.getForSystem(systemId) : []
@@ -39,12 +41,12 @@ const bodies = computed(() => {
 })
 
 const panelTitle = computed(() => {
-  if (ui.selectedBody) return `Observatoire — ${getBodyDisplayName(ui.selectedBody)}`
-  return `Observatoire — ${ui.selectedStar?.name ?? '—'}`
+  if (observatoireStore.selectedBody) return `Observatoire — ${getBodyDisplayName(observatoireStore.selectedBody)}`
+  return `Observatoire — ${observatoireStore.selectedStar?.name ?? '—'}`
 })
 
 watch(
-  () => ui.selectedStar?.id,
+  () => observatoireStore.selectedStar?.id,
   async (systemId) => {
     if (systemId && !systemObjectsStore.getForSystem(systemId)?.length) {
       await systemObjectsStore.fetchForSystem(systemId)
@@ -57,9 +59,9 @@ function addObservationPayload(body) {
   return buildObservationPayload(
     body,
     {
-      systemName: ui.selectedStar?.name ?? '—',
-      systemId: ui.selectedStar?.id ?? null,
-      distance: ui.selectedStar?.dist ?? '—',
+      systemName: observatoireStore.selectedStar?.name ?? '—',
+      systemId: observatoireStore.selectedStar?.id ?? null,
+      distance: observatoireStore.selectedStar?.dist ?? '—',
       displayName: getBodyDisplayName(body),
     },
     obsStore.NIVEAUX
@@ -71,40 +73,40 @@ function addObservation(body) {
 }
 
 async function analyser(body) {
-  const star = ui.selectedStar
+  const star = observatoireStore.selectedStar
   const existing = star ? obsStore.findObservationForBody(body, star, OBJECT_TYPE_LABELS[body.type]) : null
   if (existing) {
-    ui.closeObservatoire()
+    observatoireStore.closeObservatoire()
     router.push({ path: '/laboratoire', query: { select: existing.id } })
     return
   }
   const obsId = await obsStore.addObservation(addObservationPayload(body))
-  ui.setLabHasNew(true)
-  ui.closeObservatoire()
+  notificationsStore.setLabHasNew(true)
+  observatoireStore.closeObservatoire()
   router.push({ path: '/laboratoire', query: { select: obsId } })
 }
 
 const animatingKey = ref(null)
 
 function addOnly(body) {
-  const star = ui.selectedStar
+  const star = observatoireStore.selectedStar
   if (!star || obsStore.findObservationForBody(body, star, OBJECT_TYPE_LABELS[body.type])) return
   const key = `${star.name}-${body.id}`
   animatingKey.value = key
   setTimeout(() => {
     addObservation(body)
-    ui.setLabHasNew(true)
+    notificationsStore.setLabHasNew(true)
     animatingKey.value = null
   }, 350)
 }
 
 function isAdded(body) {
-  const star = ui.selectedStar
+  const star = observatoireStore.selectedStar
   return star ? !!obsStore.findObservationForBody(body, star, OBJECT_TYPE_LABELS[body.type]) : false
 }
 
 function isAnimating(body) {
-  const key = `${ui.selectedStar?.name}-${body.id}`
+  const key = `${observatoireStore.selectedStar?.name}-${body.id}`
   return animatingKey.value === key
 }
 
@@ -112,12 +114,12 @@ function isAnimating(body) {
 
 <template>
   <AppModal
-    v-if="ui.observatoireOpen && ui.selectedStar"
+    v-if="observatoireStore.observatoireOpen && observatoireStore.selectedStar"
     :title="panelTitle"
-    @close="ui.closeObservatoire"
+    @close="observatoireStore.closeObservatoire"
   >
     <div class="observatoire-panel__section">
-      <div class="observatoire-panel__section-title">{{ ui.selectedBody ? 'Corps sélectionné' : 'Corps détectables' }}</div>
+      <div class="observatoire-panel__section-title">{{ observatoireStore.selectedBody ? 'Corps sélectionné' : 'Corps détectables' }}</div>
       <div class="observatoire-panel__bodies">
         <ModalCell
           v-for="b in bodies"

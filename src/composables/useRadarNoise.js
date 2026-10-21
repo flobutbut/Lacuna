@@ -1,6 +1,6 @@
 import { computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useUIStore } from '@/stores/ui'
+import { useRadarStore } from '@/stores/radar'
 import { SAMPLE_RATE } from '@/lib/spectrogramData'
 
 const NOISE_CONFIG = {
@@ -41,8 +41,8 @@ function nextGaussian(rng) {
 }
 
 export function useRadarNoise(band, galacticLatitude, _activeSignals) {
-  const ui = useUIStore()
-  const { radarNoiseEnabled } = storeToRefs(ui)
+  const radarStore = useRadarStore()
+  const { radarNoiseEnabled } = storeToRefs(radarStore)
 
   const noiseLevel = computed(() => {
     const config = NOISE_CONFIG[band.value] ?? NOISE_CONFIG['L']

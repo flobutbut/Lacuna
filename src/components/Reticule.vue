@@ -1,17 +1,17 @@
 <script setup>
 import { computed } from 'vue'
-import { useUIStore } from '@/stores/ui'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { useShipStore } from '@/stores/ship'
 
-const ui = useUIStore()
+const observatoireStore = useObservatoireStore()
 const shipStore = useShipStore()
 
 const style = computed(() => ({
-  left: `${ui.reticulePosition.x}px`,
-  top: `${ui.reticulePosition.y}px`,
+  left: `${observatoireStore.reticulePosition.x}px`,
+  top: `${observatoireStore.reticulePosition.y}px`,
 }))
 
-const isVisible = computed(() => ui.reticuleVisible && !shipStore.isInTransit)
+const isVisible = computed(() => observatoireStore.reticuleVisible && !shipStore.isInTransit)
 </script>
 
 <template>

@@ -1,19 +1,19 @@
 <script setup>
 import { computed } from 'vue'
-import { useUIStore } from '@/stores/ui'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { formatRaDec } from '@/lib/formatUtils'
 
-const ui = useUIStore()
+const observatoireStore = useObservatoireStore()
 const ORIGIN = { ra: 180, dec: 0 }
 
 const display = computed(() => {
-  const vd = ui.viewDirection?.value ?? ui.viewDirection ?? ORIGIN
+  const vd = observatoireStore.viewDirection?.value ?? observatoireStore.viewDirection ?? ORIGIN
   return formatRaDec(vd.ra, vd.dec)
 })
 
 function resetToOrigin() {
   // Ne modifie que la cible : SkyCanvas interpole viewDirection vers target (lerp)
-  ui.setTargetViewDirectionValue({ ...ORIGIN })
+  observatoireStore.setTargetViewDirectionValue({ ...ORIGIN })
 }
 </script>
 

@@ -1,17 +1,18 @@
 <script setup>
-import { ref } from 'vue'
-import { supabase } from '@/lib/supabase'
-import { useSupabaseStore } from '@/stores/supabase'
+import '@/assets/components/population.css'
+import { ref, computed, onMounted } from 'vue'
+import { useShipStore } from '@/stores/ship'
+import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { POPULATION_MENU_ITEMS } from '@/constants/menus'
 import NavMenuItem from '@/components/NavMenuItem.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import { formatEffectifTrend, formatNumber } from '@/lib/formatUtils'
 
-const supabaseStore = useSupabaseStore()
+const shipStore = useShipStore()
 const activeTab = ref('current')
 
 // Données de repli si pas de vaisseau / Supabase
-const currentGen = ref({
+const FALLBACK_GEN = {
   number: 1,
   effectif: 10247,
   effectifTrend: 'stable', // 'up' | 'down' | 'stable'
@@ -21,6 +22,21 @@ const currentGen = ref({
   care: 0.95,
   courant: 'COMPRENDRE',
   heritage: "La génération fondatrice. Ils ont regardé la Terre disparaître dans l'observatoire. Personne n'a dit grand chose.",
+}
+
+/** Génération actuelle : population du vaisseau (store ship), sinon repli */
+const currentGen = computed(() => {
+  const pop = shipStore.population
+  if (!pop) return FALLBACK_GEN
+  return {
+    ...FALLBACK_GEN,
+    number: pop.generation,
+    effectif: pop.total,
+    will: Number(pop.will),
+    cohesion: Number(pop.social_cohesion),
+    food: Number(pop.food_supply),
+    care: Number(pop.medical_care),
+  }
 })
 
 const generations = ref([
@@ -57,35 +73,9 @@ const reasons = ref([
   },
 ])
 
-async function fetchPopulation() {
-  if (!supabaseStore.isConfigured()) return
-  try {
-    const { data: ships } = await supabase.from('ships').select('id').limit(1)
-    if (!ships?.length) return
-    const { data: pop } = await supabase
-      .from('populations')
-      .select('total, generation, will, social_cohesion, food_supply, medical_care')
-      .eq('ship_id', ships[0].id)
-      .single()
-    if (pop) {
-      currentGen.value = {
-        number: pop.generation,
-        effectif: pop.total,
-        effectifTrend: 'stable',
-        will: Number(pop.will),
-        cohesion: Number(pop.social_cohesion),
-        food: Number(pop.food_supply),
-        care: Number(pop.medical_care),
-        courant: 'COMPRENDRE',
-        heritage: currentGen.value.heritage,
-      }
-    }
-  } catch (err) {
-    console.warn('[Population] Erreur fetch:', err)
-  }
-}
-
-fetchPopulation()
+onMounted(async () => {
+  await ensureStoresLoaded(shipStore)
+})
 </script>
 
 <template>

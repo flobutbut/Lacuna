@@ -1,18 +1,18 @@
 <script setup>
 import { computed } from 'vue'
-import { useUIStore } from '@/stores/ui'
+import { useObservatoireStore } from '@/stores/observatoire'
 import ObservatoireTooltip from '@/components/observatoire/ObservatoireTooltip.vue'
 
-const ui = useUIStore()
+const observatoireStore = useObservatoireStore()
 
-const sig = computed(() => ui.hoveredSignal)
+const sig = computed(() => observatoireStore.hoveredSignal)
 
 const tooltipData = computed(() => {
   if (!sig.value) return null
   const dirText = `azimut ${sig.value.azimuth}° · plan ${sig.value.elevation >= 0 ? '+' : ''}${sig.value.elevation}°`
   return {
     visible: true,
-    position: ui.reticulePosition,
+    position: observatoireStore.reticulePosition,
     title: 'Signal capté',
     rows: [
       { key: 'Fréquence', value: sig.value.frequency },

@@ -45,13 +45,16 @@ Lacuna/
 │   │   ├── systemObjects.js  # Objets des systèmes (étoiles, planètes, disques)
 │   │   ├── ship.js           # Vaisseau (ARCA, current_system_id, systems, fuel)
 │   │   ├── observations.js  # File d'observations Laboratoire (persisté Supabase ou mémoire)
-│   │   ├── ui.js            # Panels, notifications, tooltip, étoile/corps sélectionné, réticule
+│   │   ├── observatoire.js  # Sélection/survol (étoile, corps, signal, constellation), réticule, vue, filtres ciel, recherche
+│   │   ├── radar.js         # Réglages Radar (bande, pause, sélection, échelle temps, seuil, fréquences, son, bruit)
+│   │   ├── transit.js       # Widget de voyage, cap en attente, confirmation de départ
+│   │   ├── notifications.js # Toast global, pastilles Laboratoire / Carte
 │   │   ├── mapNodes.js      # Nœuds et arêtes carte (map_nodes, map_edges)
 │   │   ├── signaux.js       # Signaux captés (récepteur Observatoire), table signals
 │   │   ├── labReports.js    # Rapports d'analyse Laboratoire (lab_reports)
 │   │   ├── nebulas.js       # Nébuleuses (nuages IR)
 │   │   ├── drake.js         # Équation de Drake (drake_equation)
-│   │   └── traces.js        # Traces joueur (complément traces immuables, Artefacts)
+│   │   └── traces.js        # Traces immuables + traces joueur, interprétations (Artefacts)
 │   ├── components/          # Composants Vue
 │   │   ├── AppHeader.vue
 │   │   ├── SkyCanvas.vue
@@ -93,6 +96,7 @@ Lacuna/
 │   │   ├── useStoreReady.js # ensureStoresLoaded() — chargement stores au montage
 │   │   ├── useDepartureConfirmation.js # Données vue confirmation départ (durée, générations, phrases) — DepartureConfirmation.vue
 │   │   ├── useRadarSpectrogram.js  # Spectrogramme Radar — buffer circulaire, tickCount, appendColumn — RadarView
+│   │   ├── useThreeStarScene.js    # Scène Three.js partagée (caméra, contrôles, picking, focus, nettoyage) — CarteMap3D, Stars3DCanvas
 │   │   └── useViewerSystemPolicy.js # Système courant (viewer) + exclusion ciel/recherche selon contexte (observatoire vs conception3d)
 │   ├── constants/           # Constantes partagées
 │   │   ├── objectTypes.js   # OBJECT_TYPE_LABELS (affichage Observatoire, Laboratoire)
@@ -120,7 +124,10 @@ Lacuna/
 │   │   ├── gravimetriqueData.js  # Modèle sources + résidus (analyseur gravimétrique)
 │   │   ├── spectreStellaireData.js  # Spectre stellaire + courbe de lumière
 │   │   ├── orbitalData.js       # Données orbites (analyseur orbital, résonances)
-│   │   └── atmosphereData.js    # Profil moléculaire (spectromètre atmosphérique)
+│   │   ├── atmosphereData.js    # Profil moléculaire (spectromètre atmosphérique)
+│   │   ├── radarSpectrum.js  # Radar : index buffer de colonnes, bornes de fréquence, injection pulsars, libellés temps
+│   │   ├── random.js        # seededRandom (mulberry32) — données Laboratoire et Radar
+│   │   └── cssVars.js       # getCssVar — tokens CSS pour canvas / Three.js
 │   ├── router/
 │   │   └── index.js         # Routes Vue Router
 │   └── assets/
@@ -202,7 +209,7 @@ Résumé : Supabase (PostgreSQL). Tables principales : `stellar_systems`, `syste
 
 **Documentation complète** : `docs/design/Design-system.md` — tokens, composants (AppModal, ModalCell, NavMenuItem, NavTabButton, InstrumentButton), utilitaires (sw-row, sw-key, sw-val), règles d'usage.
 
-**Règle impérative :** Tous les fichiers CSS **utilisés par l'app** sont importés directement dans `main.js`. Le fichier `main.css` (s'il existe) est une référence de convention uniquement et n'est pas chargé. Ne jamais utiliser `@import` dans un fichier CSS pour importer d'autres **fichiers CSS locaux** — Vite ignore les changements et le HMR ne fonctionne pas. Les `@import` vers des URLs externes (ex. polices Google dans `base.css`) sont admis.
+**Règle impérative :** Les fichiers CSS partagés sont importés directement dans `main.js`. Les CSS propres à une page (`lab`, `carte`, `population`, `journal`, `artifact`, `systems`) sont importés en tête du `<script setup>` de leur vue et chargés avec la route. Ne jamais utiliser `@import` dans un fichier CSS pour importer d'autres **fichiers CSS locaux** — Vite ignore les changements et le HMR ne fonctionne pas. Les `@import` vers des URLs externes (ex. polices Google dans `base.css`) sont admis.
 
 | Fichier | Rôle |
 |---------|------|
@@ -214,7 +221,7 @@ Résumé : Supabase (PostgreSQL). Tables principales : `stellar_systems`, `syste
 | `app-modal.css` | AppModal, ModalCell |
 | `components/*.css` | Styles par composant (widget, panel, header, etc.) |
 
-**Pour ajouter un nouveau fichier CSS :** l'ajouter dans `main.js` après les imports existants.
+**Pour ajouter un nouveau fichier CSS :** partagé → l'ajouter dans `main.js` après les imports existants ; propre à une page → l'importer dans la vue, à condition que **toutes** ses règles soient préfixées par la page (un CSS de route reste actif après navigation : une règle globale changerait l'apparence des autres pages selon l'historique).
 
 ## Visualisation — Laboratoire
 

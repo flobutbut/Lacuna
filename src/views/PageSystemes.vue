@@ -1,4 +1,5 @@
 <script setup>
+import '@/assets/components/systems.css'
 import { ref, watch, nextTick, onBeforeUnmount, onMounted, computed } from 'vue'
 import { useShipStore } from '@/stores/ship'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'

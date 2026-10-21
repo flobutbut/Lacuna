@@ -2,14 +2,14 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useUIStore } from '@/stores/ui'
+import { useNotificationsStore } from '@/stores/notifications'
 import { useObservationsStore } from '@/stores/observations'
 import { INSTRUMENTS } from '@/constants/menus'
 import NavTabButton from '@/components/NavTabButton.vue'
 
 const route = useRoute()
-const ui = useUIStore()
-const { carteHasNewNodes, labHasNewObservations } = storeToRefs(ui)
+const notificationsStore = useNotificationsStore()
+const { carteHasNewNodes, labHasNewObservations } = storeToRefs(notificationsStore)
 const obsStore = useObservationsStore()
 
 const instrumentsWithBadge = computed(() =>

@@ -1,16 +1,16 @@
 <script setup>
 import { computed } from 'vue'
-import { useUIStore } from '@/stores/ui'
+import { useObservatoireStore } from '@/stores/observatoire'
 import ObservatoireTooltip from '@/components/observatoire/ObservatoireTooltip.vue'
 
-const ui = useUIStore()
+const observatoireStore = useObservatoireStore()
 
 const tooltipData = computed(() => {
-  const c = ui.hoveredConstellation
+  const c = observatoireStore.hoveredConstellation
   if (!c?.name) return null
   return {
     visible: true,
-    position: ui.reticulePosition,
+    position: observatoireStore.reticulePosition,
     title: c.name,
     rows: [],
     status: '',

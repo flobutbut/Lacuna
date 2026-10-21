@@ -7,7 +7,7 @@ import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 import { useShipStore } from '@/stores/ship'
-import { useUIStore } from '@/stores/ui'
+import { useRadarStore } from '@/stores/radar'
 import { getOrCreateSessionId } from '@/lib/session'
 import { formatFrequency, parseFrequency } from '@/lib/formatUtils'
 
@@ -113,7 +113,7 @@ export const useSignauxStore = defineStore('signaux', () => {
       const pct = s.lifetimeMs > 0 ? (remaining / s.lifetimeMs) * 100 : 0
       return { ...s, remainingMs: remaining, lifetimePct: pct }
     })
-    const activeBand = useUIStore().radarFrequencyBand
+    const activeBand = useRadarStore().radarFrequencyBand
     const filtered = mapped.filter((s) => !s.band || s.band === activeBand)
     if (import.meta.env.DEV) {
       console.log('[signaux:listWithRemaining]', {
@@ -291,7 +291,27 @@ export const useSignauxStore = defineStore('signaux', () => {
     return inserted
   }
 
+  /** Calcule côté base les signaux pulsars visibles dans la bande (RPC), puis recharge la liste si besoin */
+  async function computePulsarSignals(band = 'L') {
+    const shipStore = useShipStore()
+    const shipId = shipStore.ship?.id
+    if (!shipId || !sessionId.value) return
+    const { data, error } = await supabase.rpc('compute_pulsar_signals', {
+      p_ship_id: shipId,
+      p_band: band,
+      p_session_id: sessionId.value,
+    })
+    if (error) {
+      console.warn('[signaux] compute_pulsar_signals:', error.message)
+      return
+    }
+    if (data?.inserted > 0) {
+      await fetch()
+    }
+  }
+
   return {
+    computePulsarSignals,
     list,
     listWithRemaining,
     activePulsarSignals,

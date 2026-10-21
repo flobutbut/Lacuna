@@ -1,12 +1,12 @@
 <script setup>
 import { computed, onMounted } from 'vue'
-import { useUIStore } from '@/stores/ui'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { useShipStore } from '@/stores/ship'
 import ProgressBar from '@/components/ProgressBar.vue'
 import { valClass } from '@/lib/formatUtils'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
-const ui = useUIStore()
+const observatoireStore = useObservatoireStore()
 const shipStore = useShipStore()
 
 const propulsion = computed(() => (shipStore.systems?.propulsion ?? 0.88) * 100)
@@ -64,7 +64,7 @@ onMounted(() => ensureStoresLoaded(shipStore))
       </div>
     </div>
 
-    <div v-if="ui.observatoireViewMode === 'sky'" class="side-widget">
+    <div v-if="observatoireStore.observatoireViewMode === 'sky'" class="side-widget">
       <div class="sw-title">Dernière trace</div>
       <div class="sw-row">
         <div class="sw-key">Désignation</div>

@@ -64,7 +64,7 @@ Observer le ciel → Sélectionner un système → Analyser (optionnel)
 ## Interface
 
 ### Layout
-- **Header** : Logo, nom vaisseau, coordonnées, bouton **RADAR ●/○** (acquisition buffer spectrogramme, `radarEnabled` dans `ui.js`, démarre/arrête `radarSpectrogram` depuis `PageObservatoire`), génération, N=
+- **Header** : Logo, nom vaisseau, coordonnées, bouton **RADAR ●/○** (acquisition buffer spectrogramme, `radarEnabled` dans le store `radar`, démarre/arrête `radarSpectrogram` depuis `PageObservatoire`), génération, N=
 - **Ciel** : Interface principale (étoiles, hover, clic)
 - **Indicateurs gauche** : Systèmes vaisseau (propulsion, carburant, coque...) — **Observatoire** : panneau gauche avec widget « Observatoire » (placeholders) et spectrogramme miniature (`RadarMiniature.vue` dans `SideLeft`) en vues ciel / radar (liste de signaux retirée de ce panneau)
 - **Indicateurs droite** : Population, dernière trace

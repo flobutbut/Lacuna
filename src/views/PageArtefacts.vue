@@ -1,29 +1,19 @@
 <script setup>
+import '@/assets/components/artifact.css'
 import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { supabase } from '@/lib/supabase'
-import { useSupabaseStore } from '@/stores/supabase'
 import { useTracesStore } from '@/stores/traces'
-import { useUIStore } from '@/stores/ui'
+import { useNotificationsStore } from '@/stores/notifications'
 import { formatDate } from '@/lib/formatUtils'
 import { getTraceIcon } from '@/constants/menus'
 import NavMenuItem from '@/components/NavMenuItem.vue'
 
-const supabaseStore = useSupabaseStore()
 const tracesStore = useTracesStore()
-const { playerTraces } = storeToRefs(tracesStore)
-const ui = useUIStore()
-
-// Données de repli si Supabase non configuré
-const FALLBACK_TRACES = [
-  { id: '1', designation: 'WOW-1977-A', type: 'SIGNAL_RADIO', system_id: 'SOL', difficulty: '1', description: 'Signal radio de 72 secondes détecté à 1420 MHz, correspondant exactement à la raie de l\'hydrogène. Non reproduit depuis. Non expliqué.', discovered: '1977-08-15', unread: true },
-  { id: '2', designation: 'OUMUAMUA-2017', type: 'INTERSTELLAR_OBJECT', system_id: 'SOL', difficulty: '1', description: 'Objet interstellaire détecté en 2017. Trajectoire hyperbolique. Accélération non-gravitationnelle observée. Forme allongée suggérée. Origine inconnue.', discovered: '2017-10-19', unread: true },
-  { id: '3', designation: 'BENNU-NB-2023', type: 'CHEMICAL_ANOMALY', system_id: 'SOL', difficulty: '2', description: 'Nucléobases (uracile, niacine) découvertes dans les échantillons de Bennu et Ryugu. Composition suggérant une origine prébiotique.', discovered: '2023-03-21', unread: false },
-]
+const { artefacts } = storeToRefs(tracesStore)
+const notificationsStore = useNotificationsStore()
 
 const selectedTrace = ref(null)
 const interpretations = ref([])
-const playerInterpretations = ref({}) // { traceId: [{ text, ... }] }
 const newInterpretation = ref('')
 const loadingInterpretations = ref(false)
 const submittingInterpretation = ref(false)
@@ -31,109 +21,42 @@ const deletingId = ref(null)
 
 const selectedId = computed(() => selectedTrace.value?.id)
 
-const immutableTraces = ref([])
-
-async function fetchTraces() {
-  if (!supabaseStore.isConfigured()) {
-    immutableTraces.value = FALLBACK_TRACES
-    return
-  }
-  try {
-    const { data, error } = await supabase
-      .from('traces')
-      .select('id, designation, type, system_id, difficulty, description, discovered')
-      .eq('origin', 'IMMUABLE')
-      .order('discovered', { ascending: true })
-
-    if (error) throw error
-    immutableTraces.value = (data || []).map(t => ({ ...t, unread: false }))
-  } catch (err) {
-    console.warn('[Artefacts] Erreur fetch traces:', err)
-    immutableTraces.value = FALLBACK_TRACES
-  }
-}
-
-const artefacts = computed(() => [...playerTraces.value, ...immutableTraces.value])
-
-async function fetchInterpretations(traceId) {
+async function loadInterpretations(traceId) {
   if (!traceId) return
   loadingInterpretations.value = true
   interpretations.value = []
-  try {
-    if (traceId.startsWith('player-')) {
-      interpretations.value = playerInterpretations.value[traceId] || []
-    } else if (supabaseStore.isConfigured()) {
-      const { data, error } = await supabase
-        .from('interpretations')
-        .select('id, text, confidence, generation, galactic_date, created_at')
-        .eq('trace_id', traceId)
-        .order('created_at', { ascending: true })
-
-      if (!error) interpretations.value = data || []
-    }
-  } catch (err) {
-    console.warn('[Artefacts] Erreur fetch interpretations:', err)
-  } finally {
-    loadingInterpretations.value = false
-  }
+  const list = await tracesStore.fetchInterpretations(traceId)
+  // Ignore une réponse arrivée après un changement de trace
+  if (selectedTrace.value?.id !== traceId) return
+  interpretations.value = list
+  loadingInterpretations.value = false
 }
 
 async function submitInterpretation() {
   const text = newInterpretation.value?.trim()
   if (!text || !selectedTrace.value) return
-  const traceId = selectedTrace.value.id
-  if (traceId.startsWith('player-') || !supabaseStore.isConfigured()) {
-    const interp = { id: 'local-' + Date.now(), text, confidence: 'HYPOTHÈSE', generation: null, galactic_date: null, created_at: new Date().toISOString() }
-    const list = playerInterpretations.value[traceId] || []
-    playerInterpretations.value = { ...playerInterpretations.value, [traceId]: [...list, interp] }
-    interpretations.value = [...interpretations.value, interp]
-    newInterpretation.value = ''
-    return
-  }
   submittingInterpretation.value = true
   try {
-    const { data, error } = await supabase
-      .from('interpretations')
-      .insert({
-        trace_id: selectedTrace.value.id,
-        text,
-        confidence: 'HYPOTHÈSE',
-        ship_id: null,
-        generation: null,
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    if (data) interpretations.value = [...interpretations.value, data]
+    const interp = await tracesStore.addInterpretation(selectedTrace.value.id, text)
+    if (interp) interpretations.value = [...interpretations.value, interp]
     newInterpretation.value = ''
   } catch (err) {
-    console.warn('[Artefacts] Erreur ajout interprétation:', err)
+    console.warn('[Artefacts] Erreur ajout interprétation:', err?.message)
+    notificationsStore.showNotification('Ajout de l\'interprétation impossible', 5000, 'error')
   } finally {
     submittingInterpretation.value = false
   }
 }
 
 async function deleteInterpretation(interp) {
-  if (!interp?.id) return
-  const traceId = selectedTrace.value?.id
-  const isPlayerTrace = traceId?.startsWith('player-')
+  if (!interp?.id || !selectedTrace.value) return
   deletingId.value = interp.id
   try {
-    if (isPlayerTrace) {
-      const list = (playerInterpretations.value[traceId] || []).filter(i => i.id !== interp.id)
-      playerInterpretations.value = { ...playerInterpretations.value, [traceId]: list }
-      interpretations.value = interpretations.value.filter(i => i.id !== interp.id)
-    } else if (supabaseStore.isConfigured()) {
-      const { error } = await supabase.from('interpretations').delete().eq('id', interp.id)
-      if (error) throw error
-      interpretations.value = interpretations.value.filter(i => i.id !== interp.id)
-    } else {
-      interpretations.value = interpretations.value.filter(i => i.id !== interp.id)
-    }
+    await tracesStore.deleteInterpretation(selectedTrace.value.id, interp.id)
+    interpretations.value = interpretations.value.filter(i => i.id !== interp.id)
   } catch (err) {
-    console.warn('[Artefacts] Erreur suppression interprétation:', err)
-    ui.showNotification('Suppression impossible — migration RLS peut-être non appliquée', 5000)
+    console.warn('[Artefacts] Erreur suppression interprétation:', err?.message)
+    notificationsStore.showNotification('Suppression impossible — migration RLS peut-être non appliquée', 5000)
   } finally {
     deletingId.value = null
   }
@@ -147,12 +70,8 @@ function selectTrace(trace) {
 }
 
 watch(selectedTrace, (trace) => {
-  if (trace) fetchInterpretations(trace.id)
+  if (trace) loadInterpretations(trace.id)
 }, { immediate: true })
-
-async function init() {
-  await fetchTraces()
-}
 
 function ensureSelection() {
   if (artefacts.value.length > 0 && !selectedTrace.value) {
@@ -160,7 +79,7 @@ function ensureSelection() {
   }
 }
 
-init()
+tracesStore.fetchImmutableTraces()
 watch(artefacts, ensureSelection, { immediate: true })
 </script>
 

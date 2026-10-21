@@ -4,19 +4,21 @@ import { storeToRefs } from 'pinia'
 import { useShipStore } from '@/stores/ship'
 import { useDrakeStore } from '@/stores/drake'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
-import { useUIStore } from '@/stores/ui'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useRadarStore } from '@/stores/radar'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { resetPrototypeSession } from '@/lib/session'
 
 const shipStore = useShipStore()
 const drakeStore = useDrakeStore()
 const stellarStore = useStellarSystemsStore()
-const ui = useUIStore()
-const { radarEnabled } = storeToRefs(ui)
+const notificationsStore = useNotificationsStore()
+const radarStore = useRadarStore()
+const { radarEnabled } = storeToRefs(radarStore)
 
 function resetProto() {
   resetPrototypeSession()
-  ui.showNotification('Session prototype réinitialisée — rechargement…', 500)
+  notificationsStore.showNotification('Session prototype réinitialisée — rechargement…', 500)
   setTimeout(() => window.location.reload(), 400)
 }
 
@@ -71,7 +73,7 @@ onMounted(async () => {
             ? 'Désactiver l’acquisition radar'
             : 'Activer l’acquisition radar'
         "
-        @click="ui.toggleRadarEnabled()"
+        @click="radarStore.toggleRadarEnabled()"
       >
         <span class="header__radar-toggle__label">RADAR</span>
         <span

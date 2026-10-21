@@ -3,7 +3,7 @@ import { computed, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useShipStore } from '@/stores/ship'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
-import { useUIStore } from '@/stores/ui'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
 import StarSvgInline from '@/components/illustrations/StarSvgInline.vue'
 import PlanetSvgInline from '@/components/illustrations/PlanetSvgInline.vue'
@@ -27,7 +27,7 @@ const MIN_DISTANCE_AU = 0.01
 const shipStore = useShipStore()
 const stellarStore = useStellarSystemsStore()
 const systemObjectsStore = useSystemObjectsStore()
-const ui = useUIStore()
+const observatoireStore = useObservatoireStore()
 
 const currentSystemId = computed(() => shipStore.currentSystemId ?? 'SOL')
 
@@ -260,7 +260,7 @@ const STAR_REVEAL_DURATION_MS = 3500
 const STAR_REVEAL_START = 0.06
 
 watch(
-  () => ui.observatoireViewMode,
+  () => observatoireStore.observatoireViewMode,
   (mode) => {
     if (mode === 'system') {
       starRevealOpacity.value = STAR_REVEAL_START
@@ -330,9 +330,9 @@ function onBodyClick(obj) {
   const sys = stellarStore.list.find((s) => s.id === currentSystemId.value)
   if (!sys || !obj) return
   const body = systemObjectsStore.toBodyFormat(obj, sys.name)
-  ui.selectStar({ id: sys.id, name: sys.name, dist: sys.distance ?? '0' })
-  ui.setSelectedBody(body)
-  ui.openObservatoire()
+  observatoireStore.selectStar({ id: sys.id, name: sys.name, dist: sys.distance ?? '0' })
+  observatoireStore.setSelectedBody(body)
+  observatoireStore.openObservatoire()
 }
 
 const tooltipData = computed(() => {

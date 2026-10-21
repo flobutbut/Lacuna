@@ -4,12 +4,12 @@
  */
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useUIStore } from '@/stores/ui'
+import { useRadarStore } from '@/stores/radar'
 import AppSelect from '@/components/AppSelect.vue'
 import AppDualRangeSlider from '@/components/AppDualRangeSlider.vue'
 import RadarNoiseIcon from '@/components/icons/RadarNoiseIcon.vue'
 
-const ui = useUIStore()
+const radarStore = useRadarStore()
 const {
   radarFrequencyBand,
   radarPaused,
@@ -18,7 +18,7 @@ const {
   radarFreqLow,
   radarFreqHigh,
   radarNoiseEnabled,
-} = storeToRefs(ui)
+} = storeToRefs(radarStore)
 
 const BANDS = [
   { value: 'P', label: 'P — 150–400 MHz' },
@@ -50,7 +50,7 @@ function onThresholdInput(sliderVal) {
   const threshold = s === 0
     ? 0
     : Math.pow(10, (s / 100) * 3 - 3)
-  ui.setRadarIntensityThreshold(threshold)
+  radarStore.setRadarIntensityThreshold(threshold)
 }
 </script>
 
@@ -62,7 +62,7 @@ function onThresholdInput(sliderVal) {
       :class="{ 'is-active': radarPaused }"
       :title="radarPaused ? 'Reprendre' : 'Pause'"
       aria-label="Pause"
-      @click="ui.toggleRadarPaused"
+      @click="radarStore.toggleRadarPaused"
     >
       {{ radarPaused ? '▶' : '⏸' }}
     </button>
@@ -74,7 +74,7 @@ function onThresholdInput(sliderVal) {
       class="radar-filters__select"
       :disabled="radarPaused"
       :title="radarPaused ? 'Relance le radar pour changer la bande' : undefined"
-      @update:model-value="ui.setRadarFrequencyBand"
+      @update:model-value="radarStore.setRadarFrequencyBand"
     />
     <AppSelect
       :model-value="radarTimeScale"
@@ -84,7 +84,7 @@ function onThresholdInput(sliderVal) {
       class="radar-filters__select"
       :disabled="radarPaused"
       :title="radarPaused ? 'Relance le radar pour changer l’échelle temps' : undefined"
-      @update:model-value="ui.setRadarTimeScale"
+      @update:model-value="radarStore.setRadarTimeScale"
     />
     <div class="radar-filters__threshold">
       <span class="radar-filters__threshold-label">INT.</span>
@@ -109,8 +109,8 @@ function onThresholdInput(sliderVal) {
         :step="1"
         aria-label-low="Borne basse du filtre fréquentiel (Hz)"
         aria-label-high="Borne haute du filtre fréquentiel (Hz)"
-        @update:low="ui.setRadarFreqLow"
-        @update:high="ui.setRadarFreqHigh"
+        @update:low="radarStore.setRadarFreqLow"
+        @update:high="radarStore.setRadarFreqHigh"
       />
     </div>
     <button
@@ -120,7 +120,7 @@ function onThresholdInput(sliderVal) {
       :title="radarNoiseEnabled === false ? 'Activer le bruit de fond' : 'Couper le bruit de fond'"
       :aria-pressed="radarNoiseEnabled !== false"
       aria-label="Bruit de fond du spectrogramme"
-      @click="ui.toggleRadarNoise"
+      @click="radarStore.toggleRadarNoise"
     >
       <RadarNoiseIcon :off="radarNoiseEnabled === false" />
     </button>

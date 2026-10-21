@@ -1,4 +1,5 @@
 <script setup>
+import '@/assets/components/lab.css'
 import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
@@ -8,7 +9,7 @@ import { useTracesStore } from '@/stores/traces'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useShipStore } from '@/stores/ship'
 import { useMapNodesStore } from '@/stores/mapNodes'
-import { useUIStore } from '@/stores/ui'
+import { useNotificationsStore } from '@/stores/notifications'
 import { OBJECT_TYPE_LABELS, getObsFilterType, getObservationIcon } from '@/constants/objectTypes'
 import { getSupportLabel } from '@/constants/signaux'
 import { getGraphName, getAnalysisConclusion } from '@/constants/lab'
@@ -36,7 +37,7 @@ const stellarStore = useStellarSystemsStore()
 const shipStore = useShipStore()
 const mapStore = useMapNodesStore()
 const { list: obsList } = storeToRefs(obsStore)
-const ui = useUIStore()
+const notificationsStore = useNotificationsStore()
 
 const OBS_STATES = { PENDING: 'En attente', RUNNING: 'Analyse en cours', DONE: 'Analysé' }
 
@@ -294,7 +295,7 @@ function formalize() {
     description,
     discovered: obs.date,
   })
-  ui.showNotification(`Trace « ${obs.name} » ajoutée aux Artefacts`)
+  notificationsStore.showNotification(`Trace « ${obs.name} » ajoutée aux Artefacts`)
 }
 
 const selectedReports = computed(() => {
@@ -331,8 +332,8 @@ async function addSelectedSystemToCarte() {
   const stellar = stellarStore.list.find((s) => s.id === obs.system_id)
   const name = stellar?.name ?? obs.system ?? obs.system_id
   await mapStore.addNode(obs.system_id, name)
-  ui.setCarteHasNew(true)
-  ui.showNotification(`Système ${name} ajouté à la carte`)
+  notificationsStore.setCarteHasNew(true)
+  notificationsStore.showNotification(`Système ${name} ajouté à la carte`)
 }
 
 onMounted(async () => {
@@ -340,7 +341,7 @@ onMounted(async () => {
   const obsIds = observations.value.map((o) => o.id)
   await labReportsStore.fetchForObservations(obsIds)
   reports.value = { ...labReportsStore.cache }
-  ui.clearLabHasNew()
+  notificationsStore.clearLabHasNew()
   const selectId = route.query.select
   if (selectId && typeof selectId === 'string') {
     const obs = obsStore.list.find((o) => o.id === selectId)

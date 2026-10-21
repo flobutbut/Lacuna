@@ -593,8 +593,8 @@ Ne pas utiliser de `color-mix` ni de tailles en dur pour ces blocs — rester al
 
 ### 4.5 CSS
 
-- **Import** : Tous les fichiers CSS **utilisés par l'app** sont importés dans `main.js`. Ne pas utiliser `@import` vers d'**autres fichiers CSS locaux** (HMR cassé). Les `@import` vers des URLs externes (ex. polices dans `base.css`) sont admis.
-- **Nouveau fichier** : L'ajouter dans `main.js`
+- **Import** : Les CSS partagés sont importés dans `main.js` ; les CSS propres à une page sont importés par leur vue (voir §5). Ne pas utiliser `@import` vers d'**autres fichiers CSS locaux** (HMR cassé). Les `@import` vers des URLs externes (ex. polices dans `base.css`) sont admis.
+- **Nouveau fichier** : partagé → `main.js` ; propre à une page → import dans la vue, avec **toutes** les règles préfixées par la page (un CSS de route reste chargé après navigation)
 - **Tokens** : Toujours utiliser les variables, jamais de valeurs en dur
 - **Mouvement réduit** : `animations.css` coupe animations et transitions sous `prefers-reduced-motion: reduce`. Une nouvelle animation CSS en hérite automatiquement ; une animation canvas doit vérifier `matchMedia('(prefers-reduced-motion: reduce)')` elle-même
 
@@ -621,6 +621,17 @@ Ne pas utiliser de `color-mix` ni de tailles en dur pour ces blocs — rester al
 | `notification.css` | Toast, travel-widget content |
 | `bar.css` | Barres de progression |
 | `panel.css` | Panels génériques ; variantes de positionnement (.panel-overlay--right, --left, --center) ; .panel-section-wrap |
+
+**Chargés par leur page** (import dans la vue, pas dans `main.js`) :
+
+| Fichier | Vue |
+|---------|-----|
+| `lab.css` | PageLaboratoire (+ InstrumentButton, LabReport*) |
+| `carte.css` | PageCarte (+ CarteMap3D, CarteOrbitalView) |
+| `population.css` | PagePopulation |
+| `journal.css` | PageJournal |
+| `artifact.css` | PageArtefacts |
+| `systems.css` | PageSystemes |
 
 ---
 

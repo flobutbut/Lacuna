@@ -1,4 +1,6 @@
 <script setup>
+import '@/assets/components/journal.css'
+
 const entries = [
   {
     date: 'JOUR 1 — AN 2187.042',

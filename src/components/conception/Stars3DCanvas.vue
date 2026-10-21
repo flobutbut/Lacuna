@@ -1,17 +1,15 @@
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, watch, computed } from 'vue'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { useStars3DConception } from '@/composables/useStars3DConception'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { getCircleSpriteTexture } from '@/lib/starSpriteTexture'
-import { createHighlightSprite, updateHighlightScale, HIGHLIGHT_RING_SIZE } from '@/composables/useStarHighlight'
-import { animateFocusTo, animateTargetTo } from '@/composables/useCameraFocusAnimation'
+import { createHighlightSprite, updateHighlightScale } from '@/composables/useStarHighlight'
+import { useThreeStarScene, applyMinSizeToPointsMaterial } from '@/composables/useThreeStarScene'
 import { getVisibleConstellationSegments } from '@/lib/constellationSegments'
 import { loadStarSvgTextureForSpectralType } from '@/composables/useStarSvgTexture'
 import { getSpectralLetter } from '@/lib/starClassification'
-import { getCssVar } from '@/lib/cssVars'
-import { HIGHLIGHT_CYAN_HEX, STAR_SPRITE_BASE_SIZE, STAR_SPRITE_MIN_PIXELS } from '@/constants/starDisplay'
+import { HIGHLIGHT_CYAN_HEX, STAR_SPRITE_BASE_SIZE } from '@/constants/starDisplay'
 import { buildTransitLinesMesh } from '@/composables/useTransitLines3d'
 
 const props = defineProps({
@@ -44,102 +42,29 @@ const { points, getStarPositionById, constellationPositionsById, barycentre } = 
   typeFilterRef
 )
 
-let scene = null
-let camera = null
-let renderer = null
-let controls = null
 let pointsMesh = null // THREE.Group (sprites par type spectral)
 let highlightMesh = null
 let constellationLinesMesh = null
 let transitLinesMesh = null
-let rafId = null
-let resizeObserver = null
-let raycaster = null
-let mouseDownPos = null
-let isFocusAnimating = false
-const CLICK_DRAG_THRESHOLD = 5
 
-const BASE_CAMERA_DISTANCE = 80
-
-function initThree() {
-  if (!containerRef.value) return
-
-  const width = containerRef.value.clientWidth
-  const height = containerRef.value.clientHeight
-
-  scene = new THREE.Scene()
-  const bgHex = getCssVar('--color-bg', '#03060d')
-  scene.background = new THREE.Color(bgHex)
-
-  camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 10000)
-  camera.position.set(BASE_CAMERA_DISTANCE, BASE_CAMERA_DISTANCE * 0.5, BASE_CAMERA_DISTANCE)
-  camera.lookAt(0, 0, 0)
-
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
-  renderer.setSize(width, height)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  containerRef.value.appendChild(renderer.domElement)
-
-  controls = new OrbitControls(camera, renderer.domElement)
-  controls.enableDamping = true
-  controls.dampingFactor = 0.05
-  controls.target.set(0, 0, 0)
-  controls.minDistance = 2
-  controls.maxDistance = 3000
-  controls.enablePan = true
-
-  raycaster = new THREE.Raycaster()
-  raycaster.params.Points.threshold = 3
-}
-
-/** Picking personnalisé : hitbox proportionnelle à la taille apparente de chaque étoile (espace écran). */
-function pickStarAtMouse(event) {
-  if (!containerRef.value || !camera || !points.value?.length) return null
-  const rect = containerRef.value.getBoundingClientRect()
-  const mouseX = event.clientX - rect.left
-  const mouseY = event.clientY - rect.top
-  const width = rect.width
-  const height = rect.height
-  const scaleFactor = (0.5 * height) / Math.tan((camera.fov * Math.PI) / 360)
-  const v = new THREE.Vector3()
-  const hits = []
-  for (let i = 0; i < points.value.length; i++) {
-    const p = points.value[i]
-    v.set(p.x, p.y, p.z)
-    const camDist = camera.position.distanceTo(v)
-    v.project(camera)
-    const sx = (v.x * 0.5 + 0.5) * width
-    const sy = (1 - (v.y * 0.5 + 0.5)) * height
-    if (v.z > 1) continue
-    const distPx = Math.hypot(mouseX - sx, mouseY - sy)
-    const isHighlight = p.id === props.focusStarId
-    const worldSize = isHighlight ? HIGHLIGHT_RING_SIZE : ((p.size ?? STAR_SPRITE_BASE_SIZE) || STAR_SPRITE_BASE_SIZE)
-    const screenSizePx = Math.max(STAR_SPRITE_MIN_PIXELS, (worldSize * scaleFactor) / Math.max(0.1, camDist))
-    const hitRadius = Math.max(6, screenSizePx * 0.6)
-    if (distPx <= hitRadius) {
-      hits.push({ index: i, star: p, distPx, depth: camDist })
+const { three, replaceObject, pickStarAtMouse, focusOn, focusBarycentre } = useThreeStarScene(containerRef, {
+  onReady: updatePoints,
+  onFrame: ({ camera }) => {
+    if (highlightMesh && containerRef.value) {
+      updateHighlightScale(highlightMesh, camera, containerRef.value.clientHeight || 1)
     }
-  }
-  hits.sort((a, b) => a.depth - b.depth)
-  return hits[0]?.star ?? null
-}
+  },
+  onClick: (event) => {
+    const star = pickStarAtMouse(event, points.value, props.focusStarId)
+    if (star) emit('focus-star', star)
+    else emit('clear-focus')
+  },
+})
 
 // Opacité des segments de constellation dans la vue 3D de conception.
 const CONSTELLATION_OPACITY = 0.5
 
 const circleTexture = getCircleSpriteTexture()
-
-function applyMinSizeToPointsMaterial(material) {
-  material.onBeforeCompile = (shader) => {
-    shader.uniforms.minSize = { value: STAR_SPRITE_MIN_PIXELS }
-    shader.vertexShader = shader.vertexShader
-      .replace('uniform float scale;', 'uniform float scale;\nuniform float minSize;')
-      .replace(
-        'if ( isPerspective ) gl_PointSize *= ( scale / - mvPosition.z );',
-        'if ( isPerspective ) gl_PointSize = max( size * ( scale / - mvPosition.z ), minSize );'
-      )
-  }
-}
 
 function buildPointsMesh() {
   const pts = points.value
@@ -257,69 +182,11 @@ function buildTransitLinesMeshLocal() {
 }
 
 function updatePoints() {
-  if (!scene) return
-  if (pointsMesh) {
-    scene.remove(pointsMesh)
-    if (pointsMesh.children?.length) {
-      pointsMesh.children.forEach((c) => {
-        c.geometry?.dispose?.()
-        c.material?.dispose?.()
-      })
-    } else {
-      pointsMesh.geometry?.dispose?.()
-      pointsMesh.material?.dispose?.()
-    }
-  }
-  if (highlightMesh) {
-    scene.remove(highlightMesh)
-    highlightMesh.material.dispose()
-  }
-  if (constellationLinesMesh) {
-    scene.remove(constellationLinesMesh)
-    constellationLinesMesh.geometry.dispose()
-    constellationLinesMesh.material.dispose()
-  }
-  if (transitLinesMesh) {
-    scene.remove(transitLinesMesh)
-    transitLinesMesh.geometry.dispose()
-    transitLinesMesh.material.dispose()
-  }
-  pointsMesh = buildPointsMesh()
-  if (pointsMesh) {
-    scene.add(pointsMesh)
-  }
-  highlightMesh = buildHighlightMesh()
-  if (highlightMesh) {
-    scene.add(highlightMesh)
-  }
-  constellationLinesMesh = buildConstellationLinesMesh()
-  if (constellationLinesMesh) {
-    scene.add(constellationLinesMesh)
-  }
-  transitLinesMesh = buildTransitLinesMeshLocal()
-  if (transitLinesMesh) {
-    scene.add(transitLinesMesh)
-  }
-}
-
-function animate() {
-  rafId = requestAnimationFrame(animate)
-  if (controls && !isFocusAnimating) controls.update()
-  if (highlightMesh && containerRef.value && camera) {
-    updateHighlightScale(highlightMesh, camera, containerRef.value.clientHeight || 1)
-  }
-  if (renderer && scene && camera) {
-    renderer.render(scene, camera)
-  }
-}
-
-function resize() {
-  if (!containerRef.value || !camera || !renderer) return
-  const width = containerRef.value.clientWidth
-  const height = containerRef.value.clientHeight
-  camera.aspect = width / height
-  camera.updateProjectionMatrix()
-  renderer.setSize(width, height)
+  if (!three.scene) return
+  pointsMesh = replaceObject(pointsMesh, buildPointsMesh())
+  highlightMesh = replaceObject(highlightMesh, buildHighlightMesh())
+  constellationLinesMesh = replaceObject(constellationLinesMesh, buildConstellationLinesMesh())
+  transitLinesMesh = replaceObject(transitLinesMesh, buildTransitLinesMeshLocal())
 }
 
 function focusOnStar(starId) {
@@ -346,39 +213,7 @@ function focusOnStar(starId) {
       pos = { x, y, z }
     }
   }
-  if (!pos || !camera || !controls) return
-
-  animateFocusTo(camera, controls, pos, {
-    onStart: () => { isFocusAnimating = true },
-    onComplete: () => { isFocusAnimating = false },
-  })
-}
-
-function animateToBarycentre() {
-  if (!camera || !controls) return
-  animateTargetTo(camera, controls, { x: 0, y: 0, z: 0 }, {
-    onStart: () => { isFocusAnimating = true },
-    onComplete: () => { isFocusAnimating = false },
-  })
-}
-
-function onCanvasMouseDown(event) {
-  mouseDownPos = { x: event.clientX, y: event.clientY }
-}
-
-function onCanvasClick(event) {
-  if (!containerRef.value || !camera) return
-  if (mouseDownPos) {
-    const dist = Math.hypot(event.clientX - mouseDownPos.x, event.clientY - mouseDownPos.y)
-    mouseDownPos = null
-    if (dist > CLICK_DRAG_THRESHOLD) return
-  }
-  const star = pickStarAtMouse(event)
-  if (star) {
-    emit('focus-star', star)
-  } else {
-    emit('clear-focus')
-  }
+  focusOn(pos)
 }
 
 watch(
@@ -400,58 +235,11 @@ watch(
     if (id) {
       focusOnStar(id)
     } else {
-      animateToBarycentre()
+      focusBarycentre()
     }
     requestAnimationFrame(() => updatePoints())
   }
 )
-
-onMounted(() => {
-  initThree()
-  updatePoints()
-  animate()
-  window.addEventListener('resize', resize)
-  if (containerRef.value) {
-    resizeObserver = new ResizeObserver(resize)
-    resizeObserver.observe(containerRef.value)
-    containerRef.value.addEventListener('mousedown', onCanvasMouseDown)
-    containerRef.value.addEventListener('click', onCanvasClick)
-  }
-})
-
-onBeforeUnmount(() => {
-  if (rafId) cancelAnimationFrame(rafId)
-  window.removeEventListener('resize', resize)
-  if (containerRef.value) {
-    containerRef.value.removeEventListener('mousedown', onCanvasMouseDown)
-    containerRef.value.removeEventListener('click', onCanvasClick)
-    if (resizeObserver) resizeObserver.unobserve(containerRef.value)
-    if (renderer?.domElement) containerRef.value.removeChild(renderer.domElement)
-  }
-  if (pointsMesh) {
-    if (pointsMesh.children?.length) {
-      pointsMesh.children.forEach((c) => {
-        c.geometry?.dispose?.()
-        c.material?.dispose?.()
-      })
-    } else {
-      pointsMesh.geometry?.dispose?.()
-      pointsMesh.material?.dispose?.()
-    }
-  }
-  if (highlightMesh) {
-    highlightMesh.material?.dispose()
-  }
-  if (constellationLinesMesh) {
-    constellationLinesMesh.geometry?.dispose()
-    constellationLinesMesh.material?.dispose()
-  }
-  if (transitLinesMesh) {
-    transitLinesMesh.geometry?.dispose()
-    transitLinesMesh.material?.dispose()
-  }
-  renderer?.dispose()
-})
 </script>
 
 <template>

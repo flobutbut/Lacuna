@@ -5,16 +5,20 @@
  * Données et phrases : useDepartureConfirmation.
  */
 import { computed } from 'vue'
-import { useUIStore } from '@/stores/ui'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useTransitStore } from '@/stores/transit'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { useShipStore } from '@/stores/ship'
 import { formatDuration } from '@/lib/transit'
 import AppModal from '@/components/AppModal.vue'
 import { useDepartureConfirmation } from '@/composables/useDepartureConfirmation'
 
-const ui = useUIStore()
+const notificationsStore = useNotificationsStore()
+const transitStore = useTransitStore()
+const observatoireStore = useObservatoireStore()
 const shipStore = useShipStore()
 
-const pending = computed(() => ui.pendingDeparture)
+const pending = computed(() => transitStore.pendingDeparture)
 
 const { durationPlayerLabel, durationPhysLabel, generationsCount, generationPhrase, contextPhrase } =
   useDepartureConfirmation(pending, shipStore)
@@ -24,33 +28,33 @@ const modalTitle = computed(() =>
 )
 
 function annuler() {
-  ui.clearSearchedStarId()
-  ui.clearPendingDeparture()
-  ui.closeDepartureConfirmation()
+  observatoireStore.clearSearchedStarId()
+  transitStore.clearPendingDeparture()
+  transitStore.closeDepartureConfirmation()
 }
 
 async function allumerMoteurs() {
   const p = pending.value
   if (!p || !shipStore.ship) return
   const result = await shipStore.startTransit(p.id, p.dist, p.transitMeta)
-  ui.clearSearchedStarId()
-  ui.clearPendingDeparture()
-  ui.closeDepartureConfirmation()
+  observatoireStore.clearSearchedStarId()
+  transitStore.clearPendingDeparture()
+  transitStore.closeDepartureConfirmation()
   if (result) {
     const durationLabel = p.transitMeta?.tJoueurSec != null ? formatDuration(p.transitMeta.tJoueurSec) : '—'
-    ui.showNotification(
+    notificationsStore.showNotification(
       `Cap fixé — ${p.name} — ${p.dist} al / Durée estimée : ${durationLabel}. Phase d'accélération en cours. / Moteurs allumés.`,
       5000
     )
   } else {
-    ui.showNotification('Impossible de lancer le transit (vaisseau non chargé ou erreur Supabase)', 5000)
+    notificationsStore.showNotification('Impossible de lancer le transit (vaisseau non chargé ou erreur Supabase)', 5000)
   }
 }
 </script>
 
 <template>
   <AppModal
-    v-if="ui.departureConfirmationOpen && pending"
+    v-if="transitStore.departureConfirmationOpen && pending"
     class="departure-confirmation--amber"
     :title="modalTitle"
     @close="annuler"

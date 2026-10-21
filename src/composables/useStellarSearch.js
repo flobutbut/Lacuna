@@ -9,7 +9,8 @@ import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { useShipStore } from '@/stores/ship'
 import { useSignauxStore } from '@/stores/signaux'
 import { useObservationsStore } from '@/stores/observations'
-import { useUIStore } from '@/stores/ui'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { filterBySpectralBand } from '@/lib/spectralBands'
 import { xyzToRaDec, raDecToVector } from '@/lib/stellarProjection'
 import { parseCoordinates, getSystemXyz } from '@/lib/stellarCoordinates'
@@ -38,7 +39,8 @@ export function useStellarSearch(options = {}) {
   const shipStore = useShipStore()
   const signauxStore = useSignauxStore()
   const obsStore = useObservationsStore()
-  const ui = useUIStore()
+  const notificationsStore = useNotificationsStore()
+  const observatoireStore = useObservatoireStore()
   const { viewerSystemId, shouldExcludeViewerSystemFromSearch } = useViewerSystemPolicy()
 
   const context = standalone ? 'conception3d' : 'observatoire'
@@ -48,11 +50,11 @@ export function useStellarSearch(options = {}) {
   const currentMatchIndex = ref(0)
 
   function getSpectralFilter() {
-    return standalone && spectralFilterRef ? spectralFilterRef.value : ui.spectralFilter
+    return standalone && spectralFilterRef ? spectralFilterRef.value : observatoireStore.spectralFilter
   }
 
   function getExoplanetFilter() {
-    return standalone && exoplanetFilterRef ? exoplanetFilterRef.value : ui.exoplanetFilter
+    return standalone && exoplanetFilterRef ? exoplanetFilterRef.value : observatoireStore.exoplanetFilter
   }
 
   async function computeSystemMatches() {
@@ -105,7 +107,7 @@ export function useStellarSearch(options = {}) {
 
   function goToConstellation(constellationMatch) {
     if (standalone) return
-    ui.clearSearchedStarId()
+    observatoireStore.clearSearchedStarId()
     const pool = stellarStore.forSky()
     const fullList = stellarStore.list
     const viewerSystem = pool.find((s) => s.id === shipStore.currentSystemId) || fullList.find((s) => s.id === shipStore.currentSystemId)
@@ -129,19 +131,19 @@ export function useStellarSearch(options = {}) {
       n++
     }
     if (n === 0) {
-      ui.showNotification('Constellation sans étoiles trouvées dans le catalogue', 3000)
+      notificationsStore.showNotification('Constellation sans étoiles trouvées dans le catalogue', 3000)
       return
     }
     const len = Math.sqrt(sumX * sumX + sumY * sumY + sumZ * sumZ)
     if (len < 1e-6) {
-      ui.showNotification('Impossible de calculer le centre de la constellation', 3000)
+      notificationsStore.showNotification('Impossible de calculer le centre de la constellation', 3000)
       return
     }
     const centerRa = (Math.atan2(sumY, sumX) * 180) / Math.PI
     const centerDec = (Math.asin(Math.max(-1, Math.min(1, sumZ / len))) * 180) / Math.PI
-    ui.setTargetViewDirectionValue({ ra: centerRa, dec: centerDec })
+    observatoireStore.setTargetViewDirectionValue({ ra: centerRa, dec: centerDec })
     const label = constellationMatch.nameFr || constellationMatch.name || constellationMatch.abbr
-    ui.showNotification(`Vue centrée sur ${label}`, 2000)
+    notificationsStore.showNotification(`Vue centrée sur ${label}`, 2000)
   }
 
   function goToMatch(match) {
@@ -164,17 +166,17 @@ export function useStellarSearch(options = {}) {
     const band = letter === 'L' || letter === 'T' || letter === 'Y' ? 'ir' : getSpectralFilter()
     if (letter === 'L' || letter === 'T' || letter === 'Y') {
       if (standalone) onUpdateSpectralFilter?.('ir')
-      else ui.setSpectralFilter('ir')
+      else observatoireStore.setSpectralFilter('ir')
     }
-    ui.setSearchedStarId(match.id)
-    ui.setTargetViewDirectionValue({ ra, dec })
+    observatoireStore.setSearchedStarId(match.id)
+    observatoireStore.setTargetViewDirectionValue({ ra, dec })
     const raw = stellarStore.forSky(true, { excludeSystemId: viewerSystemId.value })
     const filtered = filterBySpectralBand(raw, band)
     const exoFilter = getExoplanetFilter()
     if (!filtered.some((f) => f.star?.id === match.id)) {
-      ui.showNotification('Trop loin pour voir cette étoile — vue centrée sur la zone', 4000)
+      notificationsStore.showNotification('Trop loin pour voir cette étoile — vue centrée sur la zone', 4000)
     } else if (exoFilter && !systemObjectsStore.hasExoplanets(match.id)) {
-      ui.showNotification('Système sans exoplanètes connues — masqué par le filtre', 3000)
+      notificationsStore.showNotification('Système sans exoplanètes connues — masqué par le filtre', 3000)
     }
   }
 
@@ -183,19 +185,19 @@ export function useStellarSearch(options = {}) {
     if (!q) {
       searchMatches.value = []
       if (!standalone) {
-        ui.clearSearchedStarId()
-        ui.clearSignalSearchMatchIds()
+        observatoireStore.clearSearchedStarId()
+        observatoireStore.clearSignalSearchMatchIds()
       }
       return
     }
     const coords = parseCoordinates(q)
     if (coords) {
       if (!standalone) {
-        ui.clearSearchedStarId()
-        ui.clearSignalSearchMatchIds()
+        observatoireStore.clearSearchedStarId()
+        observatoireStore.clearSignalSearchMatchIds()
         searchMatches.value = []
-        ui.setTargetViewDirectionValue({ ra: coords.ra, dec: coords.dec })
-        ui.showNotification(`Vue centrée sur α ${coords.ra.toFixed(1)}° δ ${coords.dec >= 0 ? '+' : ''}${coords.dec.toFixed(1)}°`, 2000)
+        observatoireStore.setTargetViewDirectionValue({ ra: coords.ra, dec: coords.dec })
+        notificationsStore.showNotification(`Vue centrée sur α ${coords.ra.toFixed(1)}° δ ${coords.dec >= 0 ? '+' : ''}${coords.dec.toFixed(1)}°`, 2000)
       } else {
         searchMatches.value = []
       }
@@ -204,12 +206,12 @@ export function useStellarSearch(options = {}) {
     const systemMatches = await computeSystemMatches()
     const signalMatches = standalone ? [] : computeSignalMatches()
     const constellationMatches = standalone ? [] : computeConstellationMatches()
-    if (!standalone) ui.setSignalSearchMatchIds(signalMatches.map((s) => s.id))
+    if (!standalone) observatoireStore.setSignalSearchMatchIds(signalMatches.map((s) => s.id))
     const allMatches = [...systemMatches, ...constellationMatches]
     if (allMatches.length === 0 && signalMatches.length === 0) {
       searchMatches.value = []
-      if (!standalone) ui.clearSearchedStarId()
-      ui.showNotification('Aucun système, constellation ni signal trouvé pour « ' + q + ' »', 3000)
+      if (!standalone) observatoireStore.clearSearchedStarId()
+      notificationsStore.showNotification('Aucun système, constellation ni signal trouvé pour « ' + q + ' »', 3000)
       return
     }
     if (allMatches.length > 0) {
@@ -218,10 +220,10 @@ export function useStellarSearch(options = {}) {
       goToMatch(allMatches[0])
     } else {
       searchMatches.value = []
-      if (!standalone) ui.clearSearchedStarId()
+      if (!standalone) observatoireStore.clearSearchedStarId()
     }
     if (!standalone && signalMatches.length > 0) {
-      ui.showNotification(`${signalMatches.length} signal${signalMatches.length > 1 ? 'ux' : ''} correspondent`, 2000)
+      notificationsStore.showNotification(`${signalMatches.length} signal${signalMatches.length > 1 ? 'ux' : ''} correspondent`, 2000)
     }
   }
 
@@ -229,8 +231,8 @@ export function useStellarSearch(options = {}) {
     searchQuery.value = ''
     searchMatches.value = []
     if (!standalone) {
-      ui.clearSearchedStarId()
-      ui.clearSignalSearchMatchIds()
+      observatoireStore.clearSearchedStarId()
+      observatoireStore.clearSignalSearchMatchIds()
     } else {
       onClearFocus?.()
     }
@@ -255,7 +257,7 @@ export function useStellarSearch(options = {}) {
   )
 
   watch(searchQuery, (q) => {
-    if (!q?.trim() && !standalone) ui.clearSignalSearchMatchIds()
+    if (!q?.trim() && !standalone) observatoireStore.clearSignalSearchMatchIds()
   })
 
   return {

@@ -1,11 +1,11 @@
 /**
  * Composable — Gestion de la sélection d'étoile (recherche + clic)
- * Partagé Observatoire (ui.searchedStarId) et Vue 3D (ref local)
+ * Partagé Observatoire (observatoireStore.searchedStarId) et Vue 3D (ref local)
  */
 
 import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useUIStore } from '@/stores/ui'
+import { useObservatoireStore } from '@/stores/observatoire'
 
 /**
  * @param {object} [options]
@@ -15,8 +15,8 @@ import { useUIStore } from '@/stores/ui'
 export function useStarSelection(options = {}) {
   const { mode = 'observatoire' } = options
 
-  const ui = useUIStore()
-  const { searchedStarId } = storeToRefs(ui)
+  const observatoireStore = useObservatoireStore()
+  const { searchedStarId } = storeToRefs(observatoireStore)
   const localId = ref(null)
 
   const selectedStarId = computed(() =>
@@ -26,7 +26,7 @@ export function useStarSelection(options = {}) {
   function selectStar(star) {
     const id = star?.id ?? null
     if (mode === 'observatoire') {
-      ui.setSearchedStarId(id)
+      observatoireStore.setSearchedStarId(id)
     } else {
       localId.value = id
     }
@@ -34,7 +34,7 @@ export function useStarSelection(options = {}) {
 
   function clearSelection() {
     if (mode === 'observatoire') {
-      ui.clearSearchedStarId()
+      observatoireStore.clearSearchedStarId()
     } else {
       localId.value = null
     }

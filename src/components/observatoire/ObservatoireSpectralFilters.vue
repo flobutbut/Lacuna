@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useUIStore } from '@/stores/ui'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { useStellarSearch } from '@/composables/useStellarSearch'
 import AppSelect from '@/components/AppSelect.vue'
@@ -28,7 +28,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:spectralFilter', 'update:exoplanetFilter', 'update:typeFilter', 'update:constellationsEnabled', 'update:transitsEnabled', 'focus-star', 'clear-focus'])
 
-const ui = useUIStore()
+const observatoireStore = useObservatoireStore()
 const systemObjectsStore = useSystemObjectsStore()
 const stellarStore = useStellarSystemsStore()
 const { viewerSystemId, shouldExcludeViewerSystemFromSearch } = useViewerSystemPolicy()
@@ -49,13 +49,13 @@ const {
   clearSearch,
 } = useStellarSearch({
   standalone: props.standalone,
-  spectralFilterRef: computed(() => (props.standalone ? props.spectralFilter : ui.spectralFilter)),
-  exoplanetFilterRef: computed(() => (props.standalone ? props.exoplanetFilter : ui.exoplanetFilter)),
+  spectralFilterRef: computed(() => (props.standalone ? props.spectralFilter : observatoireStore.spectralFilter)),
+  exoplanetFilterRef: computed(() => (props.standalone ? props.exoplanetFilter : observatoireStore.exoplanetFilter)),
   onFocusStar: (match) => emit('focus-star', match),
   onClearFocus: () => emit('clear-focus'),
   onUpdateSpectralFilter: (band) => {
     if (props.standalone) emit('update:spectralFilter', band)
-    else ui.setSpectralFilter(band)
+    else observatoireStore.setSpectralFilter(band)
   },
 })
 
@@ -67,20 +67,20 @@ const FILTERS = [
 ]
 
 async function toggleExoplanetFilter() {
-  const current = props.standalone ? props.exoplanetFilter : ui.exoplanetFilter
+  const current = props.standalone ? props.exoplanetFilter : observatoireStore.exoplanetFilter
   if (!current) {
     await systemObjectsStore.fetchSystemIdsWithExoplanets()
   }
   if (props.standalone) {
     emit('update:exoplanetFilter', !props.exoplanetFilter)
   } else {
-    ui.toggleExoplanetFilter()
+    observatoireStore.toggleExoplanetFilter()
   }
 }
 
 function onSpectralFilterChange(v) {
   if (props.standalone) emit('update:spectralFilter', v)
-  else ui.setSpectralFilter(v)
+  else observatoireStore.setSpectralFilter(v)
 }
 
 function onTypeFilterChange(v) {
@@ -211,7 +211,7 @@ function onGlobalKeydown(e) {
 }
 
 watch(searchQuery, (q) => {
-  if (!q?.trim() && !props.standalone) ui.clearSignalSearchMatchIds()
+  if (!q?.trim() && !props.standalone) observatoireStore.clearSignalSearchMatchIds()
   scheduleSuggestions()
 })
 
@@ -228,7 +228,7 @@ onUnmounted(() => {
   <div class="spectral-bar">
     <div class="spectral-filters">
       <AppSelect
-        :model-value="standalone ? spectralFilter : ui.spectralFilter"
+        :model-value="standalone ? spectralFilter : observatoireStore.spectralFilter"
         :options="FILTERS"
         value-key="id"
         label-key="label"
@@ -251,7 +251,7 @@ onUnmounted(() => {
       <button
         type="button"
         class="btn btn-secondary"
-        :class="{ 'is-active': standalone ? exoplanetFilter : ui.exoplanetFilter }"
+        :class="{ 'is-active': standalone ? exoplanetFilter : observatoireStore.exoplanetFilter }"
         title="N'afficher que les systèmes avec exoplanètes connues"
         @click="toggleExoplanetFilter"
       >
@@ -261,9 +261,9 @@ onUnmounted(() => {
         v-if="!standalone"
         type="button"
         class="btn btn-secondary"
-        :class="{ 'is-active': ui.constellationsEnabled }"
+        :class="{ 'is-active': observatoireStore.constellationsEnabled }"
         title="Afficher les lignes de constellation"
-        @click="ui.toggleConstellationsEnabled"
+        @click="observatoireStore.toggleConstellationsEnabled"
       >
         Constellations
       </button>

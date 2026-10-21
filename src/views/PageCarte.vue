@@ -1,4 +1,5 @@
 <script setup>
+import '@/assets/components/carte.css'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMapNodesStore } from '@/stores/mapNodes'
@@ -7,7 +8,9 @@ import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { useObservationsStore } from '@/stores/observations'
 import { useLabReportsStore } from '@/stores/labReports'
-import { useUIStore } from '@/stores/ui'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useTransitStore } from '@/stores/transit'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { OBJECT_TYPE_LABELS, COMPOSITION_LABELS, planetTypeLabel } from '@/constants/objectTypes'
 import { buildObservationPayload } from '@/lib/observationPayload'
 import { formatCoordinates } from '@/lib/formatUtils'
@@ -30,7 +33,9 @@ const stellarStore = useStellarSystemsStore()
 const systemObjectsStore = useSystemObjectsStore()
 const obsStore = useObservationsStore()
 const labReportsStore = useLabReportsStore()
-const ui = useUIStore()
+const notificationsStore = useNotificationsStore()
+const transitStore = useTransitStore()
+const observatoireStore = useObservatoireStore()
 
 const selectedSystemId = ref(null)
 const selectedPlanet = ref(null)
@@ -73,7 +78,7 @@ const displayedSystemsList = computed(() => {
 
 // Charger les stores (vaisseau avant carte : mapStore.fetch() a besoin de ship.id)
 onMounted(async () => {
-  ui.clearCarteHasNew()
+  notificationsStore.clearCarteHasNew()
   await ensureStoresLoaded(shipStore, stellarStore)
   await ensureStoresLoaded(mapStore)
   await shipStore.fetchTravels()
@@ -279,7 +284,7 @@ async function analyserForBodyPayload(body, star) {
   const obsId = await obsStore.addObservation(
     addObservationPayload(body, star.name, star.id, star.dist)
   )
-  ui.setLabHasNew(true)
+  notificationsStore.setLabHasNew(true)
   router.push({ path: '/laboratoire', query: { select: obsId } })
 }
 
@@ -315,21 +320,21 @@ function fixerCapCarte() {
   const stellar = selectedStellar.value
   if (!systemId || !stellar) return
   if (shipStore.currentSystemId === systemId) {
-    ui.showNotification('Vous êtes déjà dans ce système', 3000)
+    notificationsStore.showNotification('Vous êtes déjà dans ce système', 3000)
     return
   }
   if (shipStore.isInTransit) {
-    ui.showNotification('Transit déjà en cours — attendez l\'arrivée avant de fixer un nouveau cap', 4000)
+    notificationsStore.showNotification('Transit déjà en cours — attendez l\'arrivée avant de fixer un nouveau cap', 4000)
     return
   }
   if (!shipStore.ship) {
-    ui.showNotification('Vaisseau non chargé — réessayez dans une seconde', 4000)
+    notificationsStore.showNotification('Vaisseau non chargé — réessayez dans une seconde', 4000)
     return
   }
   const dist = stellar.distance ?? '—'
   const distanceLy = parseFloat(dist) || 0
   const meta = distanceLy > 0 ? computeTransit(dist) : null
-  ui.setPendingDeparture({
+  transitStore.setPendingDeparture({
     id: systemId,
     name: stellar.name ?? systemId,
     dist,
@@ -337,7 +342,7 @@ function fixerCapCarte() {
     spectral_type: stellar.spectral_type ?? null,
     transitMeta: meta ?? undefined,
   })
-  ui.setSearchedStarId(systemId)
+  observatoireStore.setSearchedStarId(systemId)
   // Orienter la vue ciel vers la cible (comme depuis l'Observatoire)
   const viewerSystem = stellarStore.list.find((s) => s.id === shipStore.currentSystemId)
   const viewerXyz = viewerSystem ? getSystemXyz(viewerSystem) : { x: 0, y: 0, z: 0 }
@@ -346,10 +351,10 @@ function fixerCapCarte() {
   const dy = (targetXyz.y ?? 0) - (viewerXyz.y ?? 0)
   const dz = (targetXyz.z ?? 0) - (viewerXyz.z ?? 0)
   const { ra, dec } = xyzToRaDec(dx, dy, dz)
-  ui.setViewDirectionValue({ ra, dec })
-  ui.setTargetViewDirectionValue({ ra, dec })
-  ui.openDepartureConfirmation()
-  ui.setObservatoireViewMode('sky')
+  observatoireStore.setViewDirectionValue({ ra, dec })
+  observatoireStore.setTargetViewDirectionValue({ ra, dec })
+  transitStore.openDepartureConfirmation()
+  observatoireStore.setObservatoireViewMode('sky')
   router.push({ name: 'observatoire' })
 }
 
@@ -366,7 +371,7 @@ function addOnlyForBody(bodyObj) {
   animatingKey.value = key
   setTimeout(() => {
     obsStore.addObservation(addObservationPayload(body, star.name, star.id, star.dist))
-    ui.setLabHasNew(true)
+    notificationsStore.setLabHasNew(true)
     animatingKey.value = null
   }, 350)
 }
@@ -411,7 +416,7 @@ function addOnly() {
   animatingKey.value = key
   setTimeout(() => {
     obsStore.addObservation(addObservationPayload(body, star.name, star.id, star.dist))
-    ui.setLabHasNew(true)
+    notificationsStore.setLabHasNew(true)
     animatingKey.value = null
   }, 350)
 }

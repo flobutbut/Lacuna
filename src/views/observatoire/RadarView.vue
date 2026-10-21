@@ -5,10 +5,19 @@
  */
 import { ref, onMounted, onUnmounted, watch, inject, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useUIStore } from '@/stores/ui'
+import { useRadarStore } from '@/stores/radar'
 import { useSignauxStore } from '@/stores/signaux'
 import { computeSpectrogramColumn, SAMPLE_RATE } from '@/lib/spectrogramData'
 import { getCssVar } from '@/lib/cssVars'
+import {
+  RADAR_FREQ_BINS as FREQ_BINS,
+  RADAR_TICK_MS as TICK_MS,
+  columnIndexAt,
+  formatAgeLabel,
+  freqRangeToBins,
+  injectPulsarSignals,
+  ticksPerPixel,
+} from '@/lib/radarSpectrum'
 import * as d3 from 'd3'
 
 const emit = defineEmits(['signal-selected'])
@@ -23,7 +32,7 @@ const {
   HISTORY_SIZE,
 } = radarSpectrogram
 
-const ui = useUIStore()
+const radarStore = useRadarStore()
 const signauxStore = useSignauxStore()
 const {
   radarPaused,
@@ -34,15 +43,13 @@ const {
   radarFreqHigh,
   radarNoiseEnabled,
   radarEnabled,
-} = storeToRefs(ui)
+} = storeToRefs(radarStore)
 
 const containerRef = ref(null)
 const chartsWrapRef = ref(null)
 const spectrogramCanvasRef = ref(null)
 const intensityCanvasRef = ref(null)
 
-const FREQ_BINS = 128
-const TICK_MS = 100
 const INTERVAL_TICKS = 300  // toutes les 30s à 100ms/tick
 const margin = { left: 58, right: 8, top: 8, bottom: 24 }
 
@@ -164,70 +171,13 @@ function appendColumnFromSnapshot(snapshot, windowSize = WINDOW_SIZE) {
     computeSpectrogramColumn(snapshot, FREQ_BINS)
   if (!magnitudes.length) return
 
-  // Injection des signaux pulsars dans le domaine
-  // fréquentiel — après FFT, avant normalisation
-  const signals = signauxStore.activePulsarSignals
-  if (signals?.length) {
-    // Temps simulé courant en secondes (échelle UI, pas le tick buffer réel)
-    const tSec = (radarColumnBuffer.writeCol * radarTimeScale.value) / 1000
-
-    for (const signal of signals) {
-      if (signal.fluxRelative < radarIntensityThreshold.value) continue
-      if (!signal.pulsePeriodS || !signal.fluxRelative) continue
-
-      // Position dans la période courante (0 à 1)
-      const phase = (tSec % signal.pulsePeriodS)
-        / signal.pulsePeriodS
-
-      // Impulsion : seulement si on est dans
-      // les 5% initiaux de la période
-      if (phase > 0.05) continue
-
-      // Intensité de l'impulsion selon flux_relative
-      // et position dans l'impulsion (gaussienne)
-      const fluxCurved = Math.pow(signal.fluxRelative, 0.6)
-      // Valeur absolue indépendante de specMaxVal
-      // On injecte directement une valeur dans [0,1]
-      // qui sera normalisée avec le reste
-      const peakAmplitude = fluxCurved * 0.8
-
-      // Forme gaussienne dans le temps :
-      // max au début de l'impulsion, décroît vite
-      const sigma = 0.02
-      const envelope = Math.exp(
-        -(phase * phase) / (2 * sigma * sigma)
-      )
-
-      const SAMPLE_RATE = 250
-      const NYQUIST = SAMPLE_RATE / 2 // 125 Hz
-
-      // Bin central du pulsar
-      const rotHz = signal.rotationFrequencyHz
-      let centerBin = null
-      if (rotHz && rotHz <= NYQUIST) {
-        centerBin = Math.round((rotHz / NYQUIST) * FREQ_BINS)
-        centerBin = Math.max(0, Math.min(FREQ_BINS - 1, centerBin))
-      }
-
-      if (centerBin !== null) {
-        // Injection sur quelques bins autour du centre
-        // largeur proportionnelle à emission_width_w50_ms
-        const width = 3
-        for (let b = centerBin - width; b <= centerBin + width; b++) {
-          if (b < 0 || b >= FREQ_BINS) continue
-          const dist = Math.abs(b - centerBin)
-          const binEnvelope = Math.exp(-(dist * dist) / (2 * 1.5 * 1.5))
-          magnitudes[b] += peakAmplitude * envelope * binEnvelope
-        }
-      } else {
-        // Pulsar hors plage (milliseconde > 125 Hz)
-        // injection sur tous les bins à amplitude réduite
-        for (let bin = 0; bin < FREQ_BINS; bin++) {
-          magnitudes[bin] += peakAmplitude * envelope * 0.1
-        }
-      }
-    }
-  }
+  // Injection des signaux pulsars dans le domaine fréquentiel — après FFT, avant normalisation.
+  // Temps simulé courant en secondes (échelle UI, pas le tick buffer réel)
+  injectPulsarSignals(magnitudes, signauxStore.activePulsarSignals, {
+    tSec: (radarColumnBuffer.writeCol * radarTimeScale.value) / 1000,
+    threshold: radarIntensityThreshold.value,
+    freqBins: FREQ_BINS,
+  })
 
   for (const m of magnitudes) {
     if (m > radarColumnBuffer.specMaxVal) radarColumnBuffer.specMaxVal = m
@@ -251,20 +201,19 @@ function appendColumn() {
 }
 
 function getTicksPerPx() {
-  return Math.max(1, Math.round(radarTimeScale.value / TICK_MS))
+  return ticksPerPixel(radarTimeScale.value)
 }
 
 /** px = 0..innerW-1 dans la zone utile (sans marge gauche) */
 function colIdxFromPlotPx(px, innerW, ticksPerPx) {
-  const colOffset = (innerW - 1 - px) * ticksPerPx
-  return (
-    (radarColumnBuffer.writeCol -
-      1 -
-      colOffset -
-      Math.round(currentScrollOffset * ticksPerPx) +
-      HISTORY_SIZE * 100) %
-    HISTORY_SIZE
-  )
+  return columnIndexAt({
+    writeCol: radarColumnBuffer.writeCol,
+    px,
+    innerW,
+    ticksPerPx,
+    historySize: HISTORY_SIZE,
+    scrollOffset: currentScrollOffset,
+  })
 }
 
 function drawViewport() {
@@ -289,21 +238,11 @@ function drawViewport() {
   const ticksPerPx = getTicksPerPx()
   const norm = radarColumnBuffer.specMaxVal || 1
 
-  // Convertir les bornes Hz en indices de bins (FREQ_BINS couvre 0–125 Hz)
-  const binLow = Math.floor(radarFreqLow.value / 125 * FREQ_BINS)
-  const binHigh = Math.ceil(radarFreqHigh.value / 125 * FREQ_BINS)
-  const binRange = binHigh - binLow || 1
+  // Bornes Hz → indices de bins (FREQ_BINS couvre 0–125 Hz)
+  const { binLow, binHigh, binRange } = freqRangeToBins(radarFreqLow.value, radarFreqHigh.value, FREQ_BINS)
 
   for (let px = 0; px < innerW; px++) {
-    const colOffset = (innerW - 1 - px) * ticksPerPx
-    const colIdx =
-      (radarColumnBuffer.writeCol -
-        1 -
-        colOffset -
-        Math.round(currentScrollOffset * ticksPerPx) +
-        HISTORY_SIZE * 100) %
-      HISTORY_SIZE
-
+    const colIdx = colIdxFromPlotPx(px, innerW, ticksPerPx)
     const col = radarColumnBuffer.columnBuffer[colIdx]
     if (!col) continue
 
@@ -361,15 +300,7 @@ function drawViewport() {
     if (ageCols === lastTickAge) continue
     lastTickAge = ageCols
     const xPos = margin.left + px
-    const totalSeconds = Math.round(ageCols * TICK_MS / 1000)
-    const minutes = Math.floor(totalSeconds / 60)
-    const seconds = totalSeconds % 60
-    const label =
-      minutes === 0
-        ? `-${String(seconds).padStart(2, '0')}s`
-        : seconds === 0
-          ? `-${minutes}:00`
-          : `-${minutes}:${String(seconds).padStart(2, '0')}`
+    const label = formatAgeLabel(ageCols, TICK_MS)
     for (const { ctx, canvasH } of [
       { ctx: specCtx, canvasH: specCanvas.height },
       { ctx: intCtx, canvasH: intCanvas.height },
@@ -794,12 +725,12 @@ watch(radarPaused, () => {
     lastRenderedTick = tickCount.value
     currentScrollOffset = 0
     targetScrollOffset = 0
-    ui.setRadarSelectionMode(null)
+    radarStore.setRadarSelectionMode(null)
     clearSelection()
     resumeRenderLoop()
   } else {
     targetScrollOffset = currentScrollOffset
-    ui.setRadarSelectionMode('zone')
+    radarStore.setRadarSelectionMode('zone')
   }
 })
 

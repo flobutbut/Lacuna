@@ -2,14 +2,16 @@
 import { onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSignauxStore } from '@/stores/signaux'
-import { useUIStore } from '@/stores/ui'
+import { useRadarStore } from '@/stores/radar'
+import { useObservatoireStore } from '@/stores/observatoire'
 import RadarNoiseIcon from '@/components/icons/RadarNoiseIcon.vue'
 import RadarMiniature from '@/components/RadarMiniature.vue'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const signauxStore = useSignauxStore()
-const ui = useUIStore()
-const { radarNoiseEnabled } = storeToRefs(ui)
+const radarStore = useRadarStore()
+const observatoireStore = useObservatoireStore()
+const { radarNoiseEnabled } = storeToRefs(radarStore)
 
 let expiryInterval = null
 onMounted(async () => {
@@ -24,7 +26,7 @@ onUnmounted(() => {
 
 <template>
   <div class="side-left">
-    <div v-if="ui.observatoireViewMode === 'sky'" class="side-widget">
+    <div v-if="observatoireStore.observatoireViewMode === 'sky'" class="side-widget">
       <div class="sw-title">Observatoire</div>
       <div class="sw-row">
         <div class="sw-key">Systèmes résolus</div>
@@ -40,7 +42,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div v-if="ui.observatoireViewMode === 'sky' || ui.observatoireViewMode === 'radar'" class="side-widget side-widget--signaux">
+    <div v-if="observatoireStore.observatoireViewMode === 'sky' || observatoireStore.observatoireViewMode === 'radar'" class="side-widget side-widget--signaux">
       <div class="side-widget__header side-widget__header--radar">
         <div class="sw-title sw-title--inline">Radar</div>
         <button
@@ -50,7 +52,7 @@ onUnmounted(() => {
           :title="radarNoiseEnabled === false ? 'Activer le bruit de fond' : 'Couper le bruit de fond'"
           :aria-pressed="radarNoiseEnabled !== false"
           aria-label="Bruit de fond du spectrogramme"
-          @click="ui.toggleRadarNoise"
+          @click="radarStore.toggleRadarNoise"
         >
           <RadarNoiseIcon :off="radarNoiseEnabled === false" />
         </button>

@@ -2,10 +2,10 @@
 import { computed, onMounted, onUnmounted, provide, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useUIStore } from '@/stores/ui'
+import { useRadarStore } from '@/stores/radar'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { useShipStore } from '@/stores/ship'
 import { useSignauxStore } from '@/stores/signaux'
-import { supabase } from '@/lib/supabase'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { useGalacticPosition } from '@/composables/useGalacticPosition'
 import { useRadarNoise } from '@/composables/useRadarNoise'
@@ -28,13 +28,14 @@ import SignalTooltip from '@/components/SignalTooltip.vue'
 import ConstellationTooltip from '@/components/ConstellationTooltip.vue'
 
 const route = useRoute()
-const ui = useUIStore()
+const radarStore = useRadarStore()
+const observatoireStore = useObservatoireStore()
 const shipStore = useShipStore()
 const signauxStore = useSignauxStore()
-const { radarPaused, radarFrequencyBand, radarEnabled } = storeToRefs(ui)
+const { radarPaused, radarFrequencyBand, radarEnabled } = storeToRefs(radarStore)
 const { activePulsarSignals } = storeToRefs(signauxStore)
-const isSkyMode = computed(() => ui.observatoireViewMode === 'sky')
-const isRadarMode = computed(() => ui.observatoireViewMode === 'radar')
+const isSkyMode = computed(() => observatoireStore.observatoireViewMode === 'sky')
+const isRadarMode = computed(() => observatoireStore.observatoireViewMode === 'radar')
 
 const { galacticLatitude } = useGalacticPosition()
 
@@ -57,30 +58,11 @@ function onKeydown(e) {
   if (route.name !== 'observatoire' || !isSkyMode.value) return
   if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return
   e.preventDefault()
-  ui.toggleObservatoireTiles()
+  observatoireStore.toggleObservatoireTiles()
 }
 
-async function callComputePulsarSignals() {
-  const shipId = shipStore.ship?.id
-  const sessionId = signauxStore.sessionId
-  const band = ui.radarFrequencyBand ?? 'L'
-  if (!shipId || !sessionId) return
-
-  const { data, error } = await supabase.rpc(
-    'compute_pulsar_signals',
-    {
-      p_ship_id: shipId,
-      p_band: band,
-      p_session_id: sessionId,
-    }
-  )
-  if (error) {
-    console.warn('[radar] compute_pulsar_signals:', error.message)
-    return
-  }
-  if (data?.inserted > 0) {
-    await signauxStore.fetch()
-  }
+function callComputePulsarSignals() {
+  return signauxStore.computePulsarSignals(radarStore.radarFrequencyBand ?? 'L')
 }
 
 onMounted(async () => {
@@ -113,8 +95,8 @@ onUnmounted(() => {
     <div v-if="!isSkyMode && !isRadarMode" class="scanlines" />
     <div class="ui-layer">
       <ObservatoireViewTabs />
-      <SideLeft v-show="(isSkyMode && ui.observatoireTilesVisible) || ui.observatoireViewMode === 'system'" />
-      <SideRight v-show="ui.observatoireViewMode === 'system' || (ui.observatoireViewMode === 'sky' && ui.observatoireTilesVisible)" />
+      <SideLeft v-show="(isSkyMode && observatoireStore.observatoireTilesVisible) || observatoireStore.observatoireViewMode === 'system'" />
+      <SideRight v-show="observatoireStore.observatoireViewMode === 'system' || (observatoireStore.observatoireViewMode === 'sky' && observatoireStore.observatoireTilesVisible)" />
       <Reticule v-if="isSkyMode" />
       <StarTooltip v-if="isSkyMode" />
       <SignalTooltip v-if="isSkyMode" />
@@ -126,7 +108,7 @@ onUnmounted(() => {
       <ObservatoireAzimuth v-if="isSkyMode" />
       <TravelWidget v-if="isSkyMode" />
       <DepartureConfirmation v-if="isSkyMode" />
-      <ObservatoirePanel v-if="ui.selectedStar && ui.observatoireOpen" />
+      <ObservatoirePanel v-if="observatoireStore.selectedStar && observatoireStore.observatoireOpen" />
       <SignalModal />
     </div>
   </div>

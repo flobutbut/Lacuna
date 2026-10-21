@@ -7,27 +7,26 @@
 import { inject, watch, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import * as d3 from 'd3'
-import { useUIStore } from '@/stores/ui'
+import { useRadarStore } from '@/stores/radar'
 import { getCssVar } from '@/lib/cssVars'
+import { RADAR_FREQ_BINS, columnIndexAt, freqRangeToBins, ticksPerPixel } from '@/lib/radarSpectrum'
 
 const radarSpectrogram = inject('radarSpectrogram', null)
 const radarColumnBuffer = inject('radarColumnBuffer', null)
 
-const ui = useUIStore()
+const radarStore = useRadarStore()
 const {
   radarIntensityThreshold,
   radarFreqLow,
   radarFreqHigh,
   radarTimeScale,
   radarEnabled,
-} = storeToRefs(ui)
+} = storeToRefs(radarStore)
 
 const wrapRef = ref(null)
 const canvasRef = ref(null)
 
-const FREQ_BINS = 128
 const HEIGHT_CSS = 120
-const TICK_MS = 100
 
 const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 1])
 
@@ -75,17 +74,13 @@ function draw() {
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, w, h)
 
-  const ticksPerPx = Math.max(1, Math.round(radarTimeScale.value / TICK_MS))
+  const ticksPerPx = ticksPerPixel(radarTimeScale.value)
   const norm = specMaxVal || 1
 
-  const binLow = Math.floor(radarFreqLow.value / 125 * FREQ_BINS)
-  const binHigh = Math.ceil(radarFreqHigh.value / 125 * FREQ_BINS)
-  const binRange = binHigh - binLow || 1
+  const { binLow, binHigh, binRange } = freqRangeToBins(radarFreqLow.value, radarFreqHigh.value, RADAR_FREQ_BINS)
 
   for (let px = 0; px < w; px++) {
-    const colOffset = (w - 1 - px) * ticksPerPx
-    const colIdx =
-      (writeCol - 1 - colOffset + HISTORY_SIZE * 100) % HISTORY_SIZE
+    const colIdx = columnIndexAt({ writeCol, px, innerW: w, ticksPerPx, historySize: HISTORY_SIZE })
 
     const col = columnBuffer[colIdx]
     if (!col) continue

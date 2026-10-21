@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useUIStore } from '@/stores/ui'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { useSignauxStore } from '@/stores/signaux'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useShipStore } from '@/stores/ship'
@@ -15,10 +15,10 @@ import { useSkyStars } from '@/composables/useSkyStars'
 import { useStarSelection } from '@/composables/useStarSelection'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
-const ui = useUIStore()
+const observatoireStore = useObservatoireStore()
 const { selectStar: selectStarForFocus } = useStarSelection({ mode: 'observatoire' })
 const nebulasStore = useNebulasStore()
-const { spectralFilter, exoplanetFilter, searchedStarId, constellationsEnabled } = storeToRefs(ui)
+const { spectralFilter, exoplanetFilter, searchedStarId, constellationsEnabled } = storeToRefs(observatoireStore)
 
 const CONSTELLATION_HOVER_THRESHOLD = 12
 
@@ -118,7 +118,7 @@ function recenterOnTransitTarget() {
   const ra = star.ra
   const dec = star.dec
   // On ne met à jour que la cible : la vue courante va interpoler progressivement
-  ui.setTargetViewDirectionValue({ ra, dec })
+  observatoireStore.setTargetViewDirectionValue({ ra, dec })
 }
 
 function draw(canvas, starsRef) {
@@ -128,16 +128,16 @@ function draw(canvas, starsRef) {
   const h = canvas.height
 
   if (!isPanning.value) {
-    const vd = ui.viewDirection?.value ?? ui.viewDirection?.value ?? ui.viewDirection
-    const tv = ui.targetViewDirection?.value ?? ui.targetViewDirection?.value ?? ui.targetViewDirection
+    const vd = observatoireStore.viewDirection?.value ?? observatoireStore.viewDirection?.value ?? observatoireStore.viewDirection
+    const tv = observatoireStore.targetViewDirection?.value ?? observatoireStore.targetViewDirection?.value ?? observatoireStore.targetViewDirection
     const k = 1 - Math.pow(1 - LERP_SPEED, 1.5)
-    ui.setViewDirectionValue({
+    observatoireStore.setViewDirectionValue({
       ra: lerpAngle(vd.ra, tv.ra, k),
       dec: vd.dec + (tv.dec - vd.dec) * k,
     })
   }
 
-  const vd = ui.viewDirection?.value ?? ui.viewDirection
+  const vd = observatoireStore.viewDirection?.value ?? observatoireStore.viewDirection
   const viewerCoords = getViewerCoords()
   const band = spectralFilter.value
 
@@ -149,7 +149,7 @@ function draw(canvas, starsRef) {
     drawNebulas(ctx, nebulasStore.forSky('ir'), vd.ra, vd.dec, w, h, getViewerCoords())
   }
 
-  let selected = ui.selectedStar
+  let selected = observatoireStore.selectedStar
   const now = Date.now()
   const activeSignals = signauxStore.list.filter((s) => now - s.createdAt < s.lifetimeMs)
 
@@ -215,15 +215,15 @@ function handleMouseMove(e, starList, canvas) {
   const t = e?.target
   if (t && typeof t.closest === 'function') {
     if (t.closest('.spectral-bar') || t.closest('.spectral-search') || t.closest('.star-ac-menu')) {
-      ui.setReticuleVisible(false)
-      ui.hoveredStar = null
-      ui.setHoveredSignal(null)
-      ui.setHoveredConstellation(null)
+      observatoireStore.setReticuleVisible(false)
+      observatoireStore.hoveredStar = null
+      observatoireStore.setHoveredSignal(null)
+      observatoireStore.setHoveredConstellation(null)
       return
     }
   }
 
-  const vd = ui.viewDirection?.value ?? ui.viewDirection
+  const vd = observatoireStore.viewDirection?.value ?? observatoireStore.viewDirection
   if (isPanning.value) {
     const dx = (e.clientX - lastPanPos.value.x) * PAN_SENSITIVITY
     const dy = (e.clientY - lastPanPos.value.y) * PAN_SENSITIVITY
@@ -231,8 +231,8 @@ function handleMouseMove(e, starList, canvas) {
       ra: (vd.ra + dx + 360) % 360,
       dec: Math.max(-89, Math.min(89, vd.dec + dy)),
     }
-    ui.setViewDirectionValue(next)
-    ui.setTargetViewDirectionValue(next)
+    observatoireStore.setViewDirectionValue(next)
+    observatoireStore.setTargetViewDirectionValue(next)
     lastPanPos.value = { x: e.clientX, y: e.clientY }
     hasPanned.value = true
     return
@@ -242,18 +242,18 @@ function handleMouseMove(e, starList, canvas) {
     if (d > PAN_DRAG_THRESHOLD) {
       isPanning.value = true
       hasPanned.value = true
-      ui.clearSearchedStarId()
-      ui.hoveredStar = null
-      ui.setHoveredSignal(null)
-      ui.setHoveredConstellation(null)
+      observatoireStore.clearSearchedStarId()
+      observatoireStore.hoveredStar = null
+      observatoireStore.setHoveredSignal(null)
+      observatoireStore.setHoveredConstellation(null)
       return handleMouseMove(e, starList, canvas)
     }
   }
   const { x: mx, y: my } = screenToCanvas(e, canvas)
   const w = canvas.width
   const h = canvas.height
-  ui.setReticulePosition(e.clientX, e.clientY)
-  ui.setReticuleVisible(true)
+  observatoireStore.setReticulePosition(e.clientX, e.clientY)
+  observatoireStore.setReticuleVisible(true)
 
   let closestStar = null
   let minStarDist = 18
@@ -284,16 +284,16 @@ function handleMouseMove(e, starList, canvas) {
   })
 
   if (closestSignal && (!closestStar || minSignalDist < minStarDist)) {
-    ui.hoveredStar = null
-    ui.setHoveredConstellation(null)
-    ui.setHoveredSignal(closestSignal)
+    observatoireStore.hoveredStar = null
+    observatoireStore.setHoveredConstellation(null)
+    observatoireStore.setHoveredSignal(closestSignal)
   } else if (closestStar) {
-    ui.setHoveredSignal(null)
-    ui.setHoveredConstellation(null)
-    ui.hoveredStar = closestStar
+    observatoireStore.setHoveredSignal(null)
+    observatoireStore.setHoveredConstellation(null)
+    observatoireStore.hoveredStar = closestStar
   } else {
-    ui.setHoveredSignal(null)
-    ui.hoveredStar = null
+    observatoireStore.setHoveredSignal(null)
+    observatoireStore.hoveredStar = null
     let closestLine = null
     let minLineDist = CONSTELLATION_HOVER_THRESHOLD
     if (constellationsEnabled.value && stellarSystemsStore.constellationLines.length) {
@@ -317,9 +317,9 @@ function handleMouseMove(e, starList, canvas) {
     if (closestLine) {
       const c = closestLine.constellations
       const name = c?.name_fr || c?.name_latin || closestLine.constellation_abbr || ''
-      ui.setHoveredConstellation({ abbr: closestLine.constellation_abbr, name })
+      observatoireStore.setHoveredConstellation({ abbr: closestLine.constellation_abbr, name })
     } else {
-      ui.setHoveredConstellation(null)
+      observatoireStore.setHoveredConstellation(null)
     }
   }
 }
@@ -327,10 +327,10 @@ function handleMouseMove(e, starList, canvas) {
 function handleMouseLeave() {
   mouseDown.value = false
   isPanning.value = false
-  ui.hoveredStar = null
-  ui.setHoveredSignal(null)
-  ui.setHoveredConstellation(null)
-  ui.setReticuleVisible(false)
+  observatoireStore.hoveredStar = null
+  observatoireStore.setHoveredSignal(null)
+  observatoireStore.setHoveredConstellation(null)
+  observatoireStore.setReticuleVisible(false)
 }
 
 function handleMouseDown(e) {
@@ -353,7 +353,7 @@ function handleKeyDown(e, canvas) {
   const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
   if (!keys.includes(e.key)) return
   e.preventDefault()
-  const tv = ui.targetViewDirection?.value ?? ui.targetViewDirection
+  const tv = observatoireStore.targetViewDirection?.value ?? observatoireStore.targetViewDirection
   const step = 8
   let dra = 0
   let ddec = 0
@@ -361,7 +361,7 @@ function handleKeyDown(e, canvas) {
   if (e.key === 'ArrowRight') dra = step
   if (e.key === 'ArrowUp') ddec = step
   if (e.key === 'ArrowDown') ddec = -step
-  ui.setTargetViewDirectionValue({
+  observatoireStore.setTargetViewDirectionValue({
     ra: (tv.ra + dra + 360) % 360,
     dec: Math.max(-89, Math.min(89, tv.dec + ddec)),
   })
@@ -369,31 +369,31 @@ function handleKeyDown(e, canvas) {
 
 function handleClick() {
   if (hasPanned.value) return
-  if (ui.hoveredSignal) {
-    ui.selectSignal(ui.hoveredSignal)
+  if (observatoireStore.hoveredSignal) {
+    observatoireStore.selectSignal(observatoireStore.hoveredSignal)
     return
   }
-  const s = ui.hoveredStar
+  const s = observatoireStore.hoveredStar
   if (s) {
-    ui.selectStar(s)
+    observatoireStore.selectStar(s)
     selectStarForFocus(s)
-    ui.setTargetViewDirectionValue({ ra: s.ra, dec: s.dec })
+    observatoireStore.setTargetViewDirectionValue({ ra: s.ra, dec: s.dec })
   } else {
-    ui.selectStar(null)
+    observatoireStore.selectStar(null)
     selectStarForFocus(null)
   }
 }
 
 function handleDblClick() {
   if (hasPanned.value) return
-  if (ui.hoveredSignal) {
-    ui.selectSignal(ui.hoveredSignal)
+  if (observatoireStore.hoveredSignal) {
+    observatoireStore.selectSignal(observatoireStore.hoveredSignal)
     return
   }
-  const s = ui.hoveredStar
+  const s = observatoireStore.hoveredStar
   if (s) {
-    ui.selectStar(s)
-    ui.openObservatoire()
+    observatoireStore.selectStar(s)
+    observatoireStore.openObservatoire()
   }
 }
 
@@ -421,7 +421,7 @@ onMounted(async () => {
   rebuildStars()
 
   // Vue initiale : centrer sur Proxima quand à SOL (ra 180, dec 0 met Proxima hors FOV ~69°)
-  const vd = ui.viewDirection?.value ?? ui.viewDirection
+  const vd = observatoireStore.viewDirection?.value ?? observatoireStore.viewDirection
   if (
     shipStore.currentSystemId === 'SOL' &&
     Math.abs((vd?.ra ?? 180) - 180) < 0.5 &&
@@ -429,8 +429,8 @@ onMounted(async () => {
   ) {
     const PROXIMA_RA = 217.5
     const PROXIMA_DEC = -62.7
-    ui.setViewDirectionValue({ ra: PROXIMA_RA, dec: PROXIMA_DEC })
-    ui.setTargetViewDirectionValue({ ra: PROXIMA_RA, dec: PROXIMA_DEC })
+    observatoireStore.setViewDirectionValue({ ra: PROXIMA_RA, dec: PROXIMA_DEC })
+    observatoireStore.setTargetViewDirectionValue({ ra: PROXIMA_RA, dec: PROXIMA_DEC })
   }
 
   draw(canvasEl, stars)

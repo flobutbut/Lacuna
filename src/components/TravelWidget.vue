@@ -1,6 +1,8 @@
 <script setup>
 import { computed, watch, onMounted } from 'vue'
-import { useUIStore } from '@/stores/ui'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useTransitStore } from '@/stores/transit'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { useShipStore } from '@/stores/ship'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
@@ -11,14 +13,16 @@ import AppModal from '@/components/AppModal.vue'
 import Divider from '@/components/Divider.vue'
 import ModalCell from '@/components/ModalCell.vue'
 
-const ui = useUIStore()
+const notificationsStore = useNotificationsStore()
+const transitStore = useTransitStore()
+const observatoireStore = useObservatoireStore()
 const shipStore = useShipStore()
 const stellarStore = useStellarSystemsStore()
 const systemObjectsStore = useSystemObjectsStore()
 const mapStore = useMapNodesStore()
 
 watch(
-  () => ui.selectedStar?.id,
+  () => observatoireStore.selectedStar?.id,
   async (id) => {
     if (id) {
       await systemObjectsStore.fetchForSystem(id)
@@ -32,22 +36,22 @@ onMounted(async () => {
   await ensureStoresLoaded(shipStore, stellarStore)
 })
 
-const isOnMap = computed(() => ui.selectedStar ? mapStore.isOnMap(ui.selectedStar.id) : false)
+const isOnMap = computed(() => observatoireStore.selectedStar ? mapStore.isOnMap(observatoireStore.selectedStar.id) : false)
 
 async function addToCarte() {
-  const star = ui.selectedStar
+  const star = observatoireStore.selectedStar
   if (!star) return
-  ui.setCarteHasNew(true)
+  notificationsStore.setCarteHasNew(true)
   const node = await mapStore.addNode(star.id, star.name ?? star.id)
   if (node) {
-    ui.showNotification(`Système ${star.name} ajouté à la carte`)
+    notificationsStore.showNotification(`Système ${star.name} ajouté à la carte`)
   } else {
-    ui.showNotification('Impossible d\'ajouter à la carte — vérifiez la migration 00022', 5000)
+    notificationsStore.showNotification('Impossible d\'ajouter à la carte — vérifiez la migration 00022', 5000)
   }
 }
 
 const exoplanetLabel = computed(() => {
-  const id = ui.selectedStar?.id
+  const id = observatoireStore.selectedStar?.id
   if (!id) return '—'
   const objects = systemObjectsStore.getForSystem(id)
   const hasLoaded = systemObjectsStore.bySystem[id]
@@ -58,25 +62,25 @@ const exoplanetLabel = computed(() => {
 })
 
 const transit = computed(() => {
-  if (!ui.selectedStar?.dist) return null
-  return computeTransit(ui.selectedStar.dist)
+  if (!observatoireStore.selectedStar?.dist) return null
+  return computeTransit(observatoireStore.selectedStar.dist)
 })
 
 function analyser() {
-  ui.openObservatoire()
+  observatoireStore.openObservatoire()
 }
 
 async function fixerCap() {
-  if (!ui.selectedStar) return
+  if (!observatoireStore.selectedStar) return
   if (shipStore.isInTransit) {
-    ui.showNotification('Transit déjà en cours — attendez l’arrivée avant de fixer un nouveau cap', 4000)
+    notificationsStore.showNotification('Transit déjà en cours — attendez l’arrivée avant de fixer un nouveau cap', 4000)
     return
   }
   if (!shipStore.ship) {
-    ui.showNotification('Vaisseau non chargé — réessayez dans une seconde', 4000)
+    notificationsStore.showNotification('Vaisseau non chargé — réessayez dans une seconde', 4000)
     return
   }
-  const star = ui.selectedStar
+  const star = observatoireStore.selectedStar
   // S'assurer que la destination existe côté DB (résolution dynamique si besoin)
   let targetSystem = stellarStore.list.find((s) => s.id === star.id)
   if (!targetSystem) {
@@ -93,12 +97,12 @@ async function fixerCap() {
     }
   }
   if (!targetSystem) {
-    ui.showNotification('Impossible de fixer un cap vers ce système (aucune entrée trouvée dans le catalogue ARCA).', 5000)
+    notificationsStore.showNotification('Impossible de fixer un cap vers ce système (aucune entrée trouvée dans le catalogue ARCA).', 5000)
     return
   }
   const meta = star.dist ? computeTransit(star.dist) : null
   // Ouvrir la vue de confirmation (ne pas lancer le transit ici)
-  ui.setPendingDeparture({
+  transitStore.setPendingDeparture({
     id: star.id,
     name: star.name ?? star.id,
     dist: star.dist,
@@ -106,34 +110,34 @@ async function fixerCap() {
     spectral_type: targetSystem?.spectral_type ?? star.spectral ?? null,
     transitMeta: meta ?? undefined,
   })
-  ui.setSearchedStarId(star.id)
-  ui.openDepartureConfirmation()
-  ui.selectStar(null)
+  observatoireStore.setSearchedStarId(star.id)
+  transitStore.openDepartureConfirmation()
+  observatoireStore.selectStar(null)
 }
 
 function close() {
-  ui.selectStar(null)
+  observatoireStore.selectStar(null)
 }
 </script>
 
 <template>
   <AppModal
-    v-if="ui.selectedStar && !ui.observatoireOpen"
+    v-if="observatoireStore.selectedStar && !observatoireStore.observatoireOpen"
     @close="close"
   >
     <template #header>
-      <h2 class="app-modal__title">{{ ui.selectedStar?.name }}</h2>
+      <h2 class="app-modal__title">{{ observatoireStore.selectedStar?.name }}</h2>
     </template>
     <div class="travel-widget__content">
-      <div v-if="ui.selectedStar?.isAnomaly" class="travel-widget__badge">Anomalie détectée</div>
+      <div v-if="observatoireStore.selectedStar?.isAnomaly" class="travel-widget__badge">Anomalie détectée</div>
       <div class="travel-widget__grid">
         <div class="sw-cell">
           <div class="travel-widget__key sw-key">DISTANCE</div>
-          <div class="travel-widget__val sw-val">{{ ui.selectedStar?.dist }} al</div>
+          <div class="travel-widget__val sw-val">{{ observatoireStore.selectedStar?.dist }} al</div>
         </div>
         <div class="sw-cell">
           <div class="travel-widget__key sw-key">TYPE</div>
-          <div class="travel-widget__val sw-val">{{ ui.selectedStar?.spectral }}</div>
+          <div class="travel-widget__val sw-val">{{ observatoireStore.selectedStar?.spectral }}</div>
         </div>
         <div class="sw-cell">
           <div class="travel-widget__key sw-key">EXOPLANÈTES</div>
@@ -179,11 +183,11 @@ function close() {
       <Divider variant="dashed" />
       <div class="travel-widget__footer sw-row">
         <span class="sw-key">Âge de la lumière d'observation</span>
-        <span class="sw-val">{{ ui.selectedStar?.dist }} ans</span>
+        <span class="sw-val">{{ observatoireStore.selectedStar?.dist }} ans</span>
       </div>
       <div class="travel-widget__footer sw-row">
         <span class="sw-key">Probabilité d'anomalie</span>
-        <span class="sw-val">{{ ui.selectedStar?.isAnomaly ? '61%' : '12%' }}</span>
+        <span class="sw-val">{{ observatoireStore.selectedStar?.isAnomaly ? '61%' : '12%' }}</span>
       </div>
     </div>
     <template #footer>
