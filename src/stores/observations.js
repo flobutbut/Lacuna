@@ -1,12 +1,12 @@
 /**
  * Store Observations — file d'observations Laboratoire
- * Persisté en base (observations) quand Supabase configuré, sinon mémoire uniquement
+ * Persisté en base (observations, filtrées par vaisseau du joueur : ship_id) quand Supabase configuré, sinon mémoire uniquement
  */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
-import { getOrCreateSessionId } from '@/lib/session'
+import { useShipStore } from '@/stores/ship'
 import { formatSignalObservationName } from '@/lib/formatUtils'
 
 const OBS_STATES = { PENDING: 'En attente', RUNNING: 'Analyse en cours', DONE: 'Analysé' }
@@ -34,10 +34,10 @@ function dbToObs(row) {
   }
 }
 
-function obsToDb(obs, sessionId) {
+function obsToDb(obs, shipId) {
   const niveauKey = Object.keys(NIVEAUX).find((k) => NIVEAUX[k] === obs.niveau) || 'PASSIF'
   return {
-    session_id: sessionId,
+    ship_id: shipId,
     type: obs.type,
     system_id: obs.system_id || null,
     system_display: obs.system ?? null,
@@ -80,12 +80,16 @@ export const useObservationsStore = defineStore('observations', () => {
       }
       return list.value
     }
-    const sessionId = getOrCreateSessionId()
-    const { data, error } = await supabase
-      .from('observations')
-      .select(OBSERVATIONS_SELECT_COLUMNS)
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: false })
+    const shipStore = useShipStore()
+    if (!shipStore.loaded) await shipStore.fetch()
+    const shipId = shipStore.ship?.id
+    const { data, error } = shipId
+      ? await supabase
+        .from('observations')
+        .select(OBSERVATIONS_SELECT_COLUMNS)
+        .eq('ship_id', shipId)
+        .order('created_at', { ascending: false })
+      : { data: [], error: null }
     if (error) {
       console.warn('[observations] Erreur fetch:', error.message)
       list.value = [...FALLBACK_LIST]
@@ -156,12 +160,16 @@ export const useObservationsStore = defineStore('observations', () => {
       return id
     }
 
-    const sessionId = getOrCreateSessionId()
-    const { data, error } = await supabase
-      .from('observations')
-      .insert(obsToDb(payload, sessionId))
-      .select(OBSERVATIONS_SELECT_COLUMNS)
-      .single()
+    const shipStore = useShipStore()
+    if (!shipStore.loaded) await shipStore.fetch()
+    const shipId = shipStore.ship?.id
+    const { data, error } = shipId
+      ? await supabase
+        .from('observations')
+        .insert(obsToDb(payload, shipId))
+        .select(OBSERVATIONS_SELECT_COLUMNS)
+        .single()
+      : { data: null, error: { message: 'Aucun vaisseau' } }
 
     if (error) {
       console.warn('[observations] Erreur insert:', error.message)

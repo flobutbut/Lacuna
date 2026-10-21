@@ -1,6 +1,7 @@
 /**
  * Store Signaux — signaux captés par le récepteur (panel gauche Observatoire)
- * Branché sur table signals (fetch + INSERT). Fallback mémoire si Supabase non configuré.
+ * Branché sur table signals, filtrée par vaisseau du joueur (ship_id). Fallback mémoire si Supabase non configuré.
+ * Les signaux de démo d'un nouveau joueur sont copiés par start_new_game.
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -8,7 +9,6 @@ import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 import { useShipStore } from '@/stores/ship'
 import { useRadarStore } from '@/stores/radar'
-import { getOrCreateSessionId } from '@/lib/session'
 import { formatFrequency, parseFrequency } from '@/lib/formatUtils'
 
 const LIFETIME_MS = 2 * 60 * 60 * 1000 // 2h temps joueur par défaut
@@ -54,7 +54,7 @@ function dbToSignal(row) {
   }
 }
 
-function signalToDb(payload, sessionId, shipId) {
+function signalToDb(payload, shipId) {
   const att = {
     azimuth: payload.azimuth ?? 0,
     elevation: payload.elevation ?? 0,
@@ -68,8 +68,7 @@ function signalToDb(payload, sessionId, shipId) {
     source_type: 'UNKNOWN',
     source_object_id: null,
     source_event_id: null,
-    session_id: sessionId,
-    ship_id: shipId ?? null,
+    ship_id: shipId,
     frequency_hz: parseFrequency(payload.frequency),
     support: payload.support ?? 'EM_RADIO',
     duration_sec: payload.durationSec ?? 72,
@@ -103,8 +102,6 @@ export const useSignauxStore = defineStore('signaux', () => {
   const list = ref([])
   const loaded = ref(false)
 
-  const sessionId = computed(() => getOrCreateSessionId())
-
   const listWithRemaining = computed(() => {
     const now = Date.now()
     const mapped = list.value.map((s) => {
@@ -134,34 +131,6 @@ export const useSignauxStore = defineStore('signaux', () => {
     )
   )
 
-  async function cloneSeedDemoSignals(sessionId, shipId) {
-    const { data: demo } = await supabase
-      .from('signals')
-      .select('*')
-      .eq('session_id', 'seed-demo')
-      .order('support', { ascending: false })
-      .limit(10)
-    if (!demo?.length) return []
-    const cloned = []
-    for (const row of demo) {
-      const copy = {
-        source_type: row.source_type,
-        source_object_id: row.source_object_id,
-        source_event_id: row.source_event_id,
-        session_id: sessionId,
-        ship_id: shipId,
-        frequency_hz: row.frequency_hz,
-        support: row.support,
-        duration_sec: row.duration_sec,
-        attributes: row.attributes ?? {},
-      }
-      const { data, error } = await supabase.from('signals').insert(copy).select('id, frequency_hz, support, duration_sec, captured_at, attributes').single()
-      if (error) console.warn('[signaux] Erreur clone démo:', error.message)
-      else if (data) cloned.push(dbToSignal(data))
-    }
-    return cloned
-  }
-
   async function fetch() {
     const supabaseStore = useSupabaseStore()
     const shipStore = useShipStore()
@@ -172,21 +141,23 @@ export const useSignauxStore = defineStore('signaux', () => {
       loaded.value = true
       return list.value
     }
-    const sessionId = getOrCreateSessionId()
+    if (!shipStore.loaded) await shipStore.fetch()
+    const shipId = shipStore.ship?.id
+    if (!shipId) {
+      list.value = []
+      loaded.value = true
+      return list.value
+    }
     const { data, error } = await supabase
       .from('signals')
       .select('id, source_type, source_object_id, source_event_id, source_system_id, frequency_hz, support, duration_sec, captured_at, attributes')
-      .eq('session_id', sessionId)
+      .eq('ship_id', shipId)
       .order('captured_at', { ascending: false })
     if (error) {
       console.warn('[signaux] Erreur fetch:', error.message)
       if (list.value.length === 0) list.value = FALLBACK_LIST.map((p) => createSignal(p))
     } else {
       list.value = (data ?? []).map(dbToSignal)
-      if (list.value.length === 0) {
-        const cloned = await cloneSeedDemoSignals(sessionId, shipStore.ship?.id ?? null)
-        if (cloned.length) list.value = cloned
-      }
     }
     loaded.value = true
     return list.value
@@ -199,10 +170,14 @@ export const useSignauxStore = defineStore('signaux', () => {
       list.value.push(signal)
       return signal.id
     }
-    const sessionId = getOrCreateSessionId()
     const shipStore = useShipStore()
-    const shipId = shipStore.ship?.id ?? null
-    const row = signalToDb(payload, sessionId, shipId)
+    const shipId = shipStore.ship?.id
+    if (!shipId) {
+      const signal = createSignal(payload)
+      list.value.push(signal)
+      return signal.id
+    }
+    const row = signalToDb(payload, shipId)
     const { data, error } = await supabase.from('signals').insert(row).select('id, frequency_hz, support, duration_sec, captured_at, attributes').single()
     if (error) {
       console.warn('[signaux] Erreur insert:', error.message)
@@ -240,8 +215,8 @@ export const useSignauxStore = defineStore('signaux', () => {
     if (!supabaseStore.isConfigured()) return []
     const shipStore = useShipStore()
     const systemId = shipStore.currentSystemId || 'SOL'
-    const sessionId = getOrCreateSessionId()
-    const shipId = shipStore.ship?.id ?? null
+    const shipId = shipStore.ship?.id
+    if (!shipId) return []
     const { data: objects, error: objErr } = await supabase
       .from('system_objects')
       .select('id, name, system_id, emission_support, emission_frequency_hz')
@@ -251,7 +226,7 @@ export const useSignauxStore = defineStore('signaux', () => {
     const { data: existing } = await supabase
       .from('signals')
       .select('source_object_id')
-      .eq('session_id', sessionId)
+      .eq('ship_id', shipId)
       .eq('source_type', 'OBJECT')
     const existingIds = new Set((existing ?? []).map((r) => r.source_object_id).filter(Boolean))
     const { data: sys } = await supabase
@@ -272,7 +247,6 @@ export const useSignauxStore = defineStore('signaux', () => {
         source_type: 'OBJECT',
         source_object_id: obj.id,
         source_event_id: null,
-        session_id: sessionId,
         ship_id: shipId,
         frequency_hz: freqHzStored,
         support: obj.emission_support ?? 'EM_RADIO',
@@ -295,12 +269,8 @@ export const useSignauxStore = defineStore('signaux', () => {
   async function computePulsarSignals(band = 'L') {
     const shipStore = useShipStore()
     const shipId = shipStore.ship?.id
-    if (!shipId || !sessionId.value) return
-    const { data, error } = await supabase.rpc('compute_pulsar_signals', {
-      p_ship_id: shipId,
-      p_band: band,
-      p_session_id: sessionId.value,
-    })
+    if (!shipId) return
+    const { data, error } = await supabase.rpc('compute_pulsar_signals', { p_ship_id: shipId, p_band: band })
     if (error) {
       console.warn('[signaux] compute_pulsar_signals:', error.message)
       return
@@ -316,7 +286,6 @@ export const useSignauxStore = defineStore('signaux', () => {
     listWithRemaining,
     activePulsarSignals,
     loaded,
-    sessionId,
     fetch,
     addSignal,
     removeSignal,

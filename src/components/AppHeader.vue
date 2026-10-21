@@ -4,16 +4,13 @@ import { storeToRefs } from 'pinia'
 import { useShipStore } from '@/stores/ship'
 import { useDrakeStore } from '@/stores/drake'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
-import { useNotificationsStore } from '@/stores/notifications'
 import { useRadarStore } from '@/stores/radar'
 import { useAuthStore } from '@/stores/auth'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
-import { resetPrototypeSession } from '@/lib/session'
 
 const shipStore = useShipStore()
 const drakeStore = useDrakeStore()
 const stellarStore = useStellarSystemsStore()
-const notificationsStore = useNotificationsStore()
 const radarStore = useRadarStore()
 const authStore = useAuthStore()
 const { radarEnabled } = storeToRefs(radarStore)
@@ -21,12 +18,6 @@ const { radarEnabled } = storeToRefs(radarStore)
 // App.vue recharge la page sur /connexion dès que la session disparaît
 function logout() {
   authStore.signOut()
-}
-
-function resetProto() {
-  resetPrototypeSession()
-  notificationsStore.showNotification('Session prototype réinitialisée — rechargement…', 500)
-  setTimeout(() => window.location.reload(), 400)
 }
 
 const currentSystemName = computed(() => {
@@ -53,8 +44,7 @@ onMounted(async () => {
     <RouterLink
       to="/"
       class="header__logo"
-      title="Accueil — Double-clic : réinitialiser la session prototype"
-      @dblclick.prevent="resetProto"
+      title="Accueil"
     >LAC<span class="header__logo-accent">U</span>NA</RouterLink>
 
     <div class="header__center">

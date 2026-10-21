@@ -6,6 +6,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
+import { useShipStore } from '@/stores/ship'
 
 const OBS_TYPE_TO_TRACE_TYPE = {
   SIGNAL: 'SIGNAL_RADIO',
@@ -100,7 +101,10 @@ export const useTracesStore = defineStore('traces', () => {
     return data || []
   }
 
-  /** Ajoute une interprétation (HYPOTHÈSE) ; lève une erreur si l'insertion échoue */
+  /**
+   * Ajoute une interprétation (HYPOTHÈSE) ; lève une erreur si l'insertion échoue.
+   * ship_id identifie l'auteur pour les règles d'accès (jamais affiché) ; la génération date l'interprétation.
+   */
   async function addInterpretation(traceId, text) {
     if (isLocalTrace(traceId)) {
       const interp = { id: 'local-' + Date.now(), text, confidence: 'HYPOTHÈSE', generation: null, galactic_date: null, created_at: new Date().toISOString() }
@@ -108,10 +112,13 @@ export const useTracesStore = defineStore('traces', () => {
       localInterpretations.value = { ...localInterpretations.value, [traceId]: [...list, interp] }
       return interp
     }
+    const shipStore = useShipStore()
+    if (!shipStore.loaded) await shipStore.fetch()
+    const ship = shipStore.ship
     const { data, error } = await supabase
       .from('interpretations')
-      .insert({ trace_id: traceId, text, confidence: 'HYPOTHÈSE', ship_id: null, generation: null })
-      .select()
+      .insert({ trace_id: traceId, text, confidence: 'HYPOTHÈSE', ship_id: ship?.id ?? null, generation: ship?.generation ?? null })
+      .select(INTERPRETATION_COLUMNS)
       .single()
     if (error) throw error
     return data

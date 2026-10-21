@@ -254,9 +254,20 @@ export const useShipStore = defineStore('ship', () => {
     return travels.value
   }
 
-  async function fetch() {
+  let fetchPromise = null
+
+  /** Charge le vaisseau du joueur ; les appels simultanés partagent le même chargement */
+  function fetch() {
+    if (!fetchPromise) fetchPromise = loadShip().finally(() => { fetchPromise = null })
+    return fetchPromise
+  }
+
+  async function loadShip() {
     const supabaseStore = useSupabaseStore()
-    const userId = useAuthStore().user?.id
+    // Le header peut demander le vaisseau avant que la garde du routeur ait chargé la session
+    const authStore = useAuthStore()
+    await authStore.init()
+    const userId = authStore.user?.id
     if (!supabaseStore.isConfigured() || !userId) {
       loaded.value = true
       return null
