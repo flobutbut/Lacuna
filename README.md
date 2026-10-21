@@ -8,7 +8,7 @@ Simulation d'exploration galactique persistante et asynchrone — Vue 3 + Vite +
 2. Copier `.env.example` vers `.env`
 3. Récupérer l'URL et la clé anon dans **Settings > API**
 4. Appliquer le schéma SQL dans **SQL Editor** (dashboard Supabase) :
-   - Exécuter **toutes** les migrations de `supabase/migrations/`, dans l'ordre des noms de fichiers (`00001_…` à `00039_…`)
+   - Exécuter **toutes** les migrations de `supabase/migrations/`, dans l'ordre des noms de fichiers (de `00001_…` à la dernière)
    - Attention : `00012_*` et `00013_*` existent en double ; les appliquer dans l'ordre alphabétique (`00012_observations_structure` avant `00012_sol_system_objects_enrich`, `00013_composition_rings_satellites` avant `00013_lab_reports`)
    - Exécuter `supabase/seed.sql` pour les traces immuables (WOW, Oumuamua, Bennu)
    - Optionnel : `supabase/seed_extended_systems.sql` (~100 systèmes, régénérable avec `npm run seed:generate`)
