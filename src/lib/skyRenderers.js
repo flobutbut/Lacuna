@@ -10,7 +10,7 @@ import { HIGHLIGHT_CYAN_RGBA, HIGHLIGHT_CYAN_RGBA_SOFT, HIGHLIGHT_VISITED_RGBA }
 const TRANSITION_SPEED = 0.032 // ~0.5s à 60fps
 
 /** Voie lactée — gradient elliptique flou (désactivé en ciel profond) */
-export function drawMilkyWay(ctx, w, h) {
+export function drawMilkyWay(_ctx, _w, _h) {
   /* Flare désactivé — no-op */
 }
 

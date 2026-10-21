@@ -33,6 +33,15 @@
   --color-violet-dim:      rgba(168, 85, 247, 0.5);
   --color-signal:          #a855f7;
 
+  /* ── Voiles sombres (fonds de cartes, overlays, ombres) ── */
+  --color-shade-15:        rgba(0, 0, 0, 0.15);
+  --color-shade-20:        rgba(0, 0, 0, 0.2);
+  --color-shade-25:        rgba(0, 0, 0, 0.25);
+  --color-shade-30:        rgba(0, 0, 0, 0.3);
+  --color-shade-40:        rgba(0, 0, 0, 0.4);
+  --color-shade-60:        rgba(0, 0, 0, 0.6);
+  --color-shade-90:        rgba(0, 0, 0, 0.9);
+
   /* ── Couleurs de texte ── */
   --color-white:           #e2eaef;
   --color-muted:           #7d92a3;

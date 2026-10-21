@@ -8,6 +8,7 @@ import { storeToRefs } from 'pinia'
 import { useUIStore } from '@/stores/ui'
 import { useSignauxStore } from '@/stores/signaux'
 import { computeSpectrogramColumn, SAMPLE_RATE } from '@/lib/spectrogramData'
+import { getCssVar } from '@/lib/cssVars'
 import * as d3 from 'd3'
 
 const emit = defineEmits(['signal-selected'])
@@ -18,7 +19,6 @@ const {
   tickCount,
   getBufferSnapshot,
   getBufferSnapshotAt,
-  spectrogramSpec,
   WINDOW_SIZE,
   HISTORY_SIZE,
 } = radarSpectrogram
@@ -28,7 +28,6 @@ const signauxStore = useSignauxStore()
 const {
   radarPaused,
   radarSelectionMode,
-  radarFrequencyBand,
   radarTimeScale,
   radarIntensityThreshold,
   radarFreqLow,
@@ -58,7 +57,6 @@ let selectionEndCol = null
 let selectionStartBin = null
 let selectionEndBin = null
 let isDragging = false
-let dragStartCol = null
 let dragStartBin = null
 
 let cursorX = null
@@ -71,7 +69,6 @@ const canvasWidth = ref(800)
 const showLiveButton = ref(false)
 let currentScrollOffset = 0
 let targetScrollOffset = 0
-let isLive = true
 const EASE_FACTOR = 0.10
 const LIVE_THRESHOLD = 1
 
@@ -132,10 +129,6 @@ function initCanvases() {
 }
 
 const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 1])
-
-function getCssVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#0a0a0a'
-}
 
 function prefillColumnBuffer() {
   const total = radarSpectrogram.totalSamplesWritten()
@@ -405,7 +398,6 @@ function drawAxes(specCanvas, intCanvas) {
   const specCtx = specCanvas.getContext('2d')
   const intCtx = intCanvas.getContext('2d')
   const specH = specCanvas.height
-  const intH = intCanvas.height
   const specInnerH = specH - margin.top - margin.bottom
   const muted = getCssVar('--color-muted')
 
@@ -452,7 +444,8 @@ function drawSelection(specCanvas, intCanvas) {
   const specCtx = specCanvas.getContext('2d')
   const intCtx = intCanvas.getContext('2d')
   const cyan = getCssVar('--color-cyan')
-  specCtx.fillStyle = 'rgba(0, 200, 255, 0.2)'
+  const selectionFill = getCssVar('--color-cyan-active')
+  specCtx.fillStyle = selectionFill
   specCtx.strokeStyle = cyan
   specCtx.lineWidth = 1
   if (selectionStartBin != null && selectionEndBin != null) {
@@ -468,7 +461,7 @@ function drawSelection(specCanvas, intCanvas) {
     specCtx.fillRect(leftPx, margin.top, rightPx - leftPx, specCanvas.height - margin.top - margin.bottom)
     specCtx.strokeRect(leftPx, margin.top, rightPx - leftPx, specCanvas.height - margin.top - margin.bottom)
   }
-  intCtx.fillStyle = 'rgba(0, 200, 255, 0.2)'
+  intCtx.fillStyle = selectionFill
   intCtx.strokeStyle = cyan
   intCtx.lineWidth = 1
   intCtx.fillRect(leftPx, margin.top, rightPx - leftPx, intCanvas.height - margin.top - margin.bottom)
@@ -572,7 +565,6 @@ function onPointerDown(e, chart, py) {
     return
   }
   isDragging = true
-  dragStartCol = col
   // Période : sélection temps uniquement (toute la hauteur). Zone : col×bin sur le spectrogramme.
   if (radarSelectionMode.value === 'period') {
     dragStartBin = null
@@ -648,11 +640,9 @@ function renderLoop() {
     if (Math.abs(diff) < LIVE_THRESHOLD) {
       currentScrollOffset = 0
       targetScrollOffset = 0
-      isLive = true
       showLiveButton.value = false
     } else {
       currentScrollOffset += diff * EASE_FACTOR
-      isLive = false
       showLiveButton.value = true
     }
   } else {

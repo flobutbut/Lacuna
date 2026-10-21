@@ -10,8 +10,8 @@
     z-index: var(--z-vignette);
     background: radial-gradient(ellipse at center,
             transparent 40%,
-            rgba(3, 6, 13, 0.5) 70%,
-            rgba(3, 6, 13, 0.95) 100%);
+            color-mix(in srgb, var(--color-bg) 50%, transparent) 70%,
+            color-mix(in srgb, var(--color-bg) 95%, transparent) 100%);
     pointer-events: none;
 }
 

@@ -4,19 +4,11 @@
  * Réf. LACUNA_LABORATOIRE_INSTRUMENTS.md §5
  */
 import { seedFromObsId } from './spectrogramData'
+import { seededRandom } from './random'
 
 const NB_BINS = 64
 const E_MIN_KEV = 10
 const E_MAX_KEV = 2000
-
-function seededRandom(seed) {
-  return function () {
-    let t = (seed += 0x6d2b79f5)
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
 
 /**
  * Détecte si la structure est un sursaut (burst/GRB).
@@ -52,7 +44,7 @@ export function generateSpectreEnergetiqueData(opts = {}) {
     const eMin = E_MIN_KEV + i * dE
     const eMax = eMin + dE
     const eCenter = (eMin + eMax) / 2
-    let count = 0
+    let count
 
     if (anomalous) {
       const peak1 = 80 + (seed % 5) * 40

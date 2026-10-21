@@ -134,7 +134,7 @@ function onDismiss(e) {
 
 .app-card__dismiss:hover {
   color: var(--color-white);
-  background: rgba(200, 64, 64, 0.2);
+  background: color-mix(in srgb, var(--color-red) 20%, transparent);
 }
 
 .app-card__badge {

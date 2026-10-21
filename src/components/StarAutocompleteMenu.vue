@@ -50,9 +50,9 @@ const hasItems = computed(() => Array.isArray(props.items) && props.items.length
   top: calc(100% + var(--space-3));
   left: 0;
   right: 0;
-  background: rgba(3, 6, 13, 0.98);
+  background: color-mix(in srgb, var(--color-bg) 98%, transparent);
   border: var(--border-width) solid var(--border-default);
-  box-shadow: 0 var(--space-6) 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 var(--space-6) 30px var(--color-shade-40);
   max-height: 320px;
   overflow: auto;
   z-index: 10;
@@ -73,7 +73,7 @@ const hasItems = computed(() => Array.isArray(props.items) && props.items.length
   padding: var(--space-3) var(--space-4);
   background: transparent;
   border: none;
-  border-top: var(--border-width) solid rgba(255, 255, 255, 0.06);
+  border-top: var(--border-width) solid var(--color-ghost);
   text-align: left;
   cursor: pointer;
 }

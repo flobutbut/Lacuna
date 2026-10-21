@@ -4,15 +4,7 @@
  * Réf. LACUNA_LABORATOIRE_INSTRUMENTS.md §4.11, §5 — Terre, Mars (champ absent)
  */
 import { seedFromObsId } from './spectrogramData'
-
-function seededRandom(seed) {
-  return function () {
-    let t = (seed += 0x6d2b79f5)
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
+import { seededRandom } from './random'
 
 const GRID_SIZE = 24
 const BASE_INTENSITY = 40000 // nT — ordre de grandeur Terre (25–65 µT = 25000–65000 nT)
@@ -67,7 +59,6 @@ export function generateMagnetoData(opts = {}) {
         }
         grid.push(row)
       }
-      Bmax = Math.max(...grid.flat())
     } else {
       // Orientation atypique (dipôle fortement incliné, multipôle)
       dipoleTilt = 60 + rng() * 35
@@ -84,7 +75,6 @@ export function generateMagnetoData(opts = {}) {
         }
         grid.push(row)
       }
-      Bmax = Math.max(...grid.flat())
     }
   } else {
     // Champ dipolaire typique (pôles plus intenses)

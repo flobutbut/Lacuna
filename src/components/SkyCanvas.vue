@@ -333,7 +333,7 @@ function handleMouseLeave() {
   ui.setReticuleVisible(false)
 }
 
-function handleMouseDown(e, canvas) {
+function handleMouseDown(e) {
   if (e.button !== 0) return
   mouseDown.value = true
   isPanning.value = false
@@ -442,7 +442,7 @@ onMounted(async () => {
 
   onResize = () => handleResize(canvasEl)
   onMove = (e) => handleMouseMove(e, stars.value, canvasEl)
-  onDown = (e) => handleMouseDown(e, canvasEl)
+  onDown = (e) => handleMouseDown(e)
   onClick = handleClick
   onDblClick = handleDblClick
   onKeyDown = (e) => handleKeyDown(e, canvasEl)
@@ -575,7 +575,7 @@ onUnmounted(() => {
   letter-spacing: var(--tracking-wide);
   color: var(--color-amber);
   text-align: center;
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 0 8px var(--color-shade-90);
   transform: translateY(-40px);
   pointer-events: auto;
 }

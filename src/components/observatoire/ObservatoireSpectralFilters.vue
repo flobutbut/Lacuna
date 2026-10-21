@@ -44,8 +44,6 @@ let suggestTimeout = null
 
 const {
   searchQuery,
-  searchMatches,
-  currentMatchIndex,
   hasSearch,
   searchStar,
   clearSearch,

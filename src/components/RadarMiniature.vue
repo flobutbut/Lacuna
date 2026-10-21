@@ -8,6 +8,7 @@ import { inject, watch, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import * as d3 from 'd3'
 import { useUIStore } from '@/stores/ui'
+import { getCssVar } from '@/lib/cssVars'
 
 const radarSpectrogram = inject('radarSpectrogram', null)
 const radarColumnBuffer = inject('radarColumnBuffer', null)
@@ -29,13 +30,6 @@ const HEIGHT_CSS = 120
 const TICK_MS = 100
 
 const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 1])
-
-function getCssVar(name) {
-  return (
-    getComputedStyle(document.documentElement).getPropertyValue(name).trim() ||
-    '#0a0a0a'
-  )
-}
 
 function cssSize() {
   const wrap = wrapRef.value

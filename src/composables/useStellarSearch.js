@@ -232,7 +232,7 @@ export function useStellarSearch(options = {}) {
       ui.clearSearchedStarId()
       ui.clearSignalSearchMatchIds()
     } else {
-      options.onClearFocus?.()
+      onClearFocus?.()
     }
   }
 

@@ -4,15 +4,7 @@
  * Réf. LACUNA_LABORATOIRE_INSTRUMENTS.md §4.10, §5
  */
 import { seedFromObsId } from './spectrogramData'
-
-function seededRandom(seed) {
-  return function () {
-    let t = (seed += 0x6d2b79f5)
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
+import { seededRandom } from './random'
 
 const THERMAL_GRID_SIZE = 24
 

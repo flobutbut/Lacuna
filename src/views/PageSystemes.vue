@@ -286,7 +286,8 @@ function closeOverlay() {
           <div v-show="activeSection === 'population-quarters'" class="sys-modal-content">
             <p class="sw-desc">Efficacité des systèmes de survie (boucle fermée).</p>
             <Divider variant="solid" tight />
-            <template v-for="(ind, i) in [
+            <template
+v-for="(ind, i) in [
               { key: 'Réservoir', val: reservoir.value.toFixed(2), desc: reservoir.desc, bar: reservoir.value },
               { key: 'Alimentation', val: alimentation.value.toFixed(2), desc: alimentation.desc, bar: alimentation.value },
               { key: 'Atmosphère', val: atmosphere.value.toFixed(2), desc: atmosphere.desc, bar: atmosphere.value },

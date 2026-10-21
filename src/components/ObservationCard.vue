@@ -3,7 +3,7 @@ import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
 import ObservationTypeIcon from '@/components/icons/ObservationTypeIcon.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 
-const props = defineProps({
+defineProps({
   /** Type d'icône : 'signal' (structure) ou 'observation' (type ETOILE/PLANETE/etc.) */
   iconType: { type: String, default: 'signal' },
   /** Valeur pour l'icône : structure (sursaut, pulse…) ou type (ETOILE, PLANETE…) */
@@ -85,7 +85,7 @@ function onDismiss(e) {
   padding-right: 28px;
   margin-bottom: var(--space-2);
   border: var(--border-width) solid var(--border-default);
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--color-shade-30);
   cursor: pointer;
   transition: border-color var(--transition-base), background var(--transition-base);
 }
@@ -131,7 +131,7 @@ function onDismiss(e) {
 
 .observation-card__dismiss:hover {
   color: var(--color-white);
-  background: rgba(200, 64, 64, 0.2);
+  background: color-mix(in srgb, var(--color-red) 20%, transparent);
 }
 
 .observation-card__icon {

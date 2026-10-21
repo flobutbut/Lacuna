@@ -10,6 +10,7 @@ import { animateFocusTo, animateTargetTo } from '@/composables/useCameraFocusAni
 import { getVisibleConstellationSegments } from '@/lib/constellationSegments'
 import { loadStarSvgTextureForSpectralType } from '@/composables/useStarSvgTexture'
 import { getSpectralLetter } from '@/lib/starClassification'
+import { getCssVar } from '@/lib/cssVars'
 import { HIGHLIGHT_CYAN_HEX, STAR_SPRITE_BASE_SIZE, STAR_SPRITE_MIN_PIXELS } from '@/constants/starDisplay'
 import { buildTransitLinesMesh } from '@/composables/useTransitLines3d'
 
@@ -54,7 +55,6 @@ let transitLinesMesh = null
 let rafId = null
 let resizeObserver = null
 let raycaster = null
-let mouse = null
 let mouseDownPos = null
 let isFocusAnimating = false
 const CLICK_DRAG_THRESHOLD = 5
@@ -68,7 +68,7 @@ function initThree() {
   const height = containerRef.value.clientHeight
 
   scene = new THREE.Scene()
-  const bgHex = getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim() || '#03060d'
+  const bgHex = getCssVar('--color-bg', '#03060d')
   scene.background = new THREE.Color(bgHex)
 
   camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 10000)
@@ -90,7 +90,6 @@ function initThree() {
 
   raycaster = new THREE.Raycaster()
   raycaster.params.Points.threshold = 3
-  mouse = new THREE.Vector2()
 }
 
 /** Picking personnalisé : hitbox proportionnelle à la taille apparente de chaque étoile (espace écran). */

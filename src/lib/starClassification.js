@@ -18,7 +18,6 @@
 
 // Lettre de classe spectrale (Morgan-Keenan + L/T/Y naines brunes).
 // Conventions : PSR/PULSAR/NEUTRON/MAGNETAR en tête = pulsar ; sinon première lettre O,B,A,F,G,K,M,L,T,Y,D.
-const SPECTRAL_CLASS_LETTERS = 'OBAFGKMLTYD'
 const RE_SPECTRAL_CLASS = /([OBAFGKMLTYD])/
 
 /**
@@ -28,7 +27,8 @@ const RE_SPECTRAL_CLASS = /([OBAFGKMLTYD])/
  */
 export function getSpectralLetter(spectralType) {
   if (!spectralType || typeof spectralType !== 'string') return 'M'
-  const upper = spectralType.trim().toUpperCase()
+  // Préfixes de luminosité en minuscules (sd, esd, d…) : à retirer avant la mise en majuscules, sinon « sdT » serait lu comme « D »
+  const upper = spectralType.trim().replace(/^[a-z]+(?=[A-Z])/, '').toUpperCase()
   if (upper.startsWith('PSR') || upper.startsWith('PULSAR') || upper.startsWith('NEUTRON') || upper.startsWith('MAGNETAR')) {
     return 'PULSAR'
   }

@@ -250,7 +250,7 @@ const planetsWithSize = computed(() =>
       ...p,
       diameterPx,
       a: p.distanceAu,
-      e: Math.min(0.99, Math.max(0, Number(p.orbital_eccentricity) ?? 0)),
+      e: Math.min(0.99, Math.max(0, Number(p.orbital_eccentricity) || 0)),
     }
   })
 )

@@ -9,7 +9,7 @@
   transition: all var(--transition-base);
   position: relative;
   border: var(--border-width) solid var(--border-default);
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--color-shade-30);
   color: var(--color-muted);
   text-decoration: none;
   overflow: hidden;

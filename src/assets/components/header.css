@@ -11,7 +11,7 @@
     justify-content: space-between;
     padding: 0 var(--space-10);
     border-bottom: var(--border-width) solid var(--border-default);
-    background: linear-gradient(180deg, rgba(3, 6, 13, 0.9) 0%, transparent 100%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-bg) 90%, transparent) 0%, transparent 100%);
     pointer-events: all;
     position: relative;
     z-index: var(--z-ui);
@@ -110,7 +110,7 @@ button.header__stat-block.header__radar-toggle {
     gap: var(--space-2);
     padding: var(--space-2) var(--space-5);
     border: var(--border-width) solid var(--border-default);
-    background: rgba(3, 6, 13, 0.5);
+    background: color-mix(in srgb, var(--color-bg) 50%, transparent);
 }
 
 a.header__stat-block {
@@ -120,7 +120,7 @@ a.header__stat-block {
 
 a.header__stat-block:hover {
     border-color: var(--border-bright);
-    background: rgba(0, 180, 200, 0.04);
+    background: color-mix(in srgb, var(--color-cyan) 4%, transparent);
 }
 
 .header__stat-label {

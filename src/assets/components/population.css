@@ -20,7 +20,7 @@
 .pop-content-col {
   padding: var(--space-8) var(--space-10);
   overflow-y: auto;
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--color-shade-15);
   max-width: 800px;
 }
 

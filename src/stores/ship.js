@@ -115,7 +115,6 @@ export const useShipStore = defineStore('ship', () => {
     const supabaseStore = useSupabaseStore()
     const hasSupabase = supabaseStore.isConfigured()
 
-    const distance = parseFloat(distanceAl) || 0
     const tJoueurSec = transitMeta?.tJoueurSec ?? 0
     // Par défaut : mode test 5s pour Proxima (5 / 3600 ≈ 0.00138889)
     const baseScale = 5 / 3600
@@ -302,6 +301,7 @@ export const useShipStore = defineStore('ship', () => {
     travelArrivalAt,
     travelDestination,
     transitProgress,
+    currentTransitPhase,
     systems,
     fuel,
     dryMass,

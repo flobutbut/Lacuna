@@ -20,7 +20,7 @@
 .lab-selected-col {
   padding: var(--space-6) var(--space-8);
   overflow-y: auto;
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--color-shade-15);
 }
 
 .lab-instruments-col {
@@ -139,7 +139,7 @@
 
 .lab-raw-data {
   padding: var(--space-4);
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--color-shade-40);
   border: var(--border-width) solid var(--border-default);
   font-size: var(--text-base);
   font-family: var(--font-mono);
@@ -151,7 +151,7 @@
 .lab-report {
   padding: var(--space-4);
   border: var(--border-width) solid var(--border-default);
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--color-shade-30);
   margin-bottom: var(--space-4);
 }
 
@@ -200,10 +200,10 @@
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   color: var(--color-amber);
-  background: rgba(245, 158, 11, 0.15);
+  background: var(--color-amber-glow);
   padding: var(--space-1) var(--space-3);
   border-radius: var(--border-radius-sm);
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  border: 1px solid var(--color-amber-dim);
   flex-shrink: 0;
 }
 
@@ -443,7 +443,7 @@
   gap: var(--space-2);
   padding: var(--space-4);
   border: var(--border-width) solid var(--border-default);
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--color-shade-30);
   color: var(--color-muted);
   font-family: var(--font-mono);
   cursor: pointer;
@@ -475,7 +475,7 @@
 
 .instrument-btn--done {
   border-color: var(--color-green);
-  background: rgba(34, 197, 94, 0.1);
+  background: color-mix(in srgb, var(--color-green) 10%, transparent);
 }
 
 .instrument-btn__progress-bg {
@@ -489,7 +489,7 @@
   top: 0;
   bottom: 0;
   left: 0;
-  background: rgba(0, 180, 200, 0.2);
+  background: var(--color-cyan-hz-band);
   transition: width var(--transition-base);
 }
 

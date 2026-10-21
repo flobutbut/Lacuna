@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as d3 from 'd3'
 import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { generateOrbitalData } from '@/lib/orbitalData'
@@ -57,7 +57,6 @@ function renderDiagram() {
   const cy = margin.top + size / 2
 
   const maxA = Math.max(...data.orbits.map((o) => o.a))
-  const minA = Math.min(...data.orbits.map((o) => o.a), 0.01)
   const scaleR = d3.scaleSqrt().domain([0, maxA]).range([0, size / 2 - 12])
 
   const svg = d3.select(svgRef.value)

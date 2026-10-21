@@ -161,3 +161,16 @@
 .animate-scale-in {
     animation: scale-in 0.2s ease forwards;
 }
+
+/* ── Mouvement réduit (préférence système) ──
+   Coupe animations et transitions CSS. Les rendus canvas (ciel, radar) suivent leur propre boucle. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

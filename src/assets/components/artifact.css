@@ -62,7 +62,7 @@
 .artifacts-detail-col {
     padding: var(--space-8) var(--space-10);
     overflow-y: auto;
-    background: rgba(0, 0, 0, 0.15);
+    background: var(--color-shade-15);
     max-width: 800px;
 }
 
@@ -147,7 +147,7 @@
     min-height: 80px;
     padding: var(--space-4);
     margin-bottom: var(--space-4);
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--color-shade-40);
     border: var(--border-width) solid var(--border-default);
     color: var(--color-white);
     font-family: var(--font-mono);

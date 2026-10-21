@@ -11,15 +11,6 @@ const WINDOW_SIZE = 256
 const HISTORY_SIZE = 7200
 const BUFFER_SIZE = WINDOW_SIZE * HISTORY_SIZE
 
-function seededRandom(s) {
-  return function () {
-    let t = (s += 0x6d2b79f5)
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
 export function useRadarSpectrogram(radarPausedRef, getNoiseSample) {
   const startTimeMs = ref(0)
   const tickCount = ref(0)

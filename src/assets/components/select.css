@@ -84,7 +84,7 @@
   background: var(--color-panel-solid);
   border: var(--border-width) solid var(--border-default);
   border-radius: var(--border-radius-sm);
-  box-shadow: 0 var(--space-4) var(--space-12) rgba(0, 0, 0, 0.4);
+  box-shadow: 0 var(--space-4) var(--space-12) var(--color-shade-40);
   padding: var(--space-2);
 }
 

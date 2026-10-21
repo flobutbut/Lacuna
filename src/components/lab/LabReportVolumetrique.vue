@@ -32,11 +32,10 @@ function render() {
   })
 
   const width = Math.max(320, containerRef.value.clientWidth - 2)
-  const { grid, min, max, cutX, cutY } = volumetricData
+  const { grid, min, max, cutX } = volumetricData
 
   const colorScale = d3.scaleSequential((t) => interpolateCyanAmber(t)).domain([min, max])
 
-  const cellSize = heatmapSize / grid.length
 
   // ── Heatmap ──
   d3.select(heatmapRef.value).selectAll('*').remove()

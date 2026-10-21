@@ -55,13 +55,13 @@
 .observatoire-body__add-btn--added {
   color: var(--color-green);
   border-color: var(--color-green);
-  background: rgba(64, 168, 112, 0.12);
+  background: color-mix(in srgb, var(--color-green) 12%, transparent);
   cursor: default;
 }
 
 @keyframes observatoire-add-pulse {
   0% { transform: scale(1); }
-  50% { transform: scale(0.97); background: rgba(64, 168, 112, 0.15); }
+  50% { transform: scale(0.97); background: color-mix(in srgb, var(--color-green) 15%, transparent); }
   100% { transform: scale(1); }
 }
 

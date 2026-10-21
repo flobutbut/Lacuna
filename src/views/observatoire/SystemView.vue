@@ -480,7 +480,7 @@ onBeforeUnmount(() => {
               }"
             >
               <div
-                v-for="(p, i) in planetsWithSize"
+                v-for="p in planetsWithSize"
                 :key="p.id"
                 class="system-view__planet-orbital system-view__body-interactive"
                 :style="{ left: distanceAuToPx(p.distanceAu ?? 0) + 'px' }"

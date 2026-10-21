@@ -48,11 +48,9 @@ export function renderLineChart(svgEl, opts = {}) {
   if (!svgEl || !data?.length) return
 
   const innerWidth = width - margin.left - margin.right
-  const innerHeight = height - margin.top - margin.bottom
 
   const xMin = xDomain?.[0] ?? Math.min(...data.map(xAccessor))
   const xMax = xDomain?.[1] ?? Math.max(...data.map(xAccessor))
-  const xRange = xMax - xMin || 1
   const xScale = d3.scaleLinear().domain([xMin, xMax]).range([margin.left, width - margin.right])
 
   const yValues = data.map(yAccessor)

@@ -147,7 +147,7 @@
     width: 100%;
     font-size: var(--text-sm);
     color: var(--color-amber);
-    background: rgba(232, 160, 32, 0.15);
+    background: var(--color-amber-glow);
     padding: var(--space-3) var(--space-4);
     margin-bottom: var(--space-4);
     border: 1px solid var(--color-amber-dim);

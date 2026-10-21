@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import * as d3 from 'd3'
 import {
   generateStructureTemporelleData,
   computeAutocorrelation,

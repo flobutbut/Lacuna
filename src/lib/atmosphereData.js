@@ -4,6 +4,7 @@
  * Réf. LACUNA_LABORATOIRE_INSTRUMENTS.md §4.8, §5 — JWST, biosignatures O₂+CH₄
  */
 import { seedFromObsId } from './spectrogramData'
+import { seededRandom } from './random'
 
 const MOLECULES = [
   { formula: 'H₂O', name: 'Eau' },
@@ -16,15 +17,6 @@ const MOLECULES = [
   { formula: 'Ar', name: 'Argon' },
   { formula: 'CO', name: 'Monoxyde de carbone' },
 ]
-
-function seededRandom(seed) {
-  return function () {
-    let t = (seed += 0x6d2b79f5)
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
 
 const FORMULA_MAP = { CO2: 'CO₂', H2O: 'H₂O', N2: 'N₂', O2: 'O₂', CH4: 'CH₄', SO2: 'SO₂' }
 
@@ -67,7 +59,7 @@ export function generateAtmosphereData(opts = {}) {
     const molecules = []
     let remaining = 1
     const entries = Object.entries(parsed).sort((a, b) => b[1] - a[1])
-    entries.forEach(([formula, frac], i) => {
+    entries.forEach(([formula, frac]) => {
       const mol = MOLECULES.find((m) => m.formula === formula) || { formula, name: formula }
       let v = frac + (rng() - 0.5) * noiseLevel
       v = Math.max(0, Math.min(1, v))

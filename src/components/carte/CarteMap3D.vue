@@ -13,6 +13,7 @@ import { getCircleSpriteTexture } from '@/lib/starSpriteTexture'
 import { createHighlightSprite, updateHighlightScale, HIGHLIGHT_RING_SIZE } from '@/composables/useStarHighlight'
 import { animateFocusTo, animateTargetTo } from '@/composables/useCameraFocusAnimation'
 import { getSystemXyz } from '@/lib/stellarCoordinates'
+import { getCssVar } from '@/lib/cssVars'
 import { loadStarSvgTextureForSpectralType } from '@/composables/useStarSvgTexture'
 import { getSpectralLetter, getStarClassLabel } from '@/lib/starClassification'
 import { STAR_SPRITE_BASE_SIZE, STAR_SPRITE_MIN_PIXELS } from '@/constants/starDisplay'
@@ -81,7 +82,6 @@ const points = computed(() => {
   }))
 })
 
-const barycentre = computed(() => ({ x: 0, y: 0, z: 0 }))
 
 /** Positions par id pour les segments de transit (clés normalisées string) */
 const positionsById = computed(() => {
@@ -175,7 +175,7 @@ function buildPointsMesh() {
     const material = new THREE.PointsMaterial({
       size: STAR_SPRITE_BASE_SIZE,
       map: circleTexture,
-      color: getComputedStyle(document.documentElement).getPropertyValue('--color-white').trim() || '#e2eaef',
+      color: getCssVar('--color-white', '#e2eaef'),
       sizeAttenuation: true,
       transparent: true,
       opacity: 0.95,
@@ -217,7 +217,7 @@ function initThree() {
   const width = containerRef.value.clientWidth
   const height = containerRef.value.clientHeight
   scene = new THREE.Scene()
-  const bgHex = getComputedStyle(document.documentElement).getPropertyValue('--color-bg').trim() || '#03060d'
+  const bgHex = getCssVar('--color-bg', '#03060d')
   scene.background = new THREE.Color(bgHex)
   camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 10000)
   camera.position.set(

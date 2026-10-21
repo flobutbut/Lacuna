@@ -39,7 +39,7 @@
 .app-modal__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--color-shade-60);
   cursor: pointer;
 }
 
@@ -107,7 +107,7 @@
   display: flex;
   flex-direction: column;
   border: var(--border-width) solid var(--border-default);
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--color-shade-30);
 }
 
 .modal-cell--default {
@@ -117,7 +117,7 @@
 
 .modal-cell--compact {
   padding: var(--space-3) var(--space-5);
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--color-shade-25);
   font-size: var(--text-md);
 }
 

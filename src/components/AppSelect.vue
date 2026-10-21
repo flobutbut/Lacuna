@@ -84,7 +84,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="ds-select-wrap" ref="wrapRef">
+  <div ref="wrapRef" class="ds-select-wrap">
     <button
       type="button"
       class="ds-select"

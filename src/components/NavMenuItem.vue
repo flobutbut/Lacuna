@@ -3,7 +3,7 @@
  * NavMenuItem — Item de menu ou slot réutilisable
  * Variants: menu (Systèmes, Population), slot (Artefacts)
  */
-const props = defineProps({
+defineProps({
   /** Variant: 'menu' | 'slot' */
   variant: { type: String, default: 'menu' },
   /** Icône (caractère Unicode) */

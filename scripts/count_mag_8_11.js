@@ -13,7 +13,9 @@ try {
     const m = line.match(/^([^#=]+)=(.*)$/)
     if (m) process.env[m[1].trim()] = m[2].trim()
   })
-} catch (_) {}
+} catch {
+  // Pas de .env : on garde l'environnement courant
+}
 
 const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY

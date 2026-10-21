@@ -5,6 +5,7 @@
  * Classification MK, courbes de lumière Kepler/TESS, étoile de Tabby (KIC 8462852)
  */
 import { seedFromObsId } from './spectrogramData'
+import { seededRandom } from './random'
 
 const WAVELENGTH_MIN = 380
 const WAVELENGTH_MAX = 1000
@@ -25,15 +26,6 @@ const ABSORPTION_LINES = [
   { wl: 759.4, name: 'O2 A', depth: 0.08 },
   { wl: 769.9, name: 'K', depth: 0.1 },
 ]
-
-function seededRandom(seed) {
-  return function () {
-    let t = (seed += 0x6d2b79f5)
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
 
 /**
  * Pic spectral type → centre (nm) du continuum, largeur
@@ -119,7 +111,7 @@ export function generateLightCurveData(opts = {}) {
   const noiseLevel = Math.max(0.005, (1 - fiability / 100) * 0.03)
 
   const points = []
-  let flux = 1
+  let flux
 
   for (let i = 0; i < LIGHT_CURVE_POINTS; i++) {
     const day = (i / (LIGHT_CURVE_POINTS - 1)) * LIGHT_CURVE_DAYS

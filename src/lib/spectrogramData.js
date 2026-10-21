@@ -1,22 +1,12 @@
 /**
  * Génération de données synthétiques pour spectrogramme (Analyseur spectral)
  * Simule un signal radio : ton principal + bruit. Déterministe via seed.
- * Format attendu par spectrogram-js : Array<[timestamp_ms, amplitude]>
+ * Format : Array<[timestamp_ms, amplitude]>
  */
+import { seededRandom } from './random'
+
 export const SAMPLE_RATE = 250 // Hz
 export const DEFAULT_DURATION_SEC = 72
-
-/**
- * Générateur pseudo-aléatoire déterministe (mulberry32)
- */
-function seededRandom(seed) {
-  return function () {
-    let t = (seed += 0x6d2b79f5)
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
 
 /**
  * Détecte le type de structure à partir d'une chaîne brute.

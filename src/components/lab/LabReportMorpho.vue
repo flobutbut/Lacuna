@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as d3 from 'd3'
 import { generateMorphoData, getShapePath } from '@/lib/morphoData'
 import { interpolateCyanAmber } from '@/lib/labColors'
+import { getCssVar } from '@/lib/cssVars'
 
 const props = defineProps({
   obsId: { type: String, default: '' },
@@ -37,8 +38,8 @@ function render() {
 
   const colorScale = d3.scaleSequential((t) => interpolateCyanAmber(t)).domain([min, max])
 
-  const fillCyanSubtle = getComputedStyle(document.documentElement).getPropertyValue('--color-cyan-subtle').trim() || 'rgba(0,180,200,0.05)'
-  const fontSizeXs = getComputedStyle(document.documentElement).getPropertyValue('--text-xs').trim() || '9px'
+  const fillCyanSubtle = getCssVar('--color-cyan-subtle', 'rgba(0,180,200,0.05)')
+  const fontSizeXs = getCssVar('--text-xs', '9px')
 
   // ── Modèle de forme (silhouette) ──
   d3.select(shapeRef.value).selectAll('*').remove()

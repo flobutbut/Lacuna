@@ -40,7 +40,7 @@ function nextGaussian(rng) {
   return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
 }
 
-export function useRadarNoise(band, galacticLatitude, activeSignals) {
+export function useRadarNoise(band, galacticLatitude, _activeSignals) {
   const ui = useUIStore()
   const { radarNoiseEnabled } = storeToRefs(ui)
 

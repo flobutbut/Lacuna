@@ -46,6 +46,27 @@ Le design system LACUNA repose sur :
 | `--color-muted` | `#7d92a3` | Texte secondaire |
 | `--color-ghost` | `rgba(255, 255, 255, 0.05)` | Éléments discrets |
 
+**Voiles sombres** — fonds de cartes, overlays de modales, ombres portées :
+
+| Token | Valeur | Usage |
+|-------|--------|-------|
+| `--color-shade-15` | `rgba(0, 0, 0, 0.15)` | Fond de bloc très léger (lab, artefacts, population) |
+| `--color-shade-20` | `rgba(0, 0, 0, 0.2)` | Fond de bloc léger (carte) |
+| `--color-shade-25` | `rgba(0, 0, 0, 0.25)` | Cellules de modale |
+| `--color-shade-30` | `rgba(0, 0, 0, 0.3)` | Fond de carte, item de menu |
+| `--color-shade-40` | `rgba(0, 0, 0, 0.4)` | Ombre de dropdown, bloc appuyé |
+| `--color-shade-60` | `rgba(0, 0, 0, 0.6)` | Overlay de modale |
+| `--color-shade-90` | `rgba(0, 0, 0, 0.9)` | Ombre de texte sur le ciel |
+
+**Variantes transparentes** — pour une couleur du design system avec une opacité qui n'a pas de token, utiliser `color-mix()` plutôt qu'un `rgba()` recopié :
+
+```css
+background: color-mix(in srgb, var(--color-bg) 95%, transparent);
+background: color-mix(in srgb, var(--color-green) 12%, transparent);
+```
+
+**Exceptions assumées** : la palette d'illustration des étoiles par classe spectrale et des anneaux (`SystemView.vue`), les scanlines (`layers.css`) et la grille blueprint (`systems.css`) gardent leurs valeurs propres.
+
 ### 2.2 Bordures
 
 | Token | Valeur | Usage |
@@ -409,6 +430,83 @@ Liste déroulante native stylée avec les tokens du design system (couleurs, bor
 
 ---
 
+### 3.13 bis AppCard
+
+**Fichier** : `src/components/AppCard.vue` (styles scopés, tokens uniquement)
+
+Card de liste : icône, titre, statut, sous-titre et actions. Peut être cliquable (clavier compris : Entrée / Espace), sélectionnée, retirable (×) et porter un badge.
+
+**Props** :
+- `title`, `subtitle`, `status` : textes (remplaçables par les slots du même nom)
+- `badge` : texte ou nombre affiché en haut à droite
+- `dismissable` : affiche le bouton × (`aria-label="Retirer de la liste"`)
+- `clickable` : rend la card focusable (`role="button"`) et émet `@click`
+- `selected` : état sélectionné (bordure et fond accentués)
+
+**Slots** : `#icon`, `#title`, `#status`, `#subtitle`, `#actions`
+
+**Events** : `@click`, `@dismiss`
+
+**Exemple** :
+```vue
+<AppCard
+  :title="node.name"
+  :subtitle="`${node.exoplanetCount} exoplanètes`"
+  :badge="node.tracesFound || ''"
+  dismissable
+  clickable
+  :selected="selectedSystemId === node.systemId"
+  @click="selectSystem(node.systemId)"
+  @dismiss="removeFromMap(node.systemId)"
+/>
+```
+
+**Utilisation** : PageCarte (liste des systèmes)
+
+---
+
+### 3.13 ter AppDualRangeSlider
+
+**Fichier** : `src/components/AppDualRangeSlider.vue`
+
+Deux curseurs sur une même piste pour choisir une plage ; la portion sélectionnée est remplie en cyan. Le curseur actif passe au premier plan pendant le glisser.
+
+**Props** :
+- `low`, `high` (requis) : bornes de la plage
+- `min` (défaut `0`), `max` (défaut `100`), `step` (défaut `1`)
+- `trackWidth` : largeur de la piste (défaut `'92px'`)
+- `ariaLabelLow`, `ariaLabelHigh` : libellés accessibles des deux curseurs
+
+**Events** : `@update:low`, `@update:high`
+
+**Exemple** :
+```vue
+<AppDualRangeSlider
+  :low="radarFreqLow"
+  :high="radarFreqHigh"
+  :min="0"
+  :max="125"
+  aria-label-low="Borne basse du filtre fréquentiel (Hz)"
+  aria-label-high="Borne haute du filtre fréquentiel (Hz)"
+  @update:low="ui.setRadarFreqLow"
+  @update:high="ui.setRadarFreqHigh"
+/>
+```
+
+**Utilisation** : ObservatoireRadarFilters (filtre fréquentiel)
+
+---
+
+### 3.13 quater RadarMiniature
+
+**Fichier** : `src/components/RadarMiniature.vue`
+
+Spectrogramme miniature (120 px de haut) qui relit le même buffer de colonnes que `RadarView`. Sans props : il reçoit `radarSpectrogram` et `radarColumnBuffer` par `inject` et lit les réglages radar dans le store UI (seuil, bornes de fréquence, échelle de temps, radar actif). Couleurs : échelle Viridis sur fond `--color-bg`.
+
+**Utilisation** : SideLeft (tuile radar de l'Observatoire)
+
+---
+
 ### 3.14 Widgets latéraux (widget.css)
 
 | Classe | Usage |
@@ -491,12 +589,14 @@ Ne pas utiliser de `color-mix` ni de tailles en dur pour ces blocs — rester al
 - Texte : `--color-white`, `--color-muted`
 - Police : `--font-mono`
 - Pas de couleurs par défaut des librairies — override systématique
+- Canvas et Three.js : lire les tokens avec `getCssVar('--color-…')` (`src/lib/cssVars.js`) plutôt que de recopier la valeur hex
 
 ### 4.5 CSS
 
-- **Import** : Tous les fichiers CSS **utilisés par l'app** sont importés dans `main.js`. Le fichier `main.css` (s'il existe) est une référence de convention uniquement et n'est pas chargé. Ne pas utiliser `@import` vers d'**autres fichiers CSS locaux** (HMR cassé). Les `@import` vers des URLs externes (ex. polices dans `base.css`) sont admis.
+- **Import** : Tous les fichiers CSS **utilisés par l'app** sont importés dans `main.js`. Ne pas utiliser `@import` vers d'**autres fichiers CSS locaux** (HMR cassé). Les `@import` vers des URLs externes (ex. polices dans `base.css`) sont admis.
 - **Nouveau fichier** : L'ajouter dans `main.js`
 - **Tokens** : Toujours utiliser les variables, jamais de valeurs en dur
+- **Mouvement réduit** : `animations.css` coupe animations et transitions sous `prefers-reduced-motion: reduce`. Une nouvelle animation CSS en hérite automatiquement ; une animation canvas doit vérifier `matchMedia('(prefers-reduced-motion: reduce)')` elle-même
 
 ---
 

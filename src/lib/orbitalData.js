@@ -4,18 +4,10 @@
  * Réf. LACUNA_LABORATOIRE_INSTRUMENTS.md §4.7, §5
  */
 import { semiMajorAxisFromPeriod } from './orbitalUtils'
+import { seededRandom } from './random'
 
 /** Label par défaut des planètes */
 const DEFAULT_LABELS = ['b', 'c', 'd', 'e', 'f', 'g', 'h']
-
-function seededRandom(seed) {
-  return function () {
-    let t = (seed += 0x6d2b79f5)
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
 
 /** Hash simple pour obsId / systemId → seed */
 function seedFromIds(obsId, systemId) {
@@ -57,9 +49,9 @@ function systemObjectsToOrbits(objects) {
           ? semiMajorAxisFromPeriod(obj.orbital_period_days)
           : null
     if (!a || a <= 0) continue
-    const e = Math.min(0.99, Math.max(0, Number(obj.orbital_eccentricity) ?? 0))
-    const i = Number(obj.orbital_inclination_deg) ?? 0
-    const period = Number(obj.orbital_period_days) ?? null
+    const e = Math.min(0.99, Math.max(0, Number(obj.orbital_eccentricity) || 0))
+    const i = Number(obj.orbital_inclination_deg) || 0
+    const period = obj.orbital_period_days != null ? Number(obj.orbital_period_days) : null
     const label = obj.designation || obj.name || `P${orbits.length + 1}`
     orbits.push({
       label,
