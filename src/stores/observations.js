@@ -175,19 +175,29 @@ export const useObservationsStore = defineStore('observations', () => {
   }
 
   async function removeObservation(id) {
+    const previous = list.value
     list.value = list.value.filter((o) => o.id !== id)
     const supabaseStore = useSupabaseStore()
     if (supabaseStore.isConfigured()) {
-      await supabase.from('observations').delete().eq('id', id)
+      const { error } = await supabase.from('observations').delete().eq('id', id)
+      if (error) {
+        console.warn('[observations] Erreur delete:', error.message)
+        list.value = previous
+      }
     }
   }
 
   async function updateObservationState(id, state) {
     const obs = list.value.find((o) => o.id === id)
+    const previousState = obs?.state
     if (obs) obs.state = state
     const supabaseStore = useSupabaseStore()
     if (supabaseStore.isConfigured()) {
-      await supabase.from('observations').update({ state }).eq('id', id)
+      const { error } = await supabase.from('observations').update({ state }).eq('id', id)
+      if (error) {
+        console.warn('[observations] Erreur update state:', error.message)
+        if (obs) obs.state = previousState
+      }
     }
   }
 

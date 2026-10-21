@@ -26,7 +26,6 @@ import LabReportMorpho from '@/components/lab/LabReportMorpho.vue'
 import LabReportMagneto from '@/components/lab/LabReportMagneto.vue'
 import InstrumentButton from '@/components/InstrumentButton.vue'
 import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
-import ObservationTypeIcon from '@/components/icons/ObservationTypeIcon.vue'
 import ObservationCard from '@/components/ObservationCard.vue'
 
 const route = useRoute()

@@ -155,8 +155,9 @@ export const useSignauxStore = defineStore('signaux', () => {
         duration_sec: row.duration_sec,
         attributes: row.attributes ?? {},
       }
-      const { data, err } = await supabase.from('signals').insert(copy).select('id, frequency_hz, support, duration_sec, captured_at, attributes').single()
-      if (!err && data) cloned.push(dbToSignal(data))
+      const { data, error } = await supabase.from('signals').insert(copy).select('id, frequency_hz, support, duration_sec, captured_at, attributes').single()
+      if (error) console.warn('[signaux] Erreur clone démo:', error.message)
+      else if (data) cloned.push(dbToSignal(data))
     }
     return cloned
   }
@@ -218,7 +219,13 @@ export const useSignauxStore = defineStore('signaux', () => {
     list.value = list.value.filter((s) => s.id !== id)
     const supabaseStore = useSupabaseStore()
     if (supabaseStore.isConfigured() && /^[0-9a-f-]{36}$/i.test(id)) {
-      supabase.from('signals').delete().eq('id', id).then(() => {}).catch((e) => console.warn('[signaux] Erreur delete:', e?.message))
+      supabase
+        .from('signals')
+        .delete()
+        .eq('id', id)
+        .then(({ error }) => {
+          if (error) console.warn('[signaux] Erreur delete:', error.message)
+        })
     }
   }
 
@@ -272,8 +279,10 @@ export const useSignauxStore = defineStore('signaux', () => {
         duration_sec: 72,
         attributes: { azimuth, elevation, receivedAt, sourceName: obj.name },
       }
-      const { data, err } = await supabase.from('signals').insert(row).select('id, frequency_hz, support, duration_sec, captured_at, attributes').single()
-      if (!err && data) {
+      const { data, error } = await supabase.from('signals').insert(row).select('id, frequency_hz, support, duration_sec, captured_at, attributes').single()
+      if (error) {
+        console.warn('[signaux] Erreur insert signal objet:', error.message)
+      } else if (data) {
         existingIds.add(obj.id)
         inserted.push(dbToSignal(data))
       }

@@ -51,8 +51,7 @@ Lacuna/
 │   │   ├── labReports.js    # Rapports d'analyse Laboratoire (lab_reports)
 │   │   ├── nebulas.js       # Nébuleuses (nuages IR)
 │   │   ├── drake.js         # Équation de Drake (drake_equation)
-│   │   ├── traces.js        # Traces joueur (complément traces immuables, Artefacts)
-│   │   └── counter.js       # Store exemple (code mort — non importé)
+│   │   └── traces.js        # Traces joueur (complément traces immuables, Artefacts)
 │   ├── components/          # Composants Vue
 │   │   ├── AppHeader.vue
 │   │   ├── SkyCanvas.vue
@@ -81,11 +80,8 @@ Lacuna/
 │   │   │   ├── LabReportMagneto.vue          # Champ magnétique (magnétomètre)
 │   │   │   ├── LabReportMorpho.vue           # Scanner morphologique (formes)
 │   │   │   └── LabReportVolumetrique.vue     # Analyse volumétrique
-│   │   └── panels/          # (legacy — contenu migré vers views/)
 │   ├── composables/         # Logique réutilisable (Vue)
 │   │   ├── useCameraFocusAnimation.js  # Animation caméra/OrbitControls vers position cible — Stars3DCanvas, CarteMap3D
-│   │   ├── useCarteMapPanZoom.js       # Pan/zoom carte (viewBox, positions, système sélectionné)
-│   │   ├── useCarteMapProjection.js    # Projection noeuds carte (positions écran depuis stellarBySystemId)
 │   │   ├── useSkyStars.js   # Construction liste étoiles (DB / fallback) — Observatoire, projection x/y/z → ra/dec
 │   │   ├── useStars3DConception.js  # Vue 3D conception — barycentre, points 3D
 │   │   ├── useStellarSearch.js      # Recherche systèmes/constellations/signaux — Observatoire + Vue 3D conception

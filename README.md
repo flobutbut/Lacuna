@@ -15,19 +15,19 @@ Simulation d'exploration galactique persistante et asynchrone — Vue 3 + Vite +
 ## Project Setup
 
 ```sh
-yarn install
+npm install
 ```
 
 ### Development
 
 ```sh
-yarn dev
+npm run dev
 ```
 
 ### Build
 
 ```sh
-yarn build
+npm run build
 ```
 
 ## Recommended IDE Setup

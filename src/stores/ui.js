@@ -1,11 +1,10 @@
 /**
- * Store UI — état des panels, notifications, tooltip
+ * Store UI — notifications, sélection, tooltip, état Observatoire et Radar
  */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useUIStore = defineStore('ui', () => {
-  const activePanel = ref(null) // 'obs' | 'map' | 'art' | 'lab' | 'log' | 'drake' | 'pop' | 'sys'
   const notification = ref('')
   const notificationVisible = ref(false)
   /** Variante du toast : 'default' | 'info' | 'warn' | 'error' | 'success' */
@@ -210,20 +209,6 @@ export const useUIStore = defineStore('ui', () => {
     localStorage.setItem('lacuna_constellations_enabled', JSON.stringify(constellationsEnabled.value))
   }
 
-  function openPanel(id) {
-    activePanel.value = id
-  }
-
-  function closePanel(id) {
-    if (activePanel.value === id) {
-      activePanel.value = null
-    }
-  }
-
-  function togglePanel(id) {
-    activePanel.value = activePanel.value === id ? null : id
-  }
-
   function showNotification(msg, duration = 3000, variant = 'default') {
     notification.value = msg
     notificationVariant.value = ['default', 'info', 'warn', 'error', 'success'].includes(variant) ? variant : 'default'
@@ -307,7 +292,6 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   return {
-    activePanel,
     notification,
     notificationVisible,
     notificationVariant,
@@ -322,9 +306,6 @@ export const useUIStore = defineStore('ui', () => {
     carteHasNewNodes,
     hoveredStar,
     reticulePosition,
-    openPanel,
-    closePanel,
-    togglePanel,
     showNotification,
     showTravelWidget,
     selectStar,

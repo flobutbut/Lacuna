@@ -4,7 +4,7 @@
  * @module systemObjectConverters
  */
 
-import { EARTH_RADIUS_KM, EARTH_MASS_KG, AU_KM } from './astroConstants'
+import { EARTH_RADIUS_KM, EARTH_MASS_KG } from './astroConstants'
 import { getRadiusEarth } from './bodyRadius'
 import { semiMajorAxisFromPeriod } from './orbitalUtils'
 import {

@@ -57,7 +57,15 @@ const router = createRouter({
       component: () => import('@/views/PageConceptionEtoiles.vue'),
       meta: { title: 'Vue 3D étoiles (conception)', conceptionLayout: true },
     },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: { name: 'observatoire' },
+    },
   ],
+})
+
+router.afterEach((to) => {
+  document.title = to.meta.title ? `${to.meta.title} — LACUNA` : 'LACUNA'
 })
 
 export default router

@@ -1,11 +1,12 @@
 <script setup>
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import InstrumentsBar from '@/components/InstrumentsBar.vue'
 import NotificationToast from '@/components/NotificationToast.vue'
 
 const route = useRoute()
-const isConceptionLayout = route.meta.conceptionLayout === true
+const isConceptionLayout = computed(() => route.meta.conceptionLayout === true)
 </script>
 
 <template>
