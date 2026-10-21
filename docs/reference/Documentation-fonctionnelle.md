@@ -68,7 +68,7 @@ Observer le ciel → Sélectionner un système → Analyser (optionnel)
 - **Ciel** : Interface principale (étoiles, hover, clic)
 - **Indicateurs gauche** : Systèmes vaisseau (propulsion, carburant, coque...) — **Observatoire** : panneau gauche avec widget « Observatoire » (placeholders) et spectrogramme miniature (`RadarMiniature.vue` dans `SideLeft`) en vues ciel / radar (liste de signaux retirée de ce panneau)
 - **Indicateurs droite** : Population, dernière trace
-- **Barre instruments** : 9 modules (Observatoire, Carte, Laboratoire, Artefacts, Journal, Drake, Population, Systèmes, Vue 3D étoiles)
+- **Barre instruments** : 8 modules (Observatoire, Carte, Laboratoire, Artefacts, Journal, Drake, Population, Systèmes), plus Vue 3D étoiles pour les comptes admin (outil de conception)
 
 ### Modules (contenu par route / page)
 | Module | Contenu |

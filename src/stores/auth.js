@@ -126,6 +126,17 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
+  /** Modifie le pseudo (seule colonne du profil modifiable par le joueur) */
+  async function updatePseudo(newPseudo) {
+    const pseudo = (newPseudo ?? '').trim()
+    const uid = user.value?.id
+    if (!uid) throw new Error('Connexion requise')
+    const { data, error } = await supabase.from('profiles').update({ pseudo }).eq('id', uid).select('pseudo').single()
+    if (error) throw error
+    profile.value = { ...profile.value, pseudo: data.pseudo }
+    return data.pseudo
+  }
+
   return {
     session,
     ready,
@@ -138,6 +149,7 @@ export const useAuthStore = defineStore('auth', () => {
     init,
     ensurePlayer,
     startNewGame,
+    updatePseudo,
     signUp,
     signIn,
     signOut,

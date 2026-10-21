@@ -61,7 +61,7 @@ const router = createRouter({
       path: '/conception-etoiles',
       name: 'conception-etoiles',
       component: () => import('@/views/PageConceptionEtoiles.vue'),
-      meta: { title: 'Vue 3D étoiles (conception)', bareLayout: true },
+      meta: { title: 'Vue 3D étoiles (conception)', bareLayout: true, requiresAdmin: true },
     },
     {
       path: '/connexion',
@@ -110,6 +110,7 @@ router.beforeEach(async (to) => {
     configured: useSupabaseStore().isConfigured(),
     authenticated: auth.isAuthenticated,
     hasShip: auth.hasShip,
+    isAdmin: auth.isAdmin,
   })
 })
 

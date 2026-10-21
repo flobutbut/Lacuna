@@ -523,6 +523,18 @@ Champ de saisie : libellé, aide sous le champ, message d'erreur. L'erreur rempl
 
 ---
 
+### 3.13 septies EditableValueRow
+
+**Fichier** : `src/components/EditableValueRow.vue` (styles scopés + classes `sw-row` / `sw-key` / `sw-val`)
+
+Ligne clé / valeur modifiable sur place : bouton « Modifier » → `AppTextField` pré-rempli et focalisé, « Enregistrer » / « Annuler » (Échap annule). Valide avant l'envoi, n'appelle rien si la valeur est inchangée, affiche l'erreur sous le champ.
+
+**Props** : `label` (requis), `value`, `hint`, `validate(valeur) → message | null`, `save(valeur)` (async, requis, lève en cas d'échec), `saveErrorMessage`
+
+**Utilisation** : PageSystemes, section Identité (pseudo, nom du vaisseau)
+
+---
+
 ### 3.13 sexies AuthPanel (pages d'authentification)
 
 **Fichier** : `src/components/auth/AuthPanel.vue` — **Styles des formulaires** : `auth.css` (chargé par AuthPanel)

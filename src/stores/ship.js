@@ -233,6 +233,19 @@ export const useShipStore = defineStore('ship', () => {
     return ship.value
   }
 
+  /**
+   * Renomme le vaisseau du joueur (2 à 32 caractères, contrainte SQL ships_name_length).
+   * Lève l'erreur Supabase en cas d'échec.
+   */
+  async function renameShip(newName) {
+    const name = (newName ?? '').trim()
+    if (!ship.value?.id) throw new Error('Aucun vaisseau chargé')
+    const { data, error } = await supabase.from('ships').update({ name }).eq('id', ship.value.id).select('name').single()
+    if (error) throw error
+    ship.value = { ...ship.value, name: data.name }
+    return data.name
+  }
+
   /** Charge l'historique des voyages (ship_travels) pour le vaisseau courant — ordre chronologique. */
   async function fetchTravels() {
     const supabaseStore = useSupabaseStore()
@@ -306,6 +319,7 @@ export const useShipStore = defineStore('ship', () => {
     ship,
     shipSystems,
     population,
+    renameShip,
     loaded,
     currentSystemId,
     travelState,

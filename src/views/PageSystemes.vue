@@ -2,15 +2,32 @@
 import '@/assets/components/systems.css'
 import { ref, watch, nextTick, onBeforeUnmount, onMounted, computed } from 'vue'
 import { useShipStore } from '@/stores/ship'
+import { useAuthStore } from '@/stores/auth'
+import { useNotificationsStore } from '@/stores/notifications'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { SYSTEMS_MENU_ITEMS } from '@/constants/menus'
 import NavMenuItem from '@/components/NavMenuItem.vue'
 import AppModal from '@/components/AppModal.vue'
 import Divider from '@/components/Divider.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
+import EditableValueRow from '@/components/EditableValueRow.vue'
 import { formatNumber } from '@/lib/formatUtils'
+import { PSEUDO_MAX, PSEUDO_MIN, SHIP_NAME_MAX, SHIP_NAME_MIN, validatePseudo, validateShipName } from '@/lib/playerProfile'
 
 const shipStore = useShipStore()
+const authStore = useAuthStore()
+const notificationsStore = useNotificationsStore()
+
+/** Identité privée : renommer le vaisseau, changer de pseudo */
+async function saveShipName(value) {
+  const name = await shipStore.renameShip(value)
+  notificationsStore.showNotification(`Vaisseau renommé : ${name}`, 3000, 'success')
+}
+
+async function savePseudo(value) {
+  const pseudo = await authStore.updatePseudo(value)
+  notificationsStore.showNotification(`Pseudo mis à jour : ${pseudo}`, 3000, 'success')
+}
 const activeSection = ref(null)
 const overlayVisible = ref(false)
 const blueprintRef = ref(null)
@@ -247,6 +264,24 @@ function closeOverlay() {
           <!-- Identité -->
           <div v-show="activeSection === 'identity'" class="sys-modal-content">
             <p class="sys-modal-subtitle">{{ ship.name }} — {{ ship.class }}</p>
+            <template v-if="authStore.isAuthenticated">
+              <EditableValueRow
+                label="Commandant"
+                :value="authStore.profile?.pseudo ?? ''"
+                :hint="`Privé · ${PSEUDO_MIN} à ${PSEUDO_MAX} caractères.`"
+                :validate="validatePseudo"
+                :save="savePseudo"
+              />
+              <Divider variant="solid" tight />
+              <EditableValueRow
+                label="Nom du vaisseau"
+                :value="ship.name"
+                :hint="`Privé · ${SHIP_NAME_MIN} à ${SHIP_NAME_MAX} caractères.`"
+                :validate="validateShipName"
+                :save="saveShipName"
+              />
+              <Divider variant="solid" tight />
+            </template>
             <div class="sw-row"><span class="sw-key">Construit</span><span class="sw-val">{{ ship.builtYear }}</span></div>
             <Divider variant="solid" tight />
             <div class="sw-row"><span class="sw-key">Âge relatif</span><span class="sw-val">{{ ship.ageRelative }} ans</span></div>

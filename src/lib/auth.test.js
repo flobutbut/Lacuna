@@ -105,6 +105,13 @@ describe('resolveAuthRedirect', () => {
     expect(resolveAuthRedirect(page('/carte'), { configured: true, authenticated: true, hasShip: null })).toBe(true)
   })
 
+  it('réserve les outils admin aux comptes admin', () => {
+    const vue3d = page('/conception-etoiles', { requiresAdmin: true })
+    expect(resolveAuthRedirect(vue3d, { configured: true, authenticated: true, hasShip: true, isAdmin: false })).toEqual({ name: 'observatoire' })
+    expect(resolveAuthRedirect(vue3d, { configured: true, authenticated: true, hasShip: true, isAdmin: true })).toBe(true)
+    expect(resolveAuthRedirect(vue3d, { configured: false, authenticated: false })).toBe(true)
+  })
+
   it('hors ligne : pas de compte, pages d’authentification inutiles', () => {
     expect(resolveAuthRedirect(page('/carte'), { configured: false, authenticated: false })).toBe(true)
     expect(resolveAuthRedirect(connexion, { configured: false, authenticated: false })).toEqual({ name: 'observatoire' })
