@@ -1,8 +1,8 @@
 # Plan — Comptes joueurs, pseudo et nom du vaisseau
 
-*21 octobre 2026 — plan validé. Étape 1 (`00046_player_accounts.sql`) appliquée en production le 21/10/2026 après sauvegarde (`backups/avant_00046_20261021_141047.dump`).*
+*21 octobre 2026 — plan validé et réalisé (étapes 1 à 7). Migrations 00046 à 00048 appliquées en production après sauvegarde. Points restants avant une mise en ligne : §9.*
 
-Aujourd'hui l'app n'a aucune authentification : tous les visiteurs partagent le vaisseau prototype (`ships.user_id IS NULL`), et les signaux / observations sont rattachés à un identifiant de session stocké dans le navigateur (`lib/session.js`). Ce plan introduit un compte par joueur, un vaisseau par compte, et des règles d'accès (RLS) qui protègent les données de chacun.
+Avant ce plan, l'app n'avait aucune authentification : tous les visiteurs partageaient le vaisseau prototype (`ships.user_id IS NULL`), et les signaux / observations étaient rattachés à un identifiant de session stocké dans le navigateur (`lib/session.js`). Le plan a introduit un compte par joueur, un vaisseau par compte, et des règles d'accès (RLS) qui protègent les données de chacun. Référence à jour du schéma et des règles : `docs/reference/Documentation-backend.md` (§3, §7).
 
 ---
 
@@ -68,17 +68,18 @@ Fonction Postgres appelée par `/bienvenue`, qui crée **en une seule transactio
 
 1. le profil (`profiles`) ;
 2. le vaisseau (`ships`, `user_id = auth.uid()`, `current_system_id = 'SOL'`, état `IDLE`) ;
-3. ses systèmes (`ship_systems`) et sa population (`populations`), avec les valeurs initiales aujourd'hui dans `seed.sql` pour le prototype ;
-4. le nœud Sol de la carte (`map_nodes`).
+3. ses systèmes (`ship_systems`) et sa population (`populations`), avec les valeurs par défaut des tables (celles de l'ancien prototype) ;
+4. le nœud Sol de la carte (`map_nodes`) ;
+5. la copie des signaux modèles (démo).
 
-Elle refuse si le joueur a déjà un vaisseau. Les valeurs initiales sont définies **une seule fois**, dans la fonction, au lieu d'être recopiées dans le seed.
+Elle refuse si le joueur a déjà un vaisseau. Les valeurs initiales ne sont définies qu'à un endroit (les valeurs par défaut des tables), plus dans le seed.
 
 ### 3.4 Rattachement des données au joueur
 
-| Table | Aujourd'hui | Après |
+| Table | Avant | Après |
 |---|---|---|
-| `signals` | `session_id` (navigateur) + `ship_id` | propriété par `ship_id` ; `session_id` supprimé |
-| `observations` | `session_id` + `ship_id` | idem |
+| `signals` | `session_id` (navigateur) + `ship_id` | propriété par `ship_id` ; `session_id` facultatif, conservé pour les signaux modèles (`'seed-demo'`) |
+| `observations` | `session_id` + `ship_id` | propriété par `ship_id` ; `session_id` facultatif (obsolète) |
 | `lab_reports` | aucune colonne de propriétaire | propriété via `observation_id` → `observations.ship_id` |
 | `interpretations` | `ship_id` jamais renseigné par l'app | `ship_id` renseigné à l'insertion ; **non exposé** en lecture |
 | `traces` (dépôts joueur, plus tard) | `discovered_by` (ship_id) | + `signature TEXT` (copie du pseudo) ; `discovered_by` non exposé |
@@ -93,15 +94,17 @@ Principe : **chaque joueur ne voit et ne modifie que ce qui appartient à son va
 
 | Table | Lecture | Écriture |
 |---|---|---|
-| `profiles` | soi | soi |
-| `ships`, `ship_systems`, `populations`, `ship_travels`, `map_nodes`, `map_edges`, `logbook_entries`, `ship_traces` | son vaisseau | son vaisseau (création via `start_new_game`) |
+| `profiles` | soi | `pseudo` seulement (création via `start_new_game`) |
+| `ships` | son vaisseau | modification de son vaisseau ; création via `start_new_game`, pas de suppression |
+| `ship_systems`, `populations` | son vaisseau | aucune |
+| `ship_travels`, `map_nodes`, `map_edges`, `logbook_entries`, `ship_traces` | son vaisseau | son vaisseau |
 | `signals`, `observations` | son vaisseau | son vaisseau |
 | `lab_reports` | via ses observations | via ses observations |
-| `interpretations` | tous, **sans** `ship_id` (vue ou droits par colonne) | insertion avec son `ship_id` ; suppression de ses seules interprétations |
-| `traces` | tous (sans `discovered_by`) | dépôt joueur : plus tard |
+| `interpretations` | joueurs connectés, **sans** `ship_id` (droits par colonne) | insertion avec son `ship_id` ; suppression de ses seules interprétations |
+| `traces` | joueurs connectés, sans `discovered_by` | dépôt joueur : plus tard |
 | Données du monde | tous | aucune (import service_role) |
 
-Les politiques « prototype » ouvertes (`USING (true)`, `user_id IS NULL`) sont supprimées. Les politiques « Users can manage own … » de la migration `00001` servent de base : elles existent déjà mais n'étaient jamais utilisées.
+Les politiques « prototype » ouvertes (`USING (true)`, `user_id IS NULL`) ont été supprimées (`00048`). Les politiques « Users can manage own … » de la migration `00001` ont servi de base pour la carte, les voyages, le journal et les traces du vaisseau. Sans compte : aucune donnée de jeu.
 
 ---
 
@@ -109,14 +112,14 @@ Les politiques « prototype » ouvertes (`USING (true)`, `user_id IS NULL`) sont
 
 | Élément | Changement |
 |---|---|
-| `stores/auth.js` (nouveau) | session, utilisateur, profil ; `signUp`, `signIn`, `signOut`, `resetPassword`, `updatePseudo` ; écoute `onAuthStateChange` |
+| `stores/auth.js` (nouveau) | session, utilisateur, profil, `hasShip`, `isAdmin` ; `init`, `signUp`, `signIn`, `signOut`, `requestPasswordReset`, `updatePassword`, `ensurePlayer`, `startNewGame`, `updatePseudo` ; écoute `onAuthStateChange` |
 | `router/index.js` | routes d'authentification + garde `beforeEach` (attend la session initiale) ; `/conception-etoiles` marquée `requiresAdmin` |
 | `constants/menus.js` / `InstrumentsBar` | l'entrée « Vue 3D étoiles » n'apparaît que pour un admin |
-| `stores/ship.js` | `fetch()` lit le vaisseau du joueur (RLS) au lieu de `.is('user_id', null)` ; `renameShip()` |
+| `stores/ship.js` | `fetch()` lit le vaisseau du joueur après chargement de la session (un seul chargement à la fois) ; `renameShip()` |
 | `stores/signaux.js`, `stores/observations.js` | filtrent et insèrent par `ship_id`, plus par `session_id` |
 | `stores/traces.js` | interprétations : `ship_id` à l'insertion, suppression limitée aux siennes |
-| `PagePopulation` | affichera la vraie population : la ligne existe pour le prototype mais n'était pas lisible (pas de politique anon sur `populations`) |
-| Pages d'auth + `/bienvenue` | composants du design system (AppModal / champs / boutons), textes en français |
+| `PagePopulation` | affiche la population du vaisseau (lue via le store `ship`) |
+| Pages d'auth + `/bienvenue` | `AuthPanel`, `AppTextField`, boutons du design system, textes en français |
 | Hors ligne (Supabase non configuré) | conserver le mode démo actuel (données de repli), sans authentification ; la Vue 3D étoiles y reste accessible (développement) |
 
 ---
@@ -135,12 +138,12 @@ Les politiques « prototype » ouvertes (`USING (true)`, `user_id IS NULL`) sont
 | # | Étape | Vérification |
 |---|---|---|
 | 1 | Migration `00046_player_accounts.sql` : `profiles` (avec rôle), contrainte `ships.name`, `start_new_game`, signaux modèles détachés du prototype | ✅ 22 tests OK sur une base Postgres locale jetable ; **appliquée** le 21/10/2026 (transaction unique), vérifiée en base et via l'API anon ; app inchangée |
-| 2 | `stores/auth.js`, pages d'inscription / connexion / mot de passe, garde de routeur, déconnexion dans le header | ✅ codée ; 14 tests (messages, validation, garde, redirections) ; pages et garde vérifiées dans le navigateur sans compte réel ; **parcours réel inscription → email → connexion à faire par le joueur** |
-| 3 | `/bienvenue` : pseudo + nom du vaisseau → `start_new_game` ; garde « connecté sans vaisseau → /bienvenue » ; store `ship` sur le vaisseau du joueur | ✅ codée ; 8 tests (règles pseudo / nom, erreurs, garde) ; écran et validation vérifiés (session simulée, sans écriture) ; **création réelle de la partie à faire par le joueur** |
-| 4 | Migration `00047_signals_by_ship.sql` (`session_id` facultatif, `compute_pulsar_signals(ship, bande)` dédupliquée par vaisseau et réservée au propriétaire) ; stores signaux / observations par `ship_id` ; interprétations avec `ship_id` et génération ; `lib/session.js` et réinitialisation prototype supprimés | ✅ 11 tests SQL sur base jetable ; **appliquée** le 21/10/2026 après sauvegarde (`backups/avant_00047_20261021_201801.dump`) ; à valider en jeu par le joueur |
+| 2 | `stores/auth.js`, pages d'inscription / connexion / mot de passe, garde de routeur, déconnexion dans le header | ✅ codée ; 14 tests (messages, validation, garde, redirections) ; pages et garde vérifiées dans le navigateur ; parcours réel inscription → email → connexion validé par le joueur |
+| 3 | `/bienvenue` : pseudo + nom du vaisseau → `start_new_game` ; garde « connecté sans vaisseau → /bienvenue » ; store `ship` sur le vaisseau du joueur | ✅ codée ; 8 tests (règles pseudo / nom, erreurs, garde) ; écran et validation vérifiés ; partie réelle créée par le joueur (Artemis, vérifiée en base) |
+| 4 | Migration `00047_signals_by_ship.sql` (`session_id` facultatif, `compute_pulsar_signals(ship, bande)` dédupliquée par vaisseau et réservée au propriétaire) ; stores signaux / observations par `ship_id` ; interprétations avec `ship_id` et génération ; `lib/session.js` et réinitialisation prototype supprimés | ✅ 11 tests SQL sur base jetable ; **appliquée** le 21/10/2026 après sauvegarde (`backups/avant_00047_20261021_201801.dump`) ; validée en jeu (15 signaux dont 8 pulsars) après correctif du chargement du vaisseau |
 | 5 | Migration `00048_player_rls.sql` : suppression du prototype et de ses données ; politiques par joueur (vaisseau en lecture / modification, systèmes et population en lecture, signaux / observations / rapports par vaisseau) ; interprétations lisibles sans `ship_id` ; traces sans `discovered_by` ; RLS activée sur `constellations` / `constellation_lines` ; `TRUNCATE` retiré | ✅ 31 tests sur base jetable (deux joueurs, visiteur, nouveau joueur) ; **appliquée** le 21/10/2026 après sauvegarde (`backups/avant_00048_20261021_215732.dump`) ; API anonyme : aucune donnée de jeu ; app vérifiée en jeu |
 | 6 | Identité dans la page Systèmes (modifier pseudo, renommer, composant `EditableValueRow`), déconnexion ; Vue 3D étoiles réservée aux admins (`meta.requiresAdmin`, entrée `adminOnly`) | ✅ 1 test de garde ; vérifié en jeu : édition et validation, compte admin (entrée + accès) et joueur simulé (entrée absente, URL redirigée) ; **renommage réel à faire par le joueur** |
-| 7 | Docs (technique, fonctionnelle, README) | |
+| 7 | Docs : backend (Auth, `profiles`, RPC, RLS, migrations 00034–00048, seed), technique, fonctionnelle (parcours joueur), status, README, suivi de l'audit ; `seed.sql` sans vaisseau prototype | ✅ relecture finale ; seed vérifié sur base jetable |
 
 Les étapes 1 et 5 sont séparées pour que l'app reste utilisable pendant la transition : les nouvelles politiques arrivent avant que les anciennes soient supprimées.
 
@@ -150,12 +153,12 @@ Les étapes 1 et 5 sont séparées pour que l'app reste utilisable pendant la tr
 
 **Base utilisée** : le projet de l'app (`utdzobspxeecxauwnkve`). Il n'existe pas de base de test séparée, et le connecteur Supabase de cette session pointe vers un autre projet, qui ne sera pas touché.
 
-**État constaté (lecture seule, 21/10/2026)** : schéma conforme aux migrations du dépôt, aucun compte (`auth.users` vide), pas de table `profiles`.
+**État avant l'étape 1 (lecture seule, 21/10/2026)** : schéma conforme aux migrations du dépôt, aucun compte (`auth.users` vide), pas de table `profiles`.
 
-| Données du prototype à supprimer | Lignes |
+| Données du prototype (supprimées par `00048`) | Lignes avant suppression |
 |---|---|
 | `ships` (ARCA partagé) | 1 |
-| `signals` (93 sessions navigateur) | 2 504 |
+| `signals` (93 sessions navigateur) | 2 504 (2 519 au moment de la suppression) |
 | `observations` | 89 |
 | `lab_reports` | 138 |
 | `map_nodes` | 20 |
@@ -169,4 +172,41 @@ Les étapes 1 et 5 sont séparées pour que l'app reste utilisable pendant la tr
 
 Plusieurs mots de passe refusés de suite font bannir l'IP sur le port 5432 (Dashboard → Database → Network Bans).
 
-**Constaté en testant l'étape 1** : les migrations du dépôt ne se rejouent pas telles quelles sur une base vierge. `00015` suppose que le vaisseau prototype de `seed.sql` existe déjà, et `00019` échoue (`function name "get_visible_systems" is not unique`). Sans effet sur la base actuelle, mais à corriger pour pouvoir recréer une base de test ou de production de zéro.
+**Rejeu sur base vierge** : `seed.sql` ne crée plus le vaisseau prototype et ses signaux modèles n'ont plus de vaisseau ; `00015` ne bloque donc plus (ses insertions sont ignorées si le seed est passé avant). `00019` échoue toujours (`function name "get_visible_systems" is not unique`) — voir §9.
+
+---
+
+## 9. Avant une mise en ligne
+
+Comptes, données par joueur et RLS sont en place. Restent les points suivants, du plus urgent au moins urgent.
+
+### Bloquant
+
+| Sujet | À faire | Où |
+|---|---|---|
+| **Emails** | SMTP personnalisé (l'envoi par défaut de Supabase est très limité en débit) ; modèles de confirmation et de réinitialisation en français ; *Site URL* et *Redirect URLs* du domaine de production | Dashboard → Authentication (SMTP Settings, Emails, URL Configuration) |
+| **Sécurité des comptes** | Longueur minimale du mot de passe côté serveur alignée sur l'app (8) ; CAPTCHA (hCaptcha ou Turnstile) sur inscription et mot de passe oublié ; vérifier les limites de débit | Dashboard → Authentication ; app (jeton CAPTCHA à passer à `signUp` / `resetPasswordForEmail`) |
+| **Intégrité du jeu** | La politique « Players update own ship » laisse le client modifier toutes les colonnes de son vaisseau (`current_system_id`, `travel_state`, `voyage`…) : déplacer le transit dans des RPC (`start_transit`, `complete_transit`) et limiter l'UPDATE client à `name` (droits par colonne). Même réflexion pour `lab_reports` (fiabilité) et les insertions libres de signaux / observations | migration + `stores/ship.js` |
+| **RGPD et mentions légales** | Mentions légales et politique de confidentialité (email, données de jeu, durée de conservation) ; **suppression du compte** depuis le jeu (fonction `SECURITY DEFINER` qui supprime `auth.users` → cascade sur profil, vaisseau et données). Pas de bandeau cookies nécessaire tant qu'aucun outil d'audience n'est ajouté (la session Supabase est dans le `localStorage`) | nouvelles pages + migration |
+| **Environnements** | Aujourd'hui une seule base sert au développement et accueillerait les joueurs : créer un projet Supabase de production distinct (ou une branche) et y appliquer les migrations | Supabase |
+| **Hébergement** | Le routeur utilise `createWebHistory` : réécrire toutes les routes vers `index.html` (sinon 404 en rechargeant `/carte`) ; HTTPS ; variables `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` | config de l'hébergeur (ex. `vercel.json`) |
+| **Sauvegardes** | Sauvegardes quotidiennes / restauration à un instant donné selon le plan Supabase ; adapter `npm run backup:db` (aujourd'hui `supabase db dump`, qui demande Docker) pour utiliser `pg_dump` 18 | Supabase ; `scripts/backup-db.sh` |
+
+### Important
+
+| Sujet | À faire |
+|---|---|
+| **Migrations** | Rejeu sur base vierge bloqué à `00019` ; numéros `00012` / `00013` en double ; la base avait divergé du dépôt (`compute_pulsar_signals`, corrigé par `00047`). Recommandé : une migration de référence tirée du schéma de production (`pg_dump --schema-only`), puis la CLI Supabase pour les suivantes |
+| **Parcours de compte** | Renvoyer l'email de confirmation depuis la connexion (erreur « email non confirmé ») ; changer d'email et de mot de passe depuis le jeu |
+| **Durée de vie des signaux** | 2 h : un joueur qui revient plus tard ne voit plus ses signaux de démo, et les pulsars ne réapparaissent qu'au recalcul. Vérifier que c'est voulu côté game design |
+| **Tests** | Pas de test de bout en bout du parcours inscription → partie : Playwright sur une base de test |
+| **Contrôles Supabase** | Lancer les *Database Advisors* (sécurité et performance) depuis le dashboard |
+
+### Plus tard
+
+| Sujet | À faire |
+|---|---|
+| **Signature des traces** | Colonne `traces.signature` (copie texte du pseudo au dépôt, sans lien vers le compte) quand le dépôt de traces joueur sera branché sur la base |
+| **Dépôt git** | `Ressources/hyg_v42.csv` (33 Mo) vers Git LFS ou un téléchargement scripté |
+| **Suivi des erreurs** | PostHog ou Sentry (avec consentement si des mesures d'audience sont ajoutées) |
+

@@ -30,52 +30,9 @@ ON CONFLICT (id) DO UPDATE SET
   anomaly_level = EXCLUDED.anomaly_level,
   coordinates = EXCLUDED.coordinates;
 
--- ── Vaisseau prototype ARCA (user_id NULL pour prototype sans auth) ──
-INSERT INTO ships (id, user_id, name, voyage, generation, current_system_id, travel_state, classe)
-VALUES (
-  '11111111-1111-1111-1111-111111111111',
-  NULL,
-  'ARCA',
-  1,
-  1,
-  'SOL',
-  'IDLE',
-  'Vaisseau générationnel de classe I'
-)
-ON CONFLICT (id) DO UPDATE SET
-  name = EXCLUDED.name,
-  current_system_id = EXCLUDED.current_system_id,
-  travel_state = EXCLUDED.travel_state,
-  classe = EXCLUDED.classe;
-
--- Systèmes techniques du vaisseau ARCA (ship_systems)
-INSERT INTO ship_systems (ship_id, propulsion, hull, plasma_shield, observatory, reservoir, alimentation, atmosphere, medical, he3_current, he3_max, deuterium_current, deuterium_max, dry_mass, capacity)
-VALUES (
-  '11111111-1111-1111-1111-111111111111',
-  0.88, 0.97, 1, 1, 0.84, 0.71, 0.96, 0.95,
-  1484000, 2000000, 972000, 1200000,
-  800000, 12000
-)
-ON CONFLICT (ship_id) DO UPDATE SET
-  propulsion = EXCLUDED.propulsion,
-  hull = EXCLUDED.hull,
-  plasma_shield = EXCLUDED.plasma_shield,
-  observatory = EXCLUDED.observatory,
-  reservoir = EXCLUDED.reservoir,
-  alimentation = EXCLUDED.alimentation,
-  atmosphere = EXCLUDED.atmosphere,
-  medical = EXCLUDED.medical,
-  he3_current = EXCLUDED.he3_current,
-  he3_max = EXCLUDED.he3_max,
-  deuterium_current = EXCLUDED.deuterium_current,
-  deuterium_max = EXCLUDED.deuterium_max;
-
--- Population du vaisseau prototype
-INSERT INTO populations (ship_id, total, generation, average_age, birth_rate, will, social_cohesion, food_supply, medical_care)
-VALUES ('11111111-1111-1111-1111-111111111111', 10247, 1, 34.2, 0.012, 0.82, 0.67, 0.91, 0.95)
-ON CONFLICT (ship_id) DO UPDATE SET
-  total = EXCLUDED.total,
-  generation = EXCLUDED.generation;
+-- ── Vaisseaux ──
+-- Plus de vaisseau prototype : chaque joueur crée le sien avec start_new_game
+-- (migration 00046 : vaisseau à Sol, systèmes, population, carte, signaux de démo).
 
 -- ── Objets des systèmes (system_objects) ──
 -- SOL — étoile + 8 planètes (données NASA/IAU, distances centre-à-centre en UA)
@@ -586,33 +543,33 @@ VALUES
   ('KEPLER452', 'SUPERNOVA', NOW() - INTERVAL '5 hours', 3600, '{"designation": "SN-2341-K452", "phase": "radio_afterglow"}'::jsonb),
   ('GW_REGION_A', 'GW', NOW() - INTERVAL '8 hours', 16, '{"designation": "GW-2341-A", "chirp_mass_solar": 1.2, "distance_mpc": 130}'::jsonb);
 
--- ── Signaux démo (session seed-demo : clonés à la première visite Observatoire) ──
+-- ── Signaux modèles (session seed-demo, sans vaisseau) : copiés par start_new_game dans chaque nouvelle partie ──
 -- 1. Pulsar-like (UNKNOWN) — signal direction PSR B1919+21, sans lien system_object (pulsars via stellar_systems.object_type)
 INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
-VALUES ('UNKNOWN', NULL, NULL, 'seed-demo', '11111111-1111-1111-1111-111111111111', 1420000000, 'EM_RADIO', 72,
+VALUES ('UNKNOWN', NULL, NULL, 'seed-demo', NULL, 1420000000, 'EM_RADIO', 72,
   '{"azimuth": 290, "elevation": 22, "receivedAt": "2341-04-12", "polarization": "linéaire", "structure": "pulsé régulier", "sourceName": "PSR B1919+21"}'::jsonb);
 
 -- 2. Ponctuel : GRB (EVENT) — sursaut gamma
 INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
-SELECT 'EVENT', NULL, se.id, 'seed-demo', '11111111-1111-1111-1111-111111111111', 50000000000000, 'GAMMA_X', 42,
+SELECT 'EVENT', NULL, se.id, 'seed-demo', NULL, 50000000000000, 'GAMMA_X', 42,
   '{"azimuth": 260, "elevation": -35, "receivedAt": "2341-04-12", "polarization": "—", "structure": "sursaut", "sourceName": "GRB-2341-G667"}'::jsonb
 FROM signal_events se WHERE se.event_type = 'GRB' AND se.system_id = 'GLIESE667' ORDER BY se.created_at DESC LIMIT 1;
 
 -- 3. Ponctuel : supernova (EVENT) — émission radio post-explosion
 INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
-SELECT 'EVENT', NULL, se.id, 'seed-demo', '11111111-1111-1111-1111-111111111111', 1400000000, 'EM_RADIO', 3600,
+SELECT 'EVENT', NULL, se.id, 'seed-demo', NULL, 1400000000, 'EM_RADIO', 3600,
   '{"azimuth": 290, "elevation": 45, "receivedAt": "2341-04-11", "polarization": "linéaire", "structure": "continu décroissant", "sourceName": "SN-2341-K452"}'::jsonb
 FROM signal_events se WHERE se.event_type = 'SUPERNOVA' AND se.system_id = 'KEPLER452' ORDER BY se.created_at DESC LIMIT 1;
 
 -- 4. Ponctuel : onde gravitationnelle (EVENT) — fusion binaire
 INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
-SELECT 'EVENT', NULL, se.id, 'seed-demo', '11111111-1111-1111-1111-111111111111', 100, 'GRAVITATIONNEL', 16,
+SELECT 'EVENT', NULL, se.id, 'seed-demo', NULL, 100, 'GRAVITATIONNEL', 16,
   '{"azimuth": 200, "elevation": -35, "receivedAt": "2341-04-10", "polarization": "—", "structure": "sursaut", "sourceName": "GW-2341-A"}'::jsonb
 FROM signal_events se WHERE se.event_type = 'GW' AND se.system_id = 'GW_REGION_A' ORDER BY se.created_at DESC LIMIT 1;
 
 -- 5. Permanent : binaire compact (OBJECT) — émetteur gravitationnel
 INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
-SELECT 'OBJECT', so.id, NULL, 'seed-demo', '11111111-1111-1111-1111-111111111111', 100, so.emission_support, 16,
+SELECT 'OBJECT', so.id, NULL, 'seed-demo', NULL, 100, so.emission_support, 16,
   '{"azimuth": 200, "elevation": -35, "receivedAt": "2341-04-10", "polarization": "—", "structure": "sursaut", "sourceName": "BNS GW-2341"}'::jsonb
 FROM system_objects so
 WHERE so.system_id = 'GW_REGION_A' AND so.emits_signals = true;
@@ -621,8 +578,8 @@ WHERE so.system_id = 'GW_REGION_A' AND so.emits_signals = true;
 -- 7. Naturel : synchrotron (UNKNOWN) — 408 MHz, émission continue
 INSERT INTO signals (source_type, source_object_id, source_event_id, session_id, ship_id, frequency_hz, support, duration_sec, attributes)
 VALUES
-  ('UNKNOWN', NULL, NULL, 'seed-demo', '11111111-1111-1111-1111-111111111111', 1420405600, 'EM_RADIO', 72,
+  ('UNKNOWN', NULL, NULL, 'seed-demo', NULL, 1420405600, 'EM_RADIO', 72,
    '{"azimuth": 280, "elevation": -25, "receivedAt": "2341-04-14", "polarization": "linéaire", "structure": "non uniforme", "anomalous": true, "sourceName": "Sagittaire WOW-like"}'::jsonb),
-  ('UNKNOWN', NULL, NULL, 'seed-demo', '11111111-1111-1111-1111-111111111111', 408000000, 'EM_RADIO', 120,
+  ('UNKNOWN', NULL, NULL, 'seed-demo', NULL, 408000000, 'EM_RADIO', 120,
    '{"azimuth": 89, "elevation": -5, "receivedAt": "2341-04-11", "polarization": "linéaire", "structure": "continu", "sourceName": "Synchrotron"}'::jsonb);
 

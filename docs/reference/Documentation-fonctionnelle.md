@@ -21,8 +21,15 @@ LACUNA est une simulation d'exploration galactique **persistante, asynchrone et 
 
 ## Objets principaux
 
+### Joueur et compte
+- Compte par **email + mot de passe**, email confirmé obligatoire avant de jouer (pages connexion, inscription, mot de passe oublié)
+- Première connexion : écran **Bienvenue à bord** — le joueur choisit son **pseudo** (nom de commandant) et le **nom de son vaisseau** ; la partie démarre à Sol
+- Pseudo et nom du vaisseau sont **privés** (jamais montrés aux autres joueurs, conformément à l'anonymat du GDD) et **non uniques** ; modifiables dans Systèmes → Identité
+- Rôle `admin` (attribué à la main) : accès à la Vue 3D étoiles, outil de conception
+- Évolution prévue : le pseudo pourra signer les traces déposées par le joueur — copie texte au moment du dépôt, sans lien vers le compte
+
 ### Vaisseau
-- 1 par joueur, persistant (tables `ships`, `ship_systems`)
+- 1 par joueur, persistant (tables `ships`, `ship_systems`) ; nom choisi par le joueur, classe ARCA
 - États : `IDLE`, `IN_TRANSIT`, `ARRIVED`, `DAMAGED` (champ `travel_state`)
 - Systèmes : propulsion, coque, bouclier plasma, observatoire, réservoir, alimentation, atmosphère, médical
 - Carburant : He³, deutérium (tonnes en base ; affichage en ratio)
@@ -40,7 +47,7 @@ LACUNA est une simulation d'exploration galactique **persistante, asynchrone et 
 - Difficulté : 1 (évidente) à 4 (secrète)
 
 ### Interprétations
-- Texte libre, anonyme
+- Texte libre, anonyme : datée par la génération du vaisseau d'origine, l'auteur n'est jamais exposé
 - Niveaux : OBSERVATION, HYPOTHÈSE, CONVICTION, CERTITUDE
 
 ### Équation de Drake
@@ -53,7 +60,8 @@ LACUNA est une simulation d'exploration galactique **persistante, asynchrone et 
 ## Flux principal
 
 ```
-Observer le ciel → Sélectionner un système → Analyser (optionnel) 
+Créer un compte → Confirmer l'email → Nommer commandant et vaisseau (Bienvenue à bord)
+→ Observer le ciel → Sélectionner un système → Analyser (optionnel) 
 → Décider de voyager → Voyage (temps réel) → Arrivée 
 → Scan automatique → Traces détectées → Interpréter 
 → Décider : repartir / laisser trace / rester

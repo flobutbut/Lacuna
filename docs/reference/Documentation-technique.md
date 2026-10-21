@@ -145,7 +145,7 @@ Lacuna/
 │   ├── config.toml          # Config Supabase CLI
 │   ├── migrations/          # Nombreux fichiers (*.sql, 00001 à 00031…), liste à jour dans Documentation-backend.md
 │   ├── dumps_critiques/     # Exports PostgreSQL critiques (voir README)
-│   └── seed.sql             # Données initiales (traces immuables + systèmes prototype)
+│   └── seed.sql             # Données du monde (systèmes, traces immuables, objets) + signaux modèles ; pas de vaisseau (start_new_game)
 ├── scripts/                 # Scripts Node/shell (hors stellar_import)
 │   ├── generateExtendedSeed.js   # Génère seed étendu (yarn seed:generate)
 │   ├── backup-db.sh, pg_dump_critiques.sh

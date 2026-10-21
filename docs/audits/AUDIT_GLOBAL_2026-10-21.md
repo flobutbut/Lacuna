@@ -6,6 +6,8 @@ Audit en lecture seule de `src/`, de la configuration, des dépendances et des m
 
 **État de départ** : 128 fichiers dans `src/` (~25 400 lignes), 9 routes, 13 stores Pinia, 18 composables, 34 modules `lib/`, 26 feuilles CSS globales, 47 migrations SQL. Le build passe en 2,3 s.
 
+> **Suivi (21/10/2026, fin de journée)** — Lots 1, 2 et 3 appliqués (commits `4e6d475`, `3e24b67`, `747638f`), avec ces écarts : `SystemView` et `PageCarte` n'avaient pas de rendu canvas à extraire (§3.6) ; les imports `d3` ciblés n'apportent rien au poids (Rollup élimine déjà le code inutilisé). Les points Supabase du §7.2 sont traités par les comptes joueurs (migrations 00046–00048, `docs/architecture/PLAN_COMPTES_JOUEURS.md`) : RLS par joueur, prototype supprimé, `compute_pulsar_signals` restreinte, RLS activée sur les constellations. Restent ouverts : numéros de migration en double (00012, 00013), rejeu sur base vierge (00019), CSV de 33 Mo dans git — repris dans la liste « avant mise en ligne » du plan (§9).
+
 ---
 
 ## 1. Synthèse et priorités

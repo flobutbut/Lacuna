@@ -15,7 +15,7 @@
 5. [Migrations](#5-migrations)
 6. [Convention de nommage des IDs stellaires](#6-convention-de-nommage-des-ids-stellaires)
 7. [RLS (Row Level Security)](#7-rls-row-level-security)
-8. [Seed et données prototype](#8-seed-et-données-prototype)
+8. [Seed et données du monde](#8-seed-et-données-du-monde)
 9. [Mapping Store ↔ Table](#9-mapping-store--table)
 10. [Configuration](#10-configuration)
 11. [Scripts d'import (stellar_import)](#11-scripts-dimport-stellar_import)
@@ -28,11 +28,13 @@
 | Composant | Technologie |
 |-----------|-------------|
 | **Base de données** | PostgreSQL (Supabase) |
-| **Auth** | Supabase Auth (à intégrer) |
+| **Auth** | Supabase Auth — email + mot de passe, confirmation d'email obligatoire ; un vaisseau par compte (`docs/architecture/PLAN_COMPTES_JOUEURS.md`) |
 | **Client frontend** | `@supabase/supabase-js` |
 | **MCP** | user-supabase (list_tables, execute_sql, apply_migration) |
 
 Le backend LACUNA centralise les données de jeu dans Supabase : systèmes stellaires, objets des systèmes, traces, observations, vaisseaux, population, carte, équation de Drake.
+
+**Données du monde** (systèmes, objets, traces, nébuleuses, constellations, Drake) : lecture publique. **Données de jeu** (vaisseau, signaux, observations, carte…) : rattachées au vaisseau du joueur connecté, protégées par RLS (§7).
 
 ---
 
@@ -76,8 +78,12 @@ supabase/
 │   ├── 00030_conception_add_star_object_type.sql
 │   ├── 00031_ship_transit_rls_and_travels.sql
 │   ├── 00032_stellar_systems_object_type.sql
-│   └── 00033_stellar_systems_attributes.sql
-└── seed.sql             # Données initiales (systèmes, traces, objets, system_objects)
+│   ├── 00033_stellar_systems_attributes.sql
+│   ├── 00034 … 00045    # Pulsars (object_type, signaux PULSAR, compute_pulsar_signals, flux)
+│   ├── 00046_player_accounts.sql   # profiles, start_new_game
+│   ├── 00047_signals_by_ship.sql   # session_id facultatif, compute_pulsar_signals par vaisseau
+│   └── 00048_player_rls.sql        # RLS par joueur, suppression du prototype
+└── seed.sql             # Données initiales du monde (systèmes, traces, objets) + signaux modèles
 ```
 
 ---
@@ -270,8 +276,8 @@ File d'observations Laboratoire.
 | Colonne | Type | Description |
 |---------|------|-------------|
 | id | UUID PK | |
-| session_id | TEXT | Identifiant localStorage (prototype sans auth) |
-| ship_id | UUID FK | Nullable, pour auth future |
+| session_id | TEXT | Obsolète (prototype), facultatif depuis 00047 |
+| ship_id | UUID FK | → ships (CASCADE) — propriétaire de l'observation |
 | type | observation_type | SIGNAL, PLANETE, ATMOSPHERE... |
 | system_id | TEXT FK | → stellar_systems |
 | name | TEXT | |
@@ -302,11 +308,12 @@ Signaux captés par les capteurs du vaisseau. Pointe vers la source (objet ou é
 | Colonne | Type | Description |
 |---------|------|-------------|
 | id | UUID PK | |
-| source_type | TEXT | OBJECT \| EVENT |
+| source_type | TEXT | OBJECT \| EVENT \| PULSAR \| UNKNOWN |
 | source_object_id | UUID FK | → system_objects (pulsar, magnétar...) |
 | source_event_id | UUID FK | → signal_events (supernova, GRB...) |
-| session_id | TEXT | Pour prototype sans auth |
-| ship_id | UUID FK | Nullable, pour auth future |
+| source_system_id | TEXT FK | → stellar_systems (pulsars, 00036) |
+| session_id | TEXT | Obsolète (prototype), facultatif depuis 00047 ; `'seed-demo'` + `ship_id` nul = signal modèle |
+| ship_id | UUID FK | → ships (CASCADE) — propriétaire ; nul uniquement pour les signaux modèles |
 | frequency_hz | DECIMAL | |
 | support | signal_support | EM_RADIO, GAMMA_X... |
 | duration_sec | INT | |
@@ -330,14 +337,26 @@ Rapports d'analyse persistés (instruments Laboratoire).
 | results | TEXT | Résultats bruts ou JSON |
 | created_at | TIMESTAMPTZ | |
 
+#### `profiles`
+Profil privé du joueur (00046). Jamais exposé aux autres joueurs.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | UUID PK FK | → auth.users (CASCADE) |
+| pseudo | TEXT | 2–24 caractères, espaces en bord retirés (trigger), **non unique** |
+| role | TEXT | `player` (défaut) \| `admin` — non modifiable par le joueur (droit UPDATE limité à `pseudo`) |
+| created_at, updated_at | TIMESTAMPTZ | `updated_at` tenu par trigger |
+
+Passer un compte en admin : `UPDATE profiles SET role = 'admin' WHERE id = '<uuid>';` (SQL Editor).
+
 #### `ships`
-Vaisseaux joueurs (1 par user). Nom personnalisable par l'utilisateur.
+Vaisseaux joueurs (1 par compte, créé par `start_new_game`). Nom choisi et modifiable par le joueur, privé.
 
 | Colonne | Type | Description |
 |---------|------|-------------|
 | id | UUID PK | |
-| user_id | UUID FK | → auth.users (nullable pour prototype) |
-| name | TEXT | Nom du vaisseau (ex. ARCA) |
+| user_id | UUID FK | → auth.users (CASCADE), UNIQUE |
+| name | TEXT | Nom du vaisseau, 2–32 caractères (contrainte `ships_name_length`) ; la classe reste ARCA |
 | classe | TEXT | Classe du vaisseau (ex. Vaisseau générationnel de classe I) |
 | built_year | INT | Année construction fiction = année(created_at) + 212 (trigger) |
 | voyage | INT | |
@@ -460,7 +479,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00003 | Table observations + types observation_* |
 | 00004 | Table system_objects + types system_object_type, confirmation_status |
 | 00005 | Option A : extension system_objects (PULSAR, NEUTRON_STAR, MAGNETAR, colonnes émission), signal_events, signals |
-| 00006 | ships : current_system_id, systems étendus, fuel, policy Anon can read prototype |
+| 00006 | ships : current_system_id, systems étendus, fuel, policy Anon can read prototype (supprimée en 00048) |
 | 00007 | Table ship_systems (systèmes, carburant, capacités). Retrait systems/fuel de ships. |
 | 00008 | ships : classe, built_year (trigger = année(created_at) + 212) |
 | 00009 | RPC get_visible_systems : filtre magnitude apparente. Coord. x,y,z (HYG) ou ra/dec (legacy). Magnitude : apparent_magnitude HYG si viewer=SOL, sinon M_abs+5*log10(d/10). |
@@ -478,7 +497,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00019 | Pagination get_visible_systems : p_magnitude_min, p_limit, p_offset ; luminosity, color_index ; chargement deux passes (mag≤8 puis mag 8–18) |
 | 00020 | Correction SOL : coordinates x,y,z=0, apparent_magnitude, luminosity (origine référentiel) |
 | 00021 | Suppression doublon HYG gl-gl-71 (Tau Ceti → TAU_CETI) |
-| 00022 | map_nodes / map_edges : policies anon pour prototype (user_id NULL) |
+| 00022 | map_nodes / map_edges : policies anon pour prototype (user_id NULL) — supprimées en 00048 |
 | 00023 | Conversion ra/dec → x/y/z pour systèmes seed sans coordonnées cartésiennes |
 | 00024 | Drop fonctions obsolètes get_visible_systems (surcharges) |
 | 00025 | Constellations : stellar_systems.constellation_abbr, table constellations (88 IAU), constellation_lines (stick-figures) |
@@ -487,11 +506,35 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00028 | field_sources NASA : name, designation, confirmation_status, mass_earth, radius_earth sur system_objects |
 | 00029 | RPC get_systems_for_conception : systèmes avec coordonnées, paginé (Vue 3D conception) |
 | 00030 | get_systems_for_conception : colonne object_type (STAR, PULSAR, NEUTRON_STAR, MAGNETAR depuis system_objects) |
-| 00031 | Transit : policy Anon can update prototype ship (ships), table ship_travels + RLS (anon insert/read prototype, users manage own) |
+| 00031 | Transit : policy Anon can update prototype ship (ships), table ship_travels + RLS (anon insert/read prototype — supprimées en 00048 ; users manage own) |
 | 00032 | stellar_systems : colonne object_type (STAR, WHITE_DWARF, NEUTRON_STAR, PULSAR, MAGNETAR, BLACK_HOLE) — import SIMBAD |
 | 00033 | stellar_systems : colonne attributes (jsonb) pour paramètres pulsars ATNF (pulse_period_s, magnetic_field_gauss, etc.) |
+| 00034 | get_systems_for_conception : filtre pulsar depuis stellar_systems.object_type |
+| 00035 | Suppression de l'objet pulsar artificiel de system_objects |
+| 00036 | signals : colonne source_system_id → stellar_systems |
+| 00037 | signals : duration_sec facultatif |
+| 00038 | signals : contrainte de source mise à jour |
+| 00039 | signals : source_type PULSAR |
+| 00040 | RPC get_pulsars_with_period |
+| 00041 | RPC compute_pulsar_signals (signaux pulsars visibles depuis le vaisseau) |
+| 00042–00045 | compute_pulsar_signals : formules de flux relatif, rotation_frequency_hz (la version en base utilise aussi s1400_mjy — reprise dans 00047) |
+| 00046 | Comptes joueurs : table profiles (pseudo, rôle), contrainte ships.name, RPC start_new_game, signaux modèles détachés du prototype |
+| 00047 | session_id facultatif (signals, observations), index ship_id ; compute_pulsar_signals(vaisseau, bande) dédupliquée par vaisseau et réservée au propriétaire |
+| 00048 | RLS par joueur (§7), suppression du vaisseau prototype et des données de session, RLS sur constellations, TRUNCATE retiré à l'API |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
+
+**Procédure utilisée en production** (sans CLI Supabase) : sauvegarde `pg_dump` 18 (la base est en Postgres 17.6) puis `psql --single-transaction -v ON_ERROR_STOP=1 -f <migration>` — détail dans `docs/architecture/PLAN_COMPTES_JOUEURS.md` §8.
+
+**Rejeu sur base vierge** : échoue à `00019` (`function name "get_visible_systems" is not unique`) ; à corriger avant de recréer une base de zéro.
+
+### RPC `start_new_game(p_pseudo, p_ship_name)` (migration 00046)
+
+`SECURITY DEFINER`, réservée à `authenticated`. Crée en une transaction : profil, vaisseau à Sol, `ship_systems` et `populations` (valeurs par défaut des tables), nœud Sol de la carte, copie des signaux modèles. Erreurs : `42501` (non connecté), `22023` (longueurs), `23505` (partie déjà créée).
+
+### RPC `compute_pulsar_signals(p_ship_id, p_band)` (migrations 00041 → 00047)
+
+`SECURITY DEFINER`, réservée à `authenticated` et au **propriétaire** du vaisseau. Insère un signal `PULSAR` par pulsar visible dans la bande (P, L, X, G), dédupliqué par vaisseau. Renvoie `{ inserted, evaluated, band, ship_id }`.
 
 ### RPC `get_visible_systems` (migration 00009)
 
@@ -568,37 +611,27 @@ En cas de conflit entre sources, l'ID retenu suit cet ordre :
 
 ## 7. RLS (Row Level Security)
 
-| Table | Politique | Accès |
-|-------|-----------|-------|
-| ships | Users can manage own ship | auth.uid() = user_id |
-| ships | Anon can read prototype ship | user_id IS NULL (lecture anon sans auth) |
-| ships | Anon can update prototype ship | user_id IS NULL (UPDATE pour transit, voyage — migration 00031) |
-| ship_travels | Anon can insert prototype ship travels | ship_id = vaisseau prototype (user_id NULL) |
-| ship_travels | Anon can read prototype ship travels | idem |
-| ship_travels | Users can manage own ship travels | ship_id IN (ships où user_id = auth.uid()) |
-| ship_systems | Users can read own ship_systems | Via ship (user ou prototype) |
-| populations | Users can manage own population | Via ship |
-| ship_traces | Users can manage own ship_traces | Via ship |
-| logbook_entries | Users can manage own logbook | Via ship |
-| map_nodes / map_edges | Users can manage own map | Via ship |
-| traces | Public read traces | SELECT pour tous |
-| stellar_systems | Public read stellar_systems | SELECT pour tous |
-| system_objects | Public read system_objects | SELECT pour tous |
-| signal_events | Public read signal_events | SELECT pour tous |
-| signals | Allow all for prototype | Tout ouvert (filtrage session_id côté client) |
-| interpretations | Users can insert / Anyone can read / Allow delete | INSERT ouvert, SELECT ouvert, DELETE ouvert |
-| observations | Allow all for prototype | Tout ouvert (filtrage session_id côté client) |
-| lab_reports | Allow all for prototype | Tout ouvert |
-| drake_equation / drake_history | Lecture publique | SELECT pour tous |
-| nebulas | Lecture publique | SELECT pour tous |
-| constellations | Lecture publique | SELECT pour tous |
-| constellation_lines | Lecture publique | SELECT pour tous |
+État après la migration `00048` (comptes joueurs). « Son vaisseau » = `ship_id IN (SELECT id FROM ships WHERE user_id = auth.uid())`.
+
+| Table | Lecture | Écriture |
+|-------|---------|----------|
+| profiles | soi (`authenticated`) | UPDATE de `pseudo` seulement ; création par `start_new_game` |
+| ships | son vaisseau | UPDATE de son vaisseau ; pas d'INSERT (→ `start_new_game`) ni de DELETE |
+| ship_systems, populations | son vaisseau | aucune |
+| signals, observations | son vaisseau | son vaisseau |
+| lab_reports | via ses observations | via ses observations |
+| map_nodes, map_edges, ship_travels, ship_traces, logbook_entries | son vaisseau | son vaisseau |
+| interpretations | tous les joueurs connectés, **sans `ship_id`** (droits par colonne) | INSERT avec son `ship_id` ; DELETE des siennes |
+| traces | joueurs connectés, **sans `discovered_by`** | aucune |
+| stellar_systems, system_objects, signal_events, nebulas, drake_*, constellations, constellation_lines | publique | aucune |
+
+Sans compte (`anon`) : aucune donnée de jeu, données du monde en lecture. `TRUNCATE` retiré à `anon` et `authenticated` (non soumis à la RLS).
 
 ---
 
-## 8. Seed et données prototype
+## 8. Seed et données du monde
 
-**Fichier** : `supabase/seed.sql`
+**Fichier** : `supabase/seed.sql` — données du monde uniquement. Plus de vaisseau prototype : chaque joueur crée le sien avec `start_new_game`.
 
 | Donnée | Contenu |
 |--------|---------|
@@ -607,6 +640,7 @@ En cas de conflit entre sources, l'ID retenu suit cet ordre :
 | traces | WOW-1977-A, OUMUAMUA-2017, BENNU-NB-2023 + PROXIMA-001, BARNARD-001, ROSS128-001, EPSILON-001, TAU-CETI-001, GLIESE667-001 |
 | nebulas | Boucle de Barnard, Orion M42, Tête de Cheval, Rosette (formes ellipse, IR-only) |
 | drake_equation | Une ligne initiale |
+| signals (modèles) | 7 signaux de démo, `session_id = 'seed-demo'`, `ship_id` nul — copiés par `start_new_game` dans chaque nouvelle partie |
 | constellations / constellation_lines | Peuplés par `populate_constellations.py` (88 IAU + segments depuis constellation.shapes.iau.txt), pas par seed |
 
 **Exécution** : `supabase db reset` exécute migrations + seed. Après import HYG, exécuter `populate_constellations.py` pour les constellations.
@@ -620,11 +654,11 @@ En cas de conflit entre sources, l'ID retenu suit cet ordre :
 | stellarSystems | stellar_systems, constellation_lines | SELECT stellar_systems (RPC get_visible_systems pour Observatoire ; get_systems_for_conception pour Vue 3D conception). SELECT constellation_lines pour stick-figures. Fusion naines brunes L/T/Y pour filtre IR. |
 | nebulas | nebulas | SELECT (formes étendues, IR-only). SkyCanvas projection ellipse/polygone. |
 | systemObjects | system_objects | SELECT par system_id (corps Observatoire) |
-| observations | observations | SELECT, INSERT, UPDATE (state), DELETE. Filtre session_id |
-| traces (PageArtefacts) | traces, interpretations | SELECT traces, interpretations. INSERT interpretation. DELETE interpretation |
-| traces (tracesStore) | — | Mémoire (playerTraces, formalisation) — à brancher sur ship_traces |
-| signaux | — | Mémoire uniquement (éphémère) |
-| ship | ships, ship_travels | SELECT ships (prototype ou user). UPDATE ships (transit : travel_state, current_system_id, voyage, travel_*). INSERT ship_travels à chaque arrivée (completeTransit). |
+| observations | observations | SELECT, INSERT, UPDATE (state), DELETE. Filtre ship_id (vaisseau du joueur) |
+| traces | traces, interpretations | SELECT traces immuables, interpretations (sans ship_id). INSERT interpretation (ship_id, génération). DELETE de ses interprétations. Traces joueur en mémoire (playerTraces) — à brancher sur ship_traces |
+| signaux | signals, RPC compute_pulsar_signals | SELECT / INSERT / DELETE filtrés par ship_id ; calcul des pulsars par bande |
+| ship | ships, ship_systems, populations, ship_travels | SELECT du vaisseau du joueur (attend la session). UPDATE ships (transit, renameShip). INSERT ship_travels à chaque arrivée |
+| auth | auth (Supabase), profiles, ships, RPC start_new_game | Session, inscription, connexion, mot de passe ; profil (pseudo, rôle), hasShip ; startNewGame, updatePseudo |
 | supabase | Client | isConfigured() |
 
 ---
@@ -769,6 +803,7 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 
 | Date | Modifications |
 |------|---------------|
+| 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |
 
 ---

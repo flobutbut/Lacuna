@@ -15,7 +15,7 @@
 | **Documentation** | ✅ Créée | Technique, Backend, Status, Fonctionnelle, Interface-DB-mapping, LACUNA_I18N_SETTINGS ; conception : LACUNA_GDD, LACUNA_ARCS, LACUNA_LORE, LACUNA_SCENARIOS, LACUNA_PHYSICS ; config : LACUNA_TRACES ; procédural (docs/procedural/) : LACUNA_PROCEDURAL_DATA_MODEL, LACUNA_PROCEDURAL_PLANETS, LACUNA_PROCEDURAL_TRACES ; features : LACUNA_LABORATOIRE_INSTRUMENTS, LACUNA_INSTRUMENTAL_EXTRAPOLATION, LACUNA_NOTIFICATIONS, LACUNA_VUE_3D_ETOILES_CONCEPTION |
 | **Maquette UI** | ✅ Migrée | Composants Vue |
 | **Intégration Vue** | ✅ Faite | Ciel, Header, Panels, Instruments |
-| **Auth** | ⏳ À faire | Supabase Auth |
+| **Auth** | ✅ Fait | Email + mot de passe, confirmation obligatoire, un vaisseau par compte, RLS par joueur (`docs/architecture/PLAN_COMPTES_JOUEURS.md`) |
 | **Gameplay** | ⏳ À faire | Voyage, traces, journal |
 
 ---
@@ -39,10 +39,10 @@
 - [x] Patch luminosity (luminosity_patch.py) — 367 systèmes (luminosité extrapolée depuis spectral_type, EXTRAPOLATED).
 - [x] Patch Gaia DR3 (gaia_patch.py) — ~4 944 systèmes (color_index bp_rp, age estimation HR, matching HIP + cone search).
 - [x] Patch ATNF (atnf_pulsar_patch.py) — 2 945 pulsars (coordinates, distance, attributes, age depuis ATNF Catalogue). Total 3 918 pulsars en base (stellar_systems.object_type).
-- [x] Table observations (file Laboratoire) — session_id pour prototype sans auth, persistée en base
-- [ ] Auth (inscription/connexion)
-- [x] Vaisseau prototype ARCA — current_system_id, store ship, Header/PageSystemes. Table ship_systems (systèmes, carburant, capacités).
-- [ ] Création vaisseau au premier login (avec auth)
+- [x] Table observations (file Laboratoire) — persistée en base, rattachée au vaisseau du joueur (ship_id)
+- [x] Auth (inscription, confirmation d'email, connexion, mot de passe oublié) — store auth, garde de routeur
+- [x] Vaisseau du joueur — current_system_id, store ship, Header/PageSystemes, table ship_systems. Prototype ARCA partagé supprimé (migration 00048).
+- [x] Création de partie au premier login — écran /bienvenue (pseudo, nom du vaisseau), RPC start_new_game
 - [x] Modèle Option A validé — sources de signaux : objets émetteurs (PULSAR, NEUTRON_STAR, MAGNETAR) dans system_objects ; événements transients dans signal_events ; table signals. Doc backend mise à jour.
 - [x] Migrations Option A — migration 00005 (extension system_objects, signal_events, signals). Seed : système PSR_B1919 (pulsar via stellar_systems.object_type, pas d'objet system_objects).
 - [x] Store signaux branché sur table signals (fetch + INSERT). Migration 00011 : colonne anomalous sur observations. Support dérivé depuis la source (SignalModal). Seed signaux démo (seed-demo), clonage à la première visite. captureFromSystemObjects() pour objets émetteurs du système courant.
@@ -101,8 +101,8 @@
 
 ## Prochaines étapes prioritaires
 
-1. **Auth** — Mise en place Supabase Auth + création vaisseau
-2. **Onboarding** — Premiers écrans selon GDD
+1. **Avant une mise en ligne** — liste priorisée dans `docs/architecture/PLAN_COMPTES_JOUEURS.md` §9 (emails, RGPD, anti-triche, migrations, sauvegardes, hébergement)
+2. **Onboarding** — Premiers écrans selon GDD (au-delà de Bienvenue à bord)
 3. **Observatoire complet** — Détail système, scan, fixer cap
 
 ---
@@ -169,3 +169,5 @@
 | 2026-03-21 | simbad_exotic_import.py : 4 419 créés (WD, PSR, BH) ; atnf_pulsar_patch.py : 2 945 pulsars. |
 | 2026-03-15 | Documentation Vue Radar — Documentation-technique (section RadarView), -status, -fonctionnelle. |
 | 2026-03-16 | Audit documentation — stats réelles : 48 195 stellar_systems, 2 155 system_objects ; couverture champs (color_index 87,3 %, age 14,8 %, luminosity 90 %, constellation/coords/object_type 100 %, atmosphere_composition 1 %) ; resolve_conflicts. |
+| 2026-10-21 | Audit global (docs/audits/AUDIT_GLOBAL_2026-10-21.md) et lots 1–3 : bugs, code mort, ESLint / Prettier / Vitest, tokens couleur, stores par domaine (observatoire, radar, transit, notifications), scène Three.js partagée, CSS par page. |
+| 2026-10-21 | Comptes joueurs (migrations 00046–00048) : inscription / connexion par email, écran Bienvenue à bord (pseudo et vaisseau privés), données rattachées au vaisseau, RLS par joueur, suppression du prototype, identité modifiable, Vue 3D réservée aux admins. |
