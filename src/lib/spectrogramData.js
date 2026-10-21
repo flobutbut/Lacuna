@@ -210,8 +210,8 @@ export function computeSpectrogramColumn(values, freqBins) {
     fftRow.push(Math.sqrt(re[k] * re[k] + im[k] * im[k]) * scale)
   }
   for (let k = maxK; k < freqBins; k++) fftRow.push(0)
-  const row = []
-  for (let r = freqBins - 1; r >= 0; r--) row.push(fftRow[r])
+  // Ordre croissant des fréquences : row[k] = bin k (k × SAMPLE_RATE / N Hz), comme l'affichage Radar
+  const row = fftRow
 
   const maxMagnitude = row.length ? Math.max(...row) : 0
   let intensity = row.reduce((s, v) => s + v, 0) / row.length || 0

@@ -127,7 +127,7 @@ Lacuna/
 │   │   ├── spectreStellaireData.js  # Spectre stellaire + courbe de lumière
 │   │   ├── orbitalData.js       # Données orbites (analyseur orbital, résonances)
 │   │   ├── atmosphereData.js    # Profil moléculaire (spectromètre atmosphérique)
-│   │   ├── radarSpectrum.js  # Radar : index buffer de colonnes, bornes de fréquence, injection pulsars, libellés temps
+│   │   ├── radarSpectrum.js  # Radar : index buffer de colonnes, bornes de fréquence, injection pulsars, échelle dB, libellés temps
 │   │   ├── random.js        # seededRandom (mulberry32) — données Laboratoire et Radar
 │   │   └── cssVars.js       # getCssVar — tokens CSS pour canvas / Three.js
 │   ├── router/
@@ -253,8 +253,13 @@ Composant `RadarView.vue` — spectrogramme temps réel + courbe d'intensité, c
 | Élément | Description |
 |---------|-------------|
 | **Acquisition** | `useRadarSpectrogram` (PageObservatoire) — échantillons à 250 Hz, `tick()` toutes les 100 ms, `tickCount` (signal réactif). `start()` reprend l'horloge là où elle s'était arrêtée |
-| **Colonnes** | `useRadarColumnBuffer` — buffer circulaire partagé (`HISTORY_SIZE` = 7 200 colonnes = 12 min), créé une fois, jamais vidé ; champ `count` (colonnes écrites). RadarView écrit **une colonne par tick** (`watch(tickCount)` → `catchUpColumns()`, une fenêtre d'échantillons par tick, injection des pulsars), même masquée ; RadarMiniature lit |
-| **Rendu** | `drawViewport()` — spectrogramme écrit en pixels (`ImageData`, palette Viridis précalculée), intensité, seuil, repères de temps (`ageLabelInterval`), axes, sélection, réticule. À 1 s / 10 s par colonne, chaque pixel prend le **maximum** des colonnes qu'il couvre ; rien n'est dessiné au-delà de l'historique disponible |
+| **Bruit** | `useRadarNoise` — bruit thermique + synchrotron (AR(1)) ramené à un écart-type propre à la bande : P ≈ 0,3, L ≈ 0,18, X ≈ 0,07, γ ≈ 0,014 (latitude galactique comprise) ; raie à 12,5 Hz en bande L. Coupé par `radarNoiseEnabled` |
+| **Pulsars** | `signaux.activePulsarSignals` — pulsars de la **bande active** seulement (L et γ en ont, P et X non). `injectPulsarSignals` ajoute une impulsion de `PULSAR_REFERENCE_MAGNITUDE × PULSAR_SNR_MAX × flux^0,6` (référence = bruit médian de la bande L) : un pulsar ressort peu en P, beaucoup en γ. Phase propre à chaque pulsar (`pulsarPhaseOffset`), temps d'acquisition réel de la colonne, toute impulsion tombant dans la colonne est vue ; au-delà de Nyquist, fréquence repliée (`aliasedFrequencyHz`) |
+| **Colonnes** | `useRadarColumnBuffer` — buffer circulaire partagé (`HISTORY_SIZE` = 7 200 colonnes = 12 min), créé une fois, jamais vidé ; champ `count` (colonnes écrites). RadarView écrit **une colonne par tick** (`watch(tickCount)` → `catchUpColumns()`, une fenêtre d'échantillons par tick, injection des pulsars), même masquée ; RadarMiniature lit. Les colonnes gardent les magnitudes brutes (FFT, fréquences croissantes) |
+| **Échelle de couleur** | En dB, **recalculée sur la fenêtre visible** (temps et zoom fréquentiel) : plancher 10 dB sous le bruit médian, plafond au maximum de la fenêtre, au moins 40 dB d'étendue (`dbDisplayScale`, `dbToLevel`). Même échelle dans la miniature |
+| **Échelle de temps** | ms par pixel : 10 ms = zoom ×10 (une colonne de 100 ms sur 10 px), 100 ms = une colonne par pixel, 1 s / 10 s = **maximum** de 10 / 100 colonnes par pixel (`ticksPerPixel`, `ageAtPx`) |
+| **Seuil INT.** | Fraction (0–1) de l'échelle dB : un pixel dont le bin le plus fort reste sous le seuil est masqué ; courbe d'intensité et ligne de seuil sur la même échelle |
+| **Rendu** | `drawViewport()` — spectrogramme écrit en pixels (`ImageData`, palette Viridis précalculée), intensité, seuil, repères de temps (`ageLabelInterval`), axes, sélection, réticule ; rien n'est dessiné au-delà de l'historique disponible |
 | **Boucle rAF** | `frame()` tourne **seulement quand la vue Radar est affichée** et ne redessine que si `needsDraw` (nouvelle colonne, réglage, pointeur, défilement) |
 | **Taille** | `resizeCanvases()` (ResizeObserver) — ajuste les canvas sans toucher aux données |
 | **Pause** | `radarStore.radarPaused` — plus de nouvelles colonnes affichées, molette et sélection actives |
@@ -263,7 +268,7 @@ Composant `RadarView.vue` — spectrogramme temps réel + courbe d'intensité, c
 | **Sélection** | Zone (colonnes × bins) en pause — fréquences via `binAtY` / `binsToYRange` (haut = aigu, zoom fréquentiel compris) — `emit('signal-selected', { startCol, endCol, startBin, endBin, lowHz, highHz })` (bins croissants) |
 | **Bouton LIVE** | Affiché quand `currentScrollOffset > LIVE_THRESHOLD` — clic → `targetScrollOffset = 0`, easing vers live |
 
-**Calculs partagés** : `lib/radarSpectrum.js` (index de colonnes, bornes de fréquence, injection pulsars, libellés de temps, correspondance fréquence ↔ hauteur), testés. **Dépendances** : `spectrogramData.js` (`computeSpectrogramColumn`), D3 (`interpolateViridis`), stores `radar`, `observatoire`, `signaux`.
+**Calculs partagés** : `lib/radarSpectrum.js` (index de colonnes, bornes de fréquence, injection pulsars, échelle dB, libellés de temps, correspondance fréquence ↔ hauteur), testés. **Dépendances** : `spectrogramData.js` (`computeSpectrogramColumn`), D3 (`interpolateViridis`), stores `radar`, `observatoire`, `signaux`.
 
 **Mesures (21/10/2026)** : un dessin complet coûte 2 à 4 ms (51 ms auparavant) ; la vue ciel reste à ~9 ms par image avec le radar actif (53 ms auparavant, la vue radar masquée se redessinant en continu).
 

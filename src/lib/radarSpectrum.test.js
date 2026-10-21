@@ -1,25 +1,41 @@
 import { describe, expect, it } from 'vitest'
 import {
+  PULSAR_REFERENCE_MAGNITUDE,
+  PULSAR_SNR_MAX,
+  RADAR_DB_FLOOR_MARGIN,
+  RADAR_DB_MIN_SPAN,
   RADAR_FREQ_BINS,
+  ageAtPx,
   ageLabelInterval,
+  aliasedFrequencyHz,
   binAtY,
   binToHz,
   binsToYRange,
   columnIndexAt,
+  dbDisplayScale,
+  dbToLevel,
   formatAgeLabel,
   freqRangeToBins,
   injectPulsarSignals,
+  magnitudeToDb,
+  pulsarPhaseOffset,
   ticksPerPixel,
 } from './radarSpectrum'
 
-describe('ticksPerPixel', () => {
-  it('donne 1 colonne par pixel à 100 ms et au-dessous', () => {
+describe('ticksPerPixel / ageAtPx', () => {
+  it('donne 1 colonne par pixel à 100 ms et 0,1 à 10 ms (zoom ×10)', () => {
     expect(ticksPerPixel(100)).toBe(1)
-    expect(ticksPerPixel(10)).toBe(1)
+    expect(ticksPerPixel(10)).toBeCloseTo(0.1)
   })
 
   it('regroupe les colonnes aux échelles plus longues', () => {
     expect(ticksPerPixel(1000)).toBe(10)
+  })
+
+  it('étale une colonne sur 10 pixels à 10 ms', () => {
+    const ages = Array.from({ length: 20 }, (_, i) => ageAtPx(99 - i, 100, ticksPerPixel(10)))
+    expect(ages.slice(0, 10).every((a) => a === 0)).toBe(true)
+    expect(ages.slice(10).every((a) => a === 1)).toBe(true)
   })
 })
 
@@ -38,6 +54,12 @@ describe('columnIndexAt', () => {
   it('recule dans le passé avec le défilement', () => {
     expect(columnIndexAt({ ...base, px: 9, scrollOffset: 5 })).toBe(44)
   })
+
+  it('répète la même colonne sur 10 pixels en zoom ×10', () => {
+    expect(columnIndexAt({ ...base, ticksPerPx: 0.1, px: 9 })).toBe(49)
+    expect(columnIndexAt({ ...base, ticksPerPx: 0.1, px: 0 })).toBe(49)
+    expect(columnIndexAt({ ...base, ticksPerPx: 0.1, innerW: 20, px: 0 })).toBe(48)
+  })
 })
 
 describe('freqRangeToBins', () => {
@@ -51,27 +73,67 @@ describe('freqRangeToBins', () => {
 })
 
 describe('injectPulsarSignals', () => {
-  const pulsar = { fluxRelative: 1, pulsePeriodS: 1, rotationFrequencyHz: 62.5 }
+  const pulsar = { fluxRelative: 1, pulsePeriodS: 1, rotationFrequencyHz: 62.5, phaseOffset: 0 }
+  const peak = PULSAR_REFERENCE_MAGNITUDE * PULSAR_SNR_MAX
 
   it('ajoute une impulsion centrée sur la fréquence de rotation au début de la période', () => {
     const mags = injectPulsarSignals(new Array(RADAR_FREQ_BINS).fill(0), [pulsar], { tSec: 0 })
-    const peak = mags.indexOf(Math.max(...mags))
-    expect(peak).toBe(64)
-    expect(mags[64]).toBeCloseTo(0.8)
+    expect(mags.indexOf(Math.max(...mags))).toBe(64)
+    expect(mags[64]).toBeCloseTo(peak)
     expect(mags[0]).toBe(0)
   })
 
-  it('n’ajoute rien hors de l’impulsion ou sous le seuil', () => {
+  it('n’ajoute rien hors de l’impulsion', () => {
     const horsImpulsion = injectPulsarSignals(new Array(RADAR_FREQ_BINS).fill(0), [pulsar], { tSec: 0.5 })
     expect(Math.max(...horsImpulsion)).toBe(0)
-    const sousSeuil = injectPulsarSignals(new Array(RADAR_FREQ_BINS).fill(0), [{ ...pulsar, fluxRelative: 0.1 }], { tSec: 0, threshold: 0.5 })
-    expect(Math.max(...sousSeuil)).toBe(0)
   })
 
-  it('étale un pulsar milliseconde sur tous les bins', () => {
-    const mags = injectPulsarSignals(new Array(RADAR_FREQ_BINS).fill(0), [{ ...pulsar, rotationFrequencyHz: 500 }], { tSec: 0 })
-    expect(mags.every((m) => m > 0)).toBe(true)
-    expect(mags[0]).toBeCloseTo(0.08)
+  it('voit chaque impulsion qui tombe dans la colonne, quelle que soit la période', () => {
+    // Pic à t = 0,93 s : dans la colonne [0,9 ; 1,0] mais pas à son début
+    const decale = { ...pulsar, phaseOffset: 0.07 }
+    const mags = injectPulsarSignals(new Array(RADAR_FREQ_BINS).fill(0), [decale], { tSec: 0.9, dtSec: 0.1 })
+    expect(mags[64]).toBeCloseTo(peak)
+  })
+
+  it('décale les phases d’un pulsar à l’autre', () => {
+    expect(pulsarPhaseOffset({ id: 'a' })).not.toBe(pulsarPhaseOffset({ id: 'b' }))
+    expect(pulsarPhaseOffset({ id: 'a' })).toBe(pulsarPhaseOffset({ id: 'a' }))
+    expect(pulsarPhaseOffset({ id: 'a', phaseOffset: 0.3 })).toBe(0.3)
+  })
+
+  it('suit le flux relatif', () => {
+    const faible = injectPulsarSignals(new Array(RADAR_FREQ_BINS).fill(0), [{ ...pulsar, fluxRelative: 0.1 }], { tSec: 0 })
+    expect(faible[64]).toBeCloseTo(peak * Math.pow(0.1, 0.6))
+  })
+
+  it('replie un pulsar milliseconde au-delà de Nyquist', () => {
+    expect(aliasedFrequencyHz(300)).toBeCloseTo(50)
+    expect(aliasedFrequencyHz(366.6)).toBeCloseTo(116.6)
+    const mags = injectPulsarSignals(new Array(RADAR_FREQ_BINS).fill(0), [{ ...pulsar, rotationFrequencyHz: 300 }], { tSec: 0 })
+    expect(mags.indexOf(Math.max(...mags))).toBe(51)
+    expect(mags[0]).toBe(0)
+  })
+})
+
+describe('dbDisplayScale / dbToLevel', () => {
+  it('place le plancher sous le bruit médian et garde une étendue minimale', () => {
+    const bruit = new Float32Array(1000).fill(magnitudeToDb(0.01))
+    const scale = dbDisplayScale(bruit)
+    expect(scale.floorDb).toBeCloseTo(-40 - RADAR_DB_FLOOR_MARGIN + 0.5, 0)
+    expect(scale.spanDb).toBe(RADAR_DB_MIN_SPAN)
+    expect(dbToLevel(magnitudeToDb(0.01), scale)).toBeCloseTo(RADAR_DB_FLOOR_MARGIN / RADAR_DB_MIN_SPAN, 1)
+  })
+
+  it('met le maximum de la fenêtre en haut de la palette', () => {
+    const values = new Float32Array(1000).fill(magnitudeToDb(0.01))
+    values[10] = magnitudeToDb(1)
+    const scale = dbDisplayScale(values)
+    expect(dbToLevel(values[10], scale)).toBe(1)
+    expect(dbToLevel(values[0], scale)).toBeLessThan(0.25)
+  })
+
+  it('ignore les pixels sans données', () => {
+    expect(dbDisplayScale(new Float32Array(10).fill(NaN))).toBeNull()
   })
 })
 
@@ -116,5 +178,6 @@ describe('ageLabelInterval', () => {
   it('garde des repères espacés quand l’échelle grossit', () => {
     expect(ageLabelInterval(1)).toBe(300)
     expect(ageLabelInterval(10)).toBe(3000)
+    expect(ageLabelInterval(0.1)).toBe(30)
   })
 })

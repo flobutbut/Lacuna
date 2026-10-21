@@ -13,11 +13,25 @@ export const RADAR_NYQUIST_HZ = SAMPLE_RATE / 2
 export const RADAR_TICK_MS = 100
 
 /**
- * Colonnes du buffer par pixel, selon l'échelle de temps.
- * @param {number} timeScaleMs - ms par colonne affichée (10 | 100 | 1000 | 10000)
+ * Colonnes du buffer par pixel, selon l'échelle de temps : 0,1 à 10 ms (zoom ×10, une colonne
+ * sur 10 px), 1 à 100 ms, 10 à 1 s, 100 à 10 s (maximum des colonnes regroupées).
+ * @param {number} timeScaleMs - ms par pixel affiché (10 | 100 | 1000 | 10000)
  */
 export function ticksPerPixel(timeScaleMs, tickMs = RADAR_TICK_MS) {
-  return Math.max(1, Math.round(timeScaleMs / tickMs))
+  return timeScaleMs / tickMs
+}
+
+/** Colonnes depuis le bord droit jusqu'au pixel (arrondi bas, tolérant aux erreurs de virgule flottante) */
+function colsFromRight(px, innerW, ticksPerPx) {
+  return Math.floor((innerW - 1 - px) * ticksPerPx + 1e-9)
+}
+
+/**
+ * Âge (colonnes, 0 = la plus récente) de la première colonne représentée au pixel px.
+ * @param {number} scrollCols - Défilement vers le passé, en colonnes
+ */
+export function ageAtPx(px, innerW, ticksPerPx, scrollCols = 0) {
+  return colsFromRight(px, innerW, ticksPerPx) + scrollCols
 }
 
 /**
@@ -31,8 +45,8 @@ export function ticksPerPixel(timeScaleMs, tickMs = RADAR_TICK_MS) {
  * @param {number} [p.scrollOffset=0] - Défilement vers le passé (px)
  */
 export function columnIndexAt({ writeCol, px, innerW, ticksPerPx, historySize, scrollOffset = 0 }) {
-  const colOffset = (innerW - 1 - px) * ticksPerPx
-  return (writeCol - 1 - colOffset - Math.round(scrollOffset * ticksPerPx) + historySize * 100) % historySize
+  const age = ageAtPx(px, innerW, ticksPerPx, Math.round(scrollOffset * ticksPerPx))
+  return (writeCol - 1 - age + historySize * 100) % historySize
 }
 
 /**
@@ -46,48 +60,138 @@ export function freqRangeToBins(lowHz, highHz, freqBins = RADAR_FREQ_BINS) {
 }
 
 /**
- * Ajoute les impulsions des pulsars actifs à une colonne de magnitudes (après FFT, avant normalisation).
- * Impulsion gaussienne dans les 5 % initiaux de la période, centrée sur la fréquence de rotation ;
- * un pulsar hors plage (milliseconde, > Nyquist) est étalé sur tous les bins à amplitude réduite.
+ * Magnitude de référence des pulsars : magnitude médiane du bruit de la bande L
+ * (0,0532 par unité d'écart-type × 0,177 d'écart-type). Un pulsar a donc le même niveau absolu
+ * dans toutes les bandes et ressort plus ou moins selon le bruit de la bande (faible en P, fort en γ).
+ */
+export const PULSAR_REFERENCE_MAGNITUDE = 0.0094
+/** Rapport signal / bruit (bande L) d'un pulsar de flux relatif 1 */
+export const PULSAR_SNR_MAX = 40
+/** Largeur de l'impulsion (écart-type, fraction de la période) */
+const PULSE_SIGMA = 0.02
+
+/** Décalage de phase stable (0–1) dérivé de l'identifiant : les pulsars ne battent pas en même temps */
+export function pulsarPhaseOffset(signal) {
+  if (signal.phaseOffset != null) return signal.phaseOffset
+  const key = String(signal.id ?? '')
+  let h = 0x811c9dc5
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0) / 4294967296
+}
+
+/**
+ * Distance (fraction de période) entre l'intervalle [tSec, tSec + dtSec] et le pic d'impulsion le plus proche ;
+ * 0 si un pic tombe dans l'intervalle. Toutes les impulsions sont vues, quelle que soit la période.
+ */
+function pulseDistance(tSec, dtSec, periodS, offset) {
+  if (dtSec >= periodS) return 0
+  const phase = (((tSec / periodS + offset) % 1) + 1) % 1
+  const untilNext = (1 - phase) % 1
+  const dtPhase = dtSec / periodS
+  if (untilNext <= dtPhase) return 0
+  return Math.min(phase, untilNext - dtPhase)
+}
+
+/**
+ * Fréquence apparente après échantillonnage (repliement autour de la fréquence d'échantillonnage) :
+ * un pulsar milliseconde au-delà de Nyquist apparaît à sa fréquence repliée, comme sur un vrai récepteur.
+ * @returns {number|null} 0 … RADAR_NYQUIST_HZ, ou null sans fréquence
+ */
+export function aliasedFrequencyHz(hz) {
+  if (!hz) return null
+  const fs = 2 * RADAR_NYQUIST_HZ
+  return Math.abs(hz - fs * Math.round(hz / fs))
+}
+
+/**
+ * Ajoute les impulsions des pulsars à une colonne de magnitudes (après FFT).
+ * Impulsion gaussienne centrée sur la fréquence de rotation (repliée au-delà de Nyquist),
+ * d'amplitude PULSAR_SNR_MAX × flux^0,6 fois la référence de bruit.
  * @param {number[]} magnitudes - Colonne modifiée sur place
- * @param {Array<{ fluxRelative: number, pulsePeriodS: number, rotationFrequencyHz?: number }>} signals
+ * @param {Array<{ id?: string, fluxRelative: number, pulsePeriodS: number, rotationFrequencyHz?: number, phaseOffset?: number }>} signals
  * @param {object} opts
- * @param {number} opts.tSec - Temps simulé courant (s)
- * @param {number} [opts.threshold=0] - Flux relatif minimum (0–1)
+ * @param {number} opts.tSec - Début de la colonne (s, temps d'acquisition)
+ * @param {number} [opts.dtSec] - Durée couverte par la colonne (s)
  * @param {number} [opts.freqBins=RADAR_FREQ_BINS]
  */
-export function injectPulsarSignals(magnitudes, signals, { tSec, threshold = 0, freqBins = RADAR_FREQ_BINS }) {
+export function injectPulsarSignals(magnitudes, signals, { tSec, dtSec = RADAR_TICK_MS / 1000, freqBins = RADAR_FREQ_BINS }) {
   for (const signal of signals ?? []) {
-    if (signal.fluxRelative < threshold) continue
     if (!signal.pulsePeriodS || !signal.fluxRelative) continue
 
-    // Position dans la période courante (0 à 1) : impulsion seulement dans les 5 % initiaux
-    const phase = (tSec % signal.pulsePeriodS) / signal.pulsePeriodS
-    if (phase > 0.05) continue
+    const dist = pulseDistance(tSec, dtSec, signal.pulsePeriodS, pulsarPhaseOffset(signal))
+    if (dist > 5 * PULSE_SIGMA) continue
 
-    // Amplitude absolue dans [0, 1], normalisée ensuite avec le reste de la colonne
-    const peakAmplitude = Math.pow(signal.fluxRelative, 0.6) * 0.8
-    // Enveloppe gaussienne dans le temps : max au début de l'impulsion
-    const sigma = 0.02
-    const envelope = Math.exp(-(phase * phase) / (2 * sigma * sigma))
+    const peakAmplitude = PULSAR_REFERENCE_MAGNITUDE * PULSAR_SNR_MAX * Math.pow(signal.fluxRelative, 0.6)
+    const envelope = Math.exp(-(dist * dist) / (2 * PULSE_SIGMA * PULSE_SIGMA))
 
-    const rotHz = signal.rotationFrequencyHz
-    if (rotHz && rotHz <= RADAR_NYQUIST_HZ) {
-      const centerBin = Math.max(0, Math.min(freqBins - 1, Math.round((rotHz / RADAR_NYQUIST_HZ) * freqBins)))
-      // Quelques bins autour du centre
-      const width = 3
-      for (let b = centerBin - width; b <= centerBin + width; b++) {
-        if (b < 0 || b >= freqBins) continue
-        const dist = Math.abs(b - centerBin)
-        magnitudes[b] += peakAmplitude * envelope * Math.exp(-(dist * dist) / (2 * 1.5 * 1.5))
-      }
-    } else {
-      for (let bin = 0; bin < freqBins; bin++) {
-        magnitudes[bin] += peakAmplitude * envelope * 0.1
-      }
+    const rotHz = aliasedFrequencyHz(signal.rotationFrequencyHz)
+    if (rotHz == null) continue
+    const centerBin = Math.max(0, Math.min(freqBins - 1, Math.round((rotHz / RADAR_NYQUIST_HZ) * freqBins)))
+    // Quelques bins autour du centre
+    const width = 3
+    for (let b = centerBin - width; b <= centerBin + width; b++) {
+      if (b < 0 || b >= freqBins) continue
+      const d = Math.abs(b - centerBin)
+      magnitudes[b] += peakAmplitude * envelope * Math.exp(-(d * d) / (2 * 1.5 * 1.5))
     }
   }
   return magnitudes
+}
+
+// ── Échelle d'affichage en dB ────────────────────────────────────────────────
+
+/** Étendue minimale de l'échelle (dB) : le bruit seul ne remplit pas toute la palette */
+export const RADAR_DB_MIN_SPAN = 40
+/** Marge sous le bruit médian (dB) : le bas de la palette reste au-dessous du plancher de bruit */
+export const RADAR_DB_FLOOR_MARGIN = 10
+const DB_EPS = 1e-6
+const HIST_MIN_DB = -130
+const HIST_MAX_DB = 20
+
+/** Magnitude → dB (−120 dB pour une magnitude nulle) */
+export function magnitudeToDb(m) {
+  return 20 * Math.log10(m + DB_EPS)
+}
+
+/**
+ * Échelle de la fenêtre affichée : plancher RADAR_DB_FLOOR_MARGIN sous la médiane (le bruit),
+ * plafond au maximum de la fenêtre, avec au moins RADAR_DB_MIN_SPAN d'étendue.
+ * Médiane par histogramme de 1 dB (valeurs NaN ignorées).
+ * @param {ArrayLike<number>} dbValues
+ * @returns {{ floorDb: number, spanDb: number } | null} null si aucune valeur
+ */
+export function dbDisplayScale(dbValues) {
+  const hist = new Uint32Array(HIST_MAX_DB - HIST_MIN_DB + 1)
+  let n = 0
+  let maxDb = -Infinity
+  for (let i = 0; i < dbValues.length; i++) {
+    const db = dbValues[i]
+    if (Number.isNaN(db)) continue
+    n++
+    if (db > maxDb) maxDb = db
+    const k = Math.max(0, Math.min(hist.length - 1, Math.floor(db) - HIST_MIN_DB))
+    hist[k]++
+  }
+  if (!n) return null
+  let acc = 0
+  let medianDb = HIST_MIN_DB
+  for (let k = 0; k < hist.length; k++) {
+    acc += hist[k]
+    if (acc * 2 >= n) {
+      medianDb = k + HIST_MIN_DB + 0.5
+      break
+    }
+  }
+  const floorDb = medianDb - RADAR_DB_FLOOR_MARGIN
+  return { floorDb, spanDb: Math.max(RADAR_DB_MIN_SPAN, maxDb - floorDb) }
+}
+
+/** Niveau d'affichage (0–1) d'une valeur en dB sur l'échelle de la fenêtre */
+export function dbToLevel(db, { floorDb, spanDb }) {
+  return Math.min(1, Math.max(0, (db - floorDb) / spanDb))
 }
 
 /**
@@ -135,9 +239,9 @@ export function binToHz(bin, freqBins = RADAR_FREQ_BINS) {
 }
 
 /**
- * Écart entre deux repères de temps (en colonnes) : 30 s à 100 ms/colonne, puis proportionnel
+ * Écart entre deux repères de temps (en colonnes) : 30 s à 100 ms par pixel, puis proportionnel
  * à l'échelle pour garder des repères espacés d'environ 300 px.
  */
 export function ageLabelInterval(ticksPerPx, baseCols = 300) {
-  return baseCols * Math.max(1, ticksPerPx)
+  return Math.max(1, Math.round(baseCols * ticksPerPx))
 }

@@ -11,9 +11,9 @@ export const useRadarStore = defineStore('radar', () => {
   const radarPaused = ref(false)
   /** Mode sélection Radar en pause : 'zone' | 'period' | null. Zone présélectionné. */
   const radarSelectionMode = ref('zone')
-  /** Échelle temps spectrogramme radar : ms par colonne (10 | 100 | 1000 | 10000) */
+  /** Échelle temps spectrogramme radar : ms par pixel (10 = zoom ×10 | 100 | 1000 | 10000) */
   const radarTimeScale = ref(100)
-  /** Seuil minimum flux_relative pour l'injection pulsars (0–1) */
+  /** Seuil d'affichage (0–1, fraction de l'échelle dB de la fenêtre) : colonnes plus faibles masquées */
   const radarIntensityThreshold = ref(0)
   /** Son radar (spectrogramme) — UI seule tant que l’audio n’est pas branché */
   const radarSoundEnabled = ref(false)

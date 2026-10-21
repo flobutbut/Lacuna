@@ -34,23 +34,11 @@ const TIME_SCALES = [
   { value: 10000, label: '10 s' },
 ]
 
-const sliderDisplayValue = computed(() => {
-  const t = radarIntensityThreshold.value
-  if (t <= 0) return 0
-  if (t <= 0.001) return 1
-  return Math.round((Math.log10(t) + 3) / 3 * 100)
-})
+// Seuil linéaire sur l'échelle dB affichée : 0 = tout visible, 100 = seulement le maximum de la fenêtre
+const sliderDisplayValue = computed(() => Math.round(radarIntensityThreshold.value * 100))
 
 function onThresholdInput(sliderVal) {
-  const s = Number(sliderVal)
-  // s=0   → 0 (rien filtré)
-  // s=1   → 0.001
-  // s=50  → 0.032
-  // s=100 → 1.0
-  const threshold = s === 0
-    ? 0
-    : Math.pow(10, (s / 100) * 3 - 3)
-  radarStore.setRadarIntensityThreshold(threshold)
+  radarStore.setRadarIntensityThreshold(Number(sliderVal) / 100)
 }
 </script>
 
@@ -95,7 +83,7 @@ function onThresholdInput(sliderVal) {
         step="1"
         :value="sliderDisplayValue"
         class="radar-filters__slider"
-        aria-label="Seuil d'intensité du flux"
+        aria-label="Seuil d'intensité affichée"
         @input="onThresholdInput($event.target.value)"
       />
     </div>

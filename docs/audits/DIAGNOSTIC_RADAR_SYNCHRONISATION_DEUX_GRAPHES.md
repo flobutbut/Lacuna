@@ -13,6 +13,8 @@
 > - **Sélection de zone** : fréquences inversées et zoom ignoré (zone 94→63 Hz émise 30→61 Hz). **Corrigé** (61,5→94,7 Hz).
 > - **Radar coupé puis rallumé** : plus d'échantillons tant que le temps n'avait pas rattrapé la session précédente. **Corrigé** (`start()`).
 >
+> - **Réglages sans effet** (second passage) : 10 ms identique à 100 ms, seuil INT. sans effet jusqu'à ~30 puis tout masqué vers 75, affichage presque noir (normalisation sur le maximum absolu, dominé par les pulsars), bandes quasi identiques (niveau de bruit annulé par la normalisation, mêmes 32 pulsars dans toutes les bandes), bouton bruit sans effet visible, spectre du bruit affiché à l'envers (raie de 12,5 Hz vers 111 Hz). **Corrigé** : échelle en dB sur la fenêtre visible (vue et miniature), bruit par bande, pulsars de la bande active calibrés sur le bruit, 10 ms = zoom ×10, seuil linéaire sur l'échelle dB, ordre des fréquences de la FFT rétabli.
+>
 > **Toujours ouvert** : la miniature affiche les dernières colonnes en direct (sa largeur en pixels), sans la fenêtre ni le défilement de la vue Radar — comportement à décider.
 
 ---

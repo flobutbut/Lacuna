@@ -14,14 +14,18 @@ import { getCssVar } from '@/lib/cssVars'
 import {
   RADAR_FREQ_BINS as FREQ_BINS,
   RADAR_TICK_MS as TICK_MS,
+  ageAtPx,
   ageLabelInterval,
   binAtY,
   binToHz,
   binsToYRange,
   columnIndexAt,
+  dbDisplayScale,
+  dbToLevel,
   formatAgeLabel,
   freqRangeToBins,
   injectPulsarSignals,
+  magnitudeToDb,
   ticksPerPixel,
 } from '@/lib/radarSpectrum'
 import * as d3 from 'd3'
@@ -107,25 +111,16 @@ function appendColumnFromSnapshot(snapshot, windowSize = WINDOW_SIZE) {
     computeSpectrogramColumn(snapshot, FREQ_BINS)
   if (!magnitudes.length) return
 
-  // Injection des signaux pulsars dans le domaine fréquentiel — après FFT, avant normalisation.
-  // Temps simulé courant en secondes (échelle UI, pas le tick buffer réel)
+  // Pulsars de la bande active, après FFT ; temps d'acquisition réel de la colonne (indépendant de l'échelle d'affichage)
   injectPulsarSignals(magnitudes, signauxStore.activePulsarSignals, {
-    tSec: (radarColumnBuffer.count * radarTimeScale.value) / 1000,
-    threshold: radarIntensityThreshold.value,
+    tSec: (radarColumnBuffer.count * TICK_MS) / 1000,
+    dtSec: TICK_MS / 1000,
     freqBins: FREQ_BINS,
   })
 
-  for (const m of magnitudes) {
-    if (m > radarColumnBuffer.specMaxVal) radarColumnBuffer.specMaxVal = m
-  }
-
-  const norm = radarColumnBuffer.specMaxVal || 1
-  const intensityRecalc = Math.max(...magnitudes) / norm
-  const intensityFinal = Math.min(1, Math.max(0, intensityRecalc))
-
+  // Magnitudes brutes : la normalisation (dB, fenêtre visible) se fait au dessin
   radarColumnBuffer.columnBuffer[radarColumnBuffer.writeCol] = {
     magnitudes: new Float32Array(magnitudes),
-    intensity: intensityFinal,
   }
   radarColumnBuffer.writeCol =
     (radarColumnBuffer.writeCol + 1) % HISTORY_SIZE
@@ -166,7 +161,7 @@ function scrollColumns(ticksPerPx) {
 
 /** Âge (en colonnes) de la colonne la plus récente représentée au pixel px de la zone utile */
 function ageAtPlotPx(px, innerW, ticksPerPx) {
-  return (innerW - 1 - px) * ticksPerPx + scrollColumns(ticksPerPx)
+  return ageAtPx(px, innerW, ticksPerPx, scrollColumns(ticksPerPx))
 }
 
 /** px = 0..innerW-1 dans la zone utile (sans marge gauche) */
@@ -215,50 +210,57 @@ function drawViewport() {
   if (innerW <= 0 || innerH <= 0 || intH <= 0) return
 
   const ticksPerPx = getTicksPerPx()
-  const norm = radarColumnBuffer.specMaxVal || 1
+  // Un pixel couvre au moins une colonne ; à 10 ms (zoom ×10), une colonne s'étale sur 10 pixels
+  const colsPerPx = Math.max(1, Math.round(ticksPerPx))
   const threshold = radarIntensityThreshold.value
   const available = availableColumns()
   const geom = specGeometry(specCanvas)
   const binLow = geom.binLow
-  const binHigh = geom.binLow + geom.binRange
-
-  // Bin affiché sur chaque ligne de pixels (haut = fréquence haute)
-  const binForRow = new Int16Array(innerH)
-  for (let y = 0; y < innerH; y++) binForRow[y] = binAtY(margin.top + y + 0.5, geom) ?? binLow
-
-  const image = specCtx.createImageData(innerW, innerH)
-  const pixels = image.data
-  const agg = new Float32Array(FREQ_BINS)
+  const binRange = geom.binRange
   const { columnBuffer, writeCol } = radarColumnBuffer
-  intCtx.fillStyle = getCssVar('--color-cyan')
 
+  // 1. Magnitudes de la fenêtre visible en dB (pixel × bin de la plage zoomée), NaN sans données.
+  //    Un pixel couvrant plusieurs colonnes garde le maximum (une impulsion brève reste visible).
+  const winDb = new Float32Array(innerW * binRange).fill(NaN)
   for (let px = 0; px < innerW; px++) {
     const ageStart = ageAtPlotPx(px, innerW, ticksPerPx)
     // Au-delà de l'historique : pas de données (évite de reboucler sur le buffer circulaire)
     if (ageStart >= available) continue
-    const ageEnd = Math.min(ageStart + ticksPerPx, available)
-
-    // Un pixel couvre ticksPerPx colonnes : on garde le maximum (une impulsion brève reste visible)
-    agg.fill(0)
-    let intensity = 0
-    let colMax = 0
-    let hasData = false
+    const ageEnd = Math.min(ageStart + colsPerPx, available)
+    const base = px * binRange
     for (let age = ageStart; age < ageEnd; age++) {
       const col = columnBuffer[(writeCol - 1 - age + HISTORY_SIZE) % HISTORY_SIZE]
       if (!col) continue
-      hasData = true
       const m = col.magnitudes
-      for (let b = 0; b < FREQ_BINS; b++) {
-        if (m[b] > colMax) colMax = m[b]
-        if (b >= binLow && b < binHigh && m[b] > agg[b]) agg[b] = m[b]
+      for (let i = 0; i < binRange; i++) {
+        const db = magnitudeToDb(m[binLow + i] ?? 0)
+        if (!(db <= winDb[base + i])) winDb[base + i] = db
       }
-      if (col.intensity > intensity) intensity = col.intensity
     }
-    if (!hasData || colMax / norm < threshold) continue
+  }
+
+  // 2. Échelle de la fenêtre : plancher sous le bruit médian, plafond au maximum visible
+  const scale = dbDisplayScale(winDb)
+
+  // Ligne de pixels → indice dans la plage zoomée (haut = fréquence haute)
+  const rowIdx = new Int16Array(innerH)
+  for (let y = 0; y < innerH; y++) rowIdx[y] = (binAtY(margin.top + y + 0.5, geom) ?? binLow) - binLow
+
+  const image = specCtx.createImageData(innerW, innerH)
+  const pixels = image.data
+  intCtx.fillStyle = getCssVar('--color-cyan')
+
+  for (let px = 0; scale && px < innerW; px++) {
+    const base = px * binRange
+    if (Number.isNaN(winDb[base])) continue
+    // Intensité du pixel : niveau du bin le plus fort de la plage affichée, sur la même échelle
+    let maxDb = -Infinity
+    for (let i = 0; i < binRange; i++) if (winDb[base + i] > maxDb) maxDb = winDb[base + i]
+    const intensity = dbToLevel(maxDb, scale)
+    if (intensity < threshold) continue
 
     for (let y = 0; y < innerH; y++) {
-      const v = agg[binForRow[y]] / norm
-      const li = Math.round(Math.min(1, Math.max(0, v)) * 255) * 3
+      const li = Math.round(dbToLevel(winDb[base + rowIdx[y]], scale) * 255) * 3
       const o = (y * innerW + px) * 4
       pixels[o] = VIRIDIS_LUT[li]
       pixels[o + 1] = VIRIDIS_LUT[li + 1]
@@ -291,11 +293,11 @@ function drawViewport() {
   drawCrosshair(specCanvas, intCanvas)
 }
 
-/** Axe X : repères à âge rond (30 s à 100 ms/colonne, espacement proportionnel à l'échelle) */
+/** Axe X : repères à âge rond (30 s à 100 ms par pixel, espacement proportionnel à l'échelle) */
 function drawTimeLabels(specCtx, intCtx, specCanvas, intCanvas, innerW, ticksPerPx, available) {
   const interval = ageLabelInterval(ticksPerPx)
   const scrollCols = scrollColumns(ticksPerPx)
-  const lastAge = Math.min(available, scrollCols + innerW * ticksPerPx)
+  const lastAge = Math.min(available, scrollCols + Math.floor(innerW * ticksPerPx))
   const muted = getCssVar('--color-muted')
   for (let age = Math.ceil(scrollCols / interval) * interval; age < lastAge; age += interval) {
     const xPos = margin.left + innerW - 1 - Math.floor((age - scrollCols) / ticksPerPx)

@@ -19,6 +19,19 @@ const AR_ALPHA = {
 
 const F_H = 12.5
 
+/** Écart-type des échantillons au niveau de bruit le plus fort (bande P, plan galactique) */
+export const NOISE_STD_MAX = 0.3
+/** Niveau de bruit le plus fort (P : base + facteur galactique) */
+const LEVEL_MAX = NOISE_CONFIG.P.base + NOISE_CONFIG.P.galacticFactor
+
+/**
+ * Écart-type théorique de therm + AR(1), en unité d'amplitude : 0,3 de bruit thermique
+ * et 0,7 de bruit blanc lissé (variance (1 − α) / (1 + α) pour arState = α·arState + (1 − α)·w).
+ */
+function colouredNoiseStd(alpha) {
+  return Math.sqrt(0.3 * 0.3 + 0.7 * 0.7 * ((1 - alpha) / (1 + alpha)))
+}
+
 /**
  * LCG 32 bits, état initial dérivé de seed + totalOffset (déterministe).
  */
@@ -74,6 +87,9 @@ export function useRadarNoise(band, galacticLatitude, _activeSignals) {
 
     const rng = createLcg(seed, totalOffset)
     const α = AR_ALPHA[band.value] ?? AR_ALPHA.L
+    // Normalise la couleur du bruit (écart-type 1) puis applique le niveau de la bande :
+    // P ≈ 0,3, L ≈ 0,18, X ≈ 0,07, γ ≈ 0,014 d'écart-type
+    const gain = (NOISE_STD_MAX * level) / (LEVEL_MAX * colouredNoiseStd(α) * amplitude)
     const thermalStd = amplitude * 0.3
     const syncWhiteStd = amplitude * 0.7
     const twoPi = 2 * Math.PI
@@ -88,7 +104,7 @@ export function useRadarNoise(band, galacticLatitude, _activeSignals) {
         v += amplitude * 0.08 * Math.sin((twoPi * F_H * (totalOffset + i)) / SAMPLE_RATE)
       }
 
-      chunk[i] = Math.max(-1, Math.min(1, v / amplitude))
+      chunk[i] = Math.max(-1, Math.min(1, v * gain))
     }
 
     return chunk

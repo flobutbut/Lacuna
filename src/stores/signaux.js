@@ -123,13 +123,16 @@ export const useSignauxStore = defineStore('signaux', () => {
     return filtered
   })
 
-  const activePulsarSignals = computed(() =>
-    list.value.filter(s =>
+  /** Pulsars injectés dans le spectrogramme : seulement ceux de la bande radar active */
+  const activePulsarSignals = computed(() => {
+    const activeBand = useRadarStore().radarFrequencyBand
+    return list.value.filter(s =>
       s.sourceType === 'PULSAR' &&
+      s.band === activeBand &&
       s.fluxRelative != null &&
       s.frequencyHz != null
     )
-  )
+  })
 
   async function fetch() {
     const supabaseStore = useSupabaseStore()

@@ -1,15 +1,24 @@
 <script setup>
 /**
- * Spectrogramme miniature — mêmes colonnes que RadarView (columnBuffer, writeCol, specMaxVal).
+ * Spectrogramme miniature — mêmes colonnes que RadarView (columnBuffer, writeCol).
  * Colonne la plus récente à droite ; pas de défilement bitmap : relecture du buffer circulaire.
- * Échelle horizontale alignée sur RadarView : une colonne buffer par pixel CSS (largeur utile = w).
+ * Même échelle que RadarView : temps (ms par pixel CSS), dB normalisés sur la fenêtre affichée, seuil INT.
  */
 import { inject, watch, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
-import * as d3 from 'd3'
 import { useRadarStore } from '@/stores/radar'
 import { getCssVar } from '@/lib/cssVars'
-import { RADAR_FREQ_BINS, columnIndexAt, freqRangeToBins, ticksPerPixel } from '@/lib/radarSpectrum'
+import { interpolateViridis } from 'd3'
+import {
+  RADAR_FREQ_BINS,
+  ageAtPx,
+  columnIndexAt,
+  dbDisplayScale,
+  dbToLevel,
+  freqRangeToBins,
+  magnitudeToDb,
+  ticksPerPixel,
+} from '@/lib/radarSpectrum'
 
 const radarSpectrogram = inject('radarSpectrogram', null)
 const radarColumnBuffer = inject('radarColumnBuffer', null)
@@ -27,8 +36,6 @@ const wrapRef = ref(null)
 const canvasRef = ref(null)
 
 const HEIGHT_CSS = 120
-
-const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 1])
 
 function cssSize() {
   const wrap = wrapRef.value
@@ -56,7 +63,7 @@ function draw() {
   )
     return
 
-  const { columnBuffer, columnBufferReady, writeCol, specMaxVal } = radarColumnBuffer
+  const { columnBuffer, columnBufferReady, writeCol } = radarColumnBuffer
   const { HISTORY_SIZE } = radarSpectrogram
 
   if (!columnBuffer || !columnBufferReady) {
@@ -75,25 +82,32 @@ function draw() {
   ctx.fillRect(0, 0, w, h)
 
   const ticksPerPx = ticksPerPixel(radarTimeScale.value)
-  const norm = specMaxVal || 1
+  const available = Math.min(radarColumnBuffer.count, HISTORY_SIZE)
+  const { binLow, binRange } = freqRangeToBins(radarFreqLow.value, radarFreqHigh.value, RADAR_FREQ_BINS)
 
-  const { binLow, binHigh, binRange } = freqRangeToBins(radarFreqLow.value, radarFreqHigh.value, RADAR_FREQ_BINS)
-
+  // Fenêtre en dB (une colonne par pixel, la plus récente à droite), puis échelle commune
+  const winDb = new Float32Array(w * binRange).fill(NaN)
   for (let px = 0; px < w; px++) {
-    const colIdx = columnIndexAt({ writeCol, px, innerW: w, ticksPerPx, historySize: HISTORY_SIZE })
-
-    const col = columnBuffer[colIdx]
+    if (ageAtPx(px, w, ticksPerPx) >= available) continue
+    const col = columnBuffer[columnIndexAt({ writeCol, px, innerW: w, ticksPerPx, historySize: HISTORY_SIZE })]
     if (!col) continue
+    for (let i = 0; i < binRange; i++) winDb[px * binRange + i] = magnitudeToDb(col.magnitudes[binLow + i] ?? 0)
+  }
+  const scale = dbDisplayScale(winDb)
+  if (!scale) return
 
-    const maxMag = Math.max(...col.magnitudes)
-    const colFlux = maxMag / norm
-    if (colFlux < radarIntensityThreshold.value) continue
+  const rowH = Math.ceil(h / binRange) + 1
+  for (let px = 0; px < w; px++) {
+    const base = px * binRange
+    if (Number.isNaN(winDb[base])) continue
+    let maxDb = -Infinity
+    for (let i = 0; i < binRange; i++) if (winDb[base + i] > maxDb) maxDb = winDb[base + i]
+    if (dbToLevel(maxDb, scale) < radarIntensityThreshold.value) continue
 
-    for (let row = binLow; row < binHigh; row++) {
-      const val = Math.min(1, Math.max(0, col.magnitudes[row] / norm))
-      ctx.fillStyle = colorScale(val)
-      const yPos = (1 - (row - binLow) / binRange) * h
-      ctx.fillRect(px, yPos, 1, Math.ceil(h / binRange) + 1)
+    for (let i = 0; i < binRange; i++) {
+      ctx.fillStyle = interpolateViridis(dbToLevel(winDb[base + i], scale))
+      const yPos = (1 - (i + 1) / binRange) * h
+      ctx.fillRect(px, yPos, 1, rowH)
     }
   }
 }
