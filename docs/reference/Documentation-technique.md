@@ -38,7 +38,7 @@ Lacuna/
 │   │   ├── PageDrake.vue
 │   │   ├── PagePopulation.vue
 │   │   ├── PageConceptionEtoiles.vue   # Vue 3D étoiles (conception, /conception-etoiles)
-│   │   ├── auth/            # PageConnexion, PageInscription, PageMotDePasseOublie, PageNouveauMotDePasse (AuthPanel + AppTextField)
+│   │   ├── auth/            # PageConnexion, PageInscription, PageMotDePasseOublie, PageNouveauMotDePasse, PageBienvenue (création de partie) — AuthPanel + AppTextField
 │   │   └── ...
 │   ├── stores/
 │   │   ├── supabase.js      # Store Supabase
@@ -50,7 +50,7 @@ Lacuna/
 │   │   ├── radar.js         # Réglages Radar (bande, pause, sélection, échelle temps, seuil, fréquences, son, bruit)
 │   │   ├── transit.js       # Widget de voyage, cap en attente, confirmation de départ
 │   │   ├── notifications.js # Toast global, pastilles Laboratoire / Carte
-│   │   ├── auth.js          # Session Supabase du joueur : inscription, connexion, mot de passe, déconnexion
+│   │   ├── auth.js          # Session Supabase du joueur : inscription, connexion, mot de passe, déconnexion ; profil (pseudo, rôle), hasShip, startNewGame
 │   │   ├── mapNodes.js      # Nœuds et arêtes carte (map_nodes, map_edges)
 │   │   ├── signaux.js       # Signaux captés (récepteur Observatoire), table signals
 │   │   ├── labReports.js    # Rapports d'analyse Laboratoire (lab_reports)
@@ -132,7 +132,7 @@ Lacuna/
 │   │   └── cssVars.js       # getCssVar — tokens CSS pour canvas / Three.js
 │   ├── router/
 │   │   ├── index.js         # Routes Vue Router + garde d'authentification (beforeEach)
-│   │   └── authGuard.js     # Décisions de redirection (meta.public, meta.guestOnly) — fonctions pures testées
+│   │   └── authGuard.js     # Décisions de redirection (meta.public, meta.guestOnly, meta.onboarding) — fonctions pures testées
 │   └── assets/
 │       ├── main.css         # Convention uniquement (non importé ; styles réels : tokens, base, etc.)
 │       ├── tokens.css       # Design tokens (couleurs, typo, espacements)

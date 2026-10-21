@@ -82,6 +82,13 @@ const router = createRouter({
       meta: { title: 'Mot de passe oublié', ...AUTH_META },
     },
     {
+      // Création de partie : pseudo et nom du vaisseau (joueur connecté sans vaisseau)
+      path: '/bienvenue',
+      name: 'bienvenue',
+      component: () => import('@/views/auth/PageBienvenue.vue'),
+      meta: { title: 'Bienvenue à bord', onboarding: true, bareLayout: true },
+    },
+    {
       // Ouverte depuis le lien de réinitialisation : la session temporaire est déjà active
       path: '/nouveau-mot-de-passe',
       name: 'nouveau-mot-de-passe',
@@ -98,9 +105,11 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
   await auth.init()
+  if (auth.isAuthenticated) await auth.ensurePlayer()
   return resolveAuthRedirect(to, {
     configured: useSupabaseStore().isConfigured(),
     authenticated: auth.isAuthenticated,
+    hasShip: auth.hasShip,
   })
 })
 

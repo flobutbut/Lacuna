@@ -84,6 +84,27 @@ describe('resolveAuthRedirect', () => {
     expect(resolveAuthRedirect(nouveauMdp, { configured: true, authenticated: true })).toBe(true)
   })
 
+  const bienvenue = page('/bienvenue', { onboarding: true })
+
+  it('envoie un joueur sans vaisseau vers /bienvenue', () => {
+    const state = { configured: true, authenticated: true, hasShip: false }
+    expect(resolveAuthRedirect(page('/carte'), state)).toEqual({ name: 'bienvenue' })
+    expect(resolveAuthRedirect(bienvenue, state)).toBe(true)
+    expect(resolveAuthRedirect(nouveauMdp, state)).toBe(true)
+  })
+
+  it('ferme /bienvenue une fois le vaisseau créé, ou aux visiteurs', () => {
+    expect(resolveAuthRedirect(bienvenue, { configured: true, authenticated: true, hasShip: true })).toEqual({ name: 'observatoire' })
+    expect(resolveAuthRedirect(bienvenue, { configured: true, authenticated: false })).toEqual({
+      name: 'connexion',
+      query: { redirect: '/bienvenue' },
+    })
+  })
+
+  it('ne bloque pas le joueur si l’état du vaisseau est inconnu', () => {
+    expect(resolveAuthRedirect(page('/carte'), { configured: true, authenticated: true, hasShip: null })).toBe(true)
+  })
+
   it('hors ligne : pas de compte, pages d’authentification inutiles', () => {
     expect(resolveAuthRedirect(page('/carte'), { configured: false, authenticated: false })).toBe(true)
     expect(resolveAuthRedirect(connexion, { configured: false, authenticated: false })).toEqual({ name: 'observatoire' })

@@ -1,12 +1,13 @@
 /**
  * Store Vaisseau — chargement depuis Supabase
- * Prototype : vaisseau avec user_id NULL (policy Anon can read)
+ * Vaisseau du joueur connecté (ships.user_id = auth.uid()), créé par start_new_game
  * Données techniques : table ship_systems (systèmes, carburant, capacités)
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
+import { useAuthStore } from '@/stores/auth'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 
 export const useShipStore = defineStore('ship', () => {
@@ -255,14 +256,15 @@ export const useShipStore = defineStore('ship', () => {
 
   async function fetch() {
     const supabaseStore = useSupabaseStore()
-    if (!supabaseStore.isConfigured()) {
+    const userId = useAuthStore().user?.id
+    if (!supabaseStore.isConfigured() || !userId) {
       loaded.value = true
       return null
     }
     const { data: ships, error } = await supabase
       .from('ships')
       .select('id, name, classe, built_year, voyage, generation, current_system_id, travel_state, travel_destination, travel_departure_at, travel_arrival_at')
-      .is('user_id', null)
+      .eq('user_id', userId)
       .limit(1)
     if (error) {
       console.warn('[ship]', error.message)
