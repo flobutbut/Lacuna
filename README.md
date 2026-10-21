@@ -13,7 +13,9 @@ Simulation d'exploration galactique persistante et asynchrone — Vue 3 + Vite +
    - Exécuter `supabase/seed.sql` pour les traces immuables (WOW, Oumuamua, Bennu)
    - Optionnel : `supabase/seed_extended_systems.sql` (~100 systèmes, régénérable avec `npm run seed:generate`)
 
-> ⚠️ Les politiques RLS sont celles d'un prototype : la clé anon peut lire et écrire `signals`, `observations` et `lab_reports`. Ne pas exposer cette base publiquement en l'état.
+> Comptes joueurs : inscription par email (confirmation obligatoire), un vaisseau par compte. Chaque joueur ne lit et n'écrit que les données de son vaisseau (RLS, migration `00048`) ; sans compte, seules les données du monde sont lisibles. Détails : `docs/architecture/PLAN_COMPTES_JOUEURS.md`.
+>
+> Supabase → Authentication → URL Configuration : déclarer l'URL de l'app (Site URL et Redirect URLs, ex. `http://localhost:5173/**`) pour les liens de confirmation et de réinitialisation.
 
 ## Installation
 
