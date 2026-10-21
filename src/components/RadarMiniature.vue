@@ -2,6 +2,8 @@
 /**
  * Spectrogramme miniature — mêmes colonnes que RadarView (columnBuffer, writeCol).
  * Colonne la plus récente à droite ; pas de défilement bitmap : relecture du buffer circulaire.
+ * Montée seulement radar allumé (la tuile se replie sinon). Toujours en direct (ne suit ni la pause
+ * ni le défilement de la vue Radar), avec des repères de durée.
  * Même échelle que RadarView : temps (ms par pixel CSS), dB normalisés sur la fenêtre affichée, seuil INT.
  */
 import { inject, watch, ref, onMounted, onUnmounted, nextTick } from 'vue'
@@ -12,9 +14,10 @@ import { interpolateViridis } from 'd3'
 import {
   RADAR_FREQ_BINS,
   ageAtPx,
-  columnIndexAt,
+  ageLabelInterval,
   dbDisplayScale,
   dbToLevel,
+  formatAgeLabel,
   freqRangeToBins,
   magnitudeToDb,
   ticksPerPixel,
@@ -36,6 +39,8 @@ const wrapRef = ref(null)
 const canvasRef = ref(null)
 
 const HEIGHT_CSS = 120
+/** Écart visé entre deux repères de durée (px) */
+const MARK_SPACING_PX = 100
 
 function cssSize() {
   const wrap = wrapRef.value
@@ -85,13 +90,22 @@ function draw() {
   const available = Math.min(radarColumnBuffer.count, HISTORY_SIZE)
   const { binLow, binRange } = freqRangeToBins(radarFreqLow.value, radarFreqHigh.value, RADAR_FREQ_BINS)
 
-  // Fenêtre en dB (une colonne par pixel, la plus récente à droite), puis échelle commune
+  // Fenêtre en dB (la plus récente à droite ; maximum des colonnes couvertes par un pixel), puis échelle commune
+  const colsPerPx = Math.max(1, Math.round(ticksPerPx))
   const winDb = new Float32Array(w * binRange).fill(NaN)
   for (let px = 0; px < w; px++) {
-    if (ageAtPx(px, w, ticksPerPx) >= available) continue
-    const col = columnBuffer[columnIndexAt({ writeCol, px, innerW: w, ticksPerPx, historySize: HISTORY_SIZE })]
-    if (!col) continue
-    for (let i = 0; i < binRange; i++) winDb[px * binRange + i] = magnitudeToDb(col.magnitudes[binLow + i] ?? 0)
+    const ageStart = ageAtPx(px, w, ticksPerPx)
+    if (ageStart >= available) continue
+    const ageEnd = Math.min(ageStart + colsPerPx, available)
+    const base = px * binRange
+    for (let age = ageStart; age < ageEnd; age++) {
+      const col = columnBuffer[(writeCol - 1 - age + HISTORY_SIZE) % HISTORY_SIZE]
+      if (!col) continue
+      for (let i = 0; i < binRange; i++) {
+        const db = magnitudeToDb(col.magnitudes[binLow + i] ?? 0)
+        if (!(db <= winDb[base + i])) winDb[base + i] = db
+      }
+    }
   }
   const scale = dbDisplayScale(winDb)
   if (!scale) return
@@ -110,6 +124,35 @@ function draw() {
       const yPos = (1 - (i + 1) / binRange) * h
       ctx.fillRect(px, yPos, 1, rowH)
     }
+  }
+
+  drawDurationMarks(ctx, w, h, ticksPerPx, available)
+}
+
+/**
+ * Repères de durée (−10 s, −20 s… à 100 ms par pixel), la plus récente à droite : graduations en haut et en bas
+ * (pour ne pas les confondre avec les impulsions verticales) et âge sur fond sombre.
+ */
+function drawDurationMarks(ctx, w, h, ticksPerPx, available) {
+  const interval = ageLabelInterval(ticksPerPx, MARK_SPACING_PX)
+  const lastAge = Math.min(available, Math.floor(w * ticksPerPx))
+  const muted = getCssVar('--color-muted')
+  const bg = getCssVar('--color-bg')
+  ctx.font = '9px monospace'
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'bottom'
+  for (let age = interval; age < lastAge; age += interval) {
+    const x = w - 1 - Math.floor(age / ticksPerPx)
+    const label = formatAgeLabel(age)
+    const labelW = ctx.measureText(label).width + 4
+    ctx.fillStyle = bg
+    ctx.globalAlpha = 0.75
+    ctx.fillRect(x + 1, h - 13, labelW, 13)
+    ctx.globalAlpha = 1
+    ctx.fillStyle = muted
+    ctx.fillRect(x, 0, 1, 6)
+    ctx.fillRect(x, h - 13, 1, 13)
+    ctx.fillText(label, x + 3, h - 2)
   }
 }
 
@@ -181,22 +224,7 @@ watch(
 
 <template>
   <div ref="wrapRef" class="radar-miniature" aria-hidden="true">
-    <canvas
-      v-show="radarEnabled"
-      ref="canvasRef"
-      class="radar-miniature__canvas"
-    />
-    <div
-      v-if="!radarEnabled"
-      class="radar-miniature__placeholder"
-      role="status"
-      aria-live="polite"
-    >
-      <span class="radar-miniature__placeholder-title">Radar désactivé</span>
-      <span class="radar-miniature__placeholder-hint">
-        Activez l’acquisition pour écouter le spectre radio
-      </span>
-    </div>
+    <canvas ref="canvasRef" class="radar-miniature__canvas" />
   </div>
 </template>
 
@@ -212,37 +240,5 @@ watch(
   width: 100%;
   height: 120px;
   vertical-align: top;
-}
-
-.radar-miniature__placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
-  min-height: 120px;
-  padding: var(--space-2) var(--space-3);
-  background: transparent;
-  text-align: center;
-}
-
-.radar-miniature__placeholder-title {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  line-height: var(--leading-tight);
-  text-transform: uppercase;
-  color: var(--color-muted);
-}
-
-.radar-miniature__placeholder-hint {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-regular);
-  line-height: var(--leading-normal);
-  letter-spacing: var(--tracking-tight);
-  color: var(--color-cyan-muted);
-  max-width: 100%;
 }
 </style>

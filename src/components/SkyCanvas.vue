@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useObservatoireStore } from '@/stores/observatoire'
 import { useSignauxStore } from '@/stores/signaux'
+import { useRadarStore } from '@/stores/radar'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useShipStore } from '@/stores/ship'
 import { useNebulasStore } from '@/stores/nebulas'
@@ -23,6 +24,7 @@ const { spectralFilter, exoplanetFilter, searchedStarId, constellationsEnabled }
 const CONSTELLATION_HOVER_THRESHOLD = 12
 
 const signauxStore = useSignauxStore()
+const radarStore = useRadarStore()
 const stellarSystemsStore = useStellarSystemsStore()
 const shipStore = useShipStore()
 const mapStore = useMapNodesStore()
@@ -34,6 +36,12 @@ const isPanning = ref(false)
 const lastPanPos = ref({ x: 0, y: 0 })
 const hasPanned = ref(false)
 const mouseDown = ref(false)
+
+/** Signaux affichés sur le ciel : encore actifs, et seulement quand le radar est allumé */
+function visibleSignals(now) {
+  if (!radarStore.radarEnabled) return []
+  return signauxStore.list.filter((s) => now - s.createdAt < s.lifetimeMs)
+}
 
 const PAN_SENSITIVITY = 0.15
 const PAN_DRAG_THRESHOLD = 5
@@ -150,8 +158,7 @@ function draw(canvas, starsRef) {
   }
 
   let selected = observatoireStore.selectedStar
-  const now = Date.now()
-  const activeSignals = signauxStore.list.filter((s) => now - s.createdAt < s.lifetimeMs)
+  const activeSignals = visibleSignals(Date.now())
 
   // Pendant un transit, marquer la destination comme cible de cap (highlight spécifique)
   if (shipStore.isInTransit && shipStore.travelDestination) {
@@ -211,16 +218,14 @@ function screenToCanvas(e, canvas) {
 }
 
 function handleMouseMove(e, starList, canvas) {
-  // Ne pas déclencher de hover/tooltip du ciel quand on interagit avec l'UI (recherche, menus, etc.)
-  const t = e?.target
-  if (t && typeof t.closest === 'function') {
-    if (t.closest('.spectral-bar') || t.closest('.spectral-search') || t.closest('.star-ac-menu')) {
-      observatoireStore.setReticuleVisible(false)
-      observatoireStore.hoveredStar = null
-      observatoireStore.setHoveredSignal(null)
-      observatoireStore.setHoveredConstellation(null)
-      return
-    }
+  // Pas de hover/tooltip du ciel quand le pointeur est sur un élément d'interface (tuiles, barres, menus…) ;
+  // le déplacement de la vue continue même si le glisser passe au-dessus de l'interface
+  if (!isPanning.value && !mouseDown.value && e?.target !== canvas) {
+    observatoireStore.setReticuleVisible(false)
+    observatoireStore.hoveredStar = null
+    observatoireStore.setHoveredSignal(null)
+    observatoireStore.setHoveredConstellation(null)
+    return
   }
 
   const vd = observatoireStore.viewDirection?.value ?? observatoireStore.viewDirection
@@ -267,8 +272,7 @@ function handleMouseMove(e, starList, canvas) {
     }
   })
 
-  const now = Date.now()
-  const activeSignals = signauxStore.list.filter((s) => now - s.createdAt < s.lifetimeMs)
+  const activeSignals = visibleSignals(Date.now())
   let closestSignal = null
   let minSignalDist = 16
   activeSignals.forEach((sig) => {

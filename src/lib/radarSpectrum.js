@@ -75,6 +75,45 @@ export const PULSAR_PULSE_AMPLITUDE = 400 * NOISE_STD_L
 /** Largeur d'une impulsion (écart-type, s) : un demi-échantillon, donc une impulsion large bande (jusqu'à ~100 Hz) */
 export const PULSAR_PULSE_SIGMA_S = 0.002
 
+/**
+ * Largeur du faisceau du télescope à mi-puissance (°), par bande : plus large aux grandes longueurs d'onde (P),
+ * étroit en X ; les détecteurs γ voient un large champ. Le champ de la vue ciel fait 120°.
+ */
+export const RADAR_BEAM_FWHM_DEG = { P: 20, L: 10, X: 5, G: 30 }
+/** Gain en dessous duquel un pulsar n'est plus capté */
+const BEAM_MIN_GAIN = 0.01
+
+/** Écart angulaire (°) entre deux directions (ra/azimut, dec/élévation en degrés) */
+export function angularSeparationDeg(ra1, dec1, ra2, dec2) {
+  const r = Math.PI / 180
+  const cos =
+    Math.sin(dec1 * r) * Math.sin(dec2 * r) +
+    Math.cos(dec1 * r) * Math.cos(dec2 * r) * Math.cos((ra1 - ra2) * r)
+  return Math.acos(Math.max(-1, Math.min(1, cos))) / r
+}
+
+/** Gain du faisceau (0–1, gaussien) pour une source à sepDeg de l'axe visé */
+export function beamGain(sepDeg, fwhmDeg) {
+  return Math.exp((-4 * Math.LN2 * sepDeg * sepDeg) / (fwhmDeg * fwhmDeg))
+}
+
+/**
+ * Pulsars captés par le faisceau pointé vers `direction` : chacun reçoit son gain (`beamGain`),
+ * ceux trop loin de l'axe sont écartés.
+ * @param {Array<{ azimuth: number, elevation: number }>} signals - Pulsars de la bande active
+ * @param {{ ra: number, dec: number }} direction - Direction visée (vue ciel)
+ * @param {string} band - 'P' | 'L' | 'X' | 'G'
+ */
+export function pulsarsInBeam(signals, direction, band) {
+  const fwhm = RADAR_BEAM_FWHM_DEG[band] ?? RADAR_BEAM_FWHM_DEG.L
+  const out = []
+  for (const s of signals ?? []) {
+    const gain = beamGain(angularSeparationDeg(s.azimuth ?? 0, s.elevation ?? 0, direction.ra, direction.dec), fwhm)
+    if (gain >= BEAM_MIN_GAIN) out.push({ ...s, beamGain: gain })
+  }
+  return out
+}
+
 /** Décalage de phase stable (0–1) dérivé de l'identifiant : les pulsars ne battent pas en même temps */
 export function pulsarPhaseOffset(signal) {
   if (signal.phaseOffset != null) return signal.phaseOffset
@@ -89,11 +128,11 @@ export function pulsarPhaseOffset(signal) {
 
 /**
  * Ajoute au signal temporel le train d'impulsions de chaque pulsar (avant la FFT).
- * Une impulsion par période, gaussienne, d'amplitude PULSAR_PULSE_AMPLITUDE × flux^0,6 :
+ * Une impulsion par période, gaussienne, d'amplitude PULSAR_PULSE_AMPLITUDE × flux^0,6 × gain du faisceau :
  * un pulsar lent donne une barre verticale par impulsion, un pulsar rapide un peigne de raies
  * (fréquence de rotation et harmoniques, repliées au-delà de Nyquist comme sur un vrai récepteur).
  * @param {Float32Array} chunk - Échantillons modifiés sur place
- * @param {Array<{ id?: string, fluxRelative: number, pulsePeriodS: number, phaseOffset?: number }>} signals
+ * @param {Array<{ id?: string, fluxRelative: number, pulsePeriodS: number, phaseOffset?: number, beamGain?: number }>} signals
  * @param {object} opts
  * @param {number} opts.startSample - Indice absolu du premier échantillon
  * @param {number} [opts.sampleRate=SAMPLE_RATE]
@@ -106,7 +145,7 @@ export function addPulsarPulses(chunk, signals, { startSample, sampleRate = SAMP
   for (const signal of signals ?? []) {
     const period = signal.pulsePeriodS
     if (!period || !signal.fluxRelative) continue
-    const amplitude = PULSAR_PULSE_AMPLITUDE * Math.pow(signal.fluxRelative, 0.6)
+    const amplitude = PULSAR_PULSE_AMPLITUDE * Math.pow(signal.fluxRelative, 0.6) * (signal.beamGain ?? 1)
     const offset = pulsarPhaseOffset(signal)
     // Impulsions centrées en (k − offset) × période, seulement celles qui touchent ce bloc
     const kFirst = Math.ceil((t0 - reach) / period + offset)

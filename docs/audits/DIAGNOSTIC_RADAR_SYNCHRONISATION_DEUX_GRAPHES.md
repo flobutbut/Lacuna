@@ -17,7 +17,7 @@
 >
 > - **Pulsations invisibles** après ce second passage : les pulsars étaient dessinés après la FFT, à la hauteur de leur fréquence de rotation ; les lents (seuls à pouvoir « battre ») tombaient dans les bins 1 à 3, sous le bruit basse fréquence. **Corrigé** : impulsions ajoutées au signal temporel avant la FFT, fenêtre de 256 ms (Hann) : barre verticale par impulsion, raies et harmoniques pour les pulsars rapides, courbe d'intensité au niveau moyen.
 >
-> **Toujours ouvert** : la miniature affiche les dernières colonnes en direct (sa largeur en pixels), sans la fenêtre ni le défilement de la vue Radar — comportement à décider.
+> **Décidé et fait** : la miniature reste en direct (dernières secondes, repères de durée), sans suivre la pause ni le défilement de la vue Radar ; l'acquisition continue pendant la pause et la vue Radar reste figée sur l'instant de la pause. Le radar ne capte que les pulsars dans le faisceau pointé vers la direction de la vue ciel.
 
 ---
 

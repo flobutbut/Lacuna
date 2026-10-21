@@ -1,11 +1,12 @@
 <script setup>
 /**
- * Filtres barre Radar — pause, bande, échelle temps, INT., fréq.
+ * Filtres barre Radar — marche / arrêt, pause, bande, échelle temps, INT., fréq., bruit de fond.
  */
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRadarStore } from '@/stores/radar'
 import AppSelect from '@/components/AppSelect.vue'
+import AppSwitch from '@/components/AppSwitch.vue'
 import AppDualRangeSlider from '@/components/AppDualRangeSlider.vue'
 import RadarNoiseIcon from '@/components/icons/RadarNoiseIcon.vue'
 
@@ -18,6 +19,7 @@ const {
   radarFreqLow,
   radarFreqHigh,
   radarNoiseEnabled,
+  radarEnabled,
 } = storeToRefs(radarStore)
 
 const BANDS = [
@@ -44,6 +46,12 @@ function onThresholdInput(sliderVal) {
 
 <template>
   <div class="radar-filters">
+    <AppSwitch
+      v-model="radarEnabled"
+      class="radar-filters__switch"
+      label="Radar"
+      :title="radarEnabled ? 'Couper le radar' : 'Allumer le radar'"
+    />
     <button
       type="button"
       class="btn btn-secondary"
@@ -120,6 +128,10 @@ function onThresholdInput(sliderVal) {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+}
+
+.radar-filters__switch {
+  margin-right: var(--space-3);
 }
 .radar-filters__select {
   min-width: 140px;

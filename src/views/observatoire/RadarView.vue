@@ -2,7 +2,8 @@
 /**
  * Vue Radar — spectrogramme temps réel + courbe d'intensité.
  * Écrit une colonne par tick d'acquisition dans le buffer partagé (lu aussi par RadarMiniature),
- * même masquée. Dessine seulement quand la vue est visible et que l'image a changé.
+ * même masquée ou en pause (la vue reste alors figée sur l'instant de la pause).
+ * Dessine seulement quand la vue est visible et que l'image a changé.
  */
 import { ref, computed, onMounted, onUnmounted, watch, inject, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
@@ -78,6 +79,8 @@ const VIRIDIS_LUT = (() => {
 })()
 
 let lastAppendedTick = tickCount.value
+/** Colonnes écrites au moment de la pause : la vue reste figée sur cet instant pendant que l'acquisition continue */
+let pausedAtCount = null
 let rafId = null
 let needsDraw = true
 let resizeObserver = null
@@ -131,12 +134,22 @@ function catchUpColumns() {
     if (snapshot) appendColumnFromSnapshot(snapshot)
   }
   lastAppendedTick = tickCount.value
-  needsDraw = true
+  if (!radarPaused.value) needsDraw = true
 }
 
-/** Colonnes réellement disponibles dans l'historique */
+/** Colonnes acquises depuis la pause (0 hors pause) : décalage de la vue figée par rapport au direct */
+function frozenColumns() {
+  return pausedAtCount == null ? 0 : radarColumnBuffer.count - pausedAtCount
+}
+
+/** Prochaine colonne à écrire, vue depuis l'instant affiché (le direct, ou l'instant de la pause) */
+function viewWriteCol() {
+  return (((radarColumnBuffer.writeCol - frozenColumns()) % HISTORY_SIZE) + HISTORY_SIZE) % HISTORY_SIZE
+}
+
+/** Colonnes réellement disponibles dans l'historique, avant l'instant affiché */
 function availableColumns() {
-  return Math.min(radarColumnBuffer.count, HISTORY_SIZE)
+  return Math.max(0, Math.min(radarColumnBuffer.count, HISTORY_SIZE) - frozenColumns())
 }
 
 // ── Géométrie ────────────────────────────────────────────────────────────────
@@ -158,7 +171,7 @@ function ageAtPlotPx(px, innerW, ticksPerPx) {
 /** px = 0..innerW-1 dans la zone utile (sans marge gauche) */
 function colIdxFromPlotPx(px, innerW, ticksPerPx) {
   return columnIndexAt({
-    writeCol: radarColumnBuffer.writeCol,
+    writeCol: viewWriteCol(),
     px,
     innerW,
     ticksPerPx,
@@ -208,7 +221,8 @@ function drawViewport() {
   const geom = specGeometry(specCanvas)
   const binLow = geom.binLow
   const binRange = geom.binRange
-  const { columnBuffer, writeCol } = radarColumnBuffer
+  const { columnBuffer } = radarColumnBuffer
+  const writeCol = viewWriteCol()
 
   // 1. Magnitudes de la fenêtre visible en dB (pixel × bin de la plage zoomée), NaN sans données.
   //    Un pixel couvrant plusieurs colonnes garde le maximum (une impulsion brève reste visible).
@@ -652,9 +666,9 @@ onUnmounted(() => {
   window.removeEventListener('pointerleave', onPointerUp)
 })
 
-// Acquisition : une colonne par tick, que la vue soit affichée ou non (la miniature lit le même buffer)
+// Acquisition : une colonne par tick, que la vue soit affichée, masquée ou en pause (la miniature reste en direct)
 watch(tickCount, () => {
-  if (radarEnabled.value && !radarPaused.value) catchUpColumns()
+  if (radarEnabled.value) catchUpColumns()
 })
 
 watch(isVisible, async (visible) => {
@@ -670,6 +684,7 @@ watch(radarEnabled, async (on) => {
   await nextTick()
   // Pas de colonnes pour la période coupée : on reprend au tick courant
   lastAppendedTick = tickCount.value
+  if (radarPaused.value && pausedAtCount == null) pausedAtCount = radarColumnBuffer.count
   resizeCanvases()
   needsDraw = true
   startLoop()
@@ -678,13 +693,15 @@ watch(radarEnabled, async (on) => {
 watch(radarPaused, () => {
   if (!radarEnabled.value) return
   if (!radarPaused.value) {
-    // Rejoue les ticks acquis pendant la pause, du plus ancien au plus récent
+    // Retour au direct : les colonnes acquises pendant la pause sont déjà dans le buffer
     catchUpColumns()
+    pausedAtCount = null
     currentScrollOffset = 0
     targetScrollOffset = 0
     radarStore.setRadarSelectionMode(null)
     clearSelection()
   } else {
+    pausedAtCount = radarColumnBuffer.count
     targetScrollOffset = currentScrollOffset
     radarStore.setRadarSelectionMode('zone')
   }

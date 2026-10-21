@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 import { useShipStore } from '@/stores/ship'
 import { useRadarStore } from '@/stores/radar'
+import { useObservatoireStore } from '@/stores/observatoire'
+import { pulsarsInBeam } from '@/lib/radarSpectrum'
 import { formatFrequency, parseFrequency } from '@/lib/formatUtils'
 
 const LIFETIME_MS = 2 * 60 * 60 * 1000 // 2h temps joueur par défaut
@@ -123,15 +125,19 @@ export const useSignauxStore = defineStore('signaux', () => {
     return filtered
   })
 
-  /** Pulsars injectés dans le spectrogramme : seulement ceux de la bande radar active */
+  /**
+   * Pulsars captés par le radar : ceux de la bande active, dans le faisceau pointé vers la direction de la vue ciel,
+   * chacun avec son gain de faisceau (`beamGain`)
+   */
   const activePulsarSignals = computed(() => {
     const activeBand = useRadarStore().radarFrequencyBand
-    return list.value.filter(s =>
+    const bandPulsars = list.value.filter(s =>
       s.sourceType === 'PULSAR' &&
       s.band === activeBand &&
       s.fluxRelative != null &&
       s.frequencyHz != null
     )
+    return pulsarsInBeam(bandPulsars, useObservatoireStore().viewDirection, activeBand)
   })
 
   async function fetch() {

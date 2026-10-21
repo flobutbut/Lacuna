@@ -6,6 +6,9 @@ import {
   RADAR_FREQ_BINS,
   addPulsarPulses,
   ageAtPx,
+  angularSeparationDeg,
+  beamGain,
+  pulsarsInBeam,
   ageLabelInterval,
   binAtY,
   binToHz,
@@ -101,6 +104,39 @@ describe('addPulsarPulses', () => {
     expect(pulsarPhaseOffset({ id: 'a' })).not.toBe(pulsarPhaseOffset({ id: 'b' }))
     expect(pulsarPhaseOffset({ id: 'a' })).toBe(pulsarPhaseOffset({ id: 'a' }))
     expect(pulsarPhaseOffset({ id: 'a', phaseOffset: 0.3 })).toBe(0.3)
+  })
+})
+
+describe('faisceau du télescope', () => {
+  it('mesure l’écart angulaire entre deux directions', () => {
+    expect(angularSeparationDeg(10, 0, 20, 0)).toBeCloseTo(10)
+    expect(angularSeparationDeg(0, 89, 180, 89)).toBeCloseTo(2)
+    expect(angularSeparationDeg(350, 0, 10, 0)).toBeCloseTo(20)
+  })
+
+  it('donne un gain de 1 dans l’axe et 0,5 à mi-largeur', () => {
+    expect(beamGain(0, 10)).toBe(1)
+    expect(beamGain(5, 10)).toBeCloseTo(0.5)
+  })
+
+  it('ne garde que les pulsars proches de la direction visée, avec leur gain', () => {
+    const pulsars = [
+      { id: 'axe', azimuth: 100, elevation: 10 },
+      { id: 'bord', azimuth: 105, elevation: 10 },
+      { id: 'loin', azimuth: 200, elevation: -30 },
+    ]
+    const captes = pulsarsInBeam(pulsars, { ra: 100, dec: 10 }, 'L')
+    expect(captes.map((p) => p.id)).toEqual(['axe', 'bord'])
+    expect(captes[0].beamGain).toBeCloseTo(1)
+    expect(captes[1].beamGain).toBeGreaterThan(0.4)
+    expect(captes[1].beamGain).toBeLessThan(0.6)
+    // Faisceau γ plus large : le même écart compte moins
+    expect(pulsarsInBeam(pulsars, { ra: 100, dec: 10 }, 'G')[1].beamGain).toBeGreaterThan(0.9)
+  })
+
+  it('atténue les impulsions d’un pulsar hors de l’axe', () => {
+    const chunk = addPulsarPulses(new Float32Array(10), [{ fluxRelative: 1, pulsePeriodS: 1, phaseOffset: 0, beamGain: 0.5 }], { startSample: 0, sampleRate: 250 })
+    expect(chunk[0]).toBeCloseTo(PULSAR_PULSE_AMPLITUDE * 0.5)
   })
 })
 

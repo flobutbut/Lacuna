@@ -62,6 +62,7 @@ Lacuna/
 │   │   ├── SkyCanvas.vue
 │   │   ├── InstrumentsBar.vue
 │   │   ├── SideLeft.vue, SideRight.vue
+│   │   ├── AppSwitch.vue (interrupteur marche / arrêt, role="switch", v-model booléen)
 │   │   ├── Reticule.vue, StarTooltip.vue, SignalTooltip.vue
 │   │   ├── ObservationCard.vue (cards signaux Observatoire + observations Laboratoire)
 │   │   ├── NavMenuItem.vue (menu Systèmes, Population — items pleine largeur ; grille Artefacts)
@@ -254,19 +255,23 @@ Composant `RadarView.vue` — spectrogramme temps réel + courbe d'intensité, c
 |---------|-------------|
 | **Acquisition** | `useRadarSpectrogram` (PageObservatoire) — échantillons à 250 Hz, `tick()` toutes les 100 ms, `tickCount` (signal réactif). `start()` reprend l'horloge là où elle s'était arrêtée |
 | **Signal** | `useRadarNoise` — signal temporel à 250 Hz : bruit thermique + synchrotron (AR(1)) ramené à un écart-type propre à la bande (P ≈ 0,3, L ≈ 0,18, X ≈ 0,07, γ ≈ 0,014, latitude galactique comprise ; raie à 12,5 Hz en bande L ; coupé par `radarNoiseEnabled`), plus les impulsions des pulsars |
-| **Pulsars** | `signaux.activePulsarSignals` — pulsars de la **bande active** seulement (L et γ en ont, P et X non). `addPulsarPulses` ajoute au signal, **avant la FFT**, une impulsion gaussienne brève (σ = 2 ms) par période, d'amplitude `PULSAR_PULSE_AMPLITUDE × flux^0,6` (400 écarts-types du bruit L) : même niveau absolu dans toutes les bandes, donc peu visible en P, très visible en γ. Phase propre à chaque pulsar (`pulsarPhaseOffset`). Un pulsar lent (période ≥ ~0,25 s) donne une **barre verticale** par impulsion ; un pulsar rapide, une raie à sa fréquence de rotation et ses harmoniques ; un pulsar milliseconde est filtré par l'échantillonnage |
-| **Colonnes** | `useRadarColumnBuffer` — buffer circulaire partagé (`HISTORY_SIZE` = 7 200 colonnes = 12 min), créé une fois, jamais vidé ; champ `count` (colonnes écrites). RadarView écrit **une colonne par tick** (`watch(tickCount)` → `catchUpColumns()`, une fenêtre d'échantillons par tick, injection des pulsars), même masquée ; RadarMiniature lit. Les colonnes gardent les magnitudes brutes : FFT de 256 points sur les 64 derniers échantillons (`RADAR_FFT_WINDOW`, 256 ms, fenêtre de Hann, complétés par des zéros), fréquences croissantes |
+| **Pulsars** | `signaux.activePulsarSignals` — pulsars de la **bande active** (L et γ en ont, P et X non) **dans le faisceau** pointé vers la direction de la vue ciel (`viewDirection`) : faisceau gaussien de largeur à mi-puissance P 20°, L 10°, X 5°, γ 30° (`RADAR_BEAM_FWHM_DEG`, `pulsarsInBeam`), gain appliqué à l'amplitude, pulsars sous 1 % écartés. Viser un pulsar l'isole. `addPulsarPulses` ajoute au signal, **avant la FFT**, une impulsion gaussienne brève (σ = 2 ms) par période, d'amplitude `PULSAR_PULSE_AMPLITUDE × flux^0,6` (400 écarts-types du bruit L) : même niveau absolu dans toutes les bandes, donc peu visible en P, très visible en γ. Phase propre à chaque pulsar (`pulsarPhaseOffset`). Un pulsar lent (période ≥ ~0,25 s) donne une **barre verticale** par impulsion ; un pulsar rapide, une raie à sa fréquence de rotation et ses harmoniques ; un pulsar milliseconde est filtré par l'échantillonnage |
+| **Colonnes** | `useRadarColumnBuffer` — buffer circulaire partagé (`HISTORY_SIZE` = 7 200 colonnes = 12 min), créé une fois, jamais vidé ; champ `count` (colonnes écrites). RadarView écrit **une colonne par tick** (`watch(tickCount)` → `catchUpColumns()`, une fenêtre d'échantillons par tick), même masquée ou en pause ; RadarMiniature lit. Les colonnes gardent les magnitudes brutes : FFT de 256 points sur les 64 derniers échantillons (`RADAR_FFT_WINDOW`, 256 ms, fenêtre de Hann, complétés par des zéros), fréquences croissantes |
 | **Échelle de couleur** | En dB, **recalculée sur la fenêtre visible** (temps et zoom fréquentiel) : plancher 10 dB sous le bruit médian, plafond au maximum de la fenêtre, au moins 40 dB d'étendue (`dbDisplayScale`, `dbToLevel`). Même échelle dans la miniature |
 | **Échelle de temps** | ms par pixel : 10 ms = zoom ×10 (une colonne de 100 ms sur 10 px), 100 ms = une colonne par pixel, 1 s / 10 s = **maximum** de 10 / 100 colonnes par pixel (`ticksPerPixel`, `ageAtPx`) |
 | **Intensité et seuil INT.** | Intensité d'un pixel = niveau moyen (0–1, échelle dB) de la plage de fréquences affichée : une raie continue ne la sature pas, une impulsion large bande la fait monter. Le seuil INT. masque les pixels dont l'intensité reste en dessous ; ligne de seuil sur la même échelle |
 | **Rendu** | `drawViewport()` — spectrogramme écrit en pixels (`ImageData`, palette Viridis précalculée), intensité, seuil, repères de temps (`ageLabelInterval`), axes, sélection, réticule ; rien n'est dessiné au-delà de l'historique disponible |
 | **Boucle rAF** | `frame()` tourne **seulement quand la vue Radar est affichée** et ne redessine que si `needsDraw` (nouvelle colonne, réglage, pointeur, défilement) |
 | **Taille** | `resizeCanvases()` (ResizeObserver) — ajuste les canvas sans toucher aux données |
-| **Pause** | `radarStore.radarPaused` — plus de nouvelles colonnes affichées, molette et sélection actives |
-| **Reprise** | `watch(radarPaused)` → `catchUpColumns()` rejoue les ticks acquis pendant la pause, retour au live |
+| **Pause** | `radarStore.radarPaused` — la vue reste figée sur l'instant de la pause (`pausedAtCount`) pendant que l'acquisition continue ; molette et sélection actives |
+| **Reprise** | `watch(radarPaused)` → retour au direct (les colonnes acquises pendant la pause sont déjà dans le buffer) |
 | **Scroll** | En pause : `onWheel` modifie `targetScrollOffset`, borné à l'historique disponible |
 | **Sélection** | Zone (colonnes × bins) en pause — fréquences via `binAtY` / `binsToYRange` (haut = aigu, zoom fréquentiel compris) — `emit('signal-selected', { startCol, endCol, startBin, endBin, lowHz, highHz })` (bins croissants) |
 | **Bouton LIVE** | Affiché quand `currentScrollOffset > LIVE_THRESHOLD` — clic → `targetScrollOffset = 0`, easing vers live |
+
+**Marche / arrêt** : `radarStore.radarEnabled`, piloté par RADAR dans l'en-tête et par un `AppSwitch` dans la tuile Radar et dans la barre de la vue Radar (le bouton de bruit de fond est à côté, dans la tuile et dans la barre). Radar coupé : tuile réduite à son en-tête, signaux masqués sur le ciel (`visibleSignals` dans SkyCanvas), vue Radar remplacée par « Radar désactivé ».
+
+**Miniature** (`RadarMiniature.vue`, tuile Radar de la vue ciel, montée seulement radar allumé) : toujours **en direct** (les dernières secondes, ne suit ni la pause ni le défilement de la vue Radar), même échelle de temps, même échelle dB et même seuil ; repères de durée (−10 s, −20 s… à 100 ms par pixel, `ageLabelInterval`).
 
 **Calculs partagés** : `lib/radarSpectrum.js` (index de colonnes, bornes de fréquence, injection pulsars, échelle dB, libellés de temps, correspondance fréquence ↔ hauteur), testés. **Dépendances** : `spectrogramData.js` (`computeSpectrogramColumn`), D3 (`interpolateViridis`), stores `radar`, `observatoire`, `signaux`.
 
