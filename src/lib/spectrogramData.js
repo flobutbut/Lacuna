@@ -190,20 +190,33 @@ export function computeAutocorrelation(values, maxLag = 2000, downsample = 10) {
 /**
  * Calcule une seule colonne FFT (magnitudes) pour une fenêtre de signal.
  * Utilisé pour le rendu incrémental (canvas Radar).
- * @param {number[]} values - Fenêtre d'amplitudes (longueur 256 ou 64, puissance de 2)
+ * @param {number[]} values - Échantillons (longueur 256 ou 64, puissance de 2) : taille de la FFT
  * @param {number} freqBins
+ * @param {object} [opts]
+ * @param {number} [opts.windowLength=values.length] - Échantillons analysés (les plus récents), complétés par des zéros :
+ *   une fenêtre courte sépare les impulsions dans le temps au prix de raies plus larges
  * @returns {{ magnitudes: number[], intensity: number }}
  */
-export function computeSpectrogramColumn(values, freqBins) {
+export function computeSpectrogramColumn(values, freqBins, { windowLength } = {}) {
   if (!values || values.length < 64) return { magnitudes: [], intensity: 0 }
   const N = values.length
-  const mean = values.reduce((a, x) => a + x, 0) / N
-  const centered = values.map((x) => x - mean)
-
-  const re = centered.slice()
+  const L = Math.min(N, windowLength ?? N)
+  const start = N - L
+  let mean = 0
+  for (let n = start; n < N; n++) mean += values[n]
+  mean /= L
+  // Fenêtre de Hann : une impulsion brève n'apparaît que sur les colonnes dont la fenêtre la contient vraiment
+  // (moins d'étalement dans le temps et entre les bins) ; magnitudes corrigées du gain de la fenêtre
+  const window = hannWindow(L)
+  let windowSum = 0
+  const re = new Array(N).fill(0)
+  for (let n = 0; n < L; n++) {
+    re[n] = (values[start + n] - mean) * window[n]
+    windowSum += window[n]
+  }
   const im = new Array(N).fill(0)
   _fftInPlace(re, im)
-  const scale = 1 / N
+  const scale = 1 / windowSum
   const maxK = Math.min(freqBins, (N >> 1) + 1)
   const fftRow = []
   for (let k = 0; k < maxK; k++) {
@@ -221,6 +234,19 @@ export function computeSpectrogramColumn(values, freqBins) {
     intensity = Math.min(1, Math.max(0, intensity / maxMagnitude))
   }
   return { magnitudes: row, intensity }
+}
+
+const hannCache = new Map()
+
+/** Fenêtre de Hann de taille N (mise en cache) */
+function hannWindow(N) {
+  let w = hannCache.get(N)
+  if (!w) {
+    w = new Float64Array(N)
+    for (let n = 0; n < N; n++) w[n] = 0.5 * (1 - Math.cos((2 * Math.PI * n) / (N - 1)))
+    hannCache.set(N, w)
+  }
+  return w
 }
 
 function _fftInPlace(re, im) {

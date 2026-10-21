@@ -11,6 +11,11 @@ export const RADAR_FREQ_BINS = 128
 export const RADAR_NYQUIST_HZ = SAMPLE_RATE / 2
 /** Durée d'un tick d'acquisition (ms) */
 export const RADAR_TICK_MS = 100
+/**
+ * Échantillons analysés par colonne (256 ms à 250 Hz), complétés à 256 pour garder 128 bins :
+ * assez court pour séparer les impulsions des pulsars de période ≥ 0,25 s, au prix de raies larges de ~4 Hz
+ */
+export const RADAR_FFT_WINDOW = 64
 
 /**
  * Colonnes du buffer par pixel, selon l'échelle de temps : 0,1 à 10 ms (zoom ×10, une colonne
@@ -59,16 +64,16 @@ export function freqRangeToBins(lowHz, highHz, freqBins = RADAR_FREQ_BINS) {
   return { binLow, binHigh, binRange: binHigh - binLow || 1 }
 }
 
+/** Écart-type du bruit de la bande L (plan galactique), référence des pulsars */
+const NOISE_STD_L = 0.177
 /**
- * Magnitude de référence des pulsars : magnitude médiane du bruit de la bande L
- * (0,0532 par unité d'écart-type × 0,177 d'écart-type). Un pulsar a donc le même niveau absolu
- * dans toutes les bandes et ressort plus ou moins selon le bruit de la bande (faible en P, fort en γ).
+ * Amplitude d'une impulsion de pulsar de flux relatif 1 : 400 écarts-types du bruit de la bande L.
+ * Une impulsion de flux 0,13 ressort d'environ 20 dB au-dessus du bruit de la bande L, une de flux 0,01 de 3 dB.
+ * Même amplitude absolue dans toutes les bandes : un pulsar ressort peu en P, beaucoup en γ.
  */
-export const PULSAR_REFERENCE_MAGNITUDE = 0.0094
-/** Rapport signal / bruit (bande L) d'un pulsar de flux relatif 1 */
-export const PULSAR_SNR_MAX = 40
-/** Largeur de l'impulsion (écart-type, fraction de la période) */
-const PULSE_SIGMA = 0.02
+export const PULSAR_PULSE_AMPLITUDE = 400 * NOISE_STD_L
+/** Largeur d'une impulsion (écart-type, s) : un demi-échantillon, donc une impulsion large bande (jusqu'à ~100 Hz) */
+export const PULSAR_PULSE_SIGMA_S = 0.002
 
 /** Décalage de phase stable (0–1) dérivé de l'identifiant : les pulsars ne battent pas en même temps */
 export function pulsarPhaseOffset(signal) {
@@ -83,62 +88,40 @@ export function pulsarPhaseOffset(signal) {
 }
 
 /**
- * Distance (fraction de période) entre l'intervalle [tSec, tSec + dtSec] et le pic d'impulsion le plus proche ;
- * 0 si un pic tombe dans l'intervalle. Toutes les impulsions sont vues, quelle que soit la période.
- */
-function pulseDistance(tSec, dtSec, periodS, offset) {
-  if (dtSec >= periodS) return 0
-  const phase = (((tSec / periodS + offset) % 1) + 1) % 1
-  const untilNext = (1 - phase) % 1
-  const dtPhase = dtSec / periodS
-  if (untilNext <= dtPhase) return 0
-  return Math.min(phase, untilNext - dtPhase)
-}
-
-/**
- * Fréquence apparente après échantillonnage (repliement autour de la fréquence d'échantillonnage) :
- * un pulsar milliseconde au-delà de Nyquist apparaît à sa fréquence repliée, comme sur un vrai récepteur.
- * @returns {number|null} 0 … RADAR_NYQUIST_HZ, ou null sans fréquence
- */
-export function aliasedFrequencyHz(hz) {
-  if (!hz) return null
-  const fs = 2 * RADAR_NYQUIST_HZ
-  return Math.abs(hz - fs * Math.round(hz / fs))
-}
-
-/**
- * Ajoute les impulsions des pulsars à une colonne de magnitudes (après FFT).
- * Impulsion gaussienne centrée sur la fréquence de rotation (repliée au-delà de Nyquist),
- * d'amplitude PULSAR_SNR_MAX × flux^0,6 fois la référence de bruit.
- * @param {number[]} magnitudes - Colonne modifiée sur place
- * @param {Array<{ id?: string, fluxRelative: number, pulsePeriodS: number, rotationFrequencyHz?: number, phaseOffset?: number }>} signals
+ * Ajoute au signal temporel le train d'impulsions de chaque pulsar (avant la FFT).
+ * Une impulsion par période, gaussienne, d'amplitude PULSAR_PULSE_AMPLITUDE × flux^0,6 :
+ * un pulsar lent donne une barre verticale par impulsion, un pulsar rapide un peigne de raies
+ * (fréquence de rotation et harmoniques, repliées au-delà de Nyquist comme sur un vrai récepteur).
+ * @param {Float32Array} chunk - Échantillons modifiés sur place
+ * @param {Array<{ id?: string, fluxRelative: number, pulsePeriodS: number, phaseOffset?: number }>} signals
  * @param {object} opts
- * @param {number} opts.tSec - Début de la colonne (s, temps d'acquisition)
- * @param {number} [opts.dtSec] - Durée couverte par la colonne (s)
- * @param {number} [opts.freqBins=RADAR_FREQ_BINS]
+ * @param {number} opts.startSample - Indice absolu du premier échantillon
+ * @param {number} [opts.sampleRate=SAMPLE_RATE]
  */
-export function injectPulsarSignals(magnitudes, signals, { tSec, dtSec = RADAR_TICK_MS / 1000, freqBins = RADAR_FREQ_BINS }) {
+export function addPulsarPulses(chunk, signals, { startSample, sampleRate = SAMPLE_RATE }) {
+  const reach = 4 * PULSAR_PULSE_SIGMA_S
+  const twoSigma2 = 2 * PULSAR_PULSE_SIGMA_S * PULSAR_PULSE_SIGMA_S
+  const t0 = startSample / sampleRate
+  const t1 = (startSample + chunk.length - 1) / sampleRate
   for (const signal of signals ?? []) {
-    if (!signal.pulsePeriodS || !signal.fluxRelative) continue
-
-    const dist = pulseDistance(tSec, dtSec, signal.pulsePeriodS, pulsarPhaseOffset(signal))
-    if (dist > 5 * PULSE_SIGMA) continue
-
-    const peakAmplitude = PULSAR_REFERENCE_MAGNITUDE * PULSAR_SNR_MAX * Math.pow(signal.fluxRelative, 0.6)
-    const envelope = Math.exp(-(dist * dist) / (2 * PULSE_SIGMA * PULSE_SIGMA))
-
-    const rotHz = aliasedFrequencyHz(signal.rotationFrequencyHz)
-    if (rotHz == null) continue
-    const centerBin = Math.max(0, Math.min(freqBins - 1, Math.round((rotHz / RADAR_NYQUIST_HZ) * freqBins)))
-    // Quelques bins autour du centre
-    const width = 3
-    for (let b = centerBin - width; b <= centerBin + width; b++) {
-      if (b < 0 || b >= freqBins) continue
-      const d = Math.abs(b - centerBin)
-      magnitudes[b] += peakAmplitude * envelope * Math.exp(-(d * d) / (2 * 1.5 * 1.5))
+    const period = signal.pulsePeriodS
+    if (!period || !signal.fluxRelative) continue
+    const amplitude = PULSAR_PULSE_AMPLITUDE * Math.pow(signal.fluxRelative, 0.6)
+    const offset = pulsarPhaseOffset(signal)
+    // Impulsions centrées en (k − offset) × période, seulement celles qui touchent ce bloc
+    const kFirst = Math.ceil((t0 - reach) / period + offset)
+    const kLast = Math.floor((t1 + reach) / period + offset)
+    for (let k = kFirst; k <= kLast; k++) {
+      const tc = (k - offset) * period
+      const iFrom = Math.max(0, Math.ceil((tc - reach) * sampleRate) - startSample)
+      const iTo = Math.min(chunk.length - 1, Math.floor((tc + reach) * sampleRate) - startSample)
+      for (let i = iFrom; i <= iTo; i++) {
+        const dt = (startSample + i) / sampleRate - tc
+        chunk[i] += amplitude * Math.exp(-(dt * dt) / twoSigma2)
+      }
     }
   }
-  return magnitudes
+  return chunk
 }
 
 // ── Échelle d'affichage en dB ────────────────────────────────────────────────

@@ -7,12 +7,12 @@
 import { ref, computed, onMounted, onUnmounted, watch, inject, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRadarStore } from '@/stores/radar'
-import { useSignauxStore } from '@/stores/signaux'
 import { useObservatoireStore } from '@/stores/observatoire'
 import { computeSpectrogramColumn, SAMPLE_RATE } from '@/lib/spectrogramData'
 import { getCssVar } from '@/lib/cssVars'
 import {
   RADAR_FREQ_BINS as FREQ_BINS,
+  RADAR_FFT_WINDOW as FFT_WINDOW,
   RADAR_TICK_MS as TICK_MS,
   ageAtPx,
   ageLabelInterval,
@@ -24,7 +24,6 @@ import {
   dbToLevel,
   formatAgeLabel,
   freqRangeToBins,
-  injectPulsarSignals,
   magnitudeToDb,
   ticksPerPixel,
 } from '@/lib/radarSpectrum'
@@ -42,7 +41,6 @@ const {
 } = radarSpectrogram
 
 const radarStore = useRadarStore()
-const signauxStore = useSignauxStore()
 const observatoireStore = useObservatoireStore()
 const {
   radarPaused,
@@ -108,15 +106,8 @@ function appendColumnFromSnapshot(snapshot, windowSize = WINDOW_SIZE) {
   if (!snapshot || snapshot.length < windowSize) return
 
   const { magnitudes } =
-    computeSpectrogramColumn(snapshot, FREQ_BINS)
+    computeSpectrogramColumn(snapshot, FREQ_BINS, { windowLength: FFT_WINDOW })
   if (!magnitudes.length) return
-
-  // Pulsars de la bande active, après FFT ; temps d'acquisition réel de la colonne (indépendant de l'échelle d'affichage)
-  injectPulsarSignals(magnitudes, signauxStore.activePulsarSignals, {
-    tSec: (radarColumnBuffer.count * TICK_MS) / 1000,
-    dtSec: TICK_MS / 1000,
-    freqBins: FREQ_BINS,
-  })
 
   // Magnitudes brutes : la normalisation (dB, fenêtre visible) se fait au dessin
   radarColumnBuffer.columnBuffer[radarColumnBuffer.writeCol] = {
@@ -253,10 +244,11 @@ function drawViewport() {
   for (let px = 0; scale && px < innerW; px++) {
     const base = px * binRange
     if (Number.isNaN(winDb[base])) continue
-    // Intensité du pixel : niveau du bin le plus fort de la plage affichée, sur la même échelle
-    let maxDb = -Infinity
-    for (let i = 0; i < binRange; i++) if (winDb[base + i] > maxDb) maxDb = winDb[base + i]
-    const intensity = dbToLevel(maxDb, scale)
+    // Intensité du pixel : niveau moyen de la plage affichée, sur la même échelle.
+    // Une raie continue ne la sature pas ; une impulsion large bande la fait monter.
+    let levelSum = 0
+    for (let i = 0; i < binRange; i++) levelSum += dbToLevel(winDb[base + i], scale)
+    const intensity = levelSum / binRange
     if (intensity < threshold) continue
 
     for (let y = 0; y < innerH; y++) {

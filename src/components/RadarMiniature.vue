@@ -100,9 +100,10 @@ function draw() {
   for (let px = 0; px < w; px++) {
     const base = px * binRange
     if (Number.isNaN(winDb[base])) continue
-    let maxDb = -Infinity
-    for (let i = 0; i < binRange; i++) if (winDb[base + i] > maxDb) maxDb = winDb[base + i]
-    if (dbToLevel(maxDb, scale) < radarIntensityThreshold.value) continue
+    // Même intensité que RadarView : niveau moyen de la plage affichée
+    let levelSum = 0
+    for (let i = 0; i < binRange; i++) levelSum += dbToLevel(winDb[base + i], scale)
+    if (levelSum / binRange < radarIntensityThreshold.value) continue
 
     for (let i = 0; i < binRange; i++) {
       ctx.fillStyle = interpolateViridis(dbToLevel(winDb[base + i], scale))

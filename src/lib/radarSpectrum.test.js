@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
-  PULSAR_REFERENCE_MAGNITUDE,
-  PULSAR_SNR_MAX,
+  PULSAR_PULSE_AMPLITUDE,
   RADAR_DB_FLOOR_MARGIN,
   RADAR_DB_MIN_SPAN,
   RADAR_FREQ_BINS,
+  addPulsarPulses,
   ageAtPx,
   ageLabelInterval,
-  aliasedFrequencyHz,
   binAtY,
   binToHz,
   binsToYRange,
@@ -16,7 +15,6 @@ import {
   dbToLevel,
   formatAgeLabel,
   freqRangeToBins,
-  injectPulsarSignals,
   magnitudeToDb,
   pulsarPhaseOffset,
   ticksPerPixel,
@@ -72,46 +70,37 @@ describe('freqRangeToBins', () => {
   })
 })
 
-describe('injectPulsarSignals', () => {
-  const pulsar = { fluxRelative: 1, pulsePeriodS: 1, rotationFrequencyHz: 62.5, phaseOffset: 0 }
-  const peak = PULSAR_REFERENCE_MAGNITUDE * PULSAR_SNR_MAX
+describe('addPulsarPulses', () => {
+  const pulsar = { fluxRelative: 1, pulsePeriodS: 1, phaseOffset: 0 }
+  const peaks = (chunk) => Array.from(chunk).flatMap((v, i) => (v > PULSAR_PULSE_AMPLITUDE * 0.9 ? [i] : []))
 
-  it('ajoute une impulsion centrée sur la fréquence de rotation au début de la période', () => {
-    const mags = injectPulsarSignals(new Array(RADAR_FREQ_BINS).fill(0), [pulsar], { tSec: 0 })
-    expect(mags.indexOf(Math.max(...mags))).toBe(64)
-    expect(mags[64]).toBeCloseTo(peak)
-    expect(mags[0]).toBe(0)
+  it('place une impulsion par période, à la phase du pulsar', () => {
+    const chunk = addPulsarPulses(new Float32Array(1000), [pulsar], { startSample: 0, sampleRate: 250 })
+    expect(peaks(chunk)).toEqual([0, 250, 500, 750])
+    expect(chunk[250]).toBeCloseTo(PULSAR_PULSE_AMPLITUDE)
+    expect(chunk[125]).toBe(0)
   })
 
-  it('n’ajoute rien hors de l’impulsion', () => {
-    const horsImpulsion = injectPulsarSignals(new Array(RADAR_FREQ_BINS).fill(0), [pulsar], { tSec: 0.5 })
-    expect(Math.max(...horsImpulsion)).toBe(0)
+  it('reste continu d’un bloc à l’autre', () => {
+    const decale = { ...pulsar, phaseOffset: 0.5 }
+    const entier = addPulsarPulses(new Float32Array(500), [decale], { startSample: 0, sampleRate: 250 })
+    const a = addPulsarPulses(new Float32Array(126), [decale], { startSample: 0, sampleRate: 250 })
+    const b = addPulsarPulses(new Float32Array(374), [decale], { startSample: 126, sampleRate: 250 })
+    expect([...a, ...b].map((v) => v.toFixed(6))).toEqual([...entier].map((v) => v.toFixed(6)))
+    expect(peaks(entier)).toEqual([125, 375])
   })
 
-  it('voit chaque impulsion qui tombe dans la colonne, quelle que soit la période', () => {
-    // Pic à t = 0,93 s : dans la colonne [0,9 ; 1,0] mais pas à son début
-    const decale = { ...pulsar, phaseOffset: 0.07 }
-    const mags = injectPulsarSignals(new Array(RADAR_FREQ_BINS).fill(0), [decale], { tSec: 0.9, dtSec: 0.1 })
-    expect(mags[64]).toBeCloseTo(peak)
+  it('suit le flux relatif et ignore un pulsar sans flux', () => {
+    const faible = addPulsarPulses(new Float32Array(10), [{ ...pulsar, fluxRelative: 0.1 }], { startSample: 0, sampleRate: 250 })
+    expect(faible[0]).toBeCloseTo(PULSAR_PULSE_AMPLITUDE * Math.pow(0.1, 0.6))
+    const nul = addPulsarPulses(new Float32Array(10), [{ ...pulsar, fluxRelative: 0 }], { startSample: 0, sampleRate: 250 })
+    expect(Math.max(...nul)).toBe(0)
   })
 
   it('décale les phases d’un pulsar à l’autre', () => {
     expect(pulsarPhaseOffset({ id: 'a' })).not.toBe(pulsarPhaseOffset({ id: 'b' }))
     expect(pulsarPhaseOffset({ id: 'a' })).toBe(pulsarPhaseOffset({ id: 'a' }))
     expect(pulsarPhaseOffset({ id: 'a', phaseOffset: 0.3 })).toBe(0.3)
-  })
-
-  it('suit le flux relatif', () => {
-    const faible = injectPulsarSignals(new Array(RADAR_FREQ_BINS).fill(0), [{ ...pulsar, fluxRelative: 0.1 }], { tSec: 0 })
-    expect(faible[64]).toBeCloseTo(peak * Math.pow(0.1, 0.6))
-  })
-
-  it('replie un pulsar milliseconde au-delà de Nyquist', () => {
-    expect(aliasedFrequencyHz(300)).toBeCloseTo(50)
-    expect(aliasedFrequencyHz(366.6)).toBeCloseTo(116.6)
-    const mags = injectPulsarSignals(new Array(RADAR_FREQ_BINS).fill(0), [{ ...pulsar, rotationFrequencyHz: 300 }], { tSec: 0 })
-    expect(mags.indexOf(Math.max(...mags))).toBe(51)
-    expect(mags[0]).toBe(0)
   })
 })
 
