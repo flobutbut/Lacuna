@@ -6,6 +6,7 @@ import { useDrakeStore } from '@/stores/drake'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useRadarStore } from '@/stores/radar'
+import { useAuthStore } from '@/stores/auth'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { resetPrototypeSession } from '@/lib/session'
 
@@ -14,7 +15,13 @@ const drakeStore = useDrakeStore()
 const stellarStore = useStellarSystemsStore()
 const notificationsStore = useNotificationsStore()
 const radarStore = useRadarStore()
+const authStore = useAuthStore()
 const { radarEnabled } = storeToRefs(radarStore)
+
+// App.vue recharge la page sur /connexion dès que la session disparaît
+function logout() {
+  authStore.signOut()
+}
 
 function resetProto() {
   resetPrototypeSession()
@@ -97,6 +104,15 @@ onMounted(async () => {
           {{ drakeStore.lastDelta >= 0 ? '+' : '' }}{{ Number(drakeStore.lastDelta).toFixed(1) }}
         </span>
       </RouterLink>
+      <button
+        v-if="authStore.isAuthenticated"
+        type="button"
+        class="header__stat-block header__logout"
+        title="Se déconnecter"
+        @click="logout"
+      >
+        <span class="header__logout__label">Quitter</span>
+      </button>
     </div>
   </header>
 </template>

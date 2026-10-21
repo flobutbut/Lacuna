@@ -72,7 +72,8 @@
 }
 
 /* Reset UA du <button> + contenu centré quand la ligne est étirée */
-button.header__stat-block.header__radar-toggle {
+button.header__stat-block.header__radar-toggle,
+button.header__stat-block.header__logout {
     cursor: pointer;
     appearance: none;
     margin: 0;
@@ -83,6 +84,25 @@ button.header__stat-block.header__radar-toggle {
     box-sizing: border-box;
     border-radius: 0;
     align-items: center;
+}
+
+.header__logout {
+    transition: border-color var(--transition-base);
+}
+
+.header__logout:hover {
+    border-color: var(--border-bright);
+}
+
+.header__logout__label {
+    font-size: var(--text-base);
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-muted);
+    text-transform: uppercase;
+}
+
+.header__logout:hover .header__logout__label {
+    color: var(--color-white);
 }
 
 .header__radar-toggle--off {

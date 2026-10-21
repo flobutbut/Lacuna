@@ -178,7 +178,7 @@ src/
 | Étoiles sans x/y/z (ra/dec uniquement) | Convertir via formule existante dans `useSkyStars` (ra, dec, distance → x, y, z) |
 | Performances avec 50k points | `THREE.Points` + `BufferGeometry` ; si besoin, filtre magnitude côté store |
 | Accès non intentionnel | URL non liée dans la nav ; éventuellement garder pour usage interne |
-| Layout App.vue | Condition `route.meta.conceptionLayout` ou `route.name === 'conception-etoiles'` pour masquer Header/InstrumentsBar |
+| Layout App.vue | Condition `route.meta.bareLayout` (partagée avec les pages d'authentification) pour masquer Header/InstrumentsBar |
 
 ---
 

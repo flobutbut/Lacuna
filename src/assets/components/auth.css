@@ -1,0 +1,55 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Formulaires d'authentification
+   Chargé par AuthPanel.vue (pages connexion, inscription, mot de passe).
+   Toutes les règles sont préfixées .auth- (CSS de route, voir Design-system §5).
+   ══════════════════════════════════════════════════════ */
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.auth-form__aside {
+    align-self: flex-end;
+    margin-top: calc(-1 * var(--space-4));
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    text-decoration: none;
+}
+
+.auth-form__aside:hover {
+    color: var(--color-cyan);
+}
+
+.auth-form__submit {
+    width: 100%;
+    margin-top: var(--space-2);
+}
+
+.auth-alert {
+    margin: 0;
+    padding: var(--space-5) var(--space-6);
+    border: var(--border-width) solid var(--border-default);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    color: var(--color-white);
+}
+
+.auth-alert--error {
+    border-color: var(--color-red);
+    background: color-mix(in srgb, var(--color-red) 8%, transparent);
+    color: var(--color-red);
+}
+
+.auth-alert--success {
+    border-color: var(--color-green);
+    background: color-mix(in srgb, var(--color-green) 10%, transparent);
+}
+
+.auth-alert strong {
+    color: var(--color-cyan);
+    font-weight: normal;
+}

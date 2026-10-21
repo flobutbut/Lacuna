@@ -1,12 +1,23 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import AppHeader from '@/components/AppHeader.vue'
 import InstrumentsBar from '@/components/InstrumentsBar.vue'
 import NotificationToast from '@/components/NotificationToast.vue'
 
 const route = useRoute()
-const isConceptionLayout = computed(() => route.meta.conceptionLayout === true)
+const authStore = useAuthStore()
+/** Mise en page sans header ni barre d'instruments (Vue 3D conception, pages d'authentification) */
+const isBareLayout = computed(() => route.meta.bareLayout === true)
+
+// Déconnexion (bouton, autre onglet, session expirée) : rechargement complet pour vider l'état des stores
+watch(
+  () => authStore.isAuthenticated,
+  (now, before) => {
+    if (before && !now) window.location.assign('/connexion')
+  }
+)
 </script>
 
 <template>
@@ -14,10 +25,10 @@ const isConceptionLayout = computed(() => route.meta.conceptionLayout === true)
     class="lacuna-app"
     :class="{
       'route-observatoire': route.name === 'observatoire',
-      'route-conception': isConceptionLayout,
+      'route-bare': isBareLayout,
     }"
   >
-    <AppHeader v-if="!isConceptionLayout" />
+    <AppHeader v-if="!isBareLayout" />
     <main class="lacuna-main">
       <RouterView v-slot="{ Component }">
         <Transition name="fade" mode="out-in">
@@ -25,7 +36,7 @@ const isConceptionLayout = computed(() => route.meta.conceptionLayout === true)
         </Transition>
       </RouterView>
     </main>
-    <InstrumentsBar v-if="!isConceptionLayout" />
+    <InstrumentsBar v-if="!isBareLayout" />
     <NotificationToast />
   </div>
 </template>
@@ -39,7 +50,7 @@ const isConceptionLayout = computed(() => route.meta.conceptionLayout === true)
   overflow: hidden;
 }
 
-.lacuna-app.route-conception {
+.lacuna-app.route-bare {
   grid-template-rows: 1fr;
 }
 

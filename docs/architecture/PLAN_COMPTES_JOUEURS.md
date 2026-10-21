@@ -135,7 +135,7 @@ Les politiques « prototype » ouvertes (`USING (true)`, `user_id IS NULL`) sont
 | # | Étape | Vérification |
 |---|---|---|
 | 1 | Migration `00046_player_accounts.sql` : `profiles` (avec rôle), contrainte `ships.name`, `start_new_game`, signaux modèles détachés du prototype | ✅ 22 tests OK sur une base Postgres locale jetable ; **appliquée** le 21/10/2026 (transaction unique), vérifiée en base et via l'API anon ; app inchangée |
-| 2 | `stores/auth.js`, pages d'inscription / connexion / mot de passe, garde de routeur | inscription → email → connexion en local |
+| 2 | `stores/auth.js`, pages d'inscription / connexion / mot de passe, garde de routeur, déconnexion dans le header | ✅ codée ; 14 tests (messages, validation, garde, redirections) ; pages et garde vérifiées dans le navigateur sans compte réel ; **parcours réel inscription → email → connexion à faire par le joueur** |
 | 3 | `/bienvenue` : pseudo + nom du vaisseau → `start_new_game` | nouveau compte → vaisseau à Sol, header avec le bon nom |
 | 4 | Stores sans `session_id` ; interprétations avec `ship_id` | deux comptes : chacun ne voit que ses signaux, observations, carte |
 | 5 | Migration RLS : suppression des politiques prototype, politiques par joueur ; restreindre `compute_pulsar_signals` (aujourd'hui `SECURITY DEFINER`, appelable sans compte sur n'importe quel `ship_id`) au vaisseau du joueur | requêtes avec la clé anon sans session → refusées |

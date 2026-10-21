@@ -497,6 +497,44 @@ Deux curseurs sur une même piste pour choisir une plage ; la portion sélection
 
 ---
 
+### 3.13 quinquies AppTextField
+
+**Fichier** : `src/components/AppTextField.vue` (styles scopés, tokens uniquement)
+
+Champ de saisie : libellé, aide sous le champ, message d'erreur. L'erreur remplace l'aide, passe le champ en rouge, pose `aria-invalid` et est annoncée aux lecteurs d'écran (`role="alert"`). Focus : bordure cyan et fond `--color-cyan-subtle`.
+
+**Props** : `label` (requis), `type` (défaut `text`), `autocomplete`, `placeholder`, `hint`, `error`, `required`, `disabled`, `autofocus`
+
+**v-model** : valeur du champ (`defineModel`)
+
+**Exemple** :
+```vue
+<AppTextField
+  v-model="email"
+  label="Email"
+  type="email"
+  autocomplete="email"
+  :error="errors.email"
+  required
+/>
+```
+
+**Utilisation** : pages d'authentification (connexion, inscription, mot de passe)
+
+---
+
+### 3.13 sexies AuthPanel (pages d'authentification)
+
+**Fichier** : `src/components/auth/AuthPanel.vue` — **Styles des formulaires** : `auth.css` (chargé par AuthPanel)
+
+Cadre centré (logo, titre cyan, sous-titre, formulaire, liens en pied) sur fond `--color-bg` avec halo cyan discret. Pages en mise en page nue (`meta.bareLayout` : ni header, ni barre d'instruments).
+
+**Props** : `title` (requis), `subtitle` — **Slots** : défaut (formulaire), `#footer` (liens)
+
+**Classes `auth.css`** : `.auth-form` (colonne de champs), `.auth-form__aside` (lien secondaire aligné à droite), `.auth-form__submit` (avec `.btn-primary`, pleine largeur), `.auth-alert` + `--error` / `--success` (message de formulaire ; `<strong>` en cyan)
+
+---
+
 ### 3.13 quater RadarMiniature
 
 **Fichier** : `src/components/RadarMiniature.vue`
@@ -632,6 +670,7 @@ Ne pas utiliser de `color-mix` ni de tailles en dur pour ces blocs — rester al
 | `journal.css` | PageJournal |
 | `artifact.css` | PageArtefacts |
 | `systems.css` | PageSystemes |
+| `auth.css` | AuthPanel (pages connexion, inscription, mot de passe) |
 
 ---
 
