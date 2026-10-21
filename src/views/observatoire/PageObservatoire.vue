@@ -10,6 +10,7 @@ import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { useGalacticPosition } from '@/composables/useGalacticPosition'
 import { useRadarNoise } from '@/composables/useRadarNoise'
 import { useRadarSpectrogram } from '@/composables/useRadarSpectrogram'
+import { useRadarColumnBuffer } from '@/composables/useRadarColumnBuffer'
 import SkyCanvas from '@/components/SkyCanvas.vue'
 import RadarView from './RadarView.vue'
 import SystemView from './SystemView.vue'
@@ -30,7 +31,7 @@ const route = useRoute()
 const ui = useUIStore()
 const shipStore = useShipStore()
 const signauxStore = useSignauxStore()
-const { radarPaused, radarFrequencyBand } = storeToRefs(ui)
+const { radarPaused, radarFrequencyBand, radarEnabled } = storeToRefs(ui)
 const { activePulsarSignals } = storeToRefs(signauxStore)
 const isSkyMode = computed(() => ui.observatoireViewMode === 'sky')
 const isRadarMode = computed(() => ui.observatoireViewMode === 'radar')
@@ -47,7 +48,9 @@ const radarSpectrogram = useRadarSpectrogram(
   radarPaused,
   getNoiseSample
 )
+const radarColumnBuffer = useRadarColumnBuffer()
 provide('radarSpectrogram', radarSpectrogram)
+provide('radarColumnBuffer', radarColumnBuffer)
 
 function onKeydown(e) {
   if (e.key !== '@') return
@@ -82,9 +85,14 @@ async function callComputePulsarSignals() {
 
 onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
-  radarSpectrogram.start()
+  if (radarEnabled.value) radarSpectrogram.start()
   await ensureStoresLoaded(signauxStore, shipStore)
   await callComputePulsarSignals()
+})
+
+watch(radarEnabled, (val) => {
+  if (val) radarSpectrogram.start()
+  else radarSpectrogram.stop()
 })
 
 watch(radarFrequencyBand, () => {

@@ -13,6 +13,7 @@ import * as d3 from 'd3'
 const emit = defineEmits(['signal-selected'])
 
 const radarSpectrogram = inject('radarSpectrogram')
+const radarColumnBuffer = inject('radarColumnBuffer')
 const {
   tickCount,
   getBufferSnapshot,
@@ -30,6 +31,10 @@ const {
   radarFrequencyBand,
   radarTimeScale,
   radarIntensityThreshold,
+  radarFreqLow,
+  radarFreqHigh,
+  radarNoiseEnabled,
+  radarEnabled,
 } = storeToRefs(ui)
 
 const containerRef = ref(null)
@@ -42,10 +47,6 @@ const TICK_MS = 100
 const INTERVAL_TICKS = 300  // toutes les 30s à 100ms/tick
 const margin = { left: 58, right: 8, top: 8, bottom: 24 }
 
-let specOffscreen = null
-let intOffscreen = null
-let specMaxVal = 1e-6
-let writeCol = 0
 let lastRenderedTick = -1
 let rafId = null
 let resizeObserver = null
@@ -125,9 +126,9 @@ function initCanvases() {
     intCanvas.style.width = intCanvas.width + 'px'
     intCanvas.style.height = intCanvas.height + 'px'
   }
-  specOffscreen = new OffscreenCanvas(HISTORY_SIZE, specH)
-  intOffscreen = new OffscreenCanvas(HISTORY_SIZE, intH)
-  prefillOffscreens()
+  radarColumnBuffer.columnBuffer = new Array(HISTORY_SIZE).fill(null)
+  radarColumnBuffer.columnBufferReady = true
+  prefillColumnBuffer()
 }
 
 const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 1])
@@ -136,51 +137,37 @@ function getCssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#0a0a0a'
 }
 
-function prefillOffscreens() {
+function prefillColumnBuffer() {
   const total = radarSpectrogram.totalSamplesWritten()
-  if (total < WINDOW_SIZE || !specOffscreen || !intOffscreen) return
+  if (total < WINDOW_SIZE || !radarColumnBuffer.columnBufferReady) return
 
   const snapshot = getBufferSnapshot(total)
   if (!snapshot || snapshot.length < WINDOW_SIZE) return
 
   const numCols = Math.min(total - WINDOW_SIZE + 1, HISTORY_SIZE)
-  const specCtx = specOffscreen.getContext('2d')
-  const intCtx = intOffscreen.getContext('2d')
-  const specH = specOffscreen.height
-  const intH = intOffscreen.height
-  const innerH = specH - margin.top - margin.bottom
-  const intInnerH = intH - margin.top - margin.bottom
 
   let maxVal = 1e-6
   const columns = []
   for (let col = 0; col < numCols; col++) {
     const window = snapshot.slice(col, col + WINDOW_SIZE)
-    const { magnitudes, intensity } = computeSpectrogramColumn(window, FREQ_BINS)
+    const { magnitudes, intensity } =
+      computeSpectrogramColumn(window, FREQ_BINS)
     for (const m of magnitudes) if (m > maxVal) maxVal = m
-    columns.push({ magnitudes, intensity })
+    columns.push({ magnitudes: new Float32Array(magnitudes), intensity })
   }
-  specMaxVal = maxVal
-  const norm = maxVal || 1
+  radarColumnBuffer.specMaxVal = maxVal
 
-  for (let col = 0; col < Math.min(columns.length, HISTORY_SIZE); col++) {
-    const { magnitudes, intensity } = columns[col]
-    for (let row = 0; row < FREQ_BINS; row++) {
-      const val = Math.min(1, Math.max(0, magnitudes[row] / norm))
-      specCtx.fillStyle = colorScale(val)
-      specCtx.fillRect(col, margin.top + row * (innerH / FREQ_BINS), 1, Math.ceil(innerH / FREQ_BINS) + 1)
-    }
-    const barH = Math.max(1, intensity * intInnerH)
-    intCtx.fillStyle = getCssVar('--color-cyan')
-    intCtx.fillRect(col, intH - margin.bottom - barH, 1, barH)
+  for (let col = 0; col < columns.length; col++) {
+    radarColumnBuffer.columnBuffer[col] = columns[col]
   }
-  writeCol = Math.min(numCols, HISTORY_SIZE) % HISTORY_SIZE
+  radarColumnBuffer.writeCol = columns.length % HISTORY_SIZE
 }
 
-function appendColumnFromSnapshot(snapshot) {
-  if (!snapshot || snapshot.length < WINDOW_SIZE
-      || !specOffscreen || !intOffscreen) return
+function appendColumnFromSnapshot(snapshot, windowSize = WINDOW_SIZE) {
+  if (!snapshot || snapshot.length < windowSize || !radarColumnBuffer.columnBufferReady)
+    return
 
-  const { magnitudes, intensity } =
+  const { magnitudes } =
     computeSpectrogramColumn(snapshot, FREQ_BINS)
   if (!magnitudes.length) return
 
@@ -189,7 +176,7 @@ function appendColumnFromSnapshot(snapshot) {
   const signals = signauxStore.activePulsarSignals
   if (signals?.length) {
     // Temps simulé courant en secondes (échelle UI, pas le tick buffer réel)
-    const tSec = (writeCol * radarTimeScale.value) / 1000
+    const tSec = (radarColumnBuffer.writeCol * radarTimeScale.value) / 1000
 
     for (const signal of signals) {
       if (signal.fluxRelative < radarIntensityThreshold.value) continue
@@ -250,30 +237,19 @@ function appendColumnFromSnapshot(snapshot) {
   }
 
   for (const m of magnitudes) {
-    if (m > specMaxVal) specMaxVal = m
+    if (m > radarColumnBuffer.specMaxVal) radarColumnBuffer.specMaxVal = m
   }
-  const norm = specMaxVal || 1
-  const specH = specOffscreen.height
-  const intH = intOffscreen.height
-  const innerH = specH - margin.top - margin.bottom
-  const intInnerH = intH - margin.top - margin.bottom
-  const specCtx = specOffscreen.getContext('2d')
-  const intCtx = intOffscreen.getContext('2d')
 
-  for (let row = 0; row < FREQ_BINS; row++) {
-    const val = Math.min(1, Math.max(0, magnitudes[row] / norm))
-    specCtx.fillStyle = colorScale(val)
-    specCtx.fillRect(
-      writeCol,
-      margin.top + row * (innerH / FREQ_BINS),
-      1,
-      Math.ceil(innerH / FREQ_BINS) + 1
-    )
+  const norm = radarColumnBuffer.specMaxVal || 1
+  const intensityRecalc = Math.max(...magnitudes) / norm
+  const intensityFinal = Math.min(1, Math.max(0, intensityRecalc))
+
+  radarColumnBuffer.columnBuffer[radarColumnBuffer.writeCol] = {
+    magnitudes: new Float32Array(magnitudes),
+    intensity: intensityFinal,
   }
-  const barH = Math.max(1, intensity * intInnerH)
-  intCtx.fillStyle = getCssVar('--color-cyan')
-  intCtx.fillRect(writeCol, intH - margin.bottom - barH, 1, barH)
-  writeCol = (writeCol + 1) % HISTORY_SIZE
+  radarColumnBuffer.writeCol =
+    (radarColumnBuffer.writeCol + 1) % HISTORY_SIZE
 }
 
 function appendColumn() {
@@ -281,66 +257,126 @@ function appendColumn() {
   appendColumnFromSnapshot(snapshot)
 }
 
+function getTicksPerPx() {
+  return Math.max(1, Math.round(radarTimeScale.value / TICK_MS))
+}
+
+/** px = 0..innerW-1 dans la zone utile (sans marge gauche) */
+function colIdxFromPlotPx(px, innerW, ticksPerPx) {
+  const colOffset = (innerW - 1 - px) * ticksPerPx
+  return (
+    (radarColumnBuffer.writeCol -
+      1 -
+      colOffset -
+      Math.round(currentScrollOffset * ticksPerPx) +
+      HISTORY_SIZE * 100) %
+    HISTORY_SIZE
+  )
+}
+
 function drawViewport() {
+  if (!radarEnabled.value) return
   const specCanvas = spectrogramCanvasRef.value
   const intCanvas = intensityCanvasRef.value
-  if (!specCanvas || !intCanvas || !specOffscreen || !intOffscreen) return
+  if (!specCanvas || !intCanvas || !radarColumnBuffer.columnBufferReady) return
 
   const innerW = specCanvas.width - margin.left - margin.right
-  const totalCols = tickCount.value
-  const srcW = innerW
-  const srcX = ((writeCol - innerW - Math.round(currentScrollOffset)) + HISTORY_SIZE * 10) % HISTORY_SIZE
+  const innerH = specCanvas.height - margin.top - margin.bottom
+  const intH = intCanvas.height - margin.top - margin.bottom
 
   const specCtx = specCanvas.getContext('2d')
   const intCtx = intCanvas.getContext('2d')
+
   const bg = getCssVar('--color-bg')
   specCtx.fillStyle = bg
   specCtx.fillRect(0, 0, specCanvas.width, specCanvas.height)
   intCtx.fillStyle = bg
   intCtx.fillRect(0, 0, intCanvas.width, intCanvas.height)
 
-  if (srcW > 0) {
-    const drawTwoPass = (offscreen, ctx, destY, destH) => {
-      if (srcX + srcW <= HISTORY_SIZE) {
-        ctx.drawImage(
-          offscreen,
-          srcX, 0, srcW, offscreen.height,
-          margin.left, destY, innerW, destH
-        )
-      } else {
-        const part1 = HISTORY_SIZE - srcX
-        const part2 = srcW - part1
-        const ratio1 = part1 / srcW
-        const destW1 = innerW * ratio1
-        const destW2 = innerW - destW1
-        ctx.drawImage(
-          offscreen,
-          srcX, 0, part1, offscreen.height,
-          margin.left, destY, destW1, destH
-        )
-        ctx.drawImage(
-          offscreen,
-          0, 0, part2, offscreen.height,
-          margin.left + destW1, destY, destW2, destH
-        )
-      }
+  const ticksPerPx = getTicksPerPx()
+  const norm = radarColumnBuffer.specMaxVal || 1
+
+  // Convertir les bornes Hz en indices de bins (FREQ_BINS couvre 0–125 Hz)
+  const binLow = Math.floor(radarFreqLow.value / 125 * FREQ_BINS)
+  const binHigh = Math.ceil(radarFreqHigh.value / 125 * FREQ_BINS)
+  const binRange = binHigh - binLow || 1
+
+  for (let px = 0; px < innerW; px++) {
+    const colOffset = (innerW - 1 - px) * ticksPerPx
+    const colIdx =
+      (radarColumnBuffer.writeCol -
+        1 -
+        colOffset -
+        Math.round(currentScrollOffset * ticksPerPx) +
+        HISTORY_SIZE * 100) %
+      HISTORY_SIZE
+
+    const col = radarColumnBuffer.columnBuffer[colIdx]
+    if (!col) continue
+
+    const xPos = margin.left + px
+
+    const maxMag = Math.max(...col.magnitudes)
+    const colFlux = maxMag / norm
+    if (colFlux < radarIntensityThreshold.value) continue
+
+    for (let row = binLow; row < binHigh; row++) {
+      const val = Math.min(1, Math.max(0, col.magnitudes[row] / norm))
+      specCtx.fillStyle = colorScale(val)
+      const yPos = margin.top
+        + (1 - (row - binLow) / binRange) * innerH
+      specCtx.fillRect(
+        xPos,
+        yPos,
+        1,
+        Math.ceil(innerH / binRange) + 1
+      )
     }
-    drawTwoPass(specOffscreen, specCtx, 0, specCanvas.height)
-    drawTwoPass(intOffscreen, intCtx, 0, intCanvas.height)
+
+    const barH = Math.max(1, col.intensity * intH)
+    intCtx.fillStyle = getCssVar('--color-cyan')
+    intCtx.fillRect(
+      xPos,
+      intCanvas.height - margin.bottom - barH,
+      1,
+      barH
+    )
   }
 
-  // Axe X : intervalles de temps ronds (30s, 1min, 5min selon zoom)
-  for (let i = 0; i < HISTORY_SIZE; i += INTERVAL_TICKS) {
-    const xPos = margin.left + innerW - i + Math.round(currentScrollOffset)
-    if (xPos < margin.left || xPos > margin.left + innerW) continue
-    const totalSeconds = Math.round(i * TICK_MS / 1000)
+  // Ligne rouge horizontale : seuil d'intensité (filtre)
+  const threshold = radarIntensityThreshold.value
+  if (threshold > 0) {
+    const thresholdH = threshold * intH
+    const y = intCanvas.height - margin.bottom - thresholdH
+    intCtx.globalAlpha = 0.9
+    intCtx.strokeStyle = getCssVar('--color-red')
+    intCtx.lineWidth = 1
+    intCtx.beginPath()
+    intCtx.moveTo(margin.left, y)
+    intCtx.lineTo(margin.left + innerW, y)
+    intCtx.stroke()
+    intCtx.globalAlpha = 1
+  }
+
+  // Axe X : repères temps (colonnes logiques + défilement)
+  let lastTickAge = -1
+  for (let px = 0; px < innerW; px++) {
+    const colIdx = colIdxFromPlotPx(px, innerW, ticksPerPx)
+    const ageCols =
+      (radarColumnBuffer.writeCol - 1 - colIdx + HISTORY_SIZE) % HISTORY_SIZE
+    if (ageCols % INTERVAL_TICKS !== 0) continue
+    if (ageCols === lastTickAge) continue
+    lastTickAge = ageCols
+    const xPos = margin.left + px
+    const totalSeconds = Math.round(ageCols * TICK_MS / 1000)
     const minutes = Math.floor(totalSeconds / 60)
     const seconds = totalSeconds % 60
-    const label = minutes === 0
-      ? `-${String(seconds).padStart(2, '0')}s`
-      : seconds === 0
-        ? `-${minutes}:00`
-        : `-${minutes}:${String(seconds).padStart(2, '0')}`
+    const label =
+      minutes === 0
+        ? `-${String(seconds).padStart(2, '0')}s`
+        : seconds === 0
+          ? `-${minutes}:00`
+          : `-${minutes}:${String(seconds).padStart(2, '0')}`
     for (const { ctx, canvasH } of [
       { ctx: specCtx, canvasH: specCanvas.height },
       { ctx: intCtx, canvasH: intCanvas.height },
@@ -378,28 +414,15 @@ function drawAxes(specCanvas, intCanvas) {
   intCtx.fillStyle = muted
   intCtx.font = '9px var(--font-mono)'
 
-  const BAND_FREQ_RANGE_MHZ = {
-    P: [150, 400],
-    L: [1000, 1800],
-    X: [2000, 10000],
-    G: [10000, 100000],
-  }
-
-  const bandKey = radarFrequencyBand.value ?? 'L'
-  const [freqMin, freqMax] = BAND_FREQ_RANGE_MHZ[bandKey]
-    ?? BAND_FREQ_RANGE_MHZ['L']
-  const freqMid = Math.round((freqMin + freqMax) / 2)
-
-  const ticksY = [freqMax, freqMid, freqMin]
+  const ticksY = [
+    radarFreqHigh.value,
+    Math.round((radarFreqLow.value + radarFreqHigh.value) / 2),
+    radarFreqLow.value,
+  ]
   ticksY.forEach((f, idx) => {
     const y = margin.top + (idx / 2) * specInnerH
-    const label = f >= 10000
-      ? (f / 1000).toFixed(0) + ' GHz'
-      : f >= 1000
-        ? (f / 1000).toFixed(1) + ' GHz'
-        : f + ' MHz'
     specCtx.textAlign = 'right'
-    specCtx.fillText(label, margin.left - 2, y + 3)
+    specCtx.fillText(f + ' Hz', margin.left - 2, y + 3)
   })
 
   specCtx.textAlign = 'left'
@@ -408,20 +431,22 @@ function drawAxes(specCanvas, intCanvas) {
   intCtx.textAlign = 'left'
 }
 
+function colToPlotX(col, innerW) {
+  const ticksPerPx = getTicksPerPx()
+  for (let px = 0; px < innerW; px++) {
+    if (colIdxFromPlotPx(px, innerW, ticksPerPx) === col) return margin.left + px
+  }
+  return null
+}
+
 function drawSelection(specCanvas, intCanvas) {
   const s0 = selectionStartCol
   const s1 = selectionEndCol
   if (s0 == null || s1 == null) return
 
   const innerW = specCanvas.width - margin.left - margin.right
-  const srcX = ((writeCol - innerW - Math.round(currentScrollOffset)) + HISTORY_SIZE * 10) % HISTORY_SIZE
-  const colsToPx = (col) => {
-    const rel = (col - srcX + HISTORY_SIZE) % HISTORY_SIZE
-    if (rel >= innerW) return null
-    return margin.left + rel
-  }
-  const leftPx = colsToPx(Math.min(s0, s1))
-  const rightPx = colsToPx(Math.max(s0, s1))
+  const leftPx = colToPlotX(Math.min(s0, s1), innerW)
+  const rightPx = colToPlotX(Math.max(s0, s1), innerW)
   if (leftPx == null || rightPx == null) return
 
   const specCtx = specCanvas.getContext('2d')
@@ -501,10 +526,9 @@ function pxToCol(px) {
   const innerW = spectrogramCanvasRef.value
     ? spectrogramCanvasRef.value.width - margin.left - margin.right
     : 400
-  const srcX = ((writeCol - innerW - Math.round(currentScrollOffset)) + HISTORY_SIZE * 10) % HISTORY_SIZE
   const rel = Math.floor(px - margin.left)
   if (rel < 0 || rel >= innerW) return null
-  return (srcX + rel) % HISTORY_SIZE
+  return colIdxFromPlotPx(rel, innerW, getTicksPerPx())
 }
 
 function pxToBin(py, wrapHeight) {
@@ -612,6 +636,7 @@ function onPointerUp() {
 }
 
 function renderLoop() {
+  if (!radarEnabled.value) return
   const missed = tickCount.value - lastRenderedTick
   const toProcess = Math.min(missed, 10)
   for (let i = 0; i < toProcess; i++) {
@@ -644,14 +669,19 @@ function resumeRenderLoop() {
 }
 
 function onWheel(e) {
-  if (!radarPaused.value) return
+  if (!radarEnabled.value || !radarPaused.value) return
   e.preventDefault()
   e.stopPropagation()
   const specCanvas = spectrogramCanvasRef.value
   if (!specCanvas) return
   const innerW = specCanvas.width - margin.left - margin.right
+  const ticksPerPx = getTicksPerPx()
+  const visibleLogical = innerW * ticksPerPx
   const totalCols = tickCount.value
-  const maxScroll = Math.max(0, Math.min(totalCols, HISTORY_SIZE) - innerW)
+  const maxScroll = Math.max(
+    0,
+    Math.min(totalCols, HISTORY_SIZE) - visibleLogical
+  )
   const delta =
     Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
   targetScrollOffset -= delta
@@ -667,7 +697,7 @@ onMounted(async () => {
   isInitialized = true
   drawViewport()
   lastRenderedTick = tickCount.value
-  renderLoop()
+  if (radarEnabled.value) renderLoop()
 
   resizeObserver = new ResizeObserver(() => {
     // Ne rien faire si la vue est masquée (v-show → display:none → offsetParent null)
@@ -693,9 +723,9 @@ onMounted(async () => {
       intCanvas.height = newIntH
       intCanvas.style.width = intCanvas.width + 'px'
       intCanvas.style.height = intCanvas.height + 'px'
-      specOffscreen = new OffscreenCanvas(HISTORY_SIZE, newSpecH)
-      intOffscreen = new OffscreenCanvas(HISTORY_SIZE, newIntH)
-      prefillOffscreens()
+      radarColumnBuffer.columnBuffer = new Array(HISTORY_SIZE).fill(null)
+      radarColumnBuffer.columnBufferReady = true
+      prefillColumnBuffer()
       drawViewport()
       isInitialized = true
     }
@@ -710,7 +740,11 @@ onMounted(async () => {
   window.addEventListener('pointerleave', onPointerUp)
 
   visibilityChangeHandler = () => {
-    if (document.visibilityState === 'visible' && !radarPaused.value) {
+    if (
+      document.visibilityState === 'visible' &&
+      radarEnabled.value &&
+      !radarPaused.value
+    ) {
       resumeRenderLoop()
     }
   }
@@ -733,7 +767,26 @@ onUnmounted(() => {
   window.removeEventListener('pointerleave', onPointerUp)
 })
 
+watch(radarEnabled, (on) => {
+  if (!on) {
+    if (rafId) {
+      cancelAnimationFrame(rafId)
+      rafId = null
+    }
+    return
+  }
+  nextTick(() => {
+    if (!containerRef.value) return
+    initCanvases()
+    isInitialized = true
+    lastRenderedTick = tickCount.value
+    if (!radarPaused.value) resumeRenderLoop()
+    else drawViewport()
+  })
+})
+
 watch(radarPaused, () => {
+  if (!radarEnabled.value) return
   if (!radarPaused.value) {
     const missed = tickCount.value - lastRenderedTick
     const toFill = Math.min(missed, HISTORY_SIZE)
@@ -767,6 +820,14 @@ watch(radarSelectionMode, () => {
   cursorChart = null
   drawViewport()
 })
+
+watch(
+  [radarIntensityThreshold, radarFreqLow, radarFreqHigh, radarNoiseEnabled],
+  () => {
+    if (!isInitialized) return
+    drawViewport()
+  }
+)
 </script>
 
 <template>
@@ -774,7 +835,7 @@ watch(radarSelectionMode, () => {
     <div ref="chartsWrapRef" class="radar-view__charts">
       <div class="radar-view__spectrogram">
         <button
-          v-if="showLiveButton"
+          v-if="radarEnabled && showLiveButton"
           type="button"
           class="radar-view__live-btn"
           @click="targetScrollOffset = 0"
@@ -782,11 +843,23 @@ watch(radarSelectionMode, () => {
           ● RETOUR AU LIVE
         </button>
         <canvas
+          v-show="radarEnabled"
           ref="spectrogramCanvasRef"
           class="radar-view__canvas"
         />
         <div
-          v-if="radarPaused && (radarSelectionMode === 'period' || radarSelectionMode === 'zone')"
+          v-if="!radarEnabled"
+          class="radar-view__placeholder"
+          role="status"
+          aria-live="polite"
+        >
+          <span class="radar-view__placeholder-title">Radar désactivé</span>
+          <span class="radar-view__placeholder-hint">
+            Activez l’acquisition pour écouter le spectre radio
+          </span>
+        </div>
+        <div
+          v-else-if="radarPaused && (radarSelectionMode === 'period' || radarSelectionMode === 'zone')"
           class="radar-view__overlay"
           @pointerdown="(e) => onPointerDown(e, 'spec', e.offsetY)"
           @pointermove="(e) => { onPointerMove(e, 'spec', e.offsetY); if (!isDragging) onCursorMove(e, 'spec'); }"
@@ -796,6 +869,7 @@ watch(radarSelectionMode, () => {
       </div>
       <div class="radar-view__intensity">
         <canvas
+          v-show="radarEnabled"
           ref="intensityCanvasRef"
           class="radar-view__canvas"
         />
@@ -838,6 +912,38 @@ watch(radarSelectionMode, () => {
   flex: 1;
   min-height: 0;
   position: relative;
+}
+.radar-view__placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: transparent;
+  text-align: center;
+  pointer-events: auto;
+}
+.radar-view__placeholder-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  line-height: var(--leading-tight);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.radar-view__placeholder-hint {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-cyan-muted);
+  max-width: 28rem;
 }
 .radar-view__canvas {
   display: block;

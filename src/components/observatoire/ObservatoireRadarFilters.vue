@@ -1,19 +1,23 @@
 <script setup>
 /**
- * Filtres barre Radar — sélecteur de bande de fréquences, pause, record
+ * Filtres barre Radar — pause, bande, échelle temps, INT., fréq.
  */
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUIStore } from '@/stores/ui'
 import AppSelect from '@/components/AppSelect.vue'
+import AppDualRangeSlider from '@/components/AppDualRangeSlider.vue'
+import RadarNoiseIcon from '@/components/icons/RadarNoiseIcon.vue'
 
 const ui = useUIStore()
 const {
   radarFrequencyBand,
   radarPaused,
-  radarRecording,
   radarTimeScale,
   radarIntensityThreshold,
+  radarFreqLow,
+  radarFreqHigh,
+  radarNoiseEnabled,
 } = storeToRefs(ui)
 
 const BANDS = [
@@ -62,22 +66,14 @@ function onThresholdInput(sliderVal) {
     >
       {{ radarPaused ? '▶' : '⏸' }}
     </button>
-    <button
-      type="button"
-      class="btn btn-secondary radar-filters__btn--record"
-      :class="{ 'radar-filters__btn--rec': radarRecording }"
-      :title="'Enregistrement (bientôt)'"
-      aria-label="Enregistrer"
-      disabled
-    >
-      {{ radarRecording ? '⏹' : '⏺' }}
-    </button>
     <AppSelect
       :model-value="radarFrequencyBand"
       :options="BANDS"
       value-key="value"
       label-key="label"
       class="radar-filters__select"
+      :disabled="radarPaused"
+      :title="radarPaused ? 'Relance le radar pour changer la bande' : undefined"
       @update:model-value="ui.setRadarFrequencyBand"
     />
     <AppSelect
@@ -86,10 +82,12 @@ function onThresholdInput(sliderVal) {
       value-key="value"
       label-key="label"
       class="radar-filters__select"
+      :disabled="radarPaused"
+      :title="radarPaused ? 'Relance le radar pour changer l’échelle temps' : undefined"
       @update:model-value="ui.setRadarTimeScale"
     />
     <div class="radar-filters__threshold">
-      <span class="radar-filters__threshold-label">intensité</span>
+      <span class="radar-filters__threshold-label">INT.</span>
       <input
         type="range"
         min="0"
@@ -101,6 +99,31 @@ function onThresholdInput(sliderVal) {
         @input="onThresholdInput($event.target.value)"
       />
     </div>
+    <div class="radar-filters__threshold">
+      <span class="radar-filters__threshold-label">fréq.</span>
+      <AppDualRangeSlider
+        :low="radarFreqLow"
+        :high="radarFreqHigh"
+        :min="0"
+        :max="125"
+        :step="1"
+        aria-label-low="Borne basse du filtre fréquentiel (Hz)"
+        aria-label-high="Borne haute du filtre fréquentiel (Hz)"
+        @update:low="ui.setRadarFreqLow"
+        @update:high="ui.setRadarFreqHigh"
+      />
+    </div>
+    <button
+      type="button"
+      class="btn btn-secondary radar-filters__btn--noise"
+      :class="{ 'is-active': radarNoiseEnabled !== false }"
+      :title="radarNoiseEnabled === false ? 'Activer le bruit de fond' : 'Couper le bruit de fond'"
+      :aria-pressed="radarNoiseEnabled !== false"
+      aria-label="Bruit de fond du spectrogramme"
+      @click="ui.toggleRadarNoise"
+    >
+      <RadarNoiseIcon :off="radarNoiseEnabled === false" />
+    </button>
   </div>
 </template>
 
@@ -113,19 +136,14 @@ function onThresholdInput(sliderVal) {
 .radar-filters__select {
   min-width: 140px;
 }
-.radar-filters__btn--record {
-  opacity: 0.5;
+.radar-filters__btn--noise {
+  min-width: 2.25rem;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+  line-height: 0;
 }
-.radar-filters__btn--record:disabled {
-  cursor: not-allowed;
-}
-.radar-filters__btn--rec {
-  color: var(--color-red);
-  border-color: var(--color-red);
-}
-.radar-filters__btn--rec:hover {
-  color: var(--color-red);
-  border-color: var(--color-red);
+.radar-filters__btn--noise :deep(.radar-noise-icon) {
+  display: block;
 }
 
 /* Aligné sur .ds-select (select.css) : même cadre, typo et hover que les AppSelect */
@@ -133,6 +151,7 @@ function onThresholdInput(sliderVal) {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
+  overflow: visible;
   /* Même padding vertical que .ds-select (select.css) — line-height serré pour ne pas dépasser */
   padding: var(--space-4) var(--space-6);
   font-size: var(--text-sm);
@@ -186,7 +205,7 @@ function onThresholdInput(sliderVal) {
 .radar-filters__slider::-webkit-slider-runnable-track {
   height: 4px;
   background: var(--border-default);
-  border-radius: var(--border-radius-full);
+  border-radius: 2px;
 }
 .radar-filters__slider::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -203,15 +222,18 @@ function onThresholdInput(sliderVal) {
     border-color var(--transition-base),
     box-shadow var(--transition-base);
 }
-.radar-filters__threshold:hover .radar-filters__slider::-webkit-slider-thumb {
+.radar-filters__threshold:hover .radar-filters__slider::-webkit-slider-thumb,
+.radar-filters__threshold:hover :deep(.dual-range__input::-webkit-slider-thumb) {
   background: var(--color-white);
   border-color: var(--border-bright);
 }
-.radar-filters__threshold:focus-within .radar-filters__slider::-webkit-slider-thumb {
+.radar-filters__threshold:focus-within .radar-filters__slider::-webkit-slider-thumb,
+.radar-filters__threshold:focus-within :deep(.dual-range__input::-webkit-slider-thumb) {
   background: var(--color-cyan);
   border-color: var(--color-cyan-dim);
 }
-.radar-filters__slider:focus-visible::-webkit-slider-thumb {
+.radar-filters__slider:focus-visible::-webkit-slider-thumb,
+.radar-filters__threshold :deep(.dual-range__input:focus-visible::-webkit-slider-thumb) {
   box-shadow: 0 0 0 2px var(--color-cyan-glow);
 }
 
@@ -219,7 +241,7 @@ function onThresholdInput(sliderVal) {
 .radar-filters__slider::-moz-range-track {
   height: 4px;
   background: var(--border-default);
-  border-radius: var(--border-radius-full);
+  border-radius: 2px;
 }
 .radar-filters__slider::-moz-range-thumb {
   width: 10px;
@@ -233,15 +255,18 @@ function onThresholdInput(sliderVal) {
     border-color var(--transition-base),
     box-shadow var(--transition-base);
 }
-.radar-filters__threshold:hover .radar-filters__slider::-moz-range-thumb {
+.radar-filters__threshold:hover .radar-filters__slider::-moz-range-thumb,
+.radar-filters__threshold:hover :deep(.dual-range__input::-moz-range-thumb) {
   background: var(--color-white);
   border-color: var(--border-bright);
 }
-.radar-filters__threshold:focus-within .radar-filters__slider::-moz-range-thumb {
+.radar-filters__threshold:focus-within .radar-filters__slider::-moz-range-thumb,
+.radar-filters__threshold:focus-within :deep(.dual-range__input::-moz-range-thumb) {
   background: var(--color-cyan);
   border-color: var(--color-cyan-dim);
 }
-.radar-filters__slider:focus-visible::-moz-range-thumb {
+.radar-filters__slider:focus-visible::-moz-range-thumb,
+.radar-filters__threshold :deep(.dual-range__input:focus-visible::-moz-range-thumb) {
   box-shadow: 0 0 0 2px var(--color-cyan-glow);
 }
 </style>

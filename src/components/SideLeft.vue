@@ -1,36 +1,19 @@
 <script setup>
-import { onMounted, onUnmounted, computed } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useSignauxStore } from '@/stores/signaux'
-import { useObservationsStore } from '@/stores/observations'
 import { useUIStore } from '@/stores/ui'
-import ObservationCard from '@/components/ObservationCard.vue'
-import { formatRelativeTime } from '@/lib/formatUtils'
+import RadarNoiseIcon from '@/components/icons/RadarNoiseIcon.vue'
+import RadarMiniature from '@/components/RadarMiniature.vue'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
-import { getSupportLabel } from '@/constants/signaux'
 
 const signauxStore = useSignauxStore()
-const obsStore = useObservationsStore()
 const ui = useUIStore()
-
-function isSignalInLab(signal) {
-  return !!obsStore.findObservationForSignal(signal)
-}
-
-const signalsToShow = computed(() =>
-  signauxStore.listWithRemaining.filter((s) => !isSignalInLab(s))
-)
-
-function onCardClick(s) {
-  ui.selectSignal(s)
-}
-
-function onIgnore(id) {
-  signauxStore.removeSignal(id)
-}
+const { radarNoiseEnabled } = storeToRefs(ui)
 
 let expiryInterval = null
 onMounted(async () => {
-  await ensureStoresLoaded(signauxStore, obsStore)
+  await ensureStoresLoaded(signauxStore)
   signauxStore.removeExpired()
   expiryInterval = setInterval(() => signauxStore.removeExpired(), 60000)
 })
@@ -58,26 +41,52 @@ onUnmounted(() => {
     </div>
 
     <div v-if="ui.observatoireViewMode === 'sky' || ui.observatoireViewMode === 'radar'" class="side-widget side-widget--signaux">
-      <div class="sw-title" :class="{ 'sw-title--no-divider': signalsToShow.length > 0 }">Radar</div>
-      <div v-if="signalsToShow.length === 0" class="signal-empty">
-        Aucun signal.
+      <div class="side-widget__header side-widget__header--radar">
+        <div class="sw-title sw-title--inline">Radar</div>
+        <button
+          type="button"
+          class="btn btn-secondary side-widget__btn--noise"
+          :class="{ 'is-active': radarNoiseEnabled !== false }"
+          :title="radarNoiseEnabled === false ? 'Activer le bruit de fond' : 'Couper le bruit de fond'"
+          :aria-pressed="radarNoiseEnabled !== false"
+          aria-label="Bruit de fond du spectrogramme"
+          @click="ui.toggleRadarNoise"
+        >
+          <RadarNoiseIcon :off="radarNoiseEnabled === false" />
+        </button>
       </div>
-      <ObservationCard
-        v-for="s in signalsToShow"
-        v-else
-        :key="s.id"
-        icon-type="signal"
-        :icon-value="s.structure"
-        :title="`${s.frequency} · azimut ${s.azimuth}°`"
-        title-variant="signal"
-        :rows="[formatRelativeTime(s.createdAt, { prefix: 'Reçu ', precise: true })]"
-        :badge="getSupportLabel(s.support)"
-        :progress="{ pct: s.lifetimePct, variant: 'amber' }"
-        :state="s.remainingMs <= 0 ? 'expired' : ui.signalSearchMatchIds.has(s.id) ? 'highlight' : 'idle'"
-        dismiss-label="Ignorer"
-        @click="onCardClick(s)"
-        @dismiss="() => onIgnore(s.id)"
-      />
+      <RadarMiniature />
     </div>
   </div>
 </template>
+
+<style scoped>
+.side-widget__header--radar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--border-width) solid var(--border-default);
+}
+
+.sw-title--inline {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* Même contrôle que ObservatoireRadarFilters (vue radar) */
+.side-widget__btn--noise {
+  pointer-events: auto;
+  min-width: 2.25rem;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+  line-height: 0;
+}
+
+.side-widget__btn--noise :deep(.radar-noise-icon) {
+  display: block;
+}
+</style>

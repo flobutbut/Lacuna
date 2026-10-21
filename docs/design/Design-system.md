@@ -434,6 +434,27 @@ Fichier : `src/assets/utilities.css` — classes réutilisables (marges, couleur
 
 ---
 
+### 3.16 Placeholder « radar off » (Observatoire)
+
+**Fichiers** : `RadarView.vue`, `RadarMiniature.vue` — affichés quand `ui.radarEnabled === false`.
+
+**Contenu** :
+- **Radar off** : les canvas spectrogramme et intensité ne sont pas affichés ; seul un bloc texte (titre + consigne) est centré sur la zone spectrogramme.
+- **Titre** : « Radar désactivé » — libellé secondaire, uppercase.
+- **Corps** : « Activez l’acquisition pour écouter le spectre radio » — consigne utilisateur (lien sémantique avec l’acquisition spectrale, sans renvoyer au libellé du header).
+
+**Styles (tokens uniquement)** :
+| Élément | Tokens |
+|--------|--------|
+| Conteneur (spectrogramme / miniature) | Fond **transparent**, sans bordure ; `--space-*` pour le padding ; `pointer-events: auto` sur la vue pleine pour capter le scroll |
+| Graph d’intensité (vue radar) | Aucun placeholder radar off ; les deux canvas (spectrogramme + intensité) sont masqués (`v-show`) — rien n’est dessiné tant que l’acquisition est coupée |
+| Titre | `--font-mono`, `--text-base` (vue pleine) ou `--text-sm` (miniature), `--weight-semibold`, `--tracking-wide`, `--color-muted`, uppercase |
+| Consigne | `--font-mono`, `--text-sm` ou `--text-xs` (miniature), `--weight-regular`, `--tracking-tight`, `--leading-normal`, `--color-cyan-muted` |
+
+Ne pas utiliser de `color-mix` ni de tailles en dur pour ces blocs — rester aligné sur §2 (tokens).
+
+---
+
 ## 4. Règles d'usage
 
 ### 4.1 Modales
@@ -496,7 +517,7 @@ Fichier : `src/assets/utilities.css` — classes réutilisables (marges, couleur
 | `button.css` | Boutons |
 | `select.css` | AppSelect, dropdown (.ds-select) |
 | `tooltip.css` | Tooltips, réticule |
-| `observatoire.css` | Sections modales, signal-modal, observatoire-body |
+| `observatoire.css` | Sections modales, signal-modal, observatoire-body ; placeholders radar (styles scoped dans RadarView / RadarMiniature, tokens §3.16) |
 | `notification.css` | Toast, travel-widget content |
 | `bar.css` | Barres de progression |
 | `panel.css` | Panels génériques ; variantes de positionnement (.panel-overlay--right, --left, --center) ; .panel-section-wrap |

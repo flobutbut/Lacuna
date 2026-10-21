@@ -7,6 +7,7 @@ import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 import { useShipStore } from '@/stores/ship'
+import { useUIStore } from '@/stores/ui'
 import { getOrCreateSessionId } from '@/lib/session'
 import { formatFrequency, parseFrequency } from '@/lib/formatUtils'
 
@@ -106,12 +107,23 @@ export const useSignauxStore = defineStore('signaux', () => {
 
   const listWithRemaining = computed(() => {
     const now = Date.now()
-    return list.value.map((s) => {
+    const mapped = list.value.map((s) => {
       const elapsed = now - s.createdAt
       const remaining = Math.max(0, s.lifetimeMs - elapsed)
       const pct = s.lifetimeMs > 0 ? (remaining / s.lifetimeMs) * 100 : 0
       return { ...s, remainingMs: remaining, lifetimePct: pct }
     })
+    const activeBand = useUIStore().radarFrequencyBand
+    const filtered = mapped.filter((s) => !s.band || s.band === activeBand)
+    if (import.meta.env.DEV) {
+      console.log('[signaux:listWithRemaining]', {
+        activeBand,
+        total: mapped.length,
+        withBand: mapped.filter((s) => s.band != null).length,
+        visible: filtered.length,
+      })
+    }
+    return filtered
   })
 
   const activePulsarSignals = computed(() =>

@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useShipStore } from '@/stores/ship'
 import { useDrakeStore } from '@/stores/drake'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
@@ -11,6 +12,7 @@ const shipStore = useShipStore()
 const drakeStore = useDrakeStore()
 const stellarStore = useStellarSystemsStore()
 const ui = useUIStore()
+const { radarEnabled } = storeToRefs(ui)
 
 function resetProto() {
   resetPrototypeSession()
@@ -60,6 +62,24 @@ onMounted(async () => {
     </div>
 
     <div class="header__right">
+      <button
+        type="button"
+        class="header__stat-block header__radar-toggle"
+        :class="{ 'header__radar-toggle--off': !radarEnabled }"
+        :title="
+          radarEnabled
+            ? 'Désactiver l’acquisition radar'
+            : 'Activer l’acquisition radar'
+        "
+        @click="ui.toggleRadarEnabled()"
+      >
+        <span class="header__radar-toggle__label">RADAR</span>
+        <span
+          class="header__stat-val header__radar-toggle__state"
+          :class="{ 'header__radar-toggle__state--on': radarEnabled }"
+          aria-hidden="true"
+        >{{ radarEnabled ? '●' : '○' }}</span>
+      </button>
       <div class="header__stat-block">
         <span class="header__stat-label">Gén.</span>
         <span class="header__stat-val">{{ shipStore.generation }}</span>

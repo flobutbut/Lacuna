@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-15*
+*Dernière modification : 2026-03-25*
 
 # LACUNA — Documentation fonctionnelle
 
@@ -64,9 +64,9 @@ Observer le ciel → Sélectionner un système → Analyser (optionnel)
 ## Interface
 
 ### Layout
-- **Header** : Logo, nom vaisseau, coordonnées, génération, N=
+- **Header** : Logo, nom vaisseau, coordonnées, bouton **RADAR ●/○** (acquisition buffer spectrogramme, `radarEnabled` dans `ui.js`, démarre/arrête `radarSpectrogram` depuis `PageObservatoire`), génération, N=
 - **Ciel** : Interface principale (étoiles, hover, clic)
-- **Indicateurs gauche** : Systèmes vaisseau (propulsion, carburant, coque...)
+- **Indicateurs gauche** : Systèmes vaisseau (propulsion, carburant, coque...) — **Observatoire** : panneau gauche avec widget « Observatoire » (placeholders) et spectrogramme miniature (`RadarMiniature.vue` dans `SideLeft`) en vues ciel / radar (liste de signaux retirée de ce panneau)
 - **Indicateurs droite** : Population, dernière trace
 - **Barre instruments** : 9 modules (Observatoire, Carte, Laboratoire, Artefacts, Journal, Drake, Population, Systèmes, Vue 3D étoiles)
 

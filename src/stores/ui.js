@@ -53,14 +53,26 @@ export const useUIStore = defineStore('ui', () => {
   const radarFrequencyBand = ref('L')
   /** Radar en pause (n'acquiert plus de données) */
   const radarPaused = ref(false)
-  /** Radar en mode enregistrement */
-  const radarRecording = ref(false)
   /** Mode sélection Radar en pause : 'zone' | 'period' | null. Zone présélectionné. */
   const radarSelectionMode = ref('zone')
   /** Échelle temps spectrogramme radar : ms par colonne (10 | 100 | 1000 | 10000) */
   const radarTimeScale = ref(100)
   /** Seuil minimum flux_relative pour l'injection pulsars (0–1) */
   const radarIntensityThreshold = ref(0)
+  /** Son radar (spectrogramme) — UI seule tant que l’audio n’est pas branché */
+  const radarSoundEnabled = ref(false)
+  /** Bruit de fond du spectrogramme radar (thermique + synchrotron) */
+  const radarNoiseEnabled = ref(true)
+  /** Borne basse du zoom fréquentiel (0–125 Hz) */
+  const radarFreqLow = ref(0)
+  /** Borne haute du zoom fréquentiel (0–125 Hz) */
+  const radarFreqHigh = ref(125)
+  /** Acquisition spectrogramme (buffer radar) — piloté depuis le header */
+  const radarEnabled = ref(true)
+
+  function toggleRadarEnabled() {
+    radarEnabled.value = !radarEnabled.value
+  }
 
   function setObservatoireViewMode(mode) {
     if (['sky', 'radar', 'system'].includes(mode)) {
@@ -148,10 +160,6 @@ export const useUIStore = defineStore('ui', () => {
     radarPaused.value = !radarPaused.value
   }
 
-  function toggleRadarRecording() {
-    radarRecording.value = !radarRecording.value
-  }
-
   function setRadarSelectionMode(mode) {
     radarSelectionMode.value = mode === 'zone' || mode === 'period' ? mode : null
   }
@@ -167,6 +175,34 @@ export const useUIStore = defineStore('ui', () => {
     if (!isNaN(n)) {
       radarIntensityThreshold.value = Math.min(1, Math.max(0, n))
     }
+  }
+
+  function setRadarFreqLow(val) {
+    const n = parseFloat(val)
+    if (!isNaN(n)) {
+      radarFreqLow.value = Math.min(
+        radarFreqHigh.value - 1,
+        Math.max(0, n)
+      )
+    }
+  }
+
+  function setRadarFreqHigh(val) {
+    const n = parseFloat(val)
+    if (!isNaN(n)) {
+      radarFreqHigh.value = Math.max(
+        radarFreqLow.value + 1,
+        Math.min(125, n)
+      )
+    }
+  }
+
+  function toggleRadarSound() {
+    radarSoundEnabled.value = !radarSoundEnabled.value
+  }
+
+  function toggleRadarNoise() {
+    radarNoiseEnabled.value = !radarNoiseEnabled.value
   }
 
   function toggleConstellationsEnabled() {
@@ -340,14 +376,22 @@ export const useUIStore = defineStore('ui', () => {
     radarFrequencyBand,
     setRadarFrequencyBand,
     radarPaused,
-    radarRecording,
     toggleRadarPaused,
-    toggleRadarRecording,
     radarSelectionMode,
     setRadarSelectionMode,
     radarTimeScale,
     setRadarTimeScale,
     radarIntensityThreshold,
     setRadarIntensityThreshold,
+    radarSoundEnabled,
+    toggleRadarSound,
+    radarNoiseEnabled,
+    toggleRadarNoise,
+    radarFreqLow,
+    setRadarFreqLow,
+    radarFreqHigh,
+    setRadarFreqHigh,
+    radarEnabled,
+    toggleRadarEnabled,
   }
 })

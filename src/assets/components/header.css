@@ -64,10 +64,44 @@
     color: var(--color-amber);
 }
 
+/* stretch : RADAR / Gén. / N= ont exactement la même hauteur (celle du plus haut) */
 .header__right {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: var(--space-4);
+}
+
+/* Reset UA du <button> + contenu centré quand la ligne est étirée */
+button.header__stat-block.header__radar-toggle {
+    cursor: pointer;
+    appearance: none;
+    margin: 0;
+    padding: var(--space-2) var(--space-5);
+    font-family: inherit;
+    color: inherit;
+    line-height: normal;
+    box-sizing: border-box;
+    border-radius: 0;
+    align-items: center;
+}
+
+.header__radar-toggle--off {
+    opacity: 0.45;
+}
+
+.header__radar-toggle__label {
+    font-size: var(--text-base);
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-muted);
+    text-transform: uppercase;
+}
+
+.header__radar-toggle__state {
+    margin-left: var(--space-2);
+}
+
+.header__radar-toggle__state--on {
+    color: var(--color-cyan);
 }
 
 .header__stat-block {
