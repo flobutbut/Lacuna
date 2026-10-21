@@ -52,8 +52,10 @@ export function useRadarSpectrogram(radarPausedRef, getNoiseSample) {
   }
 
   function start() {
-    startTimeMs.value = Date.now()
-    tickInterval = setInterval(tick, CHUNK_MS)
+    // Reprise après un arrêt : l'horloge repart des échantillons déjà écrits,
+    // sinon aucun échantillon n'est produit avant d'avoir rattrapé la durée de la session précédente
+    startTimeMs.value = Date.now() - (totalSamplesWritten / SAMPLE_RATE) * 1000
+    if (!tickInterval) tickInterval = setInterval(tick, CHUNK_MS)
   }
 
   function stop() {

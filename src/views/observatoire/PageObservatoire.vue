@@ -49,7 +49,7 @@ const radarSpectrogram = useRadarSpectrogram(
   radarPaused,
   getNoiseSample
 )
-const radarColumnBuffer = useRadarColumnBuffer()
+const radarColumnBuffer = useRadarColumnBuffer(radarSpectrogram.HISTORY_SIZE)
 provide('radarSpectrogram', radarSpectrogram)
 provide('radarColumnBuffer', radarColumnBuffer)
 

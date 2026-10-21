@@ -102,3 +102,42 @@ export function formatAgeLabel(ageCols, tickMs = RADAR_TICK_MS) {
   if (seconds === 0) return `-${minutes}:00`
   return `-${minutes}:${String(seconds).padStart(2, '0')}`
 }
+
+/**
+ * Bin de fréquence affiché à la hauteur y (px canvas) : haut du tracé = fréquence la plus haute
+ * de la plage zoomée, bas = la plus basse. Même correspondance pour le dessin et la sélection.
+ * @param {number} y
+ * @param {{ top: number, innerH: number, binLow: number, binRange: number }} geom
+ * @returns {number|null} null hors du tracé
+ */
+export function binAtY(y, { top, innerH, binLow, binRange }) {
+  const rel = (y - top) / innerH
+  if (!(rel >= 0 && rel < 1)) return null
+  return binLow + binRange - 1 - Math.floor(rel * binRange)
+}
+
+/**
+ * Bande verticale (px canvas) couvrant les bins b0…b1 inclus, limitée à la plage zoomée.
+ * @returns {{ y: number, h: number } | null} null si la bande est hors de la plage affichée
+ */
+export function binsToYRange(b0, b1, { top, innerH, binLow, binRange }) {
+  const lo = Math.max(Math.min(b0, b1), binLow)
+  const hi = Math.min(Math.max(b0, b1), binLow + binRange - 1)
+  if (hi < lo) return null
+  const yTop = top + ((binLow + binRange - 1 - hi) / binRange) * innerH
+  const yBottom = top + ((binLow + binRange - lo) / binRange) * innerH
+  return { y: yTop, h: yBottom - yTop }
+}
+
+/** Fréquence (Hz) du bord inférieur d'un bin */
+export function binToHz(bin, freqBins = RADAR_FREQ_BINS) {
+  return (bin / freqBins) * RADAR_NYQUIST_HZ
+}
+
+/**
+ * Écart entre deux repères de temps (en colonnes) : 30 s à 100 ms/colonne, puis proportionnel
+ * à l'échelle pour garder des repères espacés d'environ 300 px.
+ */
+export function ageLabelInterval(ticksPerPx, baseCols = 300) {
+  return baseCols * Math.max(1, ticksPerPx)
+}

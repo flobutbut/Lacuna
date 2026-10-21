@@ -5,6 +5,16 @@
 **Correction** : le sujet n’est **pas** le spectrogramme vs intensité *dans* RadarView, mais la **vue radar pleine page** vs la **miniature** dans la colonne latérale.  
 **Analyse uniquement** — pas de modification de code dans ce document.
 
+> **Mise à jour 21/10/2026** — Ce diagnostic décrit l'état de mars (miniature à 220 colonnes fixes), qui n'existe plus : la miniature lit une colonne par pixel CSS. Tests dans le navigateur et corrections :
+>
+> - **Buffer effacé et reconstruit** au premier affichage de la vue Radar et à chaque redimensionnement, avec un pas d'un échantillon (4 ms) au lieu d'un tick (100 ms) et sans pulsars : ~17 s affichées comme ~1 min 30, contenu de la miniature changé. **Corrigé** : buffer créé une fois (`useRadarColumnBuffer`), jamais vidé ; une colonne par tick, rattrapage tick par tick.
+> - **Redessin continu même masqué** : vue ciel à ~19 images/s radar actif. **Corrigé** : dessin seulement quand la vue Radar est affichée et que l'image change ; rendu par `ImageData` (2–4 ms au lieu de 51 ms).
+> - **Échelles 1 s / 10 s** au-delà de l'historique : rebouclage sur le buffer circulaire, données mélangées, repères de temps absents. **Corrigé** : maximum par pixel, rien au-delà de l'historique.
+> - **Sélection de zone** : fréquences inversées et zoom ignoré (zone 94→63 Hz émise 30→61 Hz). **Corrigé** (61,5→94,7 Hz).
+> - **Radar coupé puis rallumé** : plus d'échantillons tant que le temps n'avait pas rattrapé la session précédente. **Corrigé** (`start()`).
+>
+> **Toujours ouvert** : la miniature affiche les dernières colonnes en direct (sa largeur en pixels), sans la fenêtre ni le défilement de la vue Radar — comportement à décider.
+
 ---
 
 ## 1. Ce qui est identique entre les deux

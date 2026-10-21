@@ -1,17 +1,23 @@
 <script setup>
 /**
  * Vue Radar — spectrogramme temps réel + courbe d'intensité.
- * Fenêtre glissante fixe, défilement géré par drawViewport().
+ * Écrit une colonne par tick d'acquisition dans le buffer partagé (lu aussi par RadarMiniature),
+ * même masquée. Dessine seulement quand la vue est visible et que l'image a changé.
  */
-import { ref, onMounted, onUnmounted, watch, inject, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, inject, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRadarStore } from '@/stores/radar'
 import { useSignauxStore } from '@/stores/signaux'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { computeSpectrogramColumn, SAMPLE_RATE } from '@/lib/spectrogramData'
 import { getCssVar } from '@/lib/cssVars'
 import {
   RADAR_FREQ_BINS as FREQ_BINS,
   RADAR_TICK_MS as TICK_MS,
+  ageLabelInterval,
+  binAtY,
+  binToHz,
+  binsToYRange,
   columnIndexAt,
   formatAgeLabel,
   freqRangeToBins,
@@ -26,7 +32,6 @@ const radarSpectrogram = inject('radarSpectrogram')
 const radarColumnBuffer = inject('radarColumnBuffer')
 const {
   tickCount,
-  getBufferSnapshot,
   getBufferSnapshotAt,
   WINDOW_SIZE,
   HISTORY_SIZE,
@@ -34,6 +39,7 @@ const {
 
 const radarStore = useRadarStore()
 const signauxStore = useSignauxStore()
+const observatoireStore = useObservatoireStore()
 const {
   radarPaused,
   radarSelectionMode,
@@ -45,19 +51,34 @@ const {
   radarEnabled,
 } = storeToRefs(radarStore)
 
+/** La vue radar est montée en permanence (v-show) : ne dessiner que lorsqu'elle est affichée */
+const isVisible = computed(() => observatoireStore.observatoireViewMode === 'radar')
+
 const containerRef = ref(null)
 const chartsWrapRef = ref(null)
 const spectrogramCanvasRef = ref(null)
 const intensityCanvasRef = ref(null)
 
-const INTERVAL_TICKS = 300  // toutes les 30s à 100ms/tick
 const margin = { left: 58, right: 8, top: 8, bottom: 24 }
+/** Échantillons acquis par tick (pas entre deux colonnes) */
+const SAMPLES_PER_TICK = Math.round((SAMPLE_RATE * TICK_MS) / 1000)
 
-let lastRenderedTick = -1
+/** Palette Viridis précalculée (256 × RGB) pour écrire les pixels sans parser de couleur */
+const VIRIDIS_LUT = (() => {
+  const lut = new Uint8ClampedArray(256 * 3)
+  for (let i = 0; i < 256; i++) {
+    const c = d3.rgb(d3.interpolateViridis(i / 255))
+    lut[i * 3] = c.r
+    lut[i * 3 + 1] = c.g
+    lut[i * 3 + 2] = c.b
+  }
+  return lut
+})()
+
+let lastAppendedTick = tickCount.value
 let rafId = null
+let needsDraw = true
 let resizeObserver = null
-let isInitialized = false
-let visibilityChangeHandler = null
 
 let selectionStartCol = null
 let selectionEndCol = null
@@ -70,8 +91,6 @@ let cursorX = null
 let cursorY = null
 let cursorChart = null
 
-const spectrogramHeight = ref(200)
-const intensityHeight = ref(100)
 const canvasWidth = ref(800)
 const showLiveButton = ref(false)
 let currentScrollOffset = 0
@@ -79,93 +98,10 @@ let targetScrollOffset = 0
 const EASE_FACTOR = 0.10
 const LIVE_THRESHOLD = 1
 
-function updateHeights() {
-  if (!chartsWrapRef.value) return
-  const h = chartsWrapRef.value.clientHeight
-  if (h <= 0) return
-  spectrogramHeight.value = Math.floor(h * (2 / 3))
-  intensityHeight.value = Math.floor(h * (1 / 3))
-}
-
-function waitForClientHeight(maxFrames = 10) {
-  return new Promise((resolve) => {
-    let frame = 0
-    function check() {
-      if (chartsWrapRef.value?.clientHeight > 0) {
-        updateHeights()
-        resolve()
-        return
-      }
-      frame++
-      if (frame >= maxFrames) {
-        updateHeights()
-        resolve()
-        return
-      }
-      requestAnimationFrame(check)
-    }
-    requestAnimationFrame(check)
-  })
-}
-
-function initCanvases() {
-  if (!containerRef.value || !chartsWrapRef.value) return
-  updateHeights()
-  const specCanvas = spectrogramCanvasRef.value
-  const intCanvas = intensityCanvasRef.value
-  if (!specCanvas || !intCanvas) return
-  const w = specCanvas.parentElement.clientWidth || 800
-  const specH = specCanvas.parentElement.clientHeight || spectrogramHeight.value
-  const intH = intCanvas.parentElement.clientHeight || intensityHeight.value
-  canvasWidth.value = w
-  if (specCanvas) {
-    specCanvas.width = w
-    specCanvas.height = specH
-    specCanvas.style.width = specCanvas.width + 'px'
-    specCanvas.style.height = specCanvas.height + 'px'
-  }
-  if (intCanvas) {
-    intCanvas.width = w
-    intCanvas.height = intH
-    intCanvas.style.width = intCanvas.width + 'px'
-    intCanvas.style.height = intCanvas.height + 'px'
-  }
-  radarColumnBuffer.columnBuffer = new Array(HISTORY_SIZE).fill(null)
-  radarColumnBuffer.columnBufferReady = true
-  prefillColumnBuffer()
-}
-
-const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 1])
-
-function prefillColumnBuffer() {
-  const total = radarSpectrogram.totalSamplesWritten()
-  if (total < WINDOW_SIZE || !radarColumnBuffer.columnBufferReady) return
-
-  const snapshot = getBufferSnapshot(total)
-  if (!snapshot || snapshot.length < WINDOW_SIZE) return
-
-  const numCols = Math.min(total - WINDOW_SIZE + 1, HISTORY_SIZE)
-
-  let maxVal = 1e-6
-  const columns = []
-  for (let col = 0; col < numCols; col++) {
-    const window = snapshot.slice(col, col + WINDOW_SIZE)
-    const { magnitudes, intensity } =
-      computeSpectrogramColumn(window, FREQ_BINS)
-    for (const m of magnitudes) if (m > maxVal) maxVal = m
-    columns.push({ magnitudes: new Float32Array(magnitudes), intensity })
-  }
-  radarColumnBuffer.specMaxVal = maxVal
-
-  for (let col = 0; col < columns.length; col++) {
-    radarColumnBuffer.columnBuffer[col] = columns[col]
-  }
-  radarColumnBuffer.writeCol = columns.length % HISTORY_SIZE
-}
+// ── Données : une colonne par tick ───────────────────────────────────────────
 
 function appendColumnFromSnapshot(snapshot, windowSize = WINDOW_SIZE) {
-  if (!snapshot || snapshot.length < windowSize || !radarColumnBuffer.columnBufferReady)
-    return
+  if (!snapshot || snapshot.length < windowSize) return
 
   const { magnitudes } =
     computeSpectrogramColumn(snapshot, FREQ_BINS)
@@ -174,7 +110,7 @@ function appendColumnFromSnapshot(snapshot, windowSize = WINDOW_SIZE) {
   // Injection des signaux pulsars dans le domaine fréquentiel — après FFT, avant normalisation.
   // Temps simulé courant en secondes (échelle UI, pas le tick buffer réel)
   injectPulsarSignals(magnitudes, signauxStore.activePulsarSignals, {
-    tSec: (radarColumnBuffer.writeCol * radarTimeScale.value) / 1000,
+    tSec: (radarColumnBuffer.count * radarTimeScale.value) / 1000,
     threshold: radarIntensityThreshold.value,
     freqBins: FREQ_BINS,
   })
@@ -193,15 +129,44 @@ function appendColumnFromSnapshot(snapshot, windowSize = WINDOW_SIZE) {
   }
   radarColumnBuffer.writeCol =
     (radarColumnBuffer.writeCol + 1) % HISTORY_SIZE
+  radarColumnBuffer.count += 1
 }
 
-function appendColumn() {
-  const snapshot = getBufferSnapshot(WINDOW_SIZE)
-  appendColumnFromSnapshot(snapshot)
+/**
+ * Ajoute une colonne pour chaque tick non encore traité (du plus ancien au plus récent),
+ * chacune sur sa propre fenêtre d'échantillons : pas de doublon, même après une pause ou un onglet en arrière-plan.
+ */
+function catchUpColumns() {
+  const missed = tickCount.value - lastAppendedTick
+  if (missed <= 0) return
+  const toFill = Math.min(missed, HISTORY_SIZE)
+  for (let i = toFill - 1; i >= 0; i--) {
+    const snapshot = getBufferSnapshotAt(i * SAMPLES_PER_TICK, WINDOW_SIZE)
+    if (snapshot) appendColumnFromSnapshot(snapshot)
+  }
+  lastAppendedTick = tickCount.value
+  needsDraw = true
 }
+
+/** Colonnes réellement disponibles dans l'historique */
+function availableColumns() {
+  return Math.min(radarColumnBuffer.count, HISTORY_SIZE)
+}
+
+// ── Géométrie ────────────────────────────────────────────────────────────────
 
 function getTicksPerPx() {
   return ticksPerPixel(radarTimeScale.value)
+}
+
+/** Défilement converti en colonnes (même arrondi que columnIndexAt) */
+function scrollColumns(ticksPerPx) {
+  return Math.round(currentScrollOffset * ticksPerPx)
+}
+
+/** Âge (en colonnes) de la colonne la plus récente représentée au pixel px de la zone utile */
+function ageAtPlotPx(px, innerW, ticksPerPx) {
+  return (innerW - 1 - px) * ticksPerPx + scrollColumns(ticksPerPx)
 }
 
 /** px = 0..innerW-1 dans la zone utile (sans marge gauche) */
@@ -216,11 +181,24 @@ function colIdxFromPlotPx(px, innerW, ticksPerPx) {
   })
 }
 
+/** Géométrie fréquences ↔ hauteur du spectrogramme (zoom fréquentiel compris) */
+function specGeometry(specCanvas) {
+  const { binLow, binRange } = freqRangeToBins(radarFreqLow.value, radarFreqHigh.value, FREQ_BINS)
+  return {
+    top: margin.top,
+    innerH: specCanvas.height - margin.top - margin.bottom,
+    binLow,
+    binRange,
+  }
+}
+
+// ── Dessin ───────────────────────────────────────────────────────────────────
+
 function drawViewport() {
   if (!radarEnabled.value) return
   const specCanvas = spectrogramCanvasRef.value
   const intCanvas = intensityCanvasRef.value
-  if (!specCanvas || !intCanvas || !radarColumnBuffer.columnBufferReady) return
+  if (!specCanvas || !intCanvas) return
 
   const innerW = specCanvas.width - margin.left - margin.right
   const innerH = specCanvas.height - margin.top - margin.bottom
@@ -234,49 +212,66 @@ function drawViewport() {
   specCtx.fillRect(0, 0, specCanvas.width, specCanvas.height)
   intCtx.fillStyle = bg
   intCtx.fillRect(0, 0, intCanvas.width, intCanvas.height)
+  if (innerW <= 0 || innerH <= 0 || intH <= 0) return
 
   const ticksPerPx = getTicksPerPx()
   const norm = radarColumnBuffer.specMaxVal || 1
+  const threshold = radarIntensityThreshold.value
+  const available = availableColumns()
+  const geom = specGeometry(specCanvas)
+  const binLow = geom.binLow
+  const binHigh = geom.binLow + geom.binRange
 
-  // Bornes Hz → indices de bins (FREQ_BINS couvre 0–125 Hz)
-  const { binLow, binHigh, binRange } = freqRangeToBins(radarFreqLow.value, radarFreqHigh.value, FREQ_BINS)
+  // Bin affiché sur chaque ligne de pixels (haut = fréquence haute)
+  const binForRow = new Int16Array(innerH)
+  for (let y = 0; y < innerH; y++) binForRow[y] = binAtY(margin.top + y + 0.5, geom) ?? binLow
+
+  const image = specCtx.createImageData(innerW, innerH)
+  const pixels = image.data
+  const agg = new Float32Array(FREQ_BINS)
+  const { columnBuffer, writeCol } = radarColumnBuffer
+  intCtx.fillStyle = getCssVar('--color-cyan')
 
   for (let px = 0; px < innerW; px++) {
-    const colIdx = colIdxFromPlotPx(px, innerW, ticksPerPx)
-    const col = radarColumnBuffer.columnBuffer[colIdx]
-    if (!col) continue
+    const ageStart = ageAtPlotPx(px, innerW, ticksPerPx)
+    // Au-delà de l'historique : pas de données (évite de reboucler sur le buffer circulaire)
+    if (ageStart >= available) continue
+    const ageEnd = Math.min(ageStart + ticksPerPx, available)
 
-    const xPos = margin.left + px
+    // Un pixel couvre ticksPerPx colonnes : on garde le maximum (une impulsion brève reste visible)
+    agg.fill(0)
+    let intensity = 0
+    let colMax = 0
+    let hasData = false
+    for (let age = ageStart; age < ageEnd; age++) {
+      const col = columnBuffer[(writeCol - 1 - age + HISTORY_SIZE) % HISTORY_SIZE]
+      if (!col) continue
+      hasData = true
+      const m = col.magnitudes
+      for (let b = 0; b < FREQ_BINS; b++) {
+        if (m[b] > colMax) colMax = m[b]
+        if (b >= binLow && b < binHigh && m[b] > agg[b]) agg[b] = m[b]
+      }
+      if (col.intensity > intensity) intensity = col.intensity
+    }
+    if (!hasData || colMax / norm < threshold) continue
 
-    const maxMag = Math.max(...col.magnitudes)
-    const colFlux = maxMag / norm
-    if (colFlux < radarIntensityThreshold.value) continue
-
-    for (let row = binLow; row < binHigh; row++) {
-      const val = Math.min(1, Math.max(0, col.magnitudes[row] / norm))
-      specCtx.fillStyle = colorScale(val)
-      const yPos = margin.top
-        + (1 - (row - binLow) / binRange) * innerH
-      specCtx.fillRect(
-        xPos,
-        yPos,
-        1,
-        Math.ceil(innerH / binRange) + 1
-      )
+    for (let y = 0; y < innerH; y++) {
+      const v = agg[binForRow[y]] / norm
+      const li = Math.round(Math.min(1, Math.max(0, v)) * 255) * 3
+      const o = (y * innerW + px) * 4
+      pixels[o] = VIRIDIS_LUT[li]
+      pixels[o + 1] = VIRIDIS_LUT[li + 1]
+      pixels[o + 2] = VIRIDIS_LUT[li + 2]
+      pixels[o + 3] = 255
     }
 
-    const barH = Math.max(1, col.intensity * intH)
-    intCtx.fillStyle = getCssVar('--color-cyan')
-    intCtx.fillRect(
-      xPos,
-      intCanvas.height - margin.bottom - barH,
-      1,
-      barH
-    )
+    const barH = Math.max(1, intensity * intH)
+    intCtx.fillRect(margin.left + px, intCanvas.height - margin.bottom - barH, 1, barH)
   }
+  specCtx.putImageData(image, margin.left, margin.top)
 
   // Ligne rouge horizontale : seuil d'intensité (filtre)
-  const threshold = radarIntensityThreshold.value
   if (threshold > 0) {
     const thresholdH = threshold * intH
     const y = intCanvas.height - margin.bottom - thresholdH
@@ -290,39 +285,39 @@ function drawViewport() {
     intCtx.globalAlpha = 1
   }
 
-  // Axe X : repères temps (colonnes logiques + défilement)
-  let lastTickAge = -1
-  for (let px = 0; px < innerW; px++) {
-    const colIdx = colIdxFromPlotPx(px, innerW, ticksPerPx)
-    const ageCols =
-      (radarColumnBuffer.writeCol - 1 - colIdx + HISTORY_SIZE) % HISTORY_SIZE
-    if (ageCols % INTERVAL_TICKS !== 0) continue
-    if (ageCols === lastTickAge) continue
-    lastTickAge = ageCols
-    const xPos = margin.left + px
-    const label = formatAgeLabel(ageCols, TICK_MS)
+  drawTimeLabels(specCtx, intCtx, specCanvas, intCanvas, innerW, ticksPerPx, available)
+  drawAxes(specCanvas, intCanvas)
+  drawSelection(specCanvas, intCanvas)
+  drawCrosshair(specCanvas, intCanvas)
+}
+
+/** Axe X : repères à âge rond (30 s à 100 ms/colonne, espacement proportionnel à l'échelle) */
+function drawTimeLabels(specCtx, intCtx, specCanvas, intCanvas, innerW, ticksPerPx, available) {
+  const interval = ageLabelInterval(ticksPerPx)
+  const scrollCols = scrollColumns(ticksPerPx)
+  const lastAge = Math.min(available, scrollCols + innerW * ticksPerPx)
+  const muted = getCssVar('--color-muted')
+  for (let age = Math.ceil(scrollCols / interval) * interval; age < lastAge; age += interval) {
+    const xPos = margin.left + innerW - 1 - Math.floor((age - scrollCols) / ticksPerPx)
+    const label = formatAgeLabel(age, TICK_MS)
     for (const { ctx, canvasH } of [
       { ctx: specCtx, canvasH: specCanvas.height },
       { ctx: intCtx, canvasH: intCanvas.height },
     ]) {
       ctx.globalAlpha = 0.15
-      ctx.strokeStyle = getCssVar('--color-muted')
+      ctx.strokeStyle = muted
       ctx.lineWidth = 1
       ctx.beginPath()
       ctx.moveTo(xPos, margin.top)
       ctx.lineTo(xPos, canvasH - margin.bottom)
       ctx.stroke()
       ctx.globalAlpha = 1
-      ctx.fillStyle = getCssVar('--color-muted')
+      ctx.fillStyle = muted
       ctx.font = '10px monospace'
       ctx.textAlign = 'center'
       ctx.fillText(label, xPos, canvasH - 4)
     }
   }
-
-  drawAxes(specCanvas, intCanvas)
-  drawSelection(specCanvas, intCanvas)
-  drawCrosshair(specCanvas, intCanvas)
 }
 
 function drawAxes(specCanvas, intCanvas) {
@@ -379,18 +374,12 @@ function drawSelection(specCanvas, intCanvas) {
   specCtx.fillStyle = selectionFill
   specCtx.strokeStyle = cyan
   specCtx.lineWidth = 1
-  if (selectionStartBin != null && selectionEndBin != null) {
-    const specH = specCanvas.height
-    const specInnerH = specH - margin.top - margin.bottom
-    const b0 = Math.min(selectionStartBin, selectionEndBin)
-    const b1 = Math.max(selectionStartBin, selectionEndBin)
-    const top = margin.top + (b0 / FREQ_BINS) * specInnerH
-    const h = ((b1 - b0 + 1) / FREQ_BINS) * specInnerH
-    specCtx.fillRect(leftPx, top, rightPx - leftPx, h)
-    specCtx.strokeRect(leftPx, top, rightPx - leftPx, h)
-  } else {
-    specCtx.fillRect(leftPx, margin.top, rightPx - leftPx, specCanvas.height - margin.top - margin.bottom)
-    specCtx.strokeRect(leftPx, margin.top, rightPx - leftPx, specCanvas.height - margin.top - margin.bottom)
+  const band = selectionStartBin != null && selectionEndBin != null
+    ? binsToYRange(selectionStartBin, selectionEndBin, specGeometry(specCanvas))
+    : { y: margin.top, h: specCanvas.height - margin.top - margin.bottom }
+  if (band) {
+    specCtx.fillRect(leftPx, band.y, rightPx - leftPx, band.h)
+    specCtx.strokeRect(leftPx, band.y, rightPx - leftPx, band.h)
   }
   intCtx.fillStyle = selectionFill
   intCtx.strokeStyle = cyan
@@ -446,22 +435,24 @@ function drawCrosshair(specCanvas, intCanvas) {
   intCtx.globalAlpha = 1
 }
 
+// ── Sélection ────────────────────────────────────────────────────────────────
+
 function pxToCol(px) {
   const innerW = spectrogramCanvasRef.value
     ? spectrogramCanvasRef.value.width - margin.left - margin.right
     : 400
   const rel = Math.floor(px - margin.left)
   if (rel < 0 || rel >= innerW) return null
-  return colIdxFromPlotPx(rel, innerW, getTicksPerPx())
+  const ticksPerPx = getTicksPerPx()
+  if (ageAtPlotPx(rel, innerW, ticksPerPx) >= availableColumns()) return null
+  return colIdxFromPlotPx(rel, innerW, ticksPerPx)
 }
 
-function pxToBin(py, wrapHeight) {
-  const innerH = wrapHeight - margin.top - margin.bottom
-  const rel = py - margin.top
-  if (rel < 0 || rel >= innerH) return null
-  // row 0 (haut) = haute fréquence, row 127 (bas) = basse fréquence
-  const bin = Math.floor((rel / innerH) * FREQ_BINS)
-  return Math.max(0, Math.min(FREQ_BINS - 1, bin))
+/** Bin sous le pointeur (même correspondance que le dessin : haut = aigu, zoom compris) */
+function pxToBin(py) {
+  const specCanvas = spectrogramCanvasRef.value
+  if (!specCanvas) return null
+  return binAtY(py, specGeometry(specCanvas))
 }
 
 function clearSelection() {
@@ -489,10 +480,10 @@ function onPointerDown(e, chart, py) {
   const px = e.clientX - rect.left
   const col = pxToCol(px)
   if (col == null) return
-  const bin = chart === 'spec' && py != null ? pxToBin(py, spectrogramHeight.value) : null
+  const bin = chart === 'spec' && py != null ? pxToBin(py) : null
   if (isClickOutsideSelection(col, bin)) {
     clearSelection()
-    drawViewport()
+    needsDraw = true
     return
   }
   isDragging = true
@@ -508,6 +499,7 @@ function onPointerDown(e, chart, py) {
   }
   selectionStartCol = col
   selectionEndCol = col
+  needsDraw = true
 }
 
 function onCursorMove(e, chart) {
@@ -515,7 +507,7 @@ function onCursorMove(e, chart) {
   cursorX = e.clientX - rect.left
   cursorY = e.offsetY
   cursorChart = chart
-  if (selectionStartCol == null || selectionEndCol == null) drawViewport()
+  if (selectionStartCol == null || selectionEndCol == null) needsDraw = true
 }
 
 function onCursorLeave(e) {
@@ -524,7 +516,7 @@ function onCursorLeave(e) {
   cursorX = null
   cursorY = null
   cursorChart = null
-  drawViewport()
+  needsDraw = true
 }
 
 function onPointerMove(e, chart, py) {
@@ -535,58 +527,70 @@ function onPointerMove(e, chart, py) {
   if (col == null) return
   selectionEndCol = col
   if (radarSelectionMode.value === 'zone' && chart === 'spec' && py != null) {
-    selectionEndBin = pxToBin(py, spectrogramHeight.value)
+    const bin = pxToBin(py)
+    if (bin != null) selectionEndBin = bin
   }
   onCursorMove(e, chart)
-  drawViewport()
+  needsDraw = true
 }
 
 function onPointerUp() {
   if (!isDragging) return
   isDragging = false
-  drawViewport()
+  needsDraw = true
   const s0 = selectionStartCol
   const s1 = selectionEndCol
   if (s0 != null && s1 != null) {
+    const hasBins = selectionStartBin != null && selectionEndBin != null
+    const startBin = hasBins ? Math.min(selectionStartBin, selectionEndBin) : null
+    const endBin = hasBins ? Math.max(selectionStartBin, selectionEndBin) : null
     emit('signal-selected', {
       startCol: Math.min(s0, s1),
       endCol: Math.max(s0, s1),
-      startBin: selectionStartBin ?? null,
-      endBin: selectionEndBin ?? null,
+      // Bins de fréquence croissants (0 = 0 Hz) et bornes en Hz
+      startBin,
+      endBin,
+      lowHz: hasBins ? binToHz(startBin) : null,
+      highHz: hasBins ? binToHz(endBin + 1) : null,
       snr: 0,
     })
   }
 }
 
-function renderLoop() {
-  if (!radarEnabled.value) return
-  const missed = tickCount.value - lastRenderedTick
-  const toProcess = Math.min(missed, 10)
-  for (let i = 0; i < toProcess; i++) {
-    appendColumn()
-  }
-  lastRenderedTick = tickCount.value
+// ── Boucle d'affichage (seulement quand la vue est visible) ──────────────────
+
+function frame() {
+  rafId = null
+  if (!isVisible.value || !radarEnabled.value) return
   if (!radarPaused.value) {
     const diff = targetScrollOffset - currentScrollOffset
     if (Math.abs(diff) < LIVE_THRESHOLD) {
+      if (currentScrollOffset !== 0) needsDraw = true
       currentScrollOffset = 0
       targetScrollOffset = 0
       showLiveButton.value = false
     } else {
       currentScrollOffset += diff * EASE_FACTOR
       showLiveButton.value = true
+      needsDraw = true
     }
   } else {
     showLiveButton.value = currentScrollOffset > LIVE_THRESHOLD
   }
-  drawViewport()
-  if (!radarPaused.value) {
-    rafId = requestAnimationFrame(renderLoop)
+  if (needsDraw) {
+    needsDraw = false
+    drawViewport()
   }
+  rafId = requestAnimationFrame(frame)
 }
 
-function resumeRenderLoop() {
-  rafId = requestAnimationFrame(renderLoop)
+function startLoop() {
+  if (rafId == null && isVisible.value && radarEnabled.value) rafId = requestAnimationFrame(frame)
+}
+
+function stopLoop() {
+  if (rafId != null) cancelAnimationFrame(rafId)
+  rafId = null
 }
 
 function onWheel(e) {
@@ -597,60 +601,43 @@ function onWheel(e) {
   if (!specCanvas) return
   const innerW = specCanvas.width - margin.left - margin.right
   const ticksPerPx = getTicksPerPx()
-  const visibleLogical = innerW * ticksPerPx
-  const totalCols = tickCount.value
-  const maxScroll = Math.max(
-    0,
-    Math.min(totalCols, HISTORY_SIZE) - visibleLogical
-  )
+  // Défilement en pixels : au plus jusqu'à la colonne la plus ancienne disponible
+  const maxScroll = Math.max(0, (availableColumns() - innerW * ticksPerPx) / ticksPerPx)
   const delta =
     Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
   targetScrollOffset -= delta
   targetScrollOffset = Math.max(0, Math.min(targetScrollOffset, maxScroll))
   currentScrollOffset = targetScrollOffset
-  drawViewport()
+  needsDraw = true
 }
 
-onMounted(async () => {
-  await waitForClientHeight(10)
-  await nextTick()
-  initCanvases()
-  isInitialized = true
-  drawViewport()
-  lastRenderedTick = tickCount.value
-  if (radarEnabled.value) renderLoop()
+// ── Taille des canvas (sans toucher aux données) ─────────────────────────────
 
-  resizeObserver = new ResizeObserver(() => {
-    // Ne rien faire si la vue est masquée (v-show → display:none → offsetParent null)
-    if (!containerRef.value?.offsetParent) return
-    updateHeights()
-    if (!isInitialized) return
-    const specCanvas = spectrogramCanvasRef.value
-    const intCanvas = intensityCanvasRef.value
-    if (!specCanvas || !intCanvas) return
-    const newW = specCanvas.parentElement?.clientWidth || 800
-    const newSpecH = specCanvas.parentElement?.clientHeight || spectrogramHeight.value
-    const newIntH = intCanvas.parentElement?.clientHeight || intensityHeight.value
-    const specChanged = specCanvas.width !== newW || specCanvas.height !== newSpecH
-    const intChanged = intCanvas.width !== newW || intCanvas.height !== newIntH
-    if (specChanged || intChanged) {
-      isInitialized = false
-      canvasWidth.value = newW
-      specCanvas.width = newW
-      specCanvas.height = newSpecH
-      specCanvas.style.width = specCanvas.width + 'px'
-      specCanvas.style.height = specCanvas.height + 'px'
-      intCanvas.width = newW
-      intCanvas.height = newIntH
-      intCanvas.style.width = intCanvas.width + 'px'
-      intCanvas.style.height = intCanvas.height + 'px'
-      radarColumnBuffer.columnBuffer = new Array(HISTORY_SIZE).fill(null)
-      radarColumnBuffer.columnBufferReady = true
-      prefillColumnBuffer()
-      drawViewport()
-      isInitialized = true
-    }
-  })
+function resizeCanvases() {
+  const specCanvas = spectrogramCanvasRef.value
+  const intCanvas = intensityCanvasRef.value
+  if (!specCanvas || !intCanvas) return
+  const w = specCanvas.parentElement?.clientWidth || 0
+  const specH = specCanvas.parentElement?.clientHeight || 0
+  const intH = intCanvas.parentElement?.clientHeight || 0
+  // Vue masquée (display: none) : tailles nulles, on garde les dimensions actuelles
+  if (!w || !specH || !intH) return
+  if (specCanvas.width === w && specCanvas.height === specH && intCanvas.width === w && intCanvas.height === intH) return
+  canvasWidth.value = w
+  specCanvas.width = w
+  specCanvas.height = specH
+  specCanvas.style.width = w + 'px'
+  specCanvas.style.height = specH + 'px'
+  intCanvas.width = w
+  intCanvas.height = intH
+  intCanvas.style.width = w + 'px'
+  intCanvas.style.height = intH + 'px'
+  needsDraw = true
+}
+
+onMounted(() => {
+  resizeCanvases()
+  resizeObserver = new ResizeObserver(() => resizeCanvases())
   if (containerRef.value) resizeObserver.observe(containerRef.value)
   if (chartsWrapRef.value) resizeObserver.observe(chartsWrapRef.value)
 
@@ -659,79 +646,55 @@ onMounted(async () => {
 
   window.addEventListener('pointerup', onPointerUp)
   window.addEventListener('pointerleave', onPointerUp)
-
-  visibilityChangeHandler = () => {
-    if (
-      document.visibilityState === 'visible' &&
-      radarEnabled.value &&
-      !radarPaused.value
-    ) {
-      resumeRenderLoop()
-    }
-  }
-  document.addEventListener('visibilitychange', visibilityChangeHandler)
+  startLoop()
 })
 
 onUnmounted(() => {
-  if (rafId) cancelAnimationFrame(rafId)
-  if (resizeObserver) {
-    if (containerRef.value) resizeObserver.unobserve(containerRef.value)
-    if (chartsWrapRef.value) resizeObserver.unobserve(chartsWrapRef.value)
-  }
+  stopLoop()
+  resizeObserver?.disconnect()
   const rootEl = containerRef.value
   if (rootEl) rootEl.removeEventListener('wheel', onWheel, { capture: true })
-  if (visibilityChangeHandler) {
-    document.removeEventListener('visibilitychange', visibilityChangeHandler)
-    visibilityChangeHandler = null
-  }
   window.removeEventListener('pointerup', onPointerUp)
   window.removeEventListener('pointerleave', onPointerUp)
 })
 
-watch(radarEnabled, (on) => {
-  if (!on) {
-    if (rafId) {
-      cancelAnimationFrame(rafId)
-      rafId = null
-    }
-    return
-  }
-  nextTick(() => {
-    if (!containerRef.value) return
-    initCanvases()
-    isInitialized = true
-    lastRenderedTick = tickCount.value
-    if (!radarPaused.value) resumeRenderLoop()
-    else drawViewport()
-  })
+// Acquisition : une colonne par tick, que la vue soit affichée ou non (la miniature lit le même buffer)
+watch(tickCount, () => {
+  if (radarEnabled.value && !radarPaused.value) catchUpColumns()
+})
+
+watch(isVisible, async (visible) => {
+  if (!visible) return stopLoop()
+  await nextTick()
+  resizeCanvases()
+  needsDraw = true
+  startLoop()
+})
+
+watch(radarEnabled, async (on) => {
+  if (!on) return stopLoop()
+  await nextTick()
+  // Pas de colonnes pour la période coupée : on reprend au tick courant
+  lastAppendedTick = tickCount.value
+  resizeCanvases()
+  needsDraw = true
+  startLoop()
 })
 
 watch(radarPaused, () => {
   if (!radarEnabled.value) return
   if (!radarPaused.value) {
-    const missed = tickCount.value - lastRenderedTick
-    const toFill = Math.min(missed, HISTORY_SIZE)
-
-    // Rejouer les colonnes manquantes dans l'ordre
-    // du plus ancien au plus récent
-    for (let i = toFill - 1; i >= 0; i--) {
-      // offset en échantillons depuis la fin du buffer
-      const offsetSamples = i * Math.floor(SAMPLE_RATE * TICK_MS / 1000)
-      const snapshot = getBufferSnapshotAt(offsetSamples, WINDOW_SIZE)
-      if (!snapshot) continue
-      appendColumnFromSnapshot(snapshot)
-    }
-
-    lastRenderedTick = tickCount.value
+    // Rejoue les ticks acquis pendant la pause, du plus ancien au plus récent
+    catchUpColumns()
     currentScrollOffset = 0
     targetScrollOffset = 0
     radarStore.setRadarSelectionMode(null)
     clearSelection()
-    resumeRenderLoop()
   } else {
     targetScrollOffset = currentScrollOffset
     radarStore.setRadarSelectionMode('zone')
   }
+  needsDraw = true
 })
 
 watch(radarSelectionMode, () => {
@@ -739,14 +702,13 @@ watch(radarSelectionMode, () => {
   cursorX = null
   cursorY = null
   cursorChart = null
-  drawViewport()
+  needsDraw = true
 })
 
 watch(
-  [radarIntensityThreshold, radarFreqLow, radarFreqHigh, radarNoiseEnabled],
+  [radarIntensityThreshold, radarFreqLow, radarFreqHigh, radarNoiseEnabled, radarTimeScale],
   () => {
-    if (!isInitialized) return
-    drawViewport()
+    needsDraw = true
   }
 )
 </script>

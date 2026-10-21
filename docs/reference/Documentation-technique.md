@@ -252,16 +252,20 @@ Composant `RadarView.vue` — spectrogramme temps réel + courbe d'intensité, c
 
 | Élément | Description |
 |---------|-------------|
-| **Composable** | `useRadarSpectrogram` — buffer circulaire (`HISTORY_SIZE` colonnes), `tickCount` (signal réactif), `getBufferSnapshot`, `appendColumn` |
-| **Rendu** | Canvas 2D — deux offscreens (spectrogramme, intensité), `drawViewport()` copie fenêtre glissante vers canvas visibles |
-| **Boucle rAF** | `renderLoop()` — `appendColumn` (jusqu'à 10 ticks/frame), easing `currentScrollOffset` vers `targetScrollOffset`, puis `drawViewport()`. En **pause** : la boucle ne planifie plus le prochain rAF. |
-| **Pause** | `ui.radarPaused` (Pinia) — arrête le défilement, active le scroll à la molette et la sélection de zone |
-| **Reprise** | `watch(radarPaused)` → `targetScrollOffset = 0`, `resumeRenderLoop()`. Sécurité : `visibilitychange` relance la boucle si l'onglet redevient visible et non en pause |
-| **Scroll** | En pause : `onWheel` modifie `targetScrollOffset` (scroll down = contenu plus récent) |
-| **Sélection** | Zone rectangulaire (col×bin) en pause — `emit('signal-selected', { startCol, endCol, startBin, endBin })` |
+| **Acquisition** | `useRadarSpectrogram` (PageObservatoire) — échantillons à 250 Hz, `tick()` toutes les 100 ms, `tickCount` (signal réactif). `start()` reprend l'horloge là où elle s'était arrêtée |
+| **Colonnes** | `useRadarColumnBuffer` — buffer circulaire partagé (`HISTORY_SIZE` = 7 200 colonnes = 12 min), créé une fois, jamais vidé ; champ `count` (colonnes écrites). RadarView écrit **une colonne par tick** (`watch(tickCount)` → `catchUpColumns()`, une fenêtre d'échantillons par tick, injection des pulsars), même masquée ; RadarMiniature lit |
+| **Rendu** | `drawViewport()` — spectrogramme écrit en pixels (`ImageData`, palette Viridis précalculée), intensité, seuil, repères de temps (`ageLabelInterval`), axes, sélection, réticule. À 1 s / 10 s par colonne, chaque pixel prend le **maximum** des colonnes qu'il couvre ; rien n'est dessiné au-delà de l'historique disponible |
+| **Boucle rAF** | `frame()` tourne **seulement quand la vue Radar est affichée** et ne redessine que si `needsDraw` (nouvelle colonne, réglage, pointeur, défilement) |
+| **Taille** | `resizeCanvases()` (ResizeObserver) — ajuste les canvas sans toucher aux données |
+| **Pause** | `radarStore.radarPaused` — plus de nouvelles colonnes affichées, molette et sélection actives |
+| **Reprise** | `watch(radarPaused)` → `catchUpColumns()` rejoue les ticks acquis pendant la pause, retour au live |
+| **Scroll** | En pause : `onWheel` modifie `targetScrollOffset`, borné à l'historique disponible |
+| **Sélection** | Zone (colonnes × bins) en pause — fréquences via `binAtY` / `binsToYRange` (haut = aigu, zoom fréquentiel compris) — `emit('signal-selected', { startCol, endCol, startBin, endBin, lowHz, highHz })` (bins croissants) |
 | **Bouton LIVE** | Affiché quand `currentScrollOffset > LIVE_THRESHOLD` — clic → `targetScrollOffset = 0`, easing vers live |
 
-**Dépendances** : `spectrogramData.js` (`computeSpectrogramColumn`), D3 (`scaleSequential`, `interpolateViridis`), store `ui` (`radarPaused`, `radarSelectionMode`).
+**Calculs partagés** : `lib/radarSpectrum.js` (index de colonnes, bornes de fréquence, injection pulsars, libellés de temps, correspondance fréquence ↔ hauteur), testés. **Dépendances** : `spectrogramData.js` (`computeSpectrogramColumn`), D3 (`interpolateViridis`), stores `radar`, `observatoire`, `signaux`.
+
+**Mesures (21/10/2026)** : un dessin complet coûte 2 à 4 ms (51 ms auparavant) ; la vue ciel reste à ~9 ms par image avec le radar actif (53 ms auparavant, la vue radar masquée se redessinant en continu).
 
 **URL importante :** Toujours utiliser `http://localhost:5173/` (racine). La maquette `docs/assets/lacuna_interface.html` est redirigée vers `/` — elle a ses propres styles et ne charge pas l'app Vue.
 

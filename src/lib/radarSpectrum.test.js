@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   RADAR_FREQ_BINS,
+  ageLabelInterval,
+  binAtY,
+  binToHz,
+  binsToYRange,
   columnIndexAt,
   formatAgeLabel,
   freqRangeToBins,
@@ -76,5 +80,41 @@ describe('formatAgeLabel', () => {
     expect(formatAgeLabel(300)).toBe('-30s')
     expect(formatAgeLabel(600)).toBe('-1:00')
     expect(formatAgeLabel(900)).toBe('-1:30')
+  })
+})
+
+describe('binAtY / binsToYRange (fréquences ↔ hauteur)', () => {
+  const geom = { top: 8, innerH: 128, binLow: 0, binRange: 128 }
+
+  it('place les hautes fréquences en haut', () => {
+    expect(binAtY(8, geom)).toBe(127)
+    expect(binAtY(8 + 127.5, geom)).toBe(0)
+    expect(binAtY(7, geom)).toBeNull()
+    expect(binAtY(8 + 128, geom)).toBeNull()
+  })
+
+  it('tient compte du zoom fréquentiel', () => {
+    const zoom = { top: 0, innerH: 100, binLow: 64, binRange: 32 }
+    expect(binAtY(0, zoom)).toBe(95)
+    expect(binAtY(99.9, zoom)).toBe(64)
+  })
+
+  it('redonne la bande des bins sélectionnés (aller-retour)', () => {
+    const r = binsToYRange(96, 64, geom)
+    expect(binAtY(r.y + 0.1, geom)).toBe(96)
+    expect(binAtY(r.y + r.h - 0.1, geom)).toBe(64)
+    expect(binsToYRange(0, 10, { ...geom, binLow: 64, binRange: 64 })).toBeNull()
+  })
+
+  it('convertit un bin en Hz', () => {
+    expect(binToHz(64)).toBeCloseTo(62.5)
+    expect(binToHz(128)).toBeCloseTo(125)
+  })
+})
+
+describe('ageLabelInterval', () => {
+  it('garde des repères espacés quand l’échelle grossit', () => {
+    expect(ageLabelInterval(1)).toBe(300)
+    expect(ageLabelInterval(10)).toBe(3000)
   })
 })
