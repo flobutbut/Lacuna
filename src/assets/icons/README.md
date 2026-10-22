@@ -9,7 +9,7 @@ rendu par `src/components/icons/AppIcon.vue`.
 - **Un nom = un sens** : ne pas réutiliser une icône pour un autre concept.
 
 Les menus (`src/constants/menus.js`) référencent les icônes par leur nom.
-Les composants spécialisés (`LabInstrumentIcon`, `ObservationTypeIcon`, `SignalTypeIcon`, `RadarNoiseIcon`)
+Les composants spécialisés (`LabInstrumentIcon`, `ObservationTypeIcon`, `SignalTypeIcon`)
 traduisent une donnée métier en nom d'icône et délèguent à `AppIcon`.
 
 Ne pas utiliser de caractères Unicode (◈ ⌬ ⚙ ×…) comme icônes : les polices de l'app ne les contiennent pas,

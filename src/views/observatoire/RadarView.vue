@@ -787,7 +787,7 @@ watch(
   position: absolute;
   inset: 0;
   background: var(--color-bg);
-  padding-top: calc(var(--sidebar-offset) + 44px);
+  padding-top: calc(var(--sidebar-offset) + var(--toolbar-height) + var(--space-6));
   display: flex;
   flex-direction: column;
 }

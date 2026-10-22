@@ -97,3 +97,14 @@
 .btn-danger:active {
     background: color-mix(in srgb, var(--color-red) 24%, transparent);
 }
+
+/* ══ Modificateur : icône seule (carré) ══
+   <button class="btn btn-secondary btn--icon" aria-label="…"><AppIcon name="…" /></button> */
+.btn--icon {
+    padding: 0;
+    aspect-ratio: 1;
+}
+
+.btn--icon .app-icon {
+    display: block;
+}

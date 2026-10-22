@@ -16,6 +16,9 @@ export const ICONS = {
   pause: '<path d="M9 6v12M15 6v12"/>',
   'arrow-left': '<path d="M19 12H5M11 6l-6 6 6 6"/>',
   'arrow-down': '<path d="M12 5v14M6 13l6 6 6-6"/>',
+  'arrow-right': '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/>',
+  panels: '<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M8.5 4v16M15.5 4v16"/>',
   dot: '<circle cx="12" cy="12" r="4" fill="currentColor"/>',
   'dot-outline': '<circle cx="12" cy="12" r="4"/>',
   warning: '<path d="M12 3.5L21.5 20h-19z"/><path d="M12 10v4.5M12 17.25v.25"/>',
@@ -71,8 +74,7 @@ export const ICONS = {
   'signal-square': '<path d="M2 15h3V9h7v6h7V9h3"/>',
 
   // ── Radar ──
-  'radar-noise': '<path d="M3 14l2-5 2 6 2-7 2 8 2-6 2 4 2-3 2 2 2-1"/>',
-  'radar-noise-off': '<path d="M3 14l2-5 2 6 2-7 2 8 2-6 2 4 2-3 2 2 2-1"/><path d="M4 4l16 16"/>',
+  'noise-filter': '<path d="M3 14l2-5 2 6 2-7 2 8 2-6 2 4 2-3 2 2 2-1"/><path d="M4 4l16 16"/>',
 
   // ── Instruments du Laboratoire ──
   spectrum: '<path d="M4 12v2M8 8v8M12 5v14M16 10v4M20 11v2"/>',

@@ -1,18 +1,18 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSignauxStore } from '@/stores/signaux'
 import { useRadarStore } from '@/stores/radar'
-import { useObservatoireStore } from '@/stores/observatoire'
 import AppSwitch from '@/components/AppSwitch.vue'
-import RadarNoiseIcon from '@/components/icons/RadarNoiseIcon.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 import RadarMiniature from '@/components/RadarMiniature.vue'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const signauxStore = useSignauxStore()
 const radarStore = useRadarStore()
-const observatoireStore = useObservatoireStore()
 const { radarEnabled, radarNoiseEnabled } = storeToRefs(radarStore)
+/** Filtre de bruit actif = bruit de fond retiré du spectrogramme */
+const noiseFiltered = computed(() => radarNoiseEnabled.value === false)
 
 let expiryInterval = null
 onMounted(async () => {
@@ -27,7 +27,7 @@ onUnmounted(() => {
 
 <template>
   <div class="side-left">
-    <div v-if="observatoireStore.observatoireViewMode === 'sky'" class="side-widget">
+    <div class="side-widget">
       <div class="sw-title">Observatoire</div>
       <div class="sw-row">
         <div class="sw-key">Systèmes résolus</div>
@@ -43,31 +43,32 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div v-if="observatoireStore.observatoireViewMode === 'sky' || observatoireStore.observatoireViewMode === 'radar'" class="side-widget side-widget--signaux">
+    <div class="side-widget side-widget--signaux">
       <div
         class="side-widget__header side-widget__header--radar"
         :class="{ 'side-widget__header--collapsed': !radarEnabled }"
       >
-        <div class="sw-title sw-title--inline">Radar</div>
-        <div class="side-widget__radar-controls">
-          <button
-            v-if="radarEnabled"
-            type="button"
-            class="btn btn-secondary side-widget__btn--noise"
-            :class="{ 'is-active': radarNoiseEnabled !== false }"
-            :title="radarNoiseEnabled === false ? 'Activer le bruit de fond' : 'Couper le bruit de fond'"
-            :aria-pressed="radarNoiseEnabled !== false"
-            aria-label="Bruit de fond du spectrogramme"
-            @click="radarStore.toggleRadarNoise"
-          >
-            <RadarNoiseIcon :off="radarNoiseEnabled === false" />
-          </button>
+        <!-- Interrupteur collé au titre ; filtre à droite, seulement radar allumé -->
+        <div class="side-widget__radar-title">
+          <div class="sw-title sw-title--inline">Radar</div>
           <AppSwitch
             v-model="radarEnabled"
             aria-label="Acquisition radar"
             :title="radarEnabled ? 'Couper le radar' : 'Allumer le radar'"
           />
         </div>
+        <button
+          v-if="radarEnabled"
+          type="button"
+          class="btn btn-secondary side-widget__btn--noise"
+          :class="{ 'is-active': noiseFiltered }"
+          :title="noiseFiltered ? 'Afficher le bruit de fond' : 'Filtrer le bruit de fond'"
+          :aria-pressed="noiseFiltered"
+          aria-label="Filtre de bruit de fond"
+          @click="radarStore.toggleRadarNoise"
+        >
+          <AppIcon name="noise-filter" />
+        </button>
       </div>
       <!-- Radar coupé : tuile réduite à son en-tête -->
       <RadarMiniature v-if="radarEnabled" />
@@ -92,7 +93,7 @@ onUnmounted(() => {
   border-bottom: none;
 }
 
-.side-widget__radar-controls {
+.side-widget__radar-title {
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -107,7 +108,7 @@ onUnmounted(() => {
   line-height: 0;
 }
 
-.side-widget__btn--noise :deep(.radar-noise-icon) {
+.side-widget__btn--noise .app-icon {
   display: block;
 }
 

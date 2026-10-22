@@ -1,6 +1,10 @@
 <script setup>
 /**
- * Filtres barre Radar — marche / arrêt, pause, bande, échelle temps, INT., fréq., bruit de fond.
+ * Barre Radar, ancrée à droite comme celle du Ciel profond, de gauche à droite :
+ * - sélection (radar en pause) : zone, période ;
+ * - réglages : bande, échelle temps, seuil d'intensité, plage de fréquences ;
+ * - actions : filtre de bruit, pause ;
+ * - alimentation : marche / arrêt, tout à droite.
  */
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
@@ -8,7 +12,7 @@ import { useRadarStore } from '@/stores/radar'
 import AppSelect from '@/components/AppSelect.vue'
 import AppSwitch from '@/components/AppSwitch.vue'
 import AppDualRangeSlider from '@/components/AppDualRangeSlider.vue'
-import RadarNoiseIcon from '@/components/icons/RadarNoiseIcon.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const radarStore = useRadarStore()
 const {
@@ -20,7 +24,15 @@ const {
   radarFreqHigh,
   radarNoiseEnabled,
   radarEnabled,
+  radarSelectionMode,
 } = storeToRefs(radarStore)
+
+/** Filtre de bruit actif = bruit de fond retiré du spectrogramme */
+const noiseFiltered = computed(() => radarNoiseEnabled.value === false)
+
+function toggleSelectionMode(mode) {
+  radarStore.setRadarSelectionMode(radarSelectionMode.value === mode ? null : mode)
+}
 
 const BANDS = [
   { value: 'P', label: 'P — 150–400 MHz' },
@@ -46,80 +58,109 @@ function onThresholdInput(sliderVal) {
 
 <template>
   <div class="radar-filters">
-    <AppSwitch
-      v-model="radarEnabled"
-      class="radar-filters__switch"
-      label="Radar"
-      :title="radarEnabled ? 'Couper le radar' : 'Allumer le radar'"
-    />
-    <button
-      type="button"
-      class="btn btn-secondary"
-      :class="{ 'is-active': radarPaused }"
-      :title="radarPaused ? 'Reprendre' : 'Pause'"
-      aria-label="Pause"
-      @click="radarStore.toggleRadarPaused"
-    >
-      {{ radarPaused ? '▶' : '⏸' }}
-    </button>
-    <AppSelect
-      :model-value="radarFrequencyBand"
-      :options="BANDS"
-      value-key="value"
-      label-key="label"
-      class="radar-filters__select"
-      :disabled="radarPaused"
-      :title="radarPaused ? 'Relance le radar pour changer la bande' : undefined"
-      @update:model-value="radarStore.setRadarFrequencyBand"
-    />
-    <AppSelect
-      :model-value="radarTimeScale"
-      :options="TIME_SCALES"
-      value-key="value"
-      label-key="label"
-      class="radar-filters__select"
-      :disabled="radarPaused"
-      :title="radarPaused ? 'Relance le radar pour changer l’échelle temps' : undefined"
-      @update:model-value="radarStore.setRadarTimeScale"
-    />
-    <div class="radar-filters__threshold">
-      <span class="radar-filters__threshold-label">INT.</span>
-      <input
-        type="range"
-        min="0"
-        max="100"
-        step="1"
-        :value="sliderDisplayValue"
-        class="radar-filters__slider"
-        aria-label="Seuil d'intensité affichée"
-        @input="onThresholdInput($event.target.value)"
+    <!-- Sélection : seulement radar en pause ; à gauche, la barre étant ancrée à droite, rien ne se décale -->
+    <div v-if="radarPaused" class="radar-filters__group" role="group" aria-label="Sélection">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        :class="{ 'is-active': radarSelectionMode === 'zone' }"
+        title="Sélectionner une zone (spectrogramme)"
+        @click="toggleSelectionMode('zone')"
+      >
+        Zone
+      </button>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        :class="{ 'is-active': radarSelectionMode === 'period' }"
+        title="Sélectionner une période (les deux graphiques)"
+        @click="toggleSelectionMode('period')"
+      >
+        Période
+      </button>
+    </div>
+
+    <div class="radar-filters__group" role="group" aria-label="Réglages">
+      <AppSelect
+        :model-value="radarFrequencyBand"
+        :options="BANDS"
+        value-key="value"
+        label-key="label"
+        class="radar-filters__select"
+        :disabled="radarPaused"
+        :title="radarPaused ? 'Relance le radar pour changer la bande' : undefined"
+        @update:model-value="radarStore.setRadarFrequencyBand"
+      />
+      <AppSelect
+        :model-value="radarTimeScale"
+        :options="TIME_SCALES"
+        value-key="value"
+        label-key="label"
+        class="radar-filters__select radar-filters__select--short"
+        :disabled="radarPaused"
+        :title="radarPaused ? 'Relance le radar pour changer l’échelle temps' : undefined"
+        @update:model-value="radarStore.setRadarTimeScale"
+      />
+      <div class="radar-filters__threshold">
+        <span class="radar-filters__threshold-label">Intensité</span>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          :value="sliderDisplayValue"
+          class="radar-filters__slider"
+          aria-label="Seuil d'intensité affichée"
+          @input="onThresholdInput($event.target.value)"
+        />
+      </div>
+      <div class="radar-filters__threshold">
+        <span class="radar-filters__threshold-label">Fréq.</span>
+        <AppDualRangeSlider
+          :low="radarFreqLow"
+          :high="radarFreqHigh"
+          :min="0"
+          :max="125"
+          :step="1"
+          aria-label-low="Borne basse du filtre fréquentiel (Hz)"
+          aria-label-high="Borne haute du filtre fréquentiel (Hz)"
+          @update:low="radarStore.setRadarFreqLow"
+          @update:high="radarStore.setRadarFreqHigh"
+        />
+      </div>
+    </div>
+
+    <div class="radar-filters__group" role="group" aria-label="Actions">
+      <button
+        type="button"
+        class="btn btn-secondary btn--icon"
+        :class="{ 'is-active': noiseFiltered }"
+        :title="noiseFiltered ? 'Afficher le bruit de fond' : 'Filtrer le bruit de fond'"
+        :aria-pressed="noiseFiltered"
+        aria-label="Filtre de bruit de fond"
+        @click="radarStore.toggleRadarNoise"
+      >
+        <AppIcon name="noise-filter" />
+      </button>
+      <button
+        type="button"
+        class="btn btn-secondary btn--icon"
+        :class="{ 'is-active': radarPaused }"
+        :title="radarPaused ? 'Reprendre' : 'Pause'"
+        :aria-label="radarPaused ? 'Reprendre' : 'Pause'"
+        @click="radarStore.toggleRadarPaused"
+      >
+        <AppIcon :name="radarPaused ? 'play' : 'pause'" />
+      </button>
+    </div>
+
+    <div class="radar-filters__group" role="group" aria-label="Alimentation">
+      <AppSwitch
+        v-model="radarEnabled"
+        label="Radar"
+        :title="radarEnabled ? 'Couper le radar' : 'Allumer le radar'"
       />
     </div>
-    <div class="radar-filters__threshold">
-      <span class="radar-filters__threshold-label">fréq.</span>
-      <AppDualRangeSlider
-        :low="radarFreqLow"
-        :high="radarFreqHigh"
-        :min="0"
-        :max="125"
-        :step="1"
-        aria-label-low="Borne basse du filtre fréquentiel (Hz)"
-        aria-label-high="Borne haute du filtre fréquentiel (Hz)"
-        @update:low="radarStore.setRadarFreqLow"
-        @update:high="radarStore.setRadarFreqHigh"
-      />
-    </div>
-    <button
-      type="button"
-      class="btn btn-secondary radar-filters__btn--noise"
-      :class="{ 'is-active': radarNoiseEnabled !== false }"
-      :title="radarNoiseEnabled === false ? 'Activer le bruit de fond' : 'Couper le bruit de fond'"
-      :aria-pressed="radarNoiseEnabled !== false"
-      aria-label="Bruit de fond du spectrogramme"
-      @click="radarStore.toggleRadarNoise"
-    >
-      <RadarNoiseIcon :off="radarNoiseEnabled === false" />
-    </button>
   </div>
 </template>
 
@@ -127,23 +168,25 @@ function onThresholdInput(sliderVal) {
 .radar-filters {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-6);
 }
 
-.radar-filters__switch {
-  margin-right: var(--space-3);
+/* Groupes séparés par un filet vertical */
+.radar-filters__group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
+.radar-filters__group + .radar-filters__group {
+  padding-left: var(--space-6);
+  border-left: var(--border-width) solid var(--border-default);
+}
+
 .radar-filters__select {
   min-width: 140px;
 }
-.radar-filters__btn--noise {
-  min-width: 2.25rem;
-  padding-left: var(--space-4);
-  padding-right: var(--space-4);
-  line-height: 0;
-}
-.radar-filters__btn--noise :deep(.radar-noise-icon) {
-  display: block;
+.radar-filters__select--short {
+  min-width: 90px;
 }
 
 /* Aligné sur .ds-select (select.css) : même cadre, typo et hover que les AppSelect */

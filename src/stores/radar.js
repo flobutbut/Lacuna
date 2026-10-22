@@ -1,5 +1,6 @@
 /**
  * Store Radar — réglages du spectrogramme (bande, pause, sélection, échelles, filtres, son, bruit)
+ * radarNoiseEnabled = bruit de fond affiché ; l'interface présente l'inverse (« Filtre de bruit » actif = false)
  */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
@@ -23,12 +24,8 @@ export const useRadarStore = defineStore('radar', () => {
   const radarFreqLow = ref(0)
   /** Borne haute du zoom fréquentiel (0–125 Hz) */
   const radarFreqHigh = ref(125)
-  /** Acquisition spectrogramme (buffer radar) — piloté depuis le header */
+  /** Acquisition spectrogramme (buffer radar) — interrupteurs de l'Observatoire, état affiché dans le header */
   const radarEnabled = ref(true)
-
-  function toggleRadarEnabled() {
-    radarEnabled.value = !radarEnabled.value
-  }
 
   function setRadarFrequencyBand(band) {
     if (band) radarFrequencyBand.value = band
@@ -103,6 +100,5 @@ export const useRadarStore = defineStore('radar', () => {
     radarFreqHigh,
     setRadarFreqHigh,
     radarEnabled,
-    toggleRadarEnabled,
   }
 })

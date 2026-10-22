@@ -141,6 +141,7 @@
   --instruments-height:    52px;
   --sidebar-width:         312px;  /* Colonnes latérales gauche/droite */
   --sidebar-offset:        20px;
+  --toolbar-height:        32px;   /* Barre d'outils de l'Observatoire (onglets + filtres) */
   --panel-width:           360px;
   --panel-width-lg:        400px;
   --site-width:            1120px;  /* Largeur max. du site public */

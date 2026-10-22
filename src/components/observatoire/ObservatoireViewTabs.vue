@@ -1,10 +1,9 @@
 <script setup>
-import { useRadarStore } from '@/stores/radar'
 import { useObservatoireStore } from '@/stores/observatoire'
 import ObservatoireSpectralFilters from '@/components/observatoire/ObservatoireSpectralFilters.vue'
 import ObservatoireRadarFilters from '@/components/observatoire/ObservatoireRadarFilters.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
-const radarStore = useRadarStore()
 const observatoireStore = useObservatoireStore()
 
 const TABS = [
@@ -15,46 +14,34 @@ const TABS = [
 </script>
 
 <template>
-  <div
-    class="observatoire-tabs"
-    :class="{ 'observatoire-tabs--full-width': observatoireStore.observatoireViewMode === 'system' || observatoireStore.observatoireViewMode === 'radar' || (observatoireStore.observatoireViewMode === 'sky' && !observatoireStore.observatoireTilesVisible) }"
-  >
-    <div
-      class="observatoire-tabs__buttons"
-      :class="{ 'observatoire-tabs__buttons--over-star': observatoireStore.observatoireViewMode === 'system' || observatoireStore.observatoireViewMode === 'radar' }"
-    >
-      <button
-        v-for="t in TABS"
-        :key="t.id"
-        type="button"
-        class="btn btn-secondary"
-        :class="{ 'is-active': observatoireStore.observatoireViewMode === t.id }"
-        @click="observatoireStore.setObservatoireViewMode(t.id)"
+  <div class="observatoire-tabs">
+    <div class="observatoire-tabs__left">
+      <div
+        class="observatoire-tabs__buttons"
+        :class="{ 'observatoire-tabs__buttons--over-star': observatoireStore.observatoireViewMode === 'system' || observatoireStore.observatoireViewMode === 'radar' }"
       >
-        {{ t.label }}
-      </button>
-    </div>
-    <div
-      v-if="observatoireStore.observatoireViewMode === 'radar' && radarStore.radarPaused"
-      class="observatoire-tabs__center"
-    >
+        <button
+          v-for="t in TABS"
+          :key="t.id"
+          type="button"
+          class="btn btn-secondary"
+          :class="{ 'is-active': observatoireStore.observatoireViewMode === t.id }"
+          @click="observatoireStore.setObservatoireViewMode(t.id)"
+        >
+          {{ t.label }}
+        </button>
+      </div>
       <button
+        v-if="observatoireStore.observatoireViewMode === 'sky'"
         type="button"
-        class="btn btn-secondary"
-        :class="{ 'is-active': radarStore.radarSelectionMode === 'zone' }"
-        title="Sélectionner une zone (spectrogramme)"
-        @click="radarStore.setRadarSelectionMode(radarStore.radarSelectionMode === 'zone' ? null : 'zone')"
+        class="btn btn-secondary btn--icon"
+        :class="{ 'is-active': observatoireStore.observatoireTilesVisible }"
+        :title="observatoireStore.observatoireTilesVisible ? 'Masquer les panneaux (@)' : 'Afficher les panneaux (@)'"
+        :aria-pressed="observatoireStore.observatoireTilesVisible"
+        aria-label="Panneaux latéraux"
+        @click="observatoireStore.toggleObservatoireTiles"
       >
-        Zone
-      </button>
-      <button
-        type="button"
-        class="btn btn-secondary"
-        :class="{ 'is-active': radarStore.radarSelectionMode === 'period' }"
-        title="Sélectionner une période (les deux graphiques)"
-        @click="radarStore.setRadarSelectionMode(radarStore.radarSelectionMode === 'period' ? null : 'period')"
-      >
-        Période
+        <AppIcon name="panels" />
       </button>
     </div>
     <ObservatoireSpectralFilters v-if="observatoireStore.observatoireViewMode === 'sky'" class="observatoire-tabs__filters" />
@@ -65,12 +52,11 @@ const TABS = [
 <style scoped>
 .observatoire-tabs {
   position: absolute;
+  /* Même place dans les trois vues ; les panneaux latéraux commencent en dessous */
   top: var(--sidebar-offset);
-  /* Réserve la place des panneaux latéraux (SideLeft / SideRight) */
-  left: calc(var(--sidebar-offset) + var(--sidebar-width));
-  right: calc(var(--sidebar-offset) + var(--sidebar-width));
-  padding-left: var(--space-6);
-  padding-right: var(--space-6);
+  left: var(--sidebar-offset);
+  right: var(--sidebar-offset);
+  height: var(--toolbar-height);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -78,12 +64,19 @@ const TABS = [
   gap: var(--space-4);
   z-index: 20;
   pointer-events: auto;
-  transition: left var(--transition-base), right var(--transition-base);
 }
 
-.observatoire-tabs--full-width {
-  left: var(--sidebar-offset);
-  right: var(--sidebar-offset);
+.observatoire-tabs__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* Tous les contrôles de la barre (onglets, boutons, selects, curseurs) à la même hauteur */
+.observatoire-tabs :deep(.btn),
+.observatoire-tabs :deep(.ds-select),
+.observatoire-tabs :deep(.radar-filters__threshold) {
+  height: var(--toolbar-height);
 }
 
 .observatoire-tabs__buttons {
@@ -114,13 +107,6 @@ const TABS = [
   background: var(--color-panel-solid);
 }
 
-.observatoire-tabs__center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-2);
-}
 .observatoire-tabs__filters {
   flex-shrink: 0;
 }

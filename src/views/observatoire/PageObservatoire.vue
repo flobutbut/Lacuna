@@ -95,7 +95,7 @@ onUnmounted(() => {
     <div v-if="!isSkyMode && !isRadarMode" class="scanlines" />
     <div class="ui-layer">
       <ObservatoireViewTabs />
-      <SideLeft v-show="(isSkyMode && observatoireStore.observatoireTilesVisible) || observatoireStore.observatoireViewMode === 'system'" />
+      <SideLeft v-show="isSkyMode && observatoireStore.observatoireTilesVisible" />
       <SideRight v-show="observatoireStore.observatoireViewMode === 'system' || (observatoireStore.observatoireViewMode === 'sky' && observatoireStore.observatoireTilesVisible)" />
       <Reticule v-if="isSkyMode" />
       <StarTooltip v-if="isSkyMode" />

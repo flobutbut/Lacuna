@@ -300,11 +300,8 @@ onUnmounted(() => {
           title="Rechercher (/)"
           @click="expandSearch"
         >
-          <span class="spectral-search__icon" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.35-4.35"/>
-            </svg>
+          <span class="spectral-search__icon">
+            <AppIcon name="search" :size="14" />
           </span>
         </button>
         <div v-else key="body" class="spectral-search__body">
@@ -323,9 +320,10 @@ onUnmounted(() => {
             type="button"
             class="spectral-search__go"
             title="Centrer sur l'étoile"
+            aria-label="Centrer sur l'étoile"
             @click="searchStar"
           >
-            →
+            <AppIcon name="arrow-right" />
           </button>
           <button
             type="button"

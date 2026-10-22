@@ -72,7 +72,6 @@
 }
 
 /* Reset UA du <button> + contenu centré quand la ligne est étirée */
-button.header__stat-block.header__radar-toggle,
 button.header__stat-block.header__settings,
 button.header__stat-block.header__logout {
     cursor: pointer;
@@ -97,16 +96,13 @@ button.header__stat-block.header__logout {
 }
 
 .header__settings__icon {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: var(--color-muted);
-    stroke-width: 1.2;
-    transition: stroke var(--transition-base);
+    font-size: var(--text-lg);
+    color: var(--color-muted);
+    transition: color var(--transition-base);
 }
 
 .header__settings:hover .header__settings__icon {
-    stroke: var(--color-white);
+    color: var(--color-white);
 }
 
 .header__logout:hover {
@@ -124,22 +120,26 @@ button.header__stat-block.header__logout {
     color: var(--color-white);
 }
 
-.header__radar-toggle--off {
+.header__radar-status {
+    align-items: center;
+}
+
+.header__radar-status--off {
     opacity: 0.45;
 }
 
-.header__radar-toggle__label {
+.header__radar-status__label {
     font-size: var(--text-base);
     letter-spacing: var(--tracking-wide);
     color: var(--color-muted);
     text-transform: uppercase;
 }
 
-.header__radar-toggle__state {
+.header__radar-status__state {
     margin-left: var(--space-2);
 }
 
-.header__radar-toggle__state--on {
+.header__radar-status__state--on {
     color: var(--color-cyan);
 }
 

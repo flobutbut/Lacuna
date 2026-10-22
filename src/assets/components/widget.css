@@ -7,7 +7,8 @@
 .side-left {
     position: absolute;
     left: var(--sidebar-offset);
-    top: var(--sidebar-offset);
+    /* Sous la barre d'outils de l'Observatoire */
+    top: calc(var(--sidebar-offset) + var(--toolbar-height) + var(--space-6));
     bottom: var(--sidebar-offset);
     width: var(--sidebar-width);
     display: flex;
@@ -19,7 +20,7 @@
 .side-right {
     position: absolute;
     right: var(--sidebar-offset);
-    top: var(--sidebar-offset);
+    top: calc(var(--sidebar-offset) + var(--toolbar-height) + var(--space-6));
     bottom: var(--sidebar-offset);
     width: var(--sidebar-width);
     display: flex;

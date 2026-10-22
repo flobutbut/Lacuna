@@ -220,7 +220,7 @@ Toutes les icônes de l'interface viennent de ce jeu. Ne pas utiliser de caract�
 <AppIcon name="observatory" :size="24" label="Observatoire" />
 ```
 
-**Composants spécialisés** (traduisent une donnée métier en nom d'icône) : `LabInstrumentIcon`, `ObservationTypeIcon`, `SignalTypeIcon`, `RadarNoiseIcon`.
+**Composants spécialisés** (traduisent une donnée métier en nom d'icône) : `LabInstrumentIcon`, `ObservationTypeIcon` et `SignalTypeIcon`.
 
 ---
 

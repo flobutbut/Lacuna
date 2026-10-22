@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useShipStore } from '@/stores/ship'
 import { useDrakeStore } from '@/stores/drake'
@@ -8,11 +9,13 @@ import { useRadarStore } from '@/stores/radar'
 import { useAuthStore } from '@/stores/auth'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import SettingsModal from '@/components/settings/SettingsModal.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const shipStore = useShipStore()
 const drakeStore = useDrakeStore()
 const stellarStore = useStellarSystemsStore()
 const radarStore = useRadarStore()
+const route = useRoute()
 const authStore = useAuthStore()
 const { radarEnabled } = storeToRefs(radarStore)
 const settingsOpen = ref(false)
@@ -63,24 +66,22 @@ onMounted(async () => {
     </div>
 
     <div class="header__right">
-      <button
-        type="button"
-        class="header__stat-block header__radar-toggle"
-        :class="{ 'header__radar-toggle--off': !radarEnabled }"
-        :title="
-          radarEnabled
-            ? 'Désactiver l’acquisition radar'
-            : 'Activer l’acquisition radar'
-        "
-        @click="radarStore.toggleRadarEnabled()"
+      <!-- Indicateur seul : l'acquisition ne tourne que sur l'Observatoire, où se trouvent ses interrupteurs -->
+      <div
+        v-if="route.name === 'observatoire'"
+        class="header__stat-block header__radar-status"
+        :class="{ 'header__radar-status--off': !radarEnabled }"
+        role="status"
+        :title="radarEnabled ? 'Acquisition radar en cours' : 'Acquisition radar coupée'"
+        :aria-label="radarEnabled ? 'Radar : acquisition en cours' : 'Radar : acquisition coupée'"
       >
-        <span class="header__radar-toggle__label">RADAR</span>
+        <span class="header__radar-status__label" aria-hidden="true">Radar</span>
         <span
-          class="header__stat-val header__radar-toggle__state"
-          :class="{ 'header__radar-toggle__state--on': radarEnabled }"
+          class="header__stat-val header__radar-status__state"
+          :class="{ 'header__radar-status__state--on': radarEnabled }"
           aria-hidden="true"
-        >{{ radarEnabled ? '●' : '○' }}</span>
-      </button>
+        ><AppIcon :name="radarEnabled ? 'dot' : 'dot-outline'" /></span>
+      </div>
       <div class="header__stat-block">
         <span class="header__stat-label">Gén.</span>
         <span class="header__stat-val">{{ shipStore.generation }}</span>
@@ -104,10 +105,7 @@ onMounted(async () => {
         aria-label="Paramètres"
         @click="settingsOpen = true"
       >
-        <svg class="header__settings__icon" viewBox="0 0 16 16" aria-hidden="true">
-          <circle cx="8" cy="5.5" r="3" />
-          <path d="M2.5 14.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
-        </svg>
+        <AppIcon name="account" class="header__settings__icon" />
       </button>
       <button
         v-if="authStore.isAuthenticated"
