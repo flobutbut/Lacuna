@@ -28,7 +28,8 @@ Lacuna/
 │   ├── main.js              # Point d'entrée
 │   ├── App.vue              # Layout racine (Header, InstrumentsBar, RouterView)
 │   ├── views/               # Pages (une par module)
-│   │   ├── observatoire/
+│   │   ├── site/            # Site public : PageAccueil (landing, /), mentions légales, confidentialité, conditions, crédits
+│   │   ├── observatoire/        # /observatoire (racine du jeu)
 │   │   │   ├── PageObservatoire.vue   # Ciel + exploration
 │   │   │   ├── RadarView.vue          # Spectrogramme temps réel + courbe d'intensité
 │   │   │   └── SystemView.vue         # Vue système (étoile + planètes, mode Observatoire)
@@ -133,7 +134,9 @@ Lacuna/
 │   │   └── cssVars.js       # getCssVar — tokens CSS pour canvas / Three.js
 │   ├── router/
 │   │   ├── index.js         # Routes Vue Router + garde d'authentification (beforeEach)
-│   │   └── authGuard.js     # Décisions de redirection (meta.public, meta.guestOnly, meta.onboarding, meta.requiresAdmin) — fonctions pures testées
+│   │   └── authGuard.js     # Décisions de redirection (meta.public, meta.site, meta.guestOnly, meta.onboarding, meta.requiresAdmin) — fonctions pures testées
+│   ├── content/
+│   │   └── legal.js         # Informations légales du site public (éditeur, contact, hébergeurs, durées) — null = « À compléter »
 │   └── assets/
 │       ├── main.css         # Convention uniquement (non importé ; styles réels : tokens, base, etc.)
 │       ├── tokens.css       # Design tokens (couleurs, typo, espacements)
@@ -277,7 +280,7 @@ Composant `RadarView.vue` — spectrogramme temps réel + courbe d'intensité, c
 
 **Mesures (21/10/2026)** : un dessin complet coûte 2 à 4 ms (51 ms auparavant) ; la vue ciel reste à ~9 ms par image avec le radar actif (53 ms auparavant, la vue radar masquée se redessinant en continu).
 
-**URL importante :** Toujours utiliser `http://localhost:5173/` (racine). La maquette `docs/assets/lacuna_interface.html` est redirigée vers `/` — elle a ses propres styles et ne charge pas l'app Vue.
+**URL importante :** `http://localhost:5173/` est la landing (visiteurs) ; le jeu est sur `/observatoire`, où un joueur connecté est envoyé automatiquement. La maquette `docs/assets/lacuna_interface.html` est redirigée vers `/` — elle a ses propres styles et ne charge pas l'app Vue.
 
 ## Import stellaires (stellar_import)
 

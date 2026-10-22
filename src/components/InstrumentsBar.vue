@@ -33,7 +33,6 @@ const instrumentsWithBadge = computed(() =>
 )
 
 function isActive(inst) {
-  if (inst.path === '/') return route.path === '/'
   return route.path.startsWith(inst.path)
 }
 </script>

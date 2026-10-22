@@ -70,6 +70,13 @@
   --text-3xl:              21px;
   --text-4xl:              33px;
 
+  /* Site public (landing, pages légales) : tailles fluides */
+  --text-site-body:        clamp(15px, 1.1vw + 10px, 17px);
+  --text-site-lead:        clamp(17px, 1.4vw + 11px, 22px);
+  --text-site-h2:          clamp(26px, 3.2vw + 12px, 44px);
+  --text-site-display:     clamp(44px, 10vw, 140px);
+  --text-site-quote:       clamp(22px, 2.6vw + 10px, 38px);
+
   --weight-regular:        400;
   --weight-semibold:       600;
   --weight-bold:           800;
@@ -125,4 +132,8 @@
   --sidebar-offset:        20px;
   --panel-width:           360px;
   --panel-width-lg:        400px;
+  --site-width:            1120px;  /* Largeur max. du site public */
+  --site-text-width:       680px;   /* Colonne de lecture (pages légales, paragraphes) */
+  --site-gutter:           clamp(16px, 4vw, 48px);
+  --site-section-gap:      clamp(96px, 14vh, 180px);
 }

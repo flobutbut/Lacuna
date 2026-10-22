@@ -33,7 +33,7 @@ async function submit() {
   submitting.value = true
   try {
     await authStore.signIn(email.value, password.value, captchaToken.value)
-    router.replace(safeRedirect(route.query.redirect) ?? '/')
+    router.replace(safeRedirect(route.query.redirect) ?? { name: 'observatoire' })
   } catch (err) {
     formError.value = authErrorMessage(err)
     captchaWidget.value?.reset()

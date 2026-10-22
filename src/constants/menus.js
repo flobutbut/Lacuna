@@ -20,7 +20,7 @@ export const SYSTEMS_MENU_ITEMS = [
 
 /** Barre Instruments — modules de navigation */
 export const INSTRUMENTS = [
-  { id: 'observatoire', path: '/', icon: '◎', label: 'Observatoire' },
+  { id: 'observatoire', path: '/observatoire', icon: '◎', label: 'Observatoire' },
   { id: 'carte', path: '/carte', icon: '⊹', label: 'Carte' },
   { id: 'laboratoire', path: '/laboratoire', icon: '⌬', label: 'Laboratoire' },
   { id: 'artefacts', path: '/artefacts', icon: '◈', label: 'Artefacts' },

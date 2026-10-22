@@ -44,9 +44,9 @@ onMounted(async () => {
 <template>
   <header class="header">
     <RouterLink
-      to="/"
+      :to="{ name: 'observatoire' }"
       class="header__logo"
-      title="Accueil"
+      title="Observatoire"
     >LAC<span class="header__logo-accent">U</span>NA</RouterLink>
 
     <div class="header__center">

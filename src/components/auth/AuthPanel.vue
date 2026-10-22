@@ -13,9 +13,9 @@ defineProps({
 <template>
   <div class="auth-page">
     <section class="auth-panel" aria-labelledby="auth-title">
-      <div class="auth-panel__logo" aria-hidden="true">
+      <RouterLink :to="{ name: 'accueil' }" class="auth-panel__logo" aria-label="LACUNA — accueil">
         LAC<span class="auth-panel__logo-accent">U</span>NA
-      </div>
+      </RouterLink>
       <header class="auth-panel__header">
         <h1 id="auth-title" class="auth-panel__title">{{ title }}</h1>
         <p v-if="subtitle" class="auth-panel__subtitle">{{ subtitle }}</p>
@@ -58,6 +58,12 @@ defineProps({
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-widest);
   color: var(--color-white);
+  text-decoration: none;
+  transition: color var(--transition-base);
+}
+
+.auth-panel__logo:hover {
+  color: var(--color-cyan-muted);
 }
 
 .auth-panel__logo-accent {

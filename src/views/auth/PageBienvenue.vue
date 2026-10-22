@@ -42,11 +42,11 @@ async function submit() {
   try {
     await authStore.startNewGame(pseudo.value, shipName.value)
     notificationsStore.showNotification(`Bienvenue à bord du ${shipName.value.trim()}.`, 4000, 'success')
-    router.replace('/')
+    router.replace({ name: 'observatoire' })
   } catch (err) {
     if (isGameAlreadyStarted(err)) {
       authStore.hasShip = true
-      return router.replace('/')
+      return router.replace({ name: 'observatoire' })
     }
     formError.value = gameErrorMessage(err)
   } finally {

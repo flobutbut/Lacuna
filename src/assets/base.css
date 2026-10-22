@@ -3,8 +3,7 @@
    Reset, fonts, fondamentaux globaux
    ══════════════════════════════════════════════════════ */
 
-/* ── Google Fonts ── */
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;600;800&display=swap');
+/* Polices (Share Tech Mono, Syne) : @fontsource, importées dans main.js */
 
 /* ── Reset ── */
 *,

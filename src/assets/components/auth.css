@@ -23,6 +23,22 @@
     color: var(--color-cyan);
 }
 
+.auth-form__legal {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: var(--leading-normal);
+    color: var(--color-muted);
+}
+
+.auth-form__legal a {
+    color: var(--color-cyan-muted);
+}
+
+.auth-form__legal a:hover {
+    color: var(--color-cyan);
+}
+
 .auth-captcha {
     min-height: 65px;
 }

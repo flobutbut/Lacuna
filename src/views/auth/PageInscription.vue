@@ -35,7 +35,7 @@ async function submit() {
   try {
     const { needsConfirmation } = await authStore.signUp(email.value, password.value, captchaToken.value)
     // Confirmation d'email désactivée côté Supabase : le compte est déjà actif
-    if (!needsConfirmation) return router.replace('/')
+    if (!needsConfirmation) return router.replace({ name: 'observatoire' })
     sentTo.value = email.value.trim()
   } catch (err) {
     formError.value = authErrorMessage(err)
@@ -85,6 +85,11 @@ async function submit() {
         :error="errors.passwordConfirm"
         required
       />
+      <p class="auth-form__legal">
+        En créant un compte, vous acceptez les
+        <RouterLink :to="{ name: 'conditions' }" target="_blank">conditions d’utilisation</RouterLink>
+        et la <RouterLink :to="{ name: 'confidentialite' }" target="_blank">politique de confidentialité</RouterLink>.
+      </p>
       <CaptchaWidget v-if="captchaRequired" ref="captchaWidget" v-model="captchaToken" />
       <button type="submit" class="btn-primary auth-form__submit" :disabled="submitting || (captchaRequired && !captchaToken)">
         {{ submitting ? 'Création…' : 'Créer le compte' }}

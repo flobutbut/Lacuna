@@ -685,6 +685,7 @@ Ne pas utiliser de `color-mix` ni de tailles en dur pour ces blocs — rester al
 | `artifact.css` | PageArtefacts |
 | `systems.css` | PageSystemes |
 | `auth.css` | AuthPanel (pages connexion, inscription, mot de passe) |
+| `site.css` | SiteLayout (site public : landing, pages légales, crédits) — tokens `--text-site-*` et `--site-*` (tailles fluides, largeurs), directive `v-reveal` (`components/site/reveal.js`) |
 
 ---
 

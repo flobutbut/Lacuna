@@ -1,7 +1,8 @@
 /**
  * Garde d'authentification — décisions de redirection (fonctions pures, testées)
  *
- * meta.public     : route accessible sans compte (pages d'authentification)
+ * meta.public     : route accessible sans compte (pages d'authentification, site public)
+ * meta.site       : site public (landing, pages légales), accessible même hors ligne
  * meta.guestOnly  : route réservée aux visiteurs non connectés (connexion, inscription…)
  * meta.onboarding : création de partie (/bienvenue), réservée aux joueurs connectés sans vaisseau
  * meta.requiresAdmin : outil réservé aux comptes admin (Vue 3D étoiles) ; libre hors ligne (développement)
@@ -26,10 +27,10 @@ export function safeRedirect(path) {
  */
 export function resolveAuthRedirect(to, { configured, authenticated, hasShip = null, isAdmin = false }) {
   // Hors ligne (Supabase non configuré) : mode démo sans compte
-  if (!configured) return to.meta.public || to.meta.onboarding ? { name: 'observatoire' } : true
+  if (!configured) return (to.meta.public && !to.meta.site) || to.meta.onboarding ? { name: 'observatoire' } : true
 
   if (!authenticated && !to.meta.public) {
-    return to.fullPath === '/' ? { name: 'connexion' } : { name: 'connexion', query: { redirect: to.fullPath } }
+    return to.fullPath === '/observatoire' ? { name: 'connexion' } : { name: 'connexion', query: { redirect: to.fullPath } }
   }
   if (authenticated && to.meta.guestOnly) return { name: 'observatoire' }
   // Partie à créer : toute page du jeu renvoie vers /bienvenue

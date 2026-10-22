@@ -33,7 +33,7 @@ async function submit() {
   try {
     await authStore.updatePassword(password.value)
     notificationsStore.showNotification('Mot de passe mis à jour.', 3000, 'success')
-    router.replace('/')
+    router.replace({ name: 'observatoire' })
   } catch (err) {
     formError.value = authErrorMessage(err)
   } finally {

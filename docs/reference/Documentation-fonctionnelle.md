@@ -61,12 +61,28 @@ LACUNA est une simulation d'exploration galactique **persistante, asynchrone et 
 ## Flux principal
 
 ```
-Créer un compte → Confirmer l'email → Nommer commandant et vaisseau (Bienvenue à bord)
+Découvrir LACUNA (landing /) → Créer un compte → Confirmer l'email → Nommer commandant et vaisseau (Bienvenue à bord)
 → Observer le ciel → Sélectionner un système → Analyser (optionnel) 
 → Décider de voyager → Voyage (temps réel) → Arrivée 
 → Scan automatique → Traces détectées → Interpréter 
 → Décider : repartir / laisser trace / rester
 ```
+
+---
+
+## Site public
+
+Accessible sans compte, dans son propre cadre (`SiteLayout` : ciel étoilé en parallaxe, en-tête, pied de page) :
+
+| Route | Page |
+|-------|------|
+| `/` | Landing : les trois phrases du lore, le catalogue (Wow!, ʻOumuamua, Ryugu/Bennu), le pari (ARCA), le voyage (observer, interpréter, partir), la solitude, l'équation de Drake, appel à embarquer. Un joueur connecté est envoyé à `/observatoire` |
+| `/mentions-legales` | Éditeur, hébergeurs (Vercel, Supabase), propriété intellectuelle, signalement |
+| `/confidentialite` | Données collectées, bases légales, stockage local, sous-traitants, durées, droits RGPD |
+| `/conditions` | Conditions d'utilisation (compte, contenus des joueurs, jeu loyal, responsabilité) |
+| `/credits` | Catalogues astronomiques (HYG, NASA Exoplanet Archive, UAI), polices, outils |
+
+Les informations légales viennent de `src/content/legal.js` ; une valeur absente s'affiche « À compléter » en ambre. L'inscription renvoie aux conditions et à la politique de confidentialité.
 
 ---
 

@@ -18,6 +18,8 @@
     "dump:critiques": "bash scripts/pg_dump_critiques.sh"
   },
   "dependencies": {
+    "@fontsource/share-tech-mono": "^5.3.0",
+    "@fontsource/syne": "^5.3.0",
     "@supabase/supabase-js": "^2.98.0",
     "d3": "^7.9.0",
     "pinia": "^3.0.4",

@@ -73,13 +73,27 @@ describe('resolveAuthRedirect', () => {
   const page = (fullPath, meta = {}) => ({ fullPath, meta })
   const connexion = page('/connexion', { public: true, guestOnly: true })
   const nouveauMdp = page('/nouveau-mot-de-passe', { public: true })
+  const accueil = page('/', { public: true, site: true, guestOnly: true })
+  const mentions = page('/mentions-legales', { public: true, site: true })
 
   it('envoie un visiteur vers la connexion, avec le chemin de retour', () => {
     expect(resolveAuthRedirect(page('/carte'), { configured: true, authenticated: false })).toEqual({
       name: 'connexion',
       query: { redirect: '/carte' },
     })
-    expect(resolveAuthRedirect(page('/'), { configured: true, authenticated: false })).toEqual({ name: 'connexion' })
+    expect(resolveAuthRedirect(page('/observatoire'), { configured: true, authenticated: false })).toEqual({ name: 'connexion' })
+  })
+
+  it('ouvre le site public aux visiteurs', () => {
+    expect(resolveAuthRedirect(accueil, { configured: true, authenticated: false })).toBe(true)
+    expect(resolveAuthRedirect(mentions, { configured: true, authenticated: false })).toBe(true)
+  })
+
+  it('envoie un joueur connecté de la landing au jeu, mais lui laisse les pages légales', () => {
+    expect(resolveAuthRedirect(accueil, { configured: true, authenticated: true, hasShip: true })).toEqual({ name: 'observatoire' })
+    expect(resolveAuthRedirect(mentions, { configured: true, authenticated: true, hasShip: true })).toBe(true)
+    // Même sans vaisseau : les pages légales restent lisibles
+    expect(resolveAuthRedirect(mentions, { configured: true, authenticated: true, hasShip: false })).toBe(true)
   })
 
   it('laisse un visiteur sur les pages publiques', () => {
@@ -126,5 +140,7 @@ describe('resolveAuthRedirect', () => {
   it('hors ligne : pas de compte, pages d’authentification inutiles', () => {
     expect(resolveAuthRedirect(page('/carte'), { configured: false, authenticated: false })).toBe(true)
     expect(resolveAuthRedirect(connexion, { configured: false, authenticated: false })).toEqual({ name: 'observatoire' })
+    expect(resolveAuthRedirect(accueil, { configured: false, authenticated: false })).toBe(true)
+    expect(resolveAuthRedirect(mentions, { configured: false, authenticated: false })).toBe(true)
   })
 })

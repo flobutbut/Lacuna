@@ -5,12 +5,45 @@ import { resolveAuthRedirect } from '@/router/authGuard'
 
 /** Pages d'authentification : sans compte, sans header ni barre d'instruments */
 const AUTH_META = { public: true, guestOnly: true, bareLayout: true }
+/** Site public (landing, pages légales) : sans compte, avec son propre cadre (SiteLayout) */
+const SITE_META = { public: true, site: true, bareLayout: true }
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      // Landing : les joueurs connectés sont envoyés à l'observatoire (guestOnly)
       path: '/',
+      name: 'accueil',
+      component: () => import('@/views/site/PageAccueil.vue'),
+      meta: { ...SITE_META, guestOnly: true },
+    },
+    {
+      path: '/mentions-legales',
+      name: 'mentions-legales',
+      component: () => import('@/views/site/PageMentionsLegales.vue'),
+      meta: { title: 'Mentions légales', ...SITE_META },
+    },
+    {
+      path: '/confidentialite',
+      name: 'confidentialite',
+      component: () => import('@/views/site/PageConfidentialite.vue'),
+      meta: { title: 'Confidentialité', ...SITE_META },
+    },
+    {
+      path: '/conditions',
+      name: 'conditions',
+      component: () => import('@/views/site/PageConditions.vue'),
+      meta: { title: 'Conditions d’utilisation', ...SITE_META },
+    },
+    {
+      path: '/credits',
+      name: 'credits',
+      component: () => import('@/views/site/PageCredits.vue'),
+      meta: { title: 'Crédits', ...SITE_META },
+    },
+    {
+      path: '/observatoire',
       name: 'observatoire',
       component: () => import('@/views/observatoire/PageObservatoire.vue'),
       meta: { title: 'Observatoire' },
@@ -97,7 +130,7 @@ const router = createRouter({
     },
     {
       path: '/:pathMatch(.*)*',
-      redirect: { name: 'observatoire' },
+      redirect: { name: 'accueil' },
     },
   ],
 })
@@ -115,7 +148,7 @@ router.beforeEach(async (to) => {
 })
 
 router.afterEach((to) => {
-  document.title = to.meta.title ? `${to.meta.title} — LACUNA` : 'LACUNA'
+  document.title = to.meta.title ? `${to.meta.title} — LACUNA` : 'LACUNA — Exploration galactique'
 })
 
 export default router

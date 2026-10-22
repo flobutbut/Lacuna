@@ -1,4 +1,9 @@
 /* Tous les CSS en imports directs — Vite ignore les changements dans les fichiers @import */
+/* Polices hébergées avec l'app (aucune requête vers Google Fonts) */
+import '@fontsource/share-tech-mono/400.css'
+import '@fontsource/syne/400.css'
+import '@fontsource/syne/600.css'
+import '@fontsource/syne/800.css'
 import './assets/tokens.css'
 import './assets/base.css'
 import './assets/animations.css'
