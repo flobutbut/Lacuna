@@ -6,6 +6,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import SiteLayout from '@/components/site/SiteLayout.vue'
 import { vReveal } from '@/components/site/reveal'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const RECORDS = [
   {
@@ -111,7 +112,7 @@ function scrollToCatalogue() {
       </div>
       <a href="#catalogue" class="site-hero__scroll" @click.prevent="scrollToCatalogue">
         Écouter le silence
-        <span aria-hidden="true">↓</span>
+        <AppIcon name="arrow-down" />
       </a>
     </section>
 

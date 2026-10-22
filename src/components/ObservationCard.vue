@@ -2,6 +2,7 @@
 import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
 import ObservationTypeIcon from '@/components/icons/ObservationTypeIcon.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 defineProps({
   /** Type d'icône : 'signal' (structure) ou 'observation' (type ETOILE/PLANETE/etc.) */
@@ -59,7 +60,7 @@ function onDismiss(e) {
       :aria-label="dismissLabel"
       @click="onDismiss"
     >
-      ×
+      <AppIcon name="close" />
     </button>
     <span class="observation-card__icon">
       <SignalTypeIcon v-if="iconType === 'signal'" :structure="iconValue" :size="12" />

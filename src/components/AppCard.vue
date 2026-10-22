@@ -1,4 +1,5 @@
 <script setup>
+import AppIcon from '@/components/icons/AppIcon.vue'
 /**
  * Card réutilisable du design system.
  * Affiche : icône/illustration (slot), titre, sous-titre/description, actions (slot).
@@ -54,7 +55,7 @@ function onDismiss(e) {
       aria-label="Retirer de la liste"
       @click="onDismiss"
     >
-      ×
+      <AppIcon name="close" />
     </button>
     <span v-if="badge" class="app-card__badge" :title="String(badge)">{{ badge }}</span>
     <div class="app-card__body">

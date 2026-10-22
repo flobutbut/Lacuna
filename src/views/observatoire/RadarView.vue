@@ -29,6 +29,7 @@ import {
   ticksPerPixel,
 } from '@/lib/radarSpectrum'
 import * as d3 from 'd3'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const emit = defineEmits(['signal-selected'])
 
@@ -734,7 +735,8 @@ watch(
           class="radar-view__live-btn"
           @click="targetScrollOffset = 0"
         >
-          ● RETOUR AU LIVE
+          <AppIcon name="dot" />
+          RETOUR AU LIVE
         </button>
         <canvas
           v-show="radarEnabled"

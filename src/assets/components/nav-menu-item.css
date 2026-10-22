@@ -49,6 +49,10 @@
   box-shadow: 0 0 0 1px var(--color-cyan-dim);
 }
 
+.nav-menu-item__icon {
+  display: inline-flex;
+}
+
 .nav-menu-item--menu .nav-menu-item__icon {
   font-size: var(--text-xl);
   flex-shrink: 0;

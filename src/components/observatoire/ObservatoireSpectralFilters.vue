@@ -8,6 +8,7 @@ import StarAutocompleteMenu from '@/components/StarAutocompleteMenu.vue'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useViewerSystemPolicy } from '@/composables/useViewerSystemPolicy'
 import { STAR_TYPE_FILTER_OPTIONS } from '@/lib/starClassification'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const props = defineProps({
   /** Mode conception (vue 3D) : utilise v-model, émet focus-star au lieu de centrer la vue 2D */
@@ -333,7 +334,7 @@ onUnmounted(() => {
             :title="hasSearch ? 'Effacer' : 'Fermer'"
             @click="onClearClick"
           >
-            ×
+            <AppIcon name="close" />
           </button>
           <StarAutocompleteMenu
             v-if="suggestionsOpen && searchQuery.trim().length >= 3"

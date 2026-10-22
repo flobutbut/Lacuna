@@ -1,20 +1,17 @@
 <script setup>
 import { computed } from 'vue'
 
-import iconSursaut from '@/assets/icons/signal-types/signal-sursaut.svg?raw'
-import iconPulse from '@/assets/icons/signal-types/signal-pulse.svg?raw'
-import iconNonUniforme from '@/assets/icons/signal-types/signal-non-uniforme.svg?raw'
-import iconCarre from '@/assets/icons/signal-types/signal-carre.svg?raw'
+import AppIcon from './AppIcon.vue'
 
 const ICONS = {
-  sursaut: iconSursaut,
-  pulse: iconPulse,
-  'non-uniforme': iconNonUniforme,
-  carre: iconCarre,
+  sursaut: 'signal-burst',
+  pulse: 'signal-pulse',
+  'non-uniforme': 'signal-irregular',
+  carre: 'signal-square',
 }
 
 /**
- * Icône de structure de signal (SVG depuis assets) :
+ * Icône de structure de signal (jeu commun iconSet.js) :
  * - Sursaut → vague à une bosse
  * - Pulsé → sinusoïde
  * - Non uniforme → forme irrégulière
@@ -39,7 +36,7 @@ const effectiveStructure = computed(() => {
   return 'non-uniforme'
 })
 
-const iconSvg = computed(() => ICONS[effectiveStructure.value] ?? ICONS['non-uniforme'])
+const iconName = computed(() => ICONS[effectiveStructure.value] ?? ICONS['non-uniforme'])
 
 const labels = {
   sursaut: 'Sursaut',
@@ -50,28 +47,17 @@ const labels = {
 </script>
 
 <template>
-  <span
+  <AppIcon
+    :name="iconName"
+    :size="size"
+    :label="labels[effectiveStructure] ?? 'Signal'"
     class="signal-type-icon"
     :class="`signal-type-icon--${effectiveStructure}`"
-    :style="{ width: size + 'px', height: size + 'px' }"
-    role="img"
-    :aria-label="labels[effectiveStructure] ?? 'Signal'"
-    v-html="iconSvg"
   />
 </template>
 
 <style scoped>
 .signal-type-icon {
-  display: inline-block;
-  flex-shrink: 0;
   color: var(--color-white);
-  overflow: visible;
-}
-
-.signal-type-icon :deep(svg) {
-  width: 100%;
-  height: 100%;
-  display: block;
-  overflow: visible;
 }
 </style>

@@ -1,5 +1,6 @@
 <script setup>
 import Divider from '@/components/Divider.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 defineProps({
   /** Titre affiché dans le header (optionnel si slot #header utilisé) */
@@ -30,7 +31,9 @@ defineEmits(['close'])
         <slot name="header">
           <h2 v-if="title" class="app-modal__title">{{ title }}</h2>
         </slot>
-        <button type="button" class="app-modal__close" @click="$emit('close')">×</button>
+        <button type="button" class="app-modal__close" aria-label="Fermer" @click="$emit('close')">
+          <AppIcon name="close" />
+        </button>
       </header>
       <Divider variant="solid" class="app-modal__divider" />
       <div class="app-modal__content">

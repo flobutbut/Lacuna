@@ -1,8 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import iconSysteme from '@/assets/icons/observation-types/icon-systeme.svg?raw'
-import iconExoplanete from '@/assets/icons/observation-types/icon-exoplanete.svg?raw'
-import iconEchantillon from '@/assets/icons/observation-types/icon-echantillon.svg?raw'
+import AppIcon from './AppIcon.vue'
 
 /**
  * Icône de type d'observation (Laboratoire) :
@@ -11,9 +9,9 @@ import iconEchantillon from '@/assets/icons/observation-types/icon-echantillon.s
  * - Échantillon (OBJET) → cube
  */
 const ICONS = {
-  systeme: iconSysteme,
-  exoplanete: iconExoplanete,
-  echantillon: iconEchantillon,
+  systeme: 'obs-system',
+  exoplanete: 'obs-planet',
+  echantillon: 'specimen',
 }
 
 const props = defineProps({
@@ -35,7 +33,7 @@ const iconVariant = computed(() => {
   }
 })
 
-const iconSvg = computed(() => ICONS[iconVariant.value] ?? ICONS.exoplanete)
+const iconName = computed(() => ICONS[iconVariant.value] ?? ICONS.exoplanete)
 
 const labels = {
   systeme: 'Étoile',
@@ -45,25 +43,17 @@ const labels = {
 </script>
 
 <template>
-  <span
+  <AppIcon
+    :name="iconName"
+    :size="size"
+    :label="labels[iconVariant] ?? 'Observation'"
     class="observation-type-icon"
     :class="`observation-type-icon--${iconVariant}`"
-    :style="{ width: size + 'px', height: size + 'px' }"
-    role="img"
-    :aria-label="labels[iconVariant] ?? 'Observation'"
-    v-html="iconSvg"
   />
 </template>
 
 <style scoped>
 .observation-type-icon {
-  display: inline-flex;
-  flex-shrink: 0;
-}
-
-.observation-type-icon :deep(svg) {
-  width: 100%;
-  height: 100%;
   color: var(--color-white);
 }
 </style>

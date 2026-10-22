@@ -11,7 +11,8 @@
 Le design system LACUNA repose sur :
 - **Tokens** : variables CSS (`tokens.css`) pour couleurs, typographie, espacements
 - **Composants** : AppModal, Divider, ModalCell, NavMenuItem, NavTabButton, InstrumentButton, ObservationCard, etc.
-- **Constantes** : `menus.js` (SYSTEMS_MENU_ITEMS, INSTRUMENTS, TRACE_ICONS)
+- **Icônes** : un seul jeu SVG (`components/icons/iconSet.js`) rendu par `AppIcon`
+- **Constantes** : `menus.js` (SYSTEMS_MENU_ITEMS, INSTRUMENTS, TRACE_ICONS — noms d'icônes)
 - **Utilitaires** : classes `.sw-row`, `.sw-cell`, `.sw-key`, `.sw-val` pour les données key/value
 
 **Principe** : Tous les styles utilisent les tokens. Aucune couleur ou valeur en dur.
@@ -194,6 +195,28 @@ Au-delà de 0.15em, l'œil lit des lettres et non plus des mots : réserver `wid
 
 ## 3. Composants
 
+### 3.0 AppIcon (iconographie)
+
+**Fichiers** : `src/components/icons/AppIcon.vue`, `src/components/icons/iconSet.js`
+
+Toutes les icônes de l'interface viennent de ce jeu. Ne pas utiliser de caractères Unicode (◈ ⌬ ⚙ ×…) comme icônes : Share Tech Mono et Syne ne les contiennent pas, ils s'affichent dans une police système différente selon l'OS (voire en emoji).
+
+**Dessin** : grille 24 × 24, trait 1.5, extrémités et angles arrondis, `currentColor`. Un nom = un sens.
+
+**Props** :
+- `name` (String, requis) : clé de `iconSet.js`
+- `size` (Number px | String) : défaut `1em` — l'icône suit la `font-size` du conteneur
+- `label` (String) : libellé accessible ; sans libellé, l'icône est décorative (`aria-hidden`)
+
+```vue
+<AppIcon name="close" />
+<AppIcon name="observatory" :size="24" label="Observatoire" />
+```
+
+**Composants spécialisés** (traduisent une donnée métier en nom d'icône) : `LabInstrumentIcon`, `ObservationTypeIcon`, `SignalTypeIcon`, `RadarNoiseIcon`.
+
+---
+
 ### 3.1 AppModal
 
 **Fichier** : `src/components/AppModal.vue`
@@ -285,7 +308,7 @@ Composant pour items de menu (Systèmes, Population) et slots grille (Artefacts)
 
 **Props** :
 - `variant` : `'menu'` | `'slot'`
-- `icon`, `label`, `selected`, `badge`
+- `icon` (nom d'icône, voir 3.0), `label`, `selected`, `badge`
 - `iconColor` (String) : `cyan` | `green` | `amber` | `signal` | `bumper` | `comms` | `nav` (menu Systèmes)
 
 **Events** : `@click`
@@ -306,7 +329,7 @@ Composant pour items de menu (Systèmes, Population) et slots grille (Artefacts)
 
 Onglet de la barre de navigation principale (menu du bas). RouterLink avec icône, libellé, badge optionnel.
 
-**Props** : `icon`, `label`, `to` (path), `active`, `badge`
+**Props** : `icon` (nom d'icône, voir 3.0), `label`, `to` (path), `active`, `badge`
 
 **Utilisation** : **InstrumentsBar** — barre des 8 modules (Observatoire, Carte, Laboratoire, etc.)
 

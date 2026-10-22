@@ -8,6 +8,7 @@ import { orbitEase } from '@/lib/animationUtils'
 import { distanceAuToPx as distanceAuToPxFromLib } from '@/lib/orbitalUtils'
 import { getPlanetSvgPathForObject } from '@/assets/illustrations/planets'
 import { getStarSvgPath } from '@/assets/illustrations/stars'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const props = defineProps({
   systemId: { type: String, default: '' },
@@ -400,7 +401,8 @@ onBeforeUnmount(() => {
           :aria-label="isPlaying ? 'Pause' : 'Lancer l’animation'"
           @click="togglePlayPause"
         >
-          {{ isPlaying ? '⏸ Pause' : '▶ Lecture' }}
+          <AppIcon :name="isPlaying ? 'pause' : 'play'" />
+          {{ isPlaying ? 'Pause' : 'Lecture' }}
         </button>
       </div>
       <svg

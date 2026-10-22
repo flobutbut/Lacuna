@@ -82,6 +82,7 @@
 }
 
 .nav-tab-btn__icon {
+  display: inline-flex;
   font-size: var(--text-xl);
   line-height: var(--leading-none);
 }

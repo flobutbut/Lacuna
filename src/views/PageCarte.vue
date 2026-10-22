@@ -25,6 +25,7 @@ import PlanetSvgInline from '@/components/illustrations/PlanetSvgInline.vue'
 import CarteOrbitalView from '@/components/carte/CarteOrbitalView.vue'
 import CarteMap3D from '@/components/carte/CarteMap3D.vue'
 import AppCard from '@/components/AppCard.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const router = useRouter()
 const mapStore = useMapNodesStore()
@@ -625,7 +626,7 @@ watch(carteViewMode, (mode) => {
           <!-- Détails planète — design system sw-row / sw-key / sw-val -->
           <div class="carte-details__header">
             <div class="carte-details__header-row">
-              <button type="button" class="btn btn-ghost carte-back-btn" aria-label="Revenir au système" @click="backToSystem">←</button>
+              <button type="button" class="btn btn-ghost carte-back-btn" aria-label="Revenir au système" @click="backToSystem"><AppIcon name="arrow-left" /></button>
               <div class="carte-details__icon">
                 <PlanetSvgInline :planet="selectedPlanet" :diameter="48" />
               </div>
@@ -693,7 +694,7 @@ watch(carteViewMode, (mode) => {
           <!-- Détails étoile — design system sw-row / sw-key / sw-val -->
           <div class="carte-details__header">
             <div class="carte-details__header-row">
-              <button type="button" class="btn btn-ghost carte-back-btn" aria-label="Revenir au système" @click="backToSystem">←</button>
+              <button type="button" class="btn btn-ghost carte-back-btn" aria-label="Revenir au système" @click="backToSystem"><AppIcon name="arrow-left" /></button>
               <div class="carte-details__icon">
                 <StarSvgInline :spectral-type="(selectedStar.spectral_type || selectedStellar?.spectral_type) ?? 'M'" />
               </div>

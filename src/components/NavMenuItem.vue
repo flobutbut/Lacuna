@@ -3,10 +3,12 @@
  * NavMenuItem — Item de menu ou slot réutilisable
  * Variants: menu (Systèmes, Population), slot (Artefacts)
  */
+import AppIcon from '@/components/icons/AppIcon.vue'
+
 defineProps({
   /** Variant: 'menu' | 'slot' */
   variant: { type: String, default: 'menu' },
-  /** Icône (caractère Unicode) */
+  /** Nom d'icône (components/icons/iconSet.js) */
   icon: { type: String, default: '' },
   /** Libellé */
   label: { type: String, default: '' },
@@ -35,7 +37,7 @@ defineEmits(['click'])
     ]"
     @click="$emit('click')"
   >
-    <span class="nav-menu-item__icon">{{ icon }}</span>
+    <span class="nav-menu-item__icon"><AppIcon v-if="icon" :name="icon" /></span>
     <span class="nav-menu-item__label">{{ label }}</span>
     <span v-if="badge" class="nav-menu-item__badge" />
   </button>

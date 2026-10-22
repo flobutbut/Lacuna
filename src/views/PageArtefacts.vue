@@ -6,6 +6,7 @@ import { useTracesStore } from '@/stores/traces'
 import { useNotificationsStore } from '@/stores/notifications'
 import { formatDate } from '@/lib/formatUtils'
 import { getTraceIcon } from '@/constants/menus'
+import AppIcon from '@/components/icons/AppIcon.vue'
 import NavMenuItem from '@/components/NavMenuItem.vue'
 
 const tracesStore = useTracesStore()
@@ -110,7 +111,7 @@ watch(artefacts, ensureSelection, { immediate: true })
       <div class="artifacts-detail-col">
         <div v-if="selectedTrace" class="artifact-detail">
           <div class="artifact-detail__header">
-            <div class="artifact-detail__icon">{{ getTraceIcon(selectedTrace.type) }}</div>
+            <div class="artifact-detail__icon"><AppIcon :name="getTraceIcon(selectedTrace.type)" /></div>
             <div class="artifact-detail__info">
               <div class="artifact-detail__name">{{ selectedTrace.designation }}</div>
               <div class="artifact-detail__type">{{ selectedTrace.type }} · {{ selectedTrace.system_id }}</div>
@@ -146,10 +147,12 @@ watch(artefacts, ensureSelection, { immediate: true })
                   type="button"
                   class="artifact-interpretation__delete"
                   title="Supprimer"
+                  aria-label="Supprimer l’interprétation"
                   :disabled="deletingId === interp.id"
                   @click="deleteInterpretation(interp)"
                 >
-                  {{ deletingId === interp.id ? '…' : '×' }}
+                  <template v-if="deletingId === interp.id">…</template>
+                  <AppIcon v-else name="close" />
                 </button>
               </div>
             </div>

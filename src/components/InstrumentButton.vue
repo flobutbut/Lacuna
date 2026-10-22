@@ -1,5 +1,6 @@
 <script setup>
 import LabInstrumentIcon from '@/components/icons/LabInstrumentIcon.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 /**
  * InstrumentButton — Bouton d'instrument (grille 3×N, carré).
@@ -46,7 +47,7 @@ function handleClick() {
     <div class="instrument-btn__content">
       <div class="instrument-btn__icon-wrap">
         <LabInstrumentIcon :instrument-id="instrument.id" :size="36" />
-        <span v-if="state === 'done'" class="instrument-btn__check">✓</span>
+        <span v-if="state === 'done'" class="instrument-btn__check"><AppIcon name="check" /></span>
       </div>
       <div class="instrument-btn__name">{{ instrument.name }}</div>
       <span v-if="state === 'disabled' && disabledReason" class="instrument-btn__reason">

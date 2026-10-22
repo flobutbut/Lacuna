@@ -25,7 +25,8 @@
 }
 
 .artifact-detail__icon {
-    font-size: 36px;
+    display: inline-flex;
+    font-size: var(--text-4xl);
 }
 
 .artifact-detail__info {
