@@ -4,6 +4,8 @@ import { useAuthStore } from '@/stores/auth'
 import { authErrorMessage, validateEmail } from '@/lib/authErrors'
 import AuthPanel from '@/components/auth/AuthPanel.vue'
 import AppTextField from '@/components/AppTextField.vue'
+import CaptchaWidget from '@/components/auth/CaptchaWidget.vue'
+import { captchaEnabled } from '@/lib/turnstile'
 
 const authStore = useAuthStore()
 
@@ -11,6 +13,9 @@ const email = ref('')
 const emailError = ref('')
 const formError = ref('')
 const submitting = ref(false)
+const captchaToken = ref('')
+const captchaWidget = ref(null)
+const captchaRequired = captchaEnabled()
 const sentTo = ref('')
 
 async function submit() {
@@ -19,10 +24,11 @@ async function submit() {
   if (emailError.value) return
   submitting.value = true
   try {
-    await authStore.requestPasswordReset(email.value)
+    await authStore.requestPasswordReset(email.value, captchaToken.value)
     sentTo.value = email.value.trim()
   } catch (err) {
     formError.value = authErrorMessage(err)
+    captchaWidget.value?.reset()
   } finally {
     submitting.value = false
   }
@@ -51,7 +57,8 @@ async function submit() {
         required
         autofocus
       />
-      <button type="submit" class="btn-primary auth-form__submit" :disabled="submitting">
+      <CaptchaWidget v-if="captchaRequired" ref="captchaWidget" v-model="captchaToken" />
+      <button type="submit" class="btn-primary auth-form__submit" :disabled="submitting || (captchaRequired && !captchaToken)">
         {{ submitting ? 'Envoi…' : 'Envoyer le lien' }}
       </button>
     </form>

@@ -52,20 +52,25 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * Crée un compte. Avec la confirmation d'email activée, aucune session n'est ouverte :
    * le joueur doit cliquer sur le lien reçu avant de se connecter.
+   * captchaToken : jeton Turnstile, exigé par Supabase quand le CAPTCHA est activé (ici et ci-dessous).
    * @returns {Promise<{ needsConfirmation: boolean }>}
    */
-  async function signUp(email, password) {
+  async function signUp(email, password, captchaToken) {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { emailRedirectTo: `${window.location.origin}/connexion` },
+      options: { emailRedirectTo: `${window.location.origin}/connexion`, captchaToken: captchaToken || undefined },
     })
     if (error) throw error
     return { needsConfirmation: !data.session }
   }
 
-  async function signIn(email, password) {
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+  async function signIn(email, password, captchaToken) {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+      options: { captchaToken: captchaToken || undefined },
+    })
     if (error) throw error
   }
 
@@ -76,9 +81,10 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /** Envoie le lien de réinitialisation (même réponse que l'adresse existe ou non) */
-  async function requestPasswordReset(email) {
+  async function requestPasswordReset(email, captchaToken) {
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/nouveau-mot-de-passe`,
+      captchaToken: captchaToken || undefined,
     })
     if (error) throw error
   }

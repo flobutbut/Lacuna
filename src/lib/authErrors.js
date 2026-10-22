@@ -18,6 +18,7 @@ const MESSAGES = {
   session_not_found: 'Session expirée. Reconnectez-vous.',
   session_expired: 'Session expirée. Reconnectez-vous.',
   otp_expired: 'Ce lien a expiré ou a déjà servi. Demandez-en un nouveau.',
+  captcha_failed: 'Vérification anti-robot échouée. Réessayez.',
 }
 
 const DEFAULT_MESSAGE = 'Une erreur est survenue. Réessayez.'
@@ -25,11 +26,18 @@ const NETWORK_MESSAGE = 'Connexion au serveur impossible. Vérifiez votre résea
 
 /**
  * Message lisible pour une erreur Supabase Auth.
- * @param {{ code?: string, name?: string, status?: number } | null | undefined} error
+ * @param {{ code?: string, name?: string, status?: number, reasons?: string[] } | null | undefined} error
  * @returns {string}
  */
 export function authErrorMessage(error) {
   if (!error) return DEFAULT_MESSAGE
+  // Mot de passe refusé par le serveur : reasons = 'length' | 'characters' | 'pwned'
+  if (error.code === 'weak_password' && error.reasons?.includes('length')) {
+    return `Mot de passe trop court : ${PASSWORD_MIN_LENGTH} caractères minimum.`
+  }
+  if (error.code === 'weak_password' && error.reasons?.includes('pwned')) {
+    return 'Ce mot de passe figure dans des fuites de données connues. Choisissez-en un autre.'
+  }
   if (error.code && MESSAGES[error.code]) return MESSAGES[error.code]
   if (error.name === 'AuthRetryableFetchError' || error.status === 0) return NETWORK_MESSAGE
   return DEFAULT_MESSAGE

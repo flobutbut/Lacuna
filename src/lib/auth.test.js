@@ -8,6 +8,17 @@ describe('authErrorMessage', () => {
     expect(authErrorMessage({ code: 'email_not_confirmed' })).toMatch(/non confirmée/)
   })
 
+  it('explique un mot de passe refusé par le serveur', () => {
+    expect(authErrorMessage({ code: 'weak_password', reasons: ['length'] })).toBe('Mot de passe trop court : 8 caractères minimum.')
+    expect(authErrorMessage({ code: 'weak_password', reasons: ['pwned'] })).toMatch(/fuites/)
+    expect(authErrorMessage({ code: 'weak_password', reasons: ['characters'] })).toMatch(/trop faible/)
+    expect(authErrorMessage({ code: 'weak_password' })).toMatch(/trop faible/)
+  })
+
+  it('traduit l’échec du CAPTCHA', () => {
+    expect(authErrorMessage({ code: 'captcha_failed' })).toMatch(/anti-robot/)
+  })
+
   it('reconnaît une erreur réseau', () => {
     expect(authErrorMessage({ name: 'AuthRetryableFetchError', status: 0 })).toMatch(/réseau/)
   })

@@ -6,6 +6,8 @@ import { authErrorFromUrlHash, authErrorMessage, validateEmail } from '@/lib/aut
 import { safeRedirect } from '@/router/authGuard'
 import AuthPanel from '@/components/auth/AuthPanel.vue'
 import AppTextField from '@/components/AppTextField.vue'
+import CaptchaWidget from '@/components/auth/CaptchaWidget.vue'
+import { captchaEnabled } from '@/lib/turnstile'
 
 const route = useRoute()
 const router = useRouter()
@@ -17,6 +19,9 @@ const errors = ref({ email: '', password: '' })
 const formError = ref('')
 const accountDeleted = route.query.compte === 'supprime'
 const submitting = ref(false)
+const captchaToken = ref('')
+const captchaWidget = ref(null)
+const captchaRequired = captchaEnabled()
 
 async function submit() {
   formError.value = ''
@@ -27,10 +32,11 @@ async function submit() {
   if (errors.value.email || errors.value.password) return
   submitting.value = true
   try {
-    await authStore.signIn(email.value, password.value)
+    await authStore.signIn(email.value, password.value, captchaToken.value)
     router.replace(safeRedirect(route.query.redirect) ?? '/')
   } catch (err) {
     formError.value = authErrorMessage(err)
+    captchaWidget.value?.reset()
   } finally {
     submitting.value = false
   }
@@ -72,7 +78,8 @@ onMounted(() => {
       <RouterLink class="auth-form__aside" :to="{ name: 'mot-de-passe-oublie' }">
         Mot de passe oublié ?
       </RouterLink>
-      <button type="submit" class="btn-primary auth-form__submit" :disabled="submitting">
+      <CaptchaWidget v-if="captchaRequired" ref="captchaWidget" v-model="captchaToken" />
+      <button type="submit" class="btn-primary auth-form__submit" :disabled="submitting || (captchaRequired && !captchaToken)">
         {{ submitting ? 'Connexion…' : 'Se connecter' }}
       </button>
     </form>

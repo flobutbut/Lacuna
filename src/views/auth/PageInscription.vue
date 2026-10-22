@@ -5,6 +5,8 @@ import { useAuthStore } from '@/stores/auth'
 import { PASSWORD_MIN_LENGTH, authErrorMessage, validateEmail, validatePassword } from '@/lib/authErrors'
 import AuthPanel from '@/components/auth/AuthPanel.vue'
 import AppTextField from '@/components/AppTextField.vue'
+import CaptchaWidget from '@/components/auth/CaptchaWidget.vue'
+import { captchaEnabled } from '@/lib/turnstile'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -15,6 +17,9 @@ const passwordConfirm = ref('')
 const errors = ref({ email: '', password: '', passwordConfirm: '' })
 const formError = ref('')
 const submitting = ref(false)
+const captchaToken = ref('')
+const captchaWidget = ref(null)
+const captchaRequired = captchaEnabled()
 /** Adresse à laquelle l'email de confirmation a été envoyé */
 const sentTo = ref('')
 
@@ -28,12 +33,13 @@ async function submit() {
   if (Object.values(errors.value).some(Boolean)) return
   submitting.value = true
   try {
-    const { needsConfirmation } = await authStore.signUp(email.value, password.value)
+    const { needsConfirmation } = await authStore.signUp(email.value, password.value, captchaToken.value)
     // Confirmation d'email désactivée côté Supabase : le compte est déjà actif
     if (!needsConfirmation) return router.replace('/')
     sentTo.value = email.value.trim()
   } catch (err) {
     formError.value = authErrorMessage(err)
+    captchaWidget.value?.reset()
   } finally {
     submitting.value = false
   }
@@ -79,7 +85,8 @@ async function submit() {
         :error="errors.passwordConfirm"
         required
       />
-      <button type="submit" class="btn-primary auth-form__submit" :disabled="submitting">
+      <CaptchaWidget v-if="captchaRequired" ref="captchaWidget" v-model="captchaToken" />
+      <button type="submit" class="btn-primary auth-form__submit" :disabled="submitting || (captchaRequired && !captchaToken)">
         {{ submitting ? 'Création…' : 'Créer le compte' }}
       </button>
     </form>
