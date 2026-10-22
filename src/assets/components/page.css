@@ -16,7 +16,7 @@
  * ou override max-width sur .page-content
  */
 .page-content {
-  padding: var(--space-8) var(--space-10);
+  padding: var(--page-gutter);
   max-width: var(--panel-width-lg);
   margin: 0;
 }

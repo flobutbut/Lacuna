@@ -7,21 +7,17 @@
 /* Une seule ligne contrainte à la hauteur dispo : ne dépasse pas header→footer */
 .carte-layout {
   display: grid;
-  grid-template-columns: minmax(220px, 260px) 1fr minmax(320px, 400px);
+  grid-template-columns: minmax(280px, var(--page-col-width)) 1fr minmax(320px, 400px);
   grid-template-rows: minmax(0, 1fr);
   gap: 0;
   min-height: 0;
 }
 
 .carte-systems-col {
-  padding: var(--space-6);
+  padding: var(--page-gutter);
   border-right: var(--border-width) solid var(--border-default);
   overflow-y: auto;
   min-height: 0;
-}
-
-.carte-systems__title {
-  margin-bottom: var(--space-4);
 }
 
 .carte-systems-filter {
@@ -264,7 +260,7 @@
 }
 
 .carte-details-col {
-  padding: var(--space-6) var(--space-8);
+  padding: var(--page-gutter);
   overflow-y: auto;
   border-left: var(--border-width) solid var(--border-default);
   min-height: 0;
@@ -310,9 +306,9 @@
 }
 
 .carte-details__name {
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   color: var(--color-cyan);
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-normal);
   margin-bottom: var(--space-4);
 }
 

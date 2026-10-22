@@ -360,7 +360,7 @@ onUnmounted(() => {
       <!-- Colonne gauche : file d'observations -->
       <div class="lab-observations-col">
         <h1 class="page-title">Laboratoire</h1>
-        <div class="lab-observations__title">File d'observations</div>
+        <div class="panel-section-title">File d'observations</div>
         <div v-if="observations.length === 0" class="lab-empty-observations">
           Aucune observation. Ajoutez-en depuis l'Observatoire ou une notification.
         </div>

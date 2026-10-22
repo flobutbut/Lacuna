@@ -34,8 +34,8 @@
 }
 
 .artifact-detail__name {
-    font-size: var(--text-md);
-    color: var(--color-white);
+    font-size: var(--text-lg);
+    color: var(--color-cyan);
     letter-spacing: var(--tracking-normal);
     margin-bottom: var(--space-1);
 }
@@ -50,18 +50,18 @@
 /* ── Layout 2 colonnes (grille gauche, détail droite) ── */
 .artifacts-layout {
     display: grid;
-    grid-template-columns: minmax(280px, 360px) 1fr;
+    grid-template-columns: minmax(280px, var(--page-col-width)) 1fr;
     gap: 0;
     min-height: 100%;
 }
 
 .artifacts-grid-col {
-    padding: var(--space-8) var(--space-10);
+    padding: var(--page-gutter);
     border-right: var(--border-width) solid var(--border-default);
 }
 
 .artifacts-detail-col {
-    padding: var(--space-8) var(--space-10);
+    padding: var(--page-gutter);
     overflow-y: auto;
     background: var(--color-shade-15);
     max-width: 800px;

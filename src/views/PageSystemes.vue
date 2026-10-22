@@ -225,6 +225,160 @@ function closeOverlay() {
             title="Plan du vaisseau ARCA"
             @load="onBlueprintLoad"
           />
+          <!-- Fiche infos (AppModal top-right), confinée à la zone du plan : sous son en-tête, au-dessus de la légende -->
+          <AppModal
+            v-if="overlayVisible"
+            :title="modalTitle"
+            position="top-right"
+            :overlay="false"
+            @close="closeOverlay"
+          >
+            <!-- Identité -->
+            <div v-show="activeSection === 'identity'" class="sys-modal-content">
+              <p class="sys-modal-subtitle">{{ ship.name }} — {{ ship.class }}</p>
+              <template v-if="authStore.isAuthenticated">
+                <EditableValueRow
+                  label="Commandant"
+                  :value="authStore.profile?.pseudo ?? ''"
+                  :hint="`Privé · ${PSEUDO_MIN} à ${PSEUDO_MAX} caractères.`"
+                  :validate="validatePseudo"
+                  :save="savePseudo"
+                />
+                <Divider variant="solid" tight />
+                <EditableValueRow
+                  label="Nom du vaisseau"
+                  :value="ship.name"
+                  :hint="`Privé · ${SHIP_NAME_MIN} à ${SHIP_NAME_MAX} caractères.`"
+                  :validate="validateShipName"
+                  :save="saveShipName"
+                />
+                <Divider variant="solid" tight />
+              </template>
+              <div class="sw-row"><span class="sw-key">Construit</span><span class="sw-val">{{ ship.builtYear }}</span></div>
+              <Divider variant="solid" tight />
+              <div class="sw-row"><span class="sw-key">Âge relatif</span><span class="sw-val">{{ ship.ageRelative }} ans</span></div>
+              <Divider variant="solid" tight />
+              <div class="sw-row"><span class="sw-key">Âge réel</span><span class="sw-val">{{ ship.ageReal }} ans</span></div>
+              <Divider variant="solid" tight />
+              <div class="sw-row"><span class="sw-key">Écart</span><span class="sw-val">+{{ ship.ageGap }} ans</span></div>
+              <Divider variant="solid" tight />
+              <div class="sw-row"><span class="sw-key">Masse sèche</span><span class="sw-val">{{ formatNumber(ship.dryMass) }} t</span></div>
+              <Divider variant="solid" tight />
+              <div class="sw-row"><span class="sw-key">Capacité</span><span class="sw-val">{{ formatNumber(ship.capacity) }} personnes</span></div>
+              <Divider variant="solid" tight />
+              <div class="sw-row"><span class="sw-key">Population actuelle</span><span class="sw-val">{{ formatNumber(ship.population) }}</span></div>
+              <Divider variant="solid" tight />
+              <div class="sw-row"><span class="sw-key">Génération</span><span class="sw-val">{{ ship.generation }}</span></div>
+            </div>
+
+            <!-- Bouclier plasma -->
+            <div v-show="activeSection === 'plasma-shield'" class="sys-modal-content">
+              <div class="sys-indicator-block">
+                <div class="sw-row"><span class="sw-key">Bouclier plasma</span><span class="sw-val">{{ plasmaShield.value.toFixed(2) }}</span></div>
+                <p class="sys-value-desc">{{ plasmaShield.desc }}</p>
+                <p class="sys-value-desc">{{ plasmaShield.state }}</p>
+                <ProgressBar :value="plasmaShield.value" color="cyan" />
+              </div>
+            </div>
+
+            <!-- Pare-chocs ablatif -->
+            <div v-show="activeSection === 'bumper-shield'" class="sys-modal-content">
+              <div class="sys-indicator-block">
+                <div class="sw-row"><span class="sw-key">Coque</span><span class="sw-val">{{ hull.value.toFixed(2) }}</span></div>
+                <p class="sys-value-desc">{{ hull.desc }}</p>
+                <ProgressBar :value="hull.value" color="cyan" />
+              </div>
+            </div>
+
+            <!-- Anneaux habitat -->
+            <div v-show="activeSection === 'population-quarters'" class="sys-modal-content">
+              <p class="sw-desc">Efficacité des systèmes de survie (boucle fermée).</p>
+              <Divider variant="solid" tight />
+              <template
+  v-for="(ind, i) in [
+                { key: 'Réservoir', val: reservoir.value.toFixed(2), desc: reservoir.desc, bar: reservoir.value },
+                { key: 'Alimentation', val: alimentation.value.toFixed(2), desc: alimentation.desc, bar: alimentation.value },
+                { key: 'Atmosphère', val: atmosphere.value.toFixed(2), desc: atmosphere.desc, bar: atmosphere.value },
+                { key: 'Médical', val: medical.value.toFixed(2), desc: medical.desc, bar: medical.value },
+              ]" :key="ind.key">
+                <Divider v-if="i > 0" variant="solid" tight />
+                <div class="sys-indicator-block">
+                  <div class="sw-row"><span class="sw-key">{{ ind.key }}</span><span class="sw-val">{{ ind.val }}</span></div>
+                  <p class="sys-value-desc">{{ ind.desc }}</p>
+                  <ProgressBar :value="ind.bar" color="cyan" />
+                </div>
+              </template>
+            </div>
+
+            <!-- Réacteurs & Cargaison -->
+            <div v-show="activeSection === 'fission-reactors'" class="sys-modal-content">
+              <p class="sw-desc">SAFE-400 × 12 — 800 MW électriques — triple redondance. Banque génomique, embryons, semences.</p>
+            </div>
+
+            <!-- Radiateurs thermiques -->
+            <div v-show="activeSection === 'thermal-radiators'" class="sys-modal-content">
+              <p class="sw-desc">Graphite pyrolytique — ~40 km² — perpendiculaires à l'axe de vol.</p>
+            </div>
+
+            <!-- Réservoirs cryogéniques -->
+            <div v-show="activeSection === 'fuel-tanks'" class="sys-modal-content">
+              <p class="sw-desc">He³ et deutérium ne sont pas en boucle fermée — consommation par voyage (Tsiolkovsky).</p>
+              <Divider variant="solid" tight />
+              <div class="sys-indicator-block">
+                <div class="sw-row"><span class="sw-key">He³</span><span class="sw-val">{{ formatNumber(he3.current) }} t / {{ formatNumber(he3.max) }} t · {{ (he3.pct * 100).toFixed(1) }}%</span></div>
+                <ProgressBar :value="he3.pct" color="cyan" />
+              </div>
+              <Divider variant="solid" tight />
+              <div class="sys-indicator-block">
+                <div class="sw-row"><span class="sw-key">Deutérium</span><span class="sw-val">{{ formatNumber(deuterium.current) }} t / {{ formatNumber(deuterium.max) }} t · {{ (deuterium.pct * 100).toFixed(1) }}%</span></div>
+                <ProgressBar :value="deuterium.pct" color="cyan" />
+              </div>
+              <Divider variant="solid" tight />
+              <div class="sw-row"><span class="sw-key">Vitesse actuelle</span><span class="sw-val">{{ fuel.speed }}</span></div>
+              <div class="sw-row"><span class="sw-key">Autonomie estimée</span><span class="sw-val">{{ fuel.autonomy }}</span></div>
+            </div>
+
+            <!-- Moteur fusion MTF -->
+            <div v-show="activeSection === 'propulsion'" class="sys-modal-content">
+              <div class="sys-indicator-block">
+                <div class="sw-row"><span class="sw-key">Propulsion</span><span class="sw-val">{{ propulsion.value.toFixed(2) }}</span></div>
+                <p class="sys-value-desc">{{ propulsion.desc }}</p>
+                <p class="sys-value-desc">État actuel : {{ propulsion.state }}</p>
+                <ProgressBar :value="propulsion.value" color="cyan" />
+              </div>
+            </div>
+
+            <!-- Laser comms -->
+            <div v-show="activeSection === 'comms'" class="sys-modal-content">
+              <div class="sys-indicator-block">
+                <div class="sw-row"><span class="sw-key">Observatoire</span><span class="sw-val">{{ observatoire.value.toFixed(2) }}</span></div>
+                <p class="sys-value-desc">{{ observatoire.desc }}</p>
+                <p class="sys-value-desc">1 Gbps — délai 4.24 ans</p>
+                <ProgressBar :value="observatoire.value" color="cyan" />
+              </div>
+            </div>
+
+            <!-- Navigation pulsar -->
+            <div v-show="activeSection === 'navigation'" class="sys-modal-content">
+              <p class="sw-desc">Pulsar MSP pour localisation et orientation en transit interstellaire.</p>
+            </div>
+
+            <!-- Historique -->
+            <div v-show="activeSection === 'history'" class="sys-modal-content">
+              <template v-for="(h, i) in history" :key="i">
+                <Divider v-if="i > 0" variant="solid" tight />
+                <div class="sys-history-item">
+                  <div class="sw-key sys-history-item__meta">GÉN. {{ h.gen }} — {{ h.date }}</div>
+                  <div class="sys-history-item__event">
+                    {{ h.event }}
+                    <span class="sw-val ml-2" :class="h.delta > 0 ? 'ok' : 'warn'">
+                      {{ h.delta > 0 ? '+' : '' }}{{ h.delta }} {{ h.system }}
+                    </span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </AppModal>
         </div>
 
         <!-- Footer du plan — légende (extrait du SVG) -->
@@ -253,160 +407,6 @@ function closeOverlay() {
           </div>
         </footer>
 
-        <!-- Modale infos (AppModal, position top-right) -->
-        <AppModal
-          v-if="overlayVisible"
-          :title="modalTitle"
-          position="top-right"
-          :overlay="false"
-          @close="closeOverlay"
-        >
-          <!-- Identité -->
-          <div v-show="activeSection === 'identity'" class="sys-modal-content">
-            <p class="sys-modal-subtitle">{{ ship.name }} — {{ ship.class }}</p>
-            <template v-if="authStore.isAuthenticated">
-              <EditableValueRow
-                label="Commandant"
-                :value="authStore.profile?.pseudo ?? ''"
-                :hint="`Privé · ${PSEUDO_MIN} à ${PSEUDO_MAX} caractères.`"
-                :validate="validatePseudo"
-                :save="savePseudo"
-              />
-              <Divider variant="solid" tight />
-              <EditableValueRow
-                label="Nom du vaisseau"
-                :value="ship.name"
-                :hint="`Privé · ${SHIP_NAME_MIN} à ${SHIP_NAME_MAX} caractères.`"
-                :validate="validateShipName"
-                :save="saveShipName"
-              />
-              <Divider variant="solid" tight />
-            </template>
-            <div class="sw-row"><span class="sw-key">Construit</span><span class="sw-val">{{ ship.builtYear }}</span></div>
-            <Divider variant="solid" tight />
-            <div class="sw-row"><span class="sw-key">Âge relatif</span><span class="sw-val">{{ ship.ageRelative }} ans</span></div>
-            <Divider variant="solid" tight />
-            <div class="sw-row"><span class="sw-key">Âge réel</span><span class="sw-val">{{ ship.ageReal }} ans</span></div>
-            <Divider variant="solid" tight />
-            <div class="sw-row"><span class="sw-key">Écart</span><span class="sw-val">+{{ ship.ageGap }} ans</span></div>
-            <Divider variant="solid" tight />
-            <div class="sw-row"><span class="sw-key">Masse sèche</span><span class="sw-val">{{ formatNumber(ship.dryMass) }} t</span></div>
-            <Divider variant="solid" tight />
-            <div class="sw-row"><span class="sw-key">Capacité</span><span class="sw-val">{{ formatNumber(ship.capacity) }} personnes</span></div>
-            <Divider variant="solid" tight />
-            <div class="sw-row"><span class="sw-key">Population actuelle</span><span class="sw-val">{{ formatNumber(ship.population) }}</span></div>
-            <Divider variant="solid" tight />
-            <div class="sw-row"><span class="sw-key">Génération</span><span class="sw-val">{{ ship.generation }}</span></div>
-          </div>
-
-          <!-- Bouclier plasma -->
-          <div v-show="activeSection === 'plasma-shield'" class="sys-modal-content">
-            <div class="sys-indicator-block">
-              <div class="sw-row"><span class="sw-key">Bouclier plasma</span><span class="sw-val">{{ plasmaShield.value.toFixed(2) }}</span></div>
-              <p class="sys-value-desc">{{ plasmaShield.desc }}</p>
-              <p class="sys-value-desc">{{ plasmaShield.state }}</p>
-              <ProgressBar :value="plasmaShield.value" color="cyan" />
-            </div>
-          </div>
-
-          <!-- Pare-chocs ablatif -->
-          <div v-show="activeSection === 'bumper-shield'" class="sys-modal-content">
-            <div class="sys-indicator-block">
-              <div class="sw-row"><span class="sw-key">Coque</span><span class="sw-val">{{ hull.value.toFixed(2) }}</span></div>
-              <p class="sys-value-desc">{{ hull.desc }}</p>
-              <ProgressBar :value="hull.value" color="cyan" />
-            </div>
-          </div>
-
-          <!-- Anneaux habitat -->
-          <div v-show="activeSection === 'population-quarters'" class="sys-modal-content">
-            <p class="sw-desc">Efficacité des systèmes de survie (boucle fermée).</p>
-            <Divider variant="solid" tight />
-            <template
-v-for="(ind, i) in [
-              { key: 'Réservoir', val: reservoir.value.toFixed(2), desc: reservoir.desc, bar: reservoir.value },
-              { key: 'Alimentation', val: alimentation.value.toFixed(2), desc: alimentation.desc, bar: alimentation.value },
-              { key: 'Atmosphère', val: atmosphere.value.toFixed(2), desc: atmosphere.desc, bar: atmosphere.value },
-              { key: 'Médical', val: medical.value.toFixed(2), desc: medical.desc, bar: medical.value },
-            ]" :key="ind.key">
-              <Divider v-if="i > 0" variant="solid" tight />
-              <div class="sys-indicator-block">
-                <div class="sw-row"><span class="sw-key">{{ ind.key }}</span><span class="sw-val">{{ ind.val }}</span></div>
-                <p class="sys-value-desc">{{ ind.desc }}</p>
-                <ProgressBar :value="ind.bar" color="cyan" />
-              </div>
-            </template>
-          </div>
-
-          <!-- Réacteurs & Cargaison -->
-          <div v-show="activeSection === 'fission-reactors'" class="sys-modal-content">
-            <p class="sw-desc">SAFE-400 × 12 — 800 MW électriques — triple redondance. Banque génomique, embryons, semences.</p>
-          </div>
-
-          <!-- Radiateurs thermiques -->
-          <div v-show="activeSection === 'thermal-radiators'" class="sys-modal-content">
-            <p class="sw-desc">Graphite pyrolytique — ~40 km² — perpendiculaires à l'axe de vol.</p>
-          </div>
-
-          <!-- Réservoirs cryogéniques -->
-          <div v-show="activeSection === 'fuel-tanks'" class="sys-modal-content">
-            <p class="sw-desc">He³ et deutérium ne sont pas en boucle fermée — consommation par voyage (Tsiolkovsky).</p>
-            <Divider variant="solid" tight />
-            <div class="sys-indicator-block">
-              <div class="sw-row"><span class="sw-key">He³</span><span class="sw-val">{{ formatNumber(he3.current) }} t / {{ formatNumber(he3.max) }} t · {{ (he3.pct * 100).toFixed(1) }}%</span></div>
-              <ProgressBar :value="he3.pct" color="cyan" />
-            </div>
-            <Divider variant="solid" tight />
-            <div class="sys-indicator-block">
-              <div class="sw-row"><span class="sw-key">Deutérium</span><span class="sw-val">{{ formatNumber(deuterium.current) }} t / {{ formatNumber(deuterium.max) }} t · {{ (deuterium.pct * 100).toFixed(1) }}%</span></div>
-              <ProgressBar :value="deuterium.pct" color="cyan" />
-            </div>
-            <Divider variant="solid" tight />
-            <div class="sw-row"><span class="sw-key">Vitesse actuelle</span><span class="sw-val">{{ fuel.speed }}</span></div>
-            <div class="sw-row"><span class="sw-key">Autonomie estimée</span><span class="sw-val">{{ fuel.autonomy }}</span></div>
-          </div>
-
-          <!-- Moteur fusion MTF -->
-          <div v-show="activeSection === 'propulsion'" class="sys-modal-content">
-            <div class="sys-indicator-block">
-              <div class="sw-row"><span class="sw-key">Propulsion</span><span class="sw-val">{{ propulsion.value.toFixed(2) }}</span></div>
-              <p class="sys-value-desc">{{ propulsion.desc }}</p>
-              <p class="sys-value-desc">État actuel : {{ propulsion.state }}</p>
-              <ProgressBar :value="propulsion.value" color="cyan" />
-            </div>
-          </div>
-
-          <!-- Laser comms -->
-          <div v-show="activeSection === 'comms'" class="sys-modal-content">
-            <div class="sys-indicator-block">
-              <div class="sw-row"><span class="sw-key">Observatoire</span><span class="sw-val">{{ observatoire.value.toFixed(2) }}</span></div>
-              <p class="sys-value-desc">{{ observatoire.desc }}</p>
-              <p class="sys-value-desc">1 Gbps — délai 4.24 ans</p>
-              <ProgressBar :value="observatoire.value" color="cyan" />
-            </div>
-          </div>
-
-          <!-- Navigation pulsar -->
-          <div v-show="activeSection === 'navigation'" class="sys-modal-content">
-            <p class="sw-desc">Pulsar MSP pour localisation et orientation en transit interstellaire.</p>
-          </div>
-
-          <!-- Historique -->
-          <div v-show="activeSection === 'history'" class="sys-modal-content">
-            <template v-for="(h, i) in history" :key="i">
-              <Divider v-if="i > 0" variant="solid" tight />
-              <div class="sys-history-item">
-                <div class="sw-key sys-history-item__meta">GÉN. {{ h.gen }} — {{ h.date }}</div>
-                <div class="sys-history-item__event">
-                  {{ h.event }}
-                  <span class="sw-val ml-2" :class="h.delta > 0 ? 'ok' : 'warn'">
-                    {{ h.delta > 0 ? '+' : '' }}{{ h.delta }} {{ h.system }}
-                  </span>
-                </div>
-              </div>
-            </template>
-          </div>
-        </AppModal>
       </div>
     </div>
   </div>

@@ -140,8 +140,10 @@
   --header-height:         48px;
   --instruments-height:    52px;
   --sidebar-width:         312px;  /* Colonnes latérales gauche/droite */
-  --sidebar-offset:        20px;
+  --sidebar-offset:        24px;   /* = marge des pages (--page-gutter) */
   --toolbar-height:        32px;   /* Barre d'outils de l'Observatoire (onglets + filtres) */
+  --page-gutter:           var(--space-10);  /* Marge intérieure des pages et colonnes */
+  --page-col-width:        360px;  /* Colonne de gauche des pages (menu, liste) */
   --panel-width:           360px;
   --panel-width-lg:        400px;
   --site-width:            1120px;  /* Largeur max. du site public */

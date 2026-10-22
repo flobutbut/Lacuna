@@ -189,14 +189,19 @@ Au-delà de 0.15em, l'œil lit des lettres et non plus des mots : réserver `wid
 
 ### 2.7 Layout
 
-| Token | Valeur |
-|-------|--------|
-| `--header-height` | `48px` |
-| `--instruments-height` | `52px` |
-| `--sidebar-width` | `312px` |
-| `--sidebar-offset` | `20px` |
-| `--panel-width` | `360px` |
-| `--panel-width-lg` | `400px` |
+| Token | Valeur | Usage |
+|-------|--------|-------|
+| `--header-height` | `48px` | Header |
+| `--instruments-height` | `52px` | Barre d'instruments |
+| `--page-gutter` | `var(--space-10)` (24 px) | Marge intérieure de toutes les pages et colonnes |
+| `--page-col-width` | `360px` | Colonne de gauche des pages (menu, liste) |
+| `--sidebar-width` | `312px` | Colonnes de tiles de l'Observatoire |
+| `--sidebar-offset` | `24px` | Marge des tiles de l'Observatoire (= `--page-gutter`) |
+| `--toolbar-height` | `32px` | Barre d'outils de l'Observatoire et hauteur de ses contrôles |
+| `--panel-width` | `360px` | |
+| `--panel-width-lg` | `400px` | Colonne de lecture (Journal, Drake) |
+
+**Alignement** : sur toutes les pages, le premier élément commence à 24 px du bord gauche et 24 px sous le header (titre de page, barre d'outils de l'Observatoire, en-tête du plan des Systèmes). Les colonnes de gauche s'arrêtent toutes à 360 px.
 
 ---
 
@@ -674,6 +679,18 @@ Ne pas utiliser de `color-mix` ni de tailles en dur pour ces blocs — rester al
 ---
 
 ## 4. Règles d'usage
+
+### 4.0 Hiérarchie des titres
+
+| Niveau | Classe | Style |
+|--------|--------|-------|
+| Titre de page | `.page-title` | `--text-2xl`, cyan, `--tracking-wider`, majuscules |
+| Sous-titre de page (sous le titre, colonne de gauche) | `.panel-section-title` | `--text-base`, muted, `--tracking-wide`, majuscules, filet |
+| Titre de tile | `.sw-title` (et fiche `AppModal` top-right) | `--text-md`, blanc, `--tracking-wide`, majuscules, filet |
+| Titre de modale | `.app-modal__title` | `--text-md`, cyan, `--tracking-wider`, majuscules |
+| Intitulé de section (dans une colonne ou une modale) | `*__section-title`, `*__title` de colonne | `--text-sm`, muted, `--tracking-wide`, majuscules |
+| Nom de l'élément sélectionné | `artifact-detail__name`, `lab-selected__name`, `carte-details__name`, `pop-current__header`, `sys-modal-subtitle` | `--text-lg`, cyan, `--tracking-normal` |
+
 
 ### 4.1 Modales
 

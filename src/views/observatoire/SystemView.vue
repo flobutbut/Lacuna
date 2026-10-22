@@ -658,6 +658,14 @@ onBeforeUnmount(() => {
   color: var(--color-muted);
 }
 
+/* Centré dans la vue, pas sous la barre d'outils */
+.system-view__empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .system-view__orbital-row {
   display: flex;
   flex-direction: row;

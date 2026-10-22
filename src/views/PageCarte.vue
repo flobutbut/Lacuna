@@ -529,7 +529,7 @@ watch(carteViewMode, (mode) => {
       <!-- Colonne gauche : liste des systèmes -->
       <div class="carte-systems-col">
         <h1 class="page-title">Carte galactique</h1>
-        <div class="carte-systems__title sw-title sw-title--no-divider">Systèmes sur la carte</div>
+        <div class="panel-section-title">Systèmes sur la carte</div>
         <div v-if="!hasSystemsOnMap" class="carte-systems-empty">
           Aucun système. Ajoutez-en depuis l'Observatoire ou le Laboratoire.
         </div>

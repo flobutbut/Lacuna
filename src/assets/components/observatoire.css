@@ -106,7 +106,7 @@
 }
 
 .signal-modal__section-title {
-  font-size: var(--text-md);
+  font-size: var(--text-sm);
   color: var(--color-muted);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);

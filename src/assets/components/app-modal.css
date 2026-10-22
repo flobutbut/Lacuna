@@ -13,14 +13,21 @@
   pointer-events: all;
 }
 
+/* Top-right : panneau d'information façon tile, entre le header et la barre d'instruments */
 .app-modal--top-right {
   align-items: flex-start;
   justify-content: flex-end;
+  padding: calc(var(--header-height) + var(--space-10)) var(--space-10) calc(var(--instruments-height) + var(--space-10));
 }
 
 .app-modal--top-right .app-modal__box {
-  margin: var(--space-6);
-  max-height: calc(100vh - var(--space-12));
+  max-height: 100%;
+  border-color: var(--border-default);
+}
+
+.app-modal--top-right .app-modal__title {
+  color: var(--color-white);
+  letter-spacing: var(--tracking-wide);
 }
 
 .app-modal--large .app-modal__box {

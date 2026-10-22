@@ -34,7 +34,11 @@
     color: var(--color-cyan);
 }
 
+/* Centré sur la fenêtre, indépendamment de la largeur du logo et du bloc de droite */
 .header__center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     align-items: center;
