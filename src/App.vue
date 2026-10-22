@@ -2,6 +2,7 @@
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { Analytics } from '@vercel/analytics/vue'
 import AppHeader from '@/components/AppHeader.vue'
 import InstrumentsBar from '@/components/InstrumentsBar.vue'
 import NotificationToast from '@/components/NotificationToast.vue'
@@ -38,6 +39,7 @@ watch(
     </main>
     <InstrumentsBar v-if="!isBareLayout" />
     <NotificationToast />
+    <Analytics />
   </div>
 </template>
 
