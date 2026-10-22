@@ -306,14 +306,14 @@ cd stellar_import && python3 check_systems.py           # Vérifier champs stell
 
 ### Paramètres de transit (temps joueur)
 
-Le temps joueur d'un voyage est calculé côté client à partir de la courbe physique (`LACUNA_PHYSICS.md`) et d'un facteur d'échelle :
+Le serveur décide du voyage (migration `00050`) : `start_transit` calcule la distance depuis la position du vaisseau, la durée joueur (même courbe que `computeTransit`, `src/lib/transit.js`) et l'heure d'arrivée ; `complete_transit` n'accepte l'arrivée qu'à cette heure. Le client n'affiche que des estimations.
 
-- **`VITE_TRANSIT_TIME_SCALE`** (optionnel, côté Vite) :
-  - `1` → respecte les durées documents (Proxima ≈ 1h joueur, bord opposé ≈ 90 jours),
-  - `0.00138889` (valeur par défaut dans `.env.example`) → **mode test** (Proxima ≈ 5s joueur, même courbe comprimée),
-  - toute autre valeur > 0 applique la même loi puissance en la contractant ou l'étirant.
+La durée réelle applique le réglage `transit_time_scale` de la table `game_settings`, propre à chaque base :
 
-En l'absence de variable d'environnement, le client utilise la valeur de test `5 / 3600` pour faciliter le prototypage.
+- `1` → durées du GDD (Proxima ≈ 1 h de jeu, bord opposé ≈ 90 jours) ;
+- `0.00138889` (5/3600, valeur actuelle) → **mode test** (Proxima ≈ 5 s, même courbe comprimée).
+
+Modification : `UPDATE game_settings SET value = '1' WHERE key = 'transit_time_scale';` (SQL Editor du dashboard).
 
 ## Commandes
 

@@ -19,6 +19,8 @@ export const useShipStore = defineStore('ship', () => {
   const loaded = ref(false)
   const nowTick = ref(Date.now())
   let transitIntervalId = null
+  // Délai avant de redemander l'arrivée si l'horloge du serveur n'y est pas encore
+  const COMPLETE_RETRY_MS = 2000
   // Ratios simplifiés des phases de transit — alignés grossièrement sur computeTransit
   const PHASE_ACCEL_END = 0.4
   const PHASE_COAST_END = 0.6
@@ -103,36 +105,12 @@ export const useShipStore = defineStore('ship', () => {
     }, 500)
   }
 
-  async function startTransit(destinationId, distanceAl, transitMeta) {
-    if (!destinationId) {
-      console.warn('[ship] startTransit appelé sans destination')
-      return null
-    }
-    if (!ship.value) {
-      console.warn('[ship] startTransit sans vaisseau chargé')
-      return null
-    }
-
-    const supabaseStore = useSupabaseStore()
-    const hasSupabase = supabaseStore.isConfigured()
-
-    const tJoueurSec = transitMeta?.tJoueurSec ?? 0
-    // Par défaut : mode test 5s pour Proxima (5 / 3600 ≈ 0.00138889)
-    const baseScale = 5 / 3600
-    const envScale = Number(import.meta.env.VITE_TRANSIT_TIME_SCALE ?? baseScale)
-    const scale = Number.isFinite(envScale) && envScale > 0 ? envScale : baseScale
-
-    const durationMs = Math.max(1000, Math.round(tJoueurSec * 1000 * scale))
-    const departure = new Date()
-    const arrival = new Date(departure.getTime() + durationMs)
-
-    const updates = {
-      travel_state: 'IN_TRANSIT',
-      travel_destination: destinationId,
-      travel_departure_at: departure.toISOString(),
-      travel_arrival_at: arrival.toISOString(),
-      // NOTE: distance non stockée en base pour l’instant (pas de colonne dédiée)
-    }
+  /**
+   * Lance le transit vers un système (RPC start_transit) : distance, durée et heure
+   * d'arrivée sont fixées par le serveur. Renvoie le vaisseau, ou null en cas d'échec.
+   */
+  async function startTransit(destinationId) {
+    if (!destinationId || !ship.value) return null
 
     // S'assurer que la destination est présente dans le store des systèmes
     const stellarStore = useStellarSystemsStore()
@@ -144,91 +122,30 @@ export const useShipStore = defineStore('ship', () => {
       }
     }
 
-    if (hasSupabase) {
-      const { data, error } = await supabase
-        .from('ships')
-        .update(updates)
-        .eq('id', ship.value.id)
-        .select('id, name, classe, built_year, voyage, generation, current_system_id, travel_state, travel_destination, travel_departure_at, travel_arrival_at')
-        .single()
-
-      if (error) {
-        console.warn('[ship] startTransit — fallback local (Supabase error)', error.message)
-        // Fallback local : on applique quand même le transit côté client
-        ship.value = {
-          ...ship.value,
-          ...updates,
-        }
-      } else {
-        ship.value = data
-      }
-    } else {
-      // Mode déconnecté : on modifie seulement l'état local
-      ship.value = {
-        ...ship.value,
-        ...updates,
-      }
+    const { data, error } = await supabase.rpc('start_transit', { p_destination: destinationId })
+    if (error) {
+      console.warn('[ship] startTransit:', error.message)
+      return null
     }
+    ship.value = data
     nowTick.value = Date.now()
     ensureTransitInterval()
     return ship.value
   }
 
+  /**
+   * Termine le transit (RPC complete_transit). Le serveur refuse une arrivée avant
+   * l'heure prévue selon son horloge : le vaisseau revient alors inchangé, on réessaie.
+   */
   async function completeTransit() {
-    if (!travelDestination.value) return null
-    if (!ship.value) return null
-
-    const supabaseStore = useSupabaseStore()
-    const hasSupabase = supabaseStore.isConfigured()
-
-    const originSystemId = ship.value.current_system_id
-    const destinationSystemId = travelDestination.value
-    const departureAt = ship.value.travel_departure_at
-    const arrivalAt = new Date().toISOString()
-
-    const updates = {
-      current_system_id: destinationSystemId,
-      travel_state: 'IDLE',
-      travel_destination: null,
-      travel_departure_at: null,
-      travel_arrival_at: null,
-      voyage: (ship.value.voyage ?? 0) + 1,
-    }
-
-    if (hasSupabase) {
-      const { data, error } = await supabase
-        .from('ships')
-        .update(updates)
-        .eq('id', ship.value.id)
-        .select('id, name, classe, built_year, voyage, generation, current_system_id, travel_state, travel_destination, travel_departure_at, travel_arrival_at')
-        .single()
-
-      if (error) {
-        console.warn('[ship] completeTransit — fallback local (Supabase error)', error.message)
-        ship.value = {
-          ...ship.value,
-          ...updates,
-        }
-      } else {
-        ship.value = data
-        // Historique des voyages — insertion dans ship_travels
-        const { error: insertError } = await supabase.from('ship_travels').insert({
-          ship_id: ship.value.id,
-          voyage_number: ship.value.voyage,
-          origin_system_id: originSystemId,
-          destination_system_id: destinationSystemId,
-          departure_at: departureAt ?? arrivalAt,
-          arrival_at: arrivalAt,
-        })
-        if (insertError) {
-          console.warn('[ship] completeTransit — unable to insert ship_travels', insertError.message)
-        }
-      }
+    if (!isInTransit.value) return null
+    const { data, error } = await supabase.rpc('complete_transit')
+    if (error) throw error
+    ship.value = data
+    if (isInTransit.value) {
+      window.setTimeout(() => ensureTransitInterval(), COMPLETE_RETRY_MS)
     } else {
-      ship.value = {
-        ...ship.value,
-        ...updates,
-      }
+      fetchTravels()
     }
     return ship.value
   }

@@ -331,9 +331,16 @@ function fixerCapCarte() {
     notificationsStore.showNotification('Vaisseau non chargé — réessayez dans une seconde', 4000)
     return
   }
-  const dist = stellar.distance ?? '—'
-  const distanceLy = parseFloat(dist) || 0
-  const meta = distanceLy > 0 ? computeTransit(dist) : null
+  // Distance et direction depuis la position du vaisseau (comme le serveur, start_transit)
+  const viewerSystem = stellarStore.list.find((s) => s.id === shipStore.currentSystemId)
+  const viewerXyz = viewerSystem ? getSystemXyz(viewerSystem) : { x: 0, y: 0, z: 0 }
+  const targetXyz = getSystemXyz(stellar)
+  const dx = (targetXyz.x ?? 0) - (viewerXyz.x ?? 0)
+  const dy = (targetXyz.y ?? 0) - (viewerXyz.y ?? 0)
+  const dz = (targetXyz.z ?? 0) - (viewerXyz.z ?? 0)
+  const { ra, dec, dist: distanceLy } = xyzToRaDec(dx, dy, dz)
+  const dist = distanceLy > 0 ? distanceLy.toFixed(1) : '—'
+  const meta = distanceLy > 0 ? computeTransit(distanceLy) : null
   transitStore.setPendingDeparture({
     id: systemId,
     name: stellar.name ?? systemId,
@@ -344,13 +351,6 @@ function fixerCapCarte() {
   })
   observatoireStore.setSearchedStarId(systemId)
   // Orienter la vue ciel vers la cible (comme depuis l'Observatoire)
-  const viewerSystem = stellarStore.list.find((s) => s.id === shipStore.currentSystemId)
-  const viewerXyz = viewerSystem ? getSystemXyz(viewerSystem) : { x: 0, y: 0, z: 0 }
-  const targetXyz = getSystemXyz(stellar)
-  const dx = (targetXyz.x ?? 0) - (viewerXyz.x ?? 0)
-  const dy = (targetXyz.y ?? 0) - (viewerXyz.y ?? 0)
-  const dz = (targetXyz.z ?? 0) - (viewerXyz.z ?? 0)
-  const { ra, dec } = xyzToRaDec(dx, dy, dz)
   observatoireStore.setViewDirectionValue({ ra, dec })
   observatoireStore.setTargetViewDirectionValue({ ra, dec })
   transitStore.openDepartureConfirmation()

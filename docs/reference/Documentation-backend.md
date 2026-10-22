@@ -366,8 +366,10 @@ Vaisseaux joueurs (1 par compte, créé par `start_new_game`). Nom choisi et mod
 | travel_state | ship_travel_state | IDLE, IN_TRANSIT, ARRIVED, DAMAGED |
 | travel_destination | TEXT FK | → stellar_systems |
 | travel_departure_at | TIMESTAMPTZ | Départ transit (pour calcul progression) |
-| travel_arrival_at | TIMESTAMPTZ | Arrivée prévue (pour completeTransit) |
+| travel_arrival_at | TIMESTAMPTZ | Arrivée prévue, fixée par `start_transit` |
 | systems, fuel | — | *Déplacés dans ship_systems (migration 00007)* |
+
+Le joueur ne modifie que `name` (droits par colonne, migration 00050) ; position, transit et numéro de voyage passent par `start_transit` et `complete_transit`.
 
 #### `ship_travels`
 Historique des trajets : un enregistrement par voyage terminé (pour retracer la route).
@@ -381,10 +383,17 @@ Historique des trajets : un enregistrement par voyage terminé (pour retracer la
 | destination_system_id | TEXT FK | → stellar_systems |
 | departure_at | TIMESTAMPTZ | Heure de départ |
 | arrival_at | TIMESTAMPTZ | Heure d'arrivée |
-| distance_al | DOUBLE PRECISION | Distance en al (optionnel) |
+| distance_al | DOUBLE PRECISION | Distance du trajet en al |
 | created_at | TIMESTAMPTZ | |
 
-Création : migration 00031. Remplie à chaque `completeTransit()` côté store ship.
+Création : migration 00031. Remplie par `complete_transit` à chaque arrivée ; lecture seule pour le joueur (00050).
+
+#### `game_settings`
+Réglages du jeu propres à la base (développement, production), lus par les fonctions serveur ; aucun accès depuis l'API.
+
+| Clé | Valeur | Description |
+|-----|--------|-------------|
+| transit_time_scale | nombre | Facteur de la durée de transit : 1 = durées du GDD, 0.00138889 = mode test (Proxima ≈ 5 s) |
 
 #### `ship_systems`
 Aspect technique du vaisseau. 1:1 avec ships.
@@ -521,6 +530,8 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00046 | Comptes joueurs : table profiles (pseudo, rôle), contrainte ships.name, RPC start_new_game, signaux modèles détachés du prototype |
 | 00047 | session_id facultatif (signals, observations), index ship_id ; compute_pulsar_signals(vaisseau, bande) dédupliquée par vaisseau et réservée au propriétaire |
 | 00048 | RLS par joueur (§7), suppression du vaisseau prototype et des données de session, RLS sur constellations, TRUNCATE retiré à l'API |
+| 00049 | Suppression des pulsars en double |
+| 00050 | Transit côté serveur : table game_settings, RPC start_transit et complete_transit, UPDATE de ships limité à name, ship_travels en lecture seule |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
@@ -531,6 +542,13 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 ### RPC `start_new_game(p_pseudo, p_ship_name)` (migration 00046)
 
 `SECURITY DEFINER`, réservée à `authenticated`. Crée en une transaction : profil, vaisseau à Sol, `ship_systems` et `populations` (valeurs par défaut des tables), nœud Sol de la carte, copie des signaux modèles. Erreurs : `42501` (non connecté), `22023` (longueurs), `23505` (partie déjà créée).
+
+### RPC `start_transit(p_destination)` et `complete_transit()` (migration 00050)
+
+`SECURITY DEFINER`, réservées à `authenticated`, sur le vaisseau du joueur connecté. Renvoient la ligne `ships`.
+
+- `start_transit` : refuse si un transit est en cours (`55000`), si la destination est inconnue ou est le système courant (`22023`). Distance entre les coordonnées des deux systèmes (`system_xyz`), durée `transit_player_seconds(distance) × transit_time_scale`, arrivée = `now()` + durée.
+- `complete_transit` : avant l'heure d'arrivée (horloge du serveur) ou hors transit, renvoie le vaisseau inchangé ; sinon ajoute le voyage à `ship_travels`, place le vaisseau à destination et incrémente `voyage`.
 
 ### RPC `compute_pulsar_signals(p_ship_id, p_band)` (migrations 00041 → 00047)
 
@@ -611,16 +629,18 @@ En cas de conflit entre sources, l'ID retenu suit cet ordre :
 
 ## 7. RLS (Row Level Security)
 
-État après la migration `00048` (comptes joueurs). « Son vaisseau » = `ship_id IN (SELECT id FROM ships WHERE user_id = auth.uid())`.
+État après les migrations `00048` (comptes joueurs) et `00050` (transit). « Son vaisseau » = `ship_id IN (SELECT id FROM ships WHERE user_id = auth.uid())`.
 
 | Table | Lecture | Écriture |
 |-------|---------|----------|
 | profiles | soi (`authenticated`) | UPDATE de `pseudo` seulement ; création par `start_new_game` |
-| ships | son vaisseau | UPDATE de son vaisseau ; pas d'INSERT (→ `start_new_game`) ni de DELETE |
+| ships | son vaisseau | UPDATE de `name` seulement ; transit par `start_transit` / `complete_transit` ; pas d'INSERT (→ `start_new_game`) ni de DELETE |
 | ship_systems, populations | son vaisseau | aucune |
 | signals, observations | son vaisseau | son vaisseau |
 | lab_reports | via ses observations | via ses observations |
-| map_nodes, map_edges, ship_travels, ship_traces, logbook_entries | son vaisseau | son vaisseau |
+| ship_travels | son vaisseau | aucune (→ `complete_transit`) |
+| map_nodes, map_edges, ship_traces, logbook_entries | son vaisseau | son vaisseau |
+| game_settings | aucune | aucune (dashboard) |
 | interpretations | tous les joueurs connectés, **sans `ship_id`** (droits par colonne) | INSERT avec son `ship_id` ; DELETE des siennes |
 | traces | joueurs connectés, **sans `discovered_by`** | aucune |
 | stellar_systems, system_objects, signal_events, nebulas, drake_*, constellations, constellation_lines | publique | aucune |
@@ -671,7 +691,6 @@ Sans compte (`anon`) : aucune donnée de jeu, données du monde en lecture. `TRU
 |----------|-------------|
 | VITE_SUPABASE_URL | URL du projet Supabase |
 | VITE_SUPABASE_ANON_KEY | Clé anon publique |
-| VITE_TRANSIT_TIME_SCALE | Facteur de durée transit (ex. 0.00138889 ≈ 5 s pour Proxima). Voir Documentation-technique.md. |
 
 ### Commandes Supabase
 
@@ -803,6 +822,7 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 
 | Date | Modifications |
 |------|---------------|
+| 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |
 

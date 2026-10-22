@@ -36,7 +36,7 @@ function annuler() {
 async function allumerMoteurs() {
   const p = pending.value
   if (!p || !shipStore.ship) return
-  const result = await shipStore.startTransit(p.id, p.dist, p.transitMeta)
+  const result = await shipStore.startTransit(p.id)
   observatoireStore.clearSearchedStarId()
   transitStore.clearPendingDeparture()
   transitStore.closeDepartureConfirmation()
@@ -47,7 +47,7 @@ async function allumerMoteurs() {
       5000
     )
   } else {
-    notificationsStore.showNotification('Impossible de lancer le transit (vaisseau non chargé ou erreur Supabase)', 5000)
+    notificationsStore.showNotification('Impossible de lancer le transit — réessayez dans un instant', 5000)
   }
 }
 </script>
