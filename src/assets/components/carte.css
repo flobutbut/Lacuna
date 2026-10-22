@@ -167,7 +167,7 @@
 .carte-tabs__btn--active {
   color: var(--color-cyan);
   border-color: var(--color-cyan-dim);
-  background: var(--color-cyan-hover);
+  background: var(--color-cyan-tint);
 }
 
 .carte-map-container {

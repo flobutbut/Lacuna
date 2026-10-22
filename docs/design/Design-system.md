@@ -35,14 +35,14 @@ Le design system LACUNA repose sur :
 | `--color-cyan-glow` | `rgba(0, 180, 200, 0.15)` | Hover boutons / select |
 | `--color-cyan-subtle` | `rgba(0, 180, 200, 0.05)` | Hover très léger |
 | `--color-cyan-hz-band` | `rgba(0, 180, 200, 0.2)` | Zone habitable (bande SVG) |
-| `--color-cyan-hover` | `rgba(0, 180, 200, 0.08)` | :active (clic) |
+| `--color-cyan-tint` | `rgba(0, 180, 200, 0.08)` | Onglet sélectionné, bouton pressé (`:active`) |
 | `--color-cyan-active` | `rgba(0, 180, 200, 0.22)` | Toggle sélectionné (.is-active) |
 | `--color-amber` | `#e8a020` | Alertes, anomalies |
 | `--color-amber-dim` | `rgba(232, 160, 32, 0.4)` | Amber atténué |
 | `--color-green` | `#40a870` | Succès, valeurs OK |
-| `--color-red` | `#c84040` | Erreurs, valeurs critiques |
+| `--color-red` | `#da5050` | Erreurs, valeurs critiques (5.1:1 sur le fond) |
 | `--color-violet` | `#a855f7` | Signaux, notifications |
-| `--color-signal` | `#a855f7` | Indicateurs signaux |
+| `--color-signal` | `var(--color-violet)` | Alias sémantique : indicateurs signaux |
 | `--color-white` | `#e2eaef` | Texte principal |
 | `--color-muted` | `#7d92a3` | Texte secondaire |
 | `--color-ghost` | `rgba(255, 255, 255, 0.05)` | Éléments discrets |
@@ -78,6 +78,7 @@ background: color-mix(in srgb, var(--color-green) 12%, transparent);
 | `--border-radius-sm` | `2px` | Petit rayon |
 | `--border-radius-md` | `4px` | Rayon moyen |
 | `--border-radius-full` | `50%` | Cercle |
+| `--border-radius-pill` | `999px` | Piste d'interrupteur, pastille allongée |
 
 ### 2.3 Typographie
 
@@ -154,6 +155,12 @@ Au-delà de 0.15em, l'œil lit des lettres et non plus des mots : réserver `wid
 | `--space-10` | `24px` | |
 | `--space-12` | `32px` | |
 | `--space-14` | `48px` | |
+
+### 2.4 bis États
+
+| Token | Valeur | Usage |
+|-------|--------|-------|
+| `--opacity-disabled` | `0.4` | Boutons et champs désactivés |
 
 ### 2.5 Transitions
 
@@ -386,17 +393,20 @@ Bouton d'instrument en grille (3×N, **carrés**). Réutilisable. Utilisé par l
 
 ### 3.8 Boutons (button.css)
 
+Base `.btn` + **une** variante : `<button class="btn btn-primary">`. La base porte la mise en page, la typo et l'état désactivé ; la variante ne porte que ses couleurs (et la taille compacte pour `secondary`).
+
 | Classe | Usage |
 |--------|-------|
+| `.btn` | Base obligatoire |
 | `.btn-primary` | Action principale (cyan) |
-| `.btn-secondary` | Action secondaire |
+| `.btn-secondary` | Action secondaire, compacte (`--text-sm`) |
 | `.btn-ghost` | Action discrète |
 | `.btn-amber` | Action warning |
 | `.btn-danger` | Action irréversible (suppression du compte) |
-| `.btn-instrument` | Bouton barre instruments |
-| `.btn-close` | Fermeture panel |
 
-**États** : `:hover`, `:active`, `:disabled`, `.is-active` (toggle sélectionné — secondary/ghost), `.active` (instrument)
+**États** : `:hover`, `:active`, `:disabled` (`--opacity-disabled`), `.is-active` (toggle sélectionné — secondary/ghost).
+
+Les onglets de la barre du bas sont des `NavTabButton` (`.nav-tab-btn`, `instruments.css`).
 
 ---
 

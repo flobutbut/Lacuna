@@ -93,7 +93,7 @@ const id = useId()
 }
 
 .app-text-field__input:disabled {
-  opacity: 0.4;
+  opacity: var(--opacity-disabled);
   cursor: not-allowed;
 }
 

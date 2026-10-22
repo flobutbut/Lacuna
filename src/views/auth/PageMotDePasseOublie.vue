@@ -58,7 +58,7 @@ async function submit() {
         autofocus
       />
       <CaptchaWidget v-if="captchaRequired" ref="captchaWidget" v-model="captchaToken" />
-      <button type="submit" class="btn-primary auth-form__submit" :disabled="submitting || (captchaRequired && !captchaToken)">
+      <button type="submit" class="btn btn-primary auth-form__submit" :disabled="submitting || (captchaRequired && !captchaToken)">
         {{ submitting ? 'Envoi…' : 'Envoyer le lien' }}
       </button>
     </form>

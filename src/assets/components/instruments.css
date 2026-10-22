@@ -69,7 +69,7 @@
   color: var(--color-cyan);
   border-color: var(--color-cyan-dim);
   border-top: var(--border-width) solid var(--color-cyan-dim);
-  background: var(--color-cyan-hover);
+  background: var(--color-cyan-tint);
   z-index: 1;
 }
 

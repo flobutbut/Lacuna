@@ -1,17 +1,19 @@
 /* ══════════════════════════════════════════════════════
    LACUNA — Button Component
-   Boutons d'instruments, d'action, ghost, close
+   Boutons d'action : base .btn + une variante
+   <button class="btn btn-primary">…</button>
+   (Onglets de la barre du bas : instruments.css, .nav-tab-btn)
    ══════════════════════════════════════════════════════ */
 
-/* ══ Bouton instrument (barre du bas) ══ */
-.btn-instrument {
-    display: flex;
-    flex-direction: column;
+/* ══ Base (alignée sur le select : fond panel peu opaque) ══ */
+.btn {
+    display: inline-flex;
     align-items: center;
-    gap: var(--space-1);
+    justify-content: center;
+    gap: var(--space-3);
     padding: var(--space-4) var(--space-8);
     border: var(--border-width) solid var(--border-default);
-    background: transparent;
+    background: var(--color-panel);
     color: var(--color-muted);
     font-family: var(--font-mono);
     font-size: var(--text-base);
@@ -19,80 +21,17 @@
     text-transform: uppercase;
     cursor: pointer;
     transition: all var(--transition-base);
-    position: relative;
-    overflow: hidden;
 }
 
-/* Underline effet */
-.btn-instrument::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: var(--color-cyan);
-    transform: scaleX(0);
-    transition: transform var(--transition-base);
+.btn:disabled {
+    opacity: var(--opacity-disabled);
+    cursor: not-allowed;
 }
 
-.btn-instrument:hover {
-    color: var(--color-white);
-    border-color: var(--border-bright);
-    background: var(--color-cyan-subtle);
-}
-
-.btn-instrument:hover::before {
-    transform: scaleX(1);
-}
-
-/* Active state */
-.btn-instrument.active {
-    color: var(--color-cyan);
-    border-color: var(--color-cyan-dim);
-    background: var(--color-cyan-hover);
-}
-
-.btn-instrument.active::before {
-    transform: scaleX(1);
-}
-
-/* Icon */
-.btn-instrument__icon {
-    font-size: var(--text-xl);
-    line-height: var(--leading-none);
-}
-
-/* Badge (notification dot) */
-.btn-instrument__badge {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 6px;
-    height: 6px;
-    border-radius: var(--border-radius-full);
-    background: var(--color-amber);
-}
-
-/* ══ Boutons d'action (alignés sur le select : fond panel peu opaque) ══
-   Default = var(--color-panel) ; états hover/active déclinés par variant. */
-
-/* Primary */
+/* ══ Primary — action principale ══ */
 .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-3);
-    padding: var(--space-4) var(--space-8);
-    border: var(--border-width) solid var(--color-cyan);
-    background: var(--color-panel);
+    border-color: var(--color-cyan);
     color: var(--color-cyan);
-    font-family: var(--font-mono);
-    font-size: var(--text-base);
-    letter-spacing: var(--tracking-normal);
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all var(--transition-base);
 }
 
 .btn-primary:hover {
@@ -101,108 +40,38 @@
 }
 
 .btn-primary:active {
-    background: var(--color-cyan-hover);
+    background: var(--color-cyan-tint);
 }
 
-.btn-primary:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-/* Secondary */
+/* ══ Secondary (compact) et Ghost — actions secondaires ══ */
 .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-3);
     padding: var(--space-3) var(--space-6);
-    border: var(--border-width) solid var(--border-default);
-    background: var(--color-panel);
-    color: var(--color-muted);
-    font-family: var(--font-mono);
     font-size: var(--text-sm);
-    letter-spacing: var(--tracking-normal);
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all var(--transition-base);
 }
 
-.btn-secondary:hover {
-    color: var(--color-white);
-    border-color: var(--border-bright);
-    background: var(--color-cyan-glow);
-}
-
-.btn-secondary:active {
-    background: var(--color-cyan-hover);
-}
-
-.btn-secondary:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.btn-secondary.is-active {
-    color: var(--color-cyan);
-    border-color: var(--color-cyan-dim);
-    background: var(--color-cyan-active);
-}
-
-/* Ghost */
-.btn-ghost {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-3);
-    padding: var(--space-4) var(--space-8);
-    border: var(--border-width) solid var(--border-default);
-    background: var(--color-panel);
-    color: var(--color-muted);
-    font-family: var(--font-mono);
-    font-size: var(--text-base);
-    letter-spacing: var(--tracking-normal);
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all var(--transition-base);
-}
-
+.btn-secondary:hover,
 .btn-ghost:hover {
     color: var(--color-white);
     border-color: var(--border-bright);
     background: var(--color-cyan-glow);
 }
 
+.btn-secondary:active,
 .btn-ghost:active {
-    background: var(--color-cyan-hover);
+    background: var(--color-cyan-tint);
 }
 
-.btn-ghost:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
+.btn-secondary.is-active,
 .btn-ghost.is-active {
     color: var(--color-cyan);
     border-color: var(--color-cyan-dim);
     background: var(--color-cyan-active);
 }
 
-/* Amber (warning) */
+/* ══ Amber — avertissement ══ */
 .btn-amber {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-3);
-    padding: var(--space-4) var(--space-8);
-    border: var(--border-width) solid var(--color-amber-dim);
-    background: var(--color-panel);
+    border-color: var(--color-amber-dim);
     color: var(--color-amber);
-    font-family: var(--font-mono);
-    font-size: var(--text-base);
-    letter-spacing: var(--tracking-normal);
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all var(--transition-base);
 }
 
 .btn-amber:hover {
@@ -214,27 +83,10 @@
     background: var(--color-amber-dim);
 }
 
-.btn-amber:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-/* Danger (action irréversible) */
+/* ══ Danger — action irréversible ══ */
 .btn-danger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-3);
-    padding: var(--space-4) var(--space-8);
-    border: var(--border-width) solid color-mix(in srgb, var(--color-red) 60%, transparent);
-    background: var(--color-panel);
+    border-color: color-mix(in srgb, var(--color-red) 60%, transparent);
     color: var(--color-red);
-    font-family: var(--font-mono);
-    font-size: var(--text-base);
-    letter-spacing: var(--tracking-normal);
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all var(--transition-base);
 }
 
 .btn-danger:hover {
@@ -244,26 +96,4 @@
 
 .btn-danger:active {
     background: color-mix(in srgb, var(--color-red) 24%, transparent);
-}
-
-.btn-danger:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-/* ══ Bouton close (fermeture panel) ══ */
-.btn-close {
-    background: none;
-    border: none;
-    color: var(--color-muted);
-    font-family: var(--font-mono);
-    font-size: var(--text-xl);
-    cursor: pointer;
-    line-height: var(--leading-none);
-    padding: 0 var(--space-2);
-    transition: color var(--transition-base);
-}
-
-.btn-close:hover {
-    color: var(--color-white);
 }

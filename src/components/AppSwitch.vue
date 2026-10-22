@@ -55,7 +55,7 @@ defineProps({
 }
 
 .app-switch:disabled {
-  opacity: 0.3;
+  opacity: var(--opacity-disabled);
   cursor: not-allowed;
 }
 
@@ -65,7 +65,7 @@ defineProps({
   width: 28px;
   height: 14px;
   border: var(--border-width) solid var(--border-bright);
-  border-radius: 7px;
+  border-radius: var(--border-radius-pill);
   background: var(--color-panel);
   transition: background var(--transition-base), border-color var(--transition-base);
 }

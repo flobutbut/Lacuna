@@ -91,7 +91,7 @@ async function submit() {
         et la <RouterLink :to="{ name: 'confidentialite' }" target="_blank">politique de confidentialité</RouterLink>.
       </p>
       <CaptchaWidget v-if="captchaRequired" ref="captchaWidget" v-model="captchaToken" />
-      <button type="submit" class="btn-primary auth-form__submit" :disabled="submitting || (captchaRequired && !captchaToken)">
+      <button type="submit" class="btn btn-primary auth-form__submit" :disabled="submitting || (captchaRequired && !captchaToken)">
         {{ submitting ? 'Création…' : 'Créer le compte' }}
       </button>
     </form>

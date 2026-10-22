@@ -82,7 +82,7 @@ async function submit() {
         required
         :autofocus="!!pseudo"
       />
-      <button type="submit" class="btn-primary auth-form__submit" :disabled="submitting">
+      <button type="submit" class="btn btn-primary auth-form__submit" :disabled="submitting">
         {{ submitting ? 'Préparation du départ…' : 'Embarquer' }}
       </button>
     </form>

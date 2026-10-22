@@ -61,7 +61,7 @@ async function submit() {
       <span class="sw-key">{{ label }}</span>
       <span class="editable-row__value">
         <span class="sw-val">{{ value || '—' }}</span>
-        <button type="button" class="btn-ghost editable-row__edit" :aria-label="`Modifier : ${label}`" @click="startEdit">
+        <button type="button" class="btn btn-ghost editable-row__edit" :aria-label="`Modifier : ${label}`" @click="startEdit">
           Modifier
         </button>
       </span>
@@ -69,8 +69,8 @@ async function submit() {
     <form v-else class="editable-row__form" novalidate @submit.prevent="submit" @keydown.esc.prevent="cancel">
       <AppTextField v-model="draft" :label="label" :hint="hint" :error="error" :disabled="saving" />
       <div class="editable-row__actions">
-        <button type="button" class="btn-ghost" :disabled="saving" @click="cancel">Annuler</button>
-        <button type="submit" class="btn-primary" :disabled="saving">{{ saving ? 'Enregistrement…' : 'Enregistrer' }}</button>
+        <button type="button" class="btn btn-ghost" :disabled="saving" @click="cancel">Annuler</button>
+        <button type="submit" class="btn btn-primary" :disabled="saving">{{ saving ? 'Enregistrement…' : 'Enregistrer' }}</button>
       </div>
     </form>
   </div>

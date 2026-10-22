@@ -74,7 +74,7 @@ onMounted(() => {
         :error="errors.passwordConfirm"
         required
       />
-      <button type="submit" class="btn-primary auth-form__submit" :disabled="submitting">
+      <button type="submit" class="btn btn-primary auth-form__submit" :disabled="submitting">
         {{ submitting ? 'Enregistrement…' : 'Enregistrer' }}
       </button>
     </form>

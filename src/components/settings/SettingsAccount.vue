@@ -66,7 +66,7 @@ async function deleteAccount() {
         voyages, carte, signaux, observations, rapports et interprétations. Cette action ne peut pas être annulée.
       </p>
 
-      <button v-if="!confirming" type="button" class="btn-danger settings-danger__action" @click="startConfirm">
+      <button v-if="!confirming" type="button" class="btn btn-danger settings-danger__action" @click="startConfirm">
         Supprimer le compte
       </button>
 
@@ -79,8 +79,8 @@ async function deleteAccount() {
           :disabled="deleting"
         />
         <div class="settings-danger__buttons">
-          <button type="button" class="btn-ghost" :disabled="deleting" @click="cancel">Annuler</button>
-          <button type="submit" class="btn-danger" :disabled="!canDelete">
+          <button type="button" class="btn btn-ghost" :disabled="deleting" @click="cancel">Annuler</button>
+          <button type="submit" class="btn btn-danger" :disabled="!canDelete">
             {{ deleting ? 'Suppression…' : 'Supprimer définitivement' }}
           </button>
         </div>

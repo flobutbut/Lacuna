@@ -161,14 +161,14 @@ function onHighInput(e) {
   top: 0;
   height: 4px;
   background: var(--border-default);
-  border-radius: 2px;
+  border-radius: var(--border-radius-sm);
   pointer-events: none;
 }
 .dual-range__fill {
   position: absolute;
   top: 0;
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--border-radius-sm);
   pointer-events: none;
   background: color-mix(in srgb, var(--color-cyan) 48%, transparent);
   box-shadow: 0 0 8px color-mix(in srgb, var(--color-cyan) 40%, transparent);
@@ -193,7 +193,7 @@ function onHighInput(e) {
 .dual-range__input::-webkit-slider-runnable-track {
   height: 4px;
   background: transparent;
-  border-radius: 2px;
+  border-radius: var(--border-radius-sm);
 }
 .dual-range__input::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -201,7 +201,7 @@ function onHighInput(e) {
   width: 10px;
   height: 10px;
   margin-top: -3px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full);
   background: var(--color-muted);
   border: 1px solid var(--border-bright);
   box-sizing: border-box;
@@ -214,12 +214,12 @@ function onHighInput(e) {
 .dual-range__input::-moz-range-track {
   height: 4px;
   background: transparent;
-  border-radius: 2px;
+  border-radius: var(--border-radius-sm);
 }
 .dual-range__input::-moz-range-thumb {
   width: 10px;
   height: 10px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full);
   background: var(--color-muted);
   border: 1px solid var(--border-bright);
   box-sizing: border-box;

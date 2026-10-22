@@ -205,7 +205,7 @@ function onThresholdInput(sliderVal) {
 .radar-filters__slider::-webkit-slider-runnable-track {
   height: 4px;
   background: var(--border-default);
-  border-radius: 2px;
+  border-radius: var(--border-radius-sm);
 }
 .radar-filters__slider::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -213,7 +213,7 @@ function onThresholdInput(sliderVal) {
   width: 10px;
   height: 10px;
   margin-top: -3px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full);
   background: var(--color-muted);
   border: 1px solid var(--border-bright);
   box-sizing: border-box;
@@ -241,12 +241,12 @@ function onThresholdInput(sliderVal) {
 .radar-filters__slider::-moz-range-track {
   height: 4px;
   background: var(--border-default);
-  border-radius: 2px;
+  border-radius: var(--border-radius-sm);
 }
 .radar-filters__slider::-moz-range-thumb {
   width: 10px;
   height: 10px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full);
   background: var(--color-muted);
   border: 1px solid var(--border-bright);
   box-sizing: border-box;

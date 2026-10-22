@@ -18,7 +18,7 @@
   --color-cyan-glow:       rgba(0, 180, 200, 0.15);
   --color-cyan-subtle:     rgba(0, 180, 200, 0.05);
   --color-cyan-hz-band:    rgba(0, 180, 200, 0.2);   /* Zone habitable — plus visible */
-  --color-cyan-hover:      rgba(0, 180, 200, 0.08);
+  --color-cyan-tint:       rgba(0, 180, 200, 0.08);  /* Onglet sélectionné, bouton pressé (:active) */
   --color-cyan-active:     rgba(0, 180, 200, 0.22);
 
   --color-amber:           #e8a020;
@@ -28,10 +28,10 @@
   /* ── Couleurs de statut ── */
   --color-green:           #40a870;
   --color-green-bright:     #5dd99a;  /* Vert plus lumineux (transits, accents) */
-  --color-red:             #c84040;
+  --color-red:             #da5050;  /* 5.1:1 sur --color-bg (AA petit texte) */
   --color-violet:          #a855f7;
   --color-violet-dim:      rgba(168, 85, 247, 0.5);
-  --color-signal:          #a855f7;
+  --color-signal:          var(--color-violet);  /* Alias sémantique : signaux */
 
   /* ── Voiles sombres (fonds de cartes, overlays, ombres) ── */
   --color-shade-15:        rgba(0, 0, 0, 0.15);
@@ -54,6 +54,7 @@
   --border-radius-sm:      2px;
   --border-radius-md:      4px;
   --border-radius-full:    50%;
+  --border-radius-pill:    999px;  /* Pistes d'interrupteur, pastilles allongées */
 
   /* ── Typographie ── */
   --font-mono:             'Share Tech Mono', monospace;
@@ -112,6 +113,9 @@
   --space-10:              24px;
   --space-12:              32px;
   --space-14:              48px;
+
+  /* ── États ── */
+  --opacity-disabled:      0.4;
 
   /* ── Transitions ── */
   --transition-fast:       0.15s ease;
