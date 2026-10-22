@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:devtools": "VUE_DEVTOOLS=true vite",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
