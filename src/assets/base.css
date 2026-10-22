@@ -27,11 +27,27 @@ body {
     font-family: var(--font-mono);
     font-size: var(--text-base);
     line-height: var(--leading-normal);
-    letter-spacing: var(--tracking-tight);
+    letter-spacing: var(--tracking-none);
     width: 100vw;
     height: 100vh;
     overflow: hidden;
     cursor: crosshair;
+}
+
+/* ── Graisse ──
+   Share Tech Mono n'existe qu'en 400 : sans cette règle, titres et <strong> sont en faux gras.
+   L'emphase passe par la couleur. Les classes du site (Syne) gardent leurs graisses. */
+h1, h2, h3, h4, h5, h6, th, strong, b {
+    font-weight: inherit;
+}
+
+strong, b {
+    color: var(--color-white);
+}
+
+/* ── Graphiques D3 : les axes posent font-family="sans-serif" sur leur groupe ── */
+.tick text {
+    font-family: var(--font-mono);
 }
 
 /* ── Sélection ── */

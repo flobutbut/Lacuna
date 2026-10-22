@@ -124,7 +124,7 @@ function onDismiss(e) {
   color: var(--color-muted);
   font-size: var(--text-md);
   cursor: pointer;
-  line-height: 1;
+  line-height: var(--leading-none);
   border-radius: var(--border-radius-sm);
   z-index: 1;
   display: flex;

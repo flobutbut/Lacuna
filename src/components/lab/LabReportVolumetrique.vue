@@ -93,8 +93,8 @@ function render() {
     .append('text')
     .attr('x', legendX)
     .attr('y', legendY - 2)
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text(max.toFixed(2))
 
@@ -103,8 +103,8 @@ function render() {
     .attr('x', legendX + legendWidth)
     .attr('y', legendY - 2)
     .attr('text-anchor', 'end')
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text(min.toFixed(2))
 
@@ -142,8 +142,8 @@ function render() {
     .append('g')
     .attr('transform', `translate(${margin.left},${cutHeight})`)
     .call(d3.axisBottom(xScaleCut).ticks(5).tickFormat((v) => `${(v * 100).toFixed(0)} %`).tickSize(4))
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('color', 'var(--color-muted)')
 
   cutSvg
@@ -151,8 +151,8 @@ function render() {
     .attr('x', margin.left + cutInnerWidth / 2)
     .attr('y', cutHeight + margin.bottom - 4)
     .attr('text-anchor', 'middle')
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text('Coupe horizontale (centre)')
 }

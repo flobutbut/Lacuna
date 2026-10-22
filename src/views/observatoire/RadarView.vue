@@ -10,7 +10,7 @@ import { storeToRefs } from 'pinia'
 import { useRadarStore } from '@/stores/radar'
 import { useObservatoireStore } from '@/stores/observatoire'
 import { computeSpectrogramColumn, SAMPLE_RATE } from '@/lib/spectrogramData'
-import { getCssVar } from '@/lib/cssVars'
+import { canvasFont, getCssVar } from '@/lib/cssVars'
 import {
   RADAR_FREQ_BINS as FREQ_BINS,
   RADAR_FFT_WINDOW as FFT_WINDOW,
@@ -321,7 +321,7 @@ function drawTimeLabels(specCtx, intCtx, specCanvas, intCanvas, innerW, ticksPer
       ctx.stroke()
       ctx.globalAlpha = 1
       ctx.fillStyle = muted
-      ctx.font = '10px monospace'
+      ctx.font = canvasFont('--text-xs')
       ctx.textAlign = 'center'
       ctx.fillText(label, xPos, canvasH - 4)
     }
@@ -336,9 +336,9 @@ function drawAxes(specCanvas, intCanvas) {
   const muted = getCssVar('--color-muted')
 
   specCtx.fillStyle = muted
-  specCtx.font = '9px var(--font-mono)'
+  specCtx.font = canvasFont()
   intCtx.fillStyle = muted
-  intCtx.font = '9px var(--font-mono)'
+  intCtx.font = canvasFont()
 
   const ticksY = [
     radarFreqHigh.value,
@@ -824,7 +824,6 @@ watch(
 .radar-view__placeholder-title {
   font-family: var(--font-mono);
   font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-wide);
   line-height: var(--leading-tight);
   text-transform: uppercase;

@@ -90,8 +90,8 @@ function renderChart(data) {
     .attr('y', (d) => yScale(d.formula) + yScale.bandwidth() / 2)
     .attr('text-anchor', 'end')
     .attr('dominant-baseline', 'middle')
-    .attr('font-size', '10px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text((d) => d.formula)
 
@@ -103,8 +103,8 @@ function renderChart(data) {
     .attr('x', (d) => xScale(d.abundance) + 4)
     .attr('y', (d) => yScale(d.formula) + yScale.bandwidth() / 2)
     .attr('dominant-baseline', 'middle')
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text((d) => `${(d.abundance * 100).toFixed(1)} %`)
 
@@ -118,8 +118,8 @@ function renderChart(data) {
         .tickFormat((v) => `${(v * 100).toFixed(0)} %`)
         .tickSize(4)
     )
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('color', 'var(--color-muted)')
 
   svg
@@ -127,8 +127,8 @@ function renderChart(data) {
     .attr('x', margin.left + innerWidth)
     .attr('y', innerHeight - 4)
     .attr('text-anchor', 'end')
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text('Abondance (fraction)')
 
@@ -138,8 +138,8 @@ function renderChart(data) {
       .attr('x', width - margin.right)
       .attr('y', margin.top + 12)
       .attr('text-anchor', 'end')
-      .attr('font-size', '9px')
-      .attr('font-family', 'var(--font-mono)')
+      .style('font-size', 'var(--text-2xs)')
+      .style('font-family', 'var(--font-mono)')
       .attr('fill', 'var(--color-muted)')
       .text(`p ≈ ${data.pressureBar < 0.01 ? data.pressureBar.toExponential(1) : data.pressureBar.toFixed(2)} bar`)
   }

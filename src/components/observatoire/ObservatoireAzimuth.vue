@@ -37,9 +37,9 @@ function resetToOrigin() {
   z-index: 20;
   pointer-events: auto;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: color-mix(in srgb, var(--color-white) 75%, transparent);
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-normal);
   background: none;
   border: none;
   padding: var(--space-3) var(--space-6);

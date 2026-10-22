@@ -65,7 +65,7 @@
     font-family: var(--font-sans);
     font-size: var(--text-2xl);
     font-weight: var(--weight-bold);
-    letter-spacing: var(--tracking-widest);
+    letter-spacing: var(--tracking-logo);
     color: var(--color-white);
     text-decoration: none;
     transition: color var(--transition-base);
@@ -196,7 +196,7 @@
     font-size: var(--text-site-display);
     font-weight: var(--weight-bold);
     line-height: var(--leading-none);
-    letter-spacing: 0.1em;
+    letter-spacing: var(--tracking-wider);
     /* Compense l'espacement après la dernière lettre pour un centrage optique */
     margin-right: -0.1em;
     color: var(--color-white);
@@ -294,7 +294,7 @@
     font-size: var(--text-site-h2);
     font-weight: var(--weight-semibold);
     line-height: var(--leading-tight);
-    letter-spacing: -0.01em;
+    letter-spacing: var(--tracking-display);
 }
 
 .site-h2 em {
@@ -418,7 +418,7 @@
     font-size: var(--text-site-h2);
     font-weight: var(--weight-bold);
     line-height: var(--leading-none);
-    letter-spacing: -0.01em;
+    letter-spacing: var(--tracking-display);
     color: var(--color-white);
     white-space: nowrap;
 }
@@ -886,7 +886,7 @@
     }
 
     .site-hero__title {
-        letter-spacing: 0.06em;
+        letter-spacing: var(--tracking-wide);
         margin-right: -0.06em;
     }
 

@@ -75,8 +75,8 @@ function render() {
     .attr('x', (d) => scaleX(d.x))
     .attr('y', (d) => scaleY(d.y) + 4)
     .attr('text-anchor', 'middle')
-    .attr('font-size', '10px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-white)')
     .text((d) => d.label)
 
@@ -86,8 +86,8 @@ function render() {
       .attr('x', width - schemaMargin)
       .attr('y', schemaMargin + 12)
       .attr('text-anchor', 'end')
-      .attr('font-size', '10px')
-      .attr('font-family', 'var(--font-mono)')
+      .style('font-size', 'var(--text-xs)')
+      .style('font-family', 'var(--font-mono)')
       .attr('fill', 'var(--color-muted)')
       .text(`≈ ${distanceMpc} Mpc`)
   }

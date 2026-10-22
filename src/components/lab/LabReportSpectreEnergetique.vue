@@ -83,8 +83,8 @@ function render() {
     .attr('x', innerWidth)
     .attr('y', 18)
     .attr('text-anchor', 'end')
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text('Énergie (keV)')
 
@@ -96,8 +96,8 @@ function render() {
 
   svg
     .selectAll('.lab-spectre-energetique__axis')
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('color', 'var(--color-muted)')
 }
 

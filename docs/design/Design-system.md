@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-18*
+*Dernière modification : 2026-10-22*
 
 # LACUNA — Design System
 
@@ -80,27 +80,62 @@ background: color-mix(in srgb, var(--color-green) 12%, transparent);
 
 ### 2.3 Typographie
 
+**Polices** (hébergées avec l'app, `@fontsource`, importées dans `main.js`) :
+
+| Token | Valeur | Graisses disponibles | Usage |
+|-------|--------|----------------------|-------|
+| `--font-mono` | `'Share Tech Mono', monospace` | **400 uniquement** | Toute l'interface du jeu (police du `body`) |
+| `--font-sans` | `'Syne', sans-serif` | 400, 600, 800 | Logotype, site public, titres d'authentification |
+
+**Règle — pas de gras sur la mono.** Share Tech Mono n'existe qu'en 400 : `--weight-semibold` / `--weight-bold` sur du texte mono produisent un faux gras généré par le navigateur. La hiérarchie passe par la taille, la couleur (cyan, blanc, muted) et les majuscules. `base.css` remet `h1`–`h6`, `th`, `strong`, `b` à la graisse héritée ; `strong` s'affiche en `--color-white`.
+
+**Tailles** (app) — 10 px est un plancher réservé aux micro-libellés (unités, graduations) :
+
 | Token | Valeur | Usage |
 |-------|--------|-------|
-| `--font-mono` | `'Share Tech Mono', monospace` | Données, valeurs |
-| `--font-sans` | `'Syne', sans-serif` | Titres, UI |
-| `--text-2xs` | `8px` | Très petit |
-| `--text-xs` | `9px` | Petit |
-| `--text-sm` | `10px` | Sous-titres |
-| `--text-base` | `11px` | Corps de texte |
-| `--text-md` | `12px` | Labels, valeurs |
-| `--text-lg` | `14px` | Titres secondaires |
-| `--text-xl` | `15px` | Titres |
-| `--text-2xl` | `19px` | Grands titres |
-| `--weight-regular` | `400` | Texte normal |
-| `--weight-semibold` | `600` | Semi-gras |
-| `--weight-bold` | `800` | Gras |
-| `--tracking-tight` | `0.5px` | Serré |
-| `--tracking-normal` | `1px` | Normal |
-| `--tracking-wide` | `2px` | Large (labels) |
-| `--tracking-wider` | `4px` | Très large |
-| `--leading-none` | `1` | Interligne serré |
-| `--leading-normal` | `1.5` | Interligne standard |
+| `--text-2xs` | `10px` | Graduations d'axes, unités, badges |
+| `--text-xs` | `11px` | Petits libellés |
+| `--text-sm` | `12px` | Sous-titres, boutons secondaires |
+| `--text-base` | `13px` | Corps de texte (défaut du `body`) |
+| `--text-md` | `14px` | Labels, valeurs, titres de modale |
+| `--text-lg` | `16px` | Titres secondaires |
+| `--text-xl` | `18px` | Titres, icônes de menu |
+| `--text-2xl` | `22px` | Titres de page, logotype |
+| `--text-3xl` | `26px` | Icônes de grille, titres du site |
+| `--text-4xl` | `34px` | Grandes valeurs, icône de détail |
+
+Le site public a sa propre échelle fluide : `--text-site-body`, `--text-site-lead`, `--text-site-h2`, `--text-site-display`, `--text-site-quote` (`clamp()`).
+
+**Interlettrage** — en `em`, donc proportionnel à la taille du texte. La mono a déjà une chasse large : le texte courant n'en a pas besoin.
+
+| Token | Valeur | Usage |
+|-------|--------|-------|
+| `--tracking-none` | `0` | Texte courant (défaut du `body`) |
+| `--tracking-tight` | `0.02em` | Valeurs, texte dense |
+| `--tracking-normal` | `0.04em` | Boutons, onglets |
+| `--tracking-wide` | `0.08em` | Libellés en majuscules |
+| `--tracking-wider` | `0.12em` | Titres en majuscules |
+| `--tracking-widest` | `0.2em` | Titres d'affichage (rare) |
+| `--tracking-logo` | `0.32em` | Logotype LACUNA uniquement |
+| `--tracking-display` | `-0.01em` | Grands titres Syne du site |
+
+Au-delà de 0.15em, l'œil lit des lettres et non plus des mots : réserver `widest` et `logo` aux mots isolés.
+
+**Graisses et interlignes** :
+
+| Token | Valeur |
+|-------|--------|
+| `--weight-regular` | `400` |
+| `--weight-semibold` | `600` (Syne uniquement) |
+| `--weight-bold` | `800` (Syne uniquement) |
+| `--leading-none` | `1` |
+| `--leading-tight` | `1.2` |
+| `--leading-normal` | `1.5` |
+| `--leading-relaxed` | `1.6` |
+
+**Majuscules** : réservées aux libellés courts (titres, boutons, clés de données). Les phrases restent en casse normale.
+
+**Canvas et D3** : `var()` n'est résolu ni dans `ctx.font` ni dans les attributs SVG (`.attr('font-size', …)`). Utiliser `canvasFont('--text-2xs')` (`lib/cssVars.js`) pour le canvas, et `.style('font-size', 'var(--text-2xs)')` pour D3.
 
 ### 2.4 Espacements
 

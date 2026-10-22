@@ -25,7 +25,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  padding: var(--space-4) var(--space-8);
+  padding: var(--space-3) var(--space-8);
   margin-left: -1px;
   border: var(--border-width) solid var(--border-default);
   border-top: none;
@@ -84,6 +84,10 @@
 .nav-tab-btn__icon {
   font-size: var(--text-xl);
   line-height: var(--leading-none);
+}
+
+.nav-tab-btn__label {
+  line-height: var(--leading-tight);
 }
 
 .nav-tab-btn__badge {

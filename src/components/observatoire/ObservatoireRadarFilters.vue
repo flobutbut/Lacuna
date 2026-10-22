@@ -157,7 +157,7 @@ function onThresholdInput(sliderVal) {
   font-size: var(--text-sm);
   font-family: var(--font-mono);
   letter-spacing: var(--tracking-normal);
-  line-height: 1;
+  line-height: var(--leading-none);
   text-transform: uppercase;
   color: var(--color-muted);
   background: var(--color-panel);
@@ -180,7 +180,7 @@ function onThresholdInput(sliderVal) {
 .radar-filters__threshold-label {
   flex-shrink: 0;
   white-space: nowrap;
-  line-height: 1;
+  line-height: var(--leading-none);
 }
 
 /* Range custom : évite le thumb bleu système et garde une hauteur de ligne proche du .ds-select */

@@ -61,7 +61,7 @@
     border: var(--border-width) solid var(--border-default);
     font-family: var(--font-mono);
     font-size: var(--text-sm);
-    line-height: 1.5;
+    line-height: var(--leading-normal);
     color: var(--color-white);
 }
 
@@ -78,5 +78,5 @@
 
 .auth-alert strong {
     color: var(--color-cyan);
-    font-weight: normal;
+    font-weight: var(--weight-regular);
 }

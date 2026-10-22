@@ -42,7 +42,7 @@
 .sw-title {
     font-size: var(--text-md);
     letter-spacing: var(--tracking-wide);
-    color: var(--color-muted);
+    color: var(--color-white);
     text-transform: uppercase;
     margin-bottom: var(--space-4);
     padding-bottom: var(--space-3);

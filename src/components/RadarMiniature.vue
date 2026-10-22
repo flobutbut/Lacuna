@@ -9,7 +9,7 @@
 import { inject, watch, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRadarStore } from '@/stores/radar'
-import { getCssVar } from '@/lib/cssVars'
+import { canvasFont, getCssVar } from '@/lib/cssVars'
 import { interpolateViridis } from 'd3'
 import {
   RADAR_FREQ_BINS,
@@ -138,7 +138,7 @@ function drawDurationMarks(ctx, w, h, ticksPerPx, available) {
   const lastAge = Math.min(available, Math.floor(w * ticksPerPx))
   const muted = getCssVar('--color-muted')
   const bg = getCssVar('--color-bg')
-  ctx.font = '9px monospace'
+  ctx.font = canvasFont()
   ctx.textAlign = 'left'
   ctx.textBaseline = 'bottom'
   for (let age = interval; age < lastAge; age += interval) {

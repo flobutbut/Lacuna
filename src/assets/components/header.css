@@ -21,7 +21,7 @@
     font-family: var(--font-sans);
     font-size: var(--text-2xl);
     font-weight: var(--weight-bold);
-    letter-spacing: var(--tracking-widest);
+    letter-spacing: var(--tracking-logo);
     color: var(--color-white);
     text-decoration: none;
     transition: color var(--transition-base);

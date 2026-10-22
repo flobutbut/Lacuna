@@ -56,7 +56,7 @@ defineProps({
   font-family: var(--font-sans);
   font-size: var(--text-2xl);
   font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-widest);
+  letter-spacing: var(--tracking-logo);
   color: var(--color-white);
   text-decoration: none;
   transition: color var(--transition-base);
@@ -80,7 +80,7 @@ defineProps({
   margin: 0;
   font-family: var(--font-mono);
   font-size: var(--text-lg);
-  font-weight: normal;
+  font-weight: var(--weight-regular);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--color-cyan);
@@ -90,7 +90,7 @@ defineProps({
   margin: 0;
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   color: var(--color-muted);
 }
 

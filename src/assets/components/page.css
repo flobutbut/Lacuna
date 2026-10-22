@@ -63,11 +63,17 @@
 
 .page-full--systems .sys-layout {
   height: 100%;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* Petits écrans : le menu défile au lieu d'être coupé */
+.page-full--systems .sys-menu-col {
+  overflow-y: auto;
 }
 
 .page-title {
   font-size: var(--text-2xl);
-  font-weight: var(--weight-bold);
   color: var(--color-cyan);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;

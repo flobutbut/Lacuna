@@ -105,7 +105,7 @@ export function renderLineChart(svgEl, opts = {}) {
     .append('g')
     .attr('transform', `translate(0,${height - margin.bottom})`)
     .call(axisBottom)
-    .attr('font-size', AXIS_STYLE.fontSize)
+    .style('font-size', AXIS_STYLE.fontSize)
     .attr('color', AXIS_STYLE.color)
 
   if (xAxisLabel) {
@@ -114,8 +114,8 @@ export function renderLineChart(svgEl, opts = {}) {
       .attr('x', width - margin.right)
       .attr('y', 18)
       .attr('text-anchor', 'end')
-      .attr('font-size', '9px')
-      .attr('font-family', 'var(--font-mono)')
+      .style('font-size', 'var(--text-2xs)')
+      .style('font-family', 'var(--font-mono)')
       .attr('fill', 'var(--color-muted)')
       .text(xAxisLabel)
   }
@@ -123,7 +123,7 @@ export function renderLineChart(svgEl, opts = {}) {
   const gY = svg.append('g').attr('transform', `translate(${margin.left},0)`)
   gY
     .call(d3.axisLeft(yScale).ticks(4).tickSize(-innerWidth).tickSizeOuter(0))
-    .attr('font-size', AXIS_STYLE.fontSize)
+    .style('font-size', AXIS_STYLE.fontSize)
     .attr('color', AXIS_STYLE.color)
   gY.selectAll('.tick').filter((_, i, n) => i === n.length - 1).select('line').attr('stroke', 'none')
 
@@ -133,8 +133,8 @@ export function renderLineChart(svgEl, opts = {}) {
       .attr('x', -8)
       .attr('y', margin.top)
       .attr('text-anchor', 'end')
-      .attr('font-size', '9px')
-      .attr('font-family', 'var(--font-mono)')
+      .style('font-size', 'var(--text-2xs)')
+      .style('font-family', 'var(--font-mono)')
       .attr('fill', 'var(--color-muted)')
       .text(yAxisLabel)
   }

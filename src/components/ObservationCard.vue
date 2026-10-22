@@ -121,7 +121,7 @@ function onDismiss(e) {
   color: var(--color-muted);
   font-size: var(--text-md);
   cursor: pointer;
-  line-height: 1;
+  line-height: var(--leading-none);
   border-radius: var(--border-radius-sm);
   z-index: 1;
   display: flex;
@@ -149,7 +149,7 @@ function onDismiss(e) {
   font-family: var(--font-mono);
   color: var(--color-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-normal);
 }
 
 .observation-card__main {
@@ -181,7 +181,6 @@ function onDismiss(e) {
 
 .observation-card__state--done {
   color: var(--color-green);
-  font-weight: 500;
 }
 
 .observation-card__state--running {

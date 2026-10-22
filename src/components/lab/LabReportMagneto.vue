@@ -91,8 +91,8 @@ function render() {
     .append('text')
     .attr('x', legendX)
     .attr('y', legendY - 2)
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text(formatB(min))
 
@@ -101,8 +101,8 @@ function render() {
     .attr('x', legendX + legendWidth)
     .attr('y', legendY - 2)
     .attr('text-anchor', 'end')
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text(formatB(max))
 
@@ -111,8 +111,8 @@ function render() {
       .append('text')
       .attr('x', margin.left + 8)
       .attr('y', margin.top + 14)
-      .attr('font-size', '9px')
-      .attr('font-family', 'var(--font-mono)')
+      .style('font-size', 'var(--text-2xs)')
+      .style('font-family', 'var(--font-mono)')
       .attr('fill', 'var(--color-muted)')
       .text(`Incl. dipôle ≈ ${params.dipoleTilt}° · Bmax ${formatB(params.Bmax)}`)
   }
@@ -151,8 +151,8 @@ function render() {
     .append('g')
     .attr('transform', `translate(${margin.left},${profileHeight})`)
     .call(d3.axisBottom(xScale).ticks(5).tickFormat((v) => `${(v * 100).toFixed(0)} %`).tickSize(4))
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('color', 'var(--color-muted)')
 
   profileSvg
@@ -160,8 +160,8 @@ function render() {
     .attr('x', margin.left + profileInnerWidth / 2)
     .attr('y', profileHeight + margin.bottom - 4)
     .attr('text-anchor', 'middle')
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text('Profil B (coupe centre)')
 }

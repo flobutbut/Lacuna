@@ -59,16 +59,17 @@
   --font-mono:             'Share Tech Mono', monospace;
   --font-sans:             'Syne', sans-serif;
 
-  --text-2xs:              8px;
-  --text-xs:               9px;
-  --text-sm:               10px;
-  --text-base:             11px;
-  --text-md:               12px;
-  --text-lg:               14px;
-  --text-xl:               15px;
-  --text-2xl:              19px;
-  --text-3xl:              21px;
-  --text-4xl:              33px;
+  /* 10px : micro-libellés uniquement (unités, graduations) */
+  --text-2xs:              10px;
+  --text-xs:               11px;
+  --text-sm:               12px;
+  --text-base:             13px;
+  --text-md:               14px;
+  --text-lg:               16px;
+  --text-xl:               18px;
+  --text-2xl:              22px;
+  --text-3xl:              26px;
+  --text-4xl:              34px;
 
   /* Site public (landing, pages légales) : tailles fluides */
   --text-site-body:        clamp(15px, 1.1vw + 10px, 17px);
@@ -77,15 +78,21 @@
   --text-site-display:     clamp(44px, 10vw, 140px);
   --text-site-quote:       clamp(22px, 2.6vw + 10px, 38px);
 
+  /* Share Tech Mono n'existe qu'en 400 : semibold et bold sont réservés à Syne (--font-sans) */
   --weight-regular:        400;
   --weight-semibold:       600;
   --weight-bold:           800;
 
-  --tracking-tight:        0.5px;
-  --tracking-normal:       1px;
-  --tracking-wide:         2px;
-  --tracking-wider:        4px;
-  --tracking-widest:       6px;
+  /* Interlettrage en em : proportionnel à la taille du texte.
+     La mono a déjà une chasse large : texte courant à 0, libellés en majuscules de wide à wider. */
+  --tracking-none:         0;
+  --tracking-tight:        0.02em;
+  --tracking-normal:       0.04em;
+  --tracking-wide:         0.08em;
+  --tracking-wider:        0.12em;
+  --tracking-widest:       0.2em;
+  --tracking-logo:         0.32em;  /* Logotype LACUNA uniquement */
+  --tracking-display:      -0.01em; /* Grands titres Syne du site */
 
   --leading-none:          1;
   --leading-tight:         1.2;

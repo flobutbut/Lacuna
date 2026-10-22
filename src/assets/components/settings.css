@@ -28,7 +28,6 @@
 .settings__title {
   margin: 0 0 var(--space-4);
   font-size: var(--text-md);
-  font-weight: var(--weight-semibold);
   color: var(--color-cyan);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
@@ -37,7 +36,7 @@
 .settings__text {
   margin: 0;
   font-size: var(--text-base);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
   color: var(--color-muted);
 }
 
@@ -55,7 +54,6 @@
 .settings-danger__title {
   margin: 0;
   font-size: var(--text-md);
-  font-weight: var(--weight-semibold);
   color: var(--color-red);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;

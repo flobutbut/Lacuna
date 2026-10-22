@@ -91,8 +91,8 @@ function render() {
     .attr('x', innerWidth)
     .attr('y', 18)
     .attr('text-anchor', 'end')
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text('λ (nm)')
 
@@ -134,8 +134,8 @@ function render() {
     .attr('x', innerWidth)
     .attr('y', 18)
     .attr('text-anchor', 'end')
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text('Temps (jours)')
 
@@ -147,14 +147,14 @@ function render() {
 
   lightCurveSvg
     .selectAll('.lab-spectre-stellaire__axis')
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('color', 'var(--color-muted)')
 
   spectrumSvg
     .selectAll('.lab-spectre-stellaire__axis')
-    .attr('font-size', '9px')
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-2xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('color', 'var(--color-muted)')
 }
 

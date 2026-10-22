@@ -109,8 +109,8 @@ function renderDiagram() {
       .attr('x', lx)
       .attr('y', ly)
       .attr('text-anchor', 'start')
-      .attr('font-size', '9px')
-      .attr('font-family', 'var(--font-mono)')
+      .style('font-size', 'var(--text-2xs)')
+      .style('font-family', 'var(--font-mono)')
       .attr('fill', 'var(--color-muted)')
       .text(orbit.label)
   })
@@ -121,8 +121,8 @@ function renderDiagram() {
       .attr('x', width - margin.right)
       .attr('y', margin.top + 12)
       .attr('text-anchor', 'end')
-      .attr('font-size', '9px')
-      .attr('font-family', 'var(--font-mono)')
+      .style('font-size', 'var(--text-2xs)')
+      .style('font-family', 'var(--font-mono)')
       .attr('fill', 'var(--color-amber)')
       .text(`Δa ≈ ${data.residualAcceleration.toExponential(1)} m/s²`)
   }
@@ -222,7 +222,6 @@ watch(
 }
 .lab-orbital__table th {
   color: var(--color-white);
-  font-weight: 500;
 }
 .lab-orbital__res-list {
   margin: 0;

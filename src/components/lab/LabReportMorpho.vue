@@ -39,7 +39,6 @@ function render() {
   const colorScale = d3.scaleSequential((t) => interpolateCyanAmber(t)).domain([min, max])
 
   const fillCyanSubtle = getCssVar('--color-cyan-subtle', 'rgba(0,180,200,0.05)')
-  const fontSizeXs = getCssVar('--text-xs', '9px')
 
   // ── Modèle de forme (silhouette) ──
   d3.select(shapeRef.value).selectAll('*').remove()
@@ -62,8 +61,8 @@ function render() {
     .append('text')
     .attr('x', margin.left + 8)
     .attr('y', margin.top + 14)
-    .attr('font-size', fontSizeXs)
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text(`L/l ≈ ${params.elongation} · ${params.symetrie}`)
 
@@ -122,8 +121,8 @@ function render() {
     .append('text')
     .attr('x', legendX)
     .attr('y', legendY - 2)
-    .attr('font-size', fontSizeXs)
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text(`${Math.round(min)} K`)
 
@@ -132,8 +131,8 @@ function render() {
     .attr('x', legendX + legendWidth)
     .attr('y', legendY - 2)
     .attr('text-anchor', 'end')
-    .attr('font-size', fontSizeXs)
-    .attr('font-family', 'var(--font-mono)')
+    .style('font-size', 'var(--text-xs)')
+    .style('font-family', 'var(--font-mono)')
     .attr('fill', 'var(--color-muted)')
     .text(`${Math.round(max)} K`)
 }

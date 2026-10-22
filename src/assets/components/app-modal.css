@@ -71,7 +71,6 @@
 
 .app-modal__title {
   font-size: var(--text-md);
-  font-weight: var(--weight-semibold);
   color: var(--color-cyan);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
