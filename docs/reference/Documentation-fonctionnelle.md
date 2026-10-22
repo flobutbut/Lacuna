@@ -26,6 +26,7 @@ LACUNA est une simulation d'exploration galactique **persistante, asynchrone et 
 - Première connexion : écran **Bienvenue à bord** — le joueur choisit son **pseudo** (nom de commandant) et le **nom de son vaisseau** ; la partie démarre à Sol
 - Pseudo et nom du vaisseau sont **privés** (jamais montrés aux autres joueurs, conformément à l'anonymat du GDD) et **non uniques** ; modifiables dans Systèmes → Identité
 - Rôle `admin` (attribué à la main) : accès à la Vue 3D étoiles, outil de conception
+- **Paramètres** (icône joueur du header, à côté de Quitter) : grande modale à sections, prévue pour accueillir les futurs réglages. Section Compte : email, **suppression du compte** (saisir « SUPPRIMER ») — compte, vaisseau, partie et interprétations effacés définitivement, retour à la connexion avec confirmation
 - Évolution prévue : le pseudo pourra signer les traces déposées par le joueur — copie texte au moment du dépôt, sans lien vers le compte
 
 ### Vaisseau

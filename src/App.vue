@@ -15,7 +15,7 @@ const isBareLayout = computed(() => route.meta.bareLayout === true)
 watch(
   () => authStore.isAuthenticated,
   (now, before) => {
-    if (before && !now) window.location.assign('/connexion')
+    if (before && !now) window.location.assign(authStore.accountDeleted ? '/connexion?compte=supprime' : '/connexion')
   }
 )
 </script>

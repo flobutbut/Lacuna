@@ -23,6 +23,12 @@
   max-height: calc(100vh - var(--space-12));
 }
 
+.app-modal--large .app-modal__box {
+  max-width: 880px;
+  height: min(640px, calc(100vh - var(--space-12)));
+  max-height: none;
+}
+
 .app-modal--no-overlay {
   pointer-events: none;
 }

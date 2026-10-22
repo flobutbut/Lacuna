@@ -173,6 +173,7 @@ Modal réutilisable avec structure header / content / footer. Toutes les modales
 **Props** :
 - `title` (String) : Titre affiché dans le header
 - `position` (String) : `'center'` | `'top-right'` — position du box (défaut : center)
+- `size` (String) : `'default'` | `'large'` — `large` : 880 px de large, hauteur fixe (paramètres, contenus à plusieurs sections)
 - `overlay` (Boolean) : afficher le backdrop (défaut : true). Si false, interaction possible avec le reste de l'interface.
 
 **Events** :
@@ -188,7 +189,7 @@ Modal réutilisable avec structure header / content / footer. Toutes les modales
 </AppModal>
 ```
 
-**Utilisation** : SignalModal, TravelWidget, ObservatoirePanel, PageSystemes (position `top-right`), DepartureConfirmation (vue confirmation départ — titre dynamique, footer btn-ghost + btn-primary)
+**Utilisation** : SignalModal, TravelWidget, ObservatoirePanel, PageSystemes (position `top-right`), SettingsModal (taille `large`, menu des sections à gauche), DepartureConfirmation (vue confirmation départ — titre dynamique, footer btn-ghost + btn-primary)
 
 ---
 
@@ -333,6 +334,7 @@ Bouton d'instrument en grille (3×N, **carrés**). Réutilisable. Utilisé par l
 | `.btn-secondary` | Action secondaire |
 | `.btn-ghost` | Action discrète |
 | `.btn-amber` | Action warning |
+| `.btn-danger` | Action irréversible (suppression du compte) |
 | `.btn-instrument` | Bouton barre instruments |
 | `.btn-close` | Fermeture panel |
 

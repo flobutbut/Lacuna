@@ -1,6 +1,6 @@
 /**
  * Données de menus partagées — LACUNA
- * Utilisées par PageSystemes, PageArtefacts, InstrumentsBar
+ * Utilisées par PageSystemes, PageArtefacts, InstrumentsBar, SettingsModal
  */
 
 /** Menu Systèmes (vue ARCA) — 1 item par groupe SVG + Identité + Historique */
@@ -55,3 +55,6 @@ export const TRACE_ICONS = {
 export function getTraceIcon(type) {
   return TRACE_ICONS[type] ?? '◈'
 }
+
+/** Paramètres (modale du header) — une entrée par section */
+export const SETTINGS_SECTIONS = [{ id: 'account', label: 'Compte', icon: '◈' }]

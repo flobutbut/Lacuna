@@ -532,6 +532,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00048 | RLS par joueur (§7), suppression du vaisseau prototype et des données de session, RLS sur constellations, TRUNCATE retiré à l'API |
 | 00049 | Suppression des pulsars en double |
 | 00050 | Transit côté serveur : table game_settings, RPC start_transit et complete_transit, UPDATE de ships limité à name, ship_travels en lecture seule |
+| 00051 | RPC delete_account : suppression du compte par le joueur (RGPD) |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
@@ -549,6 +550,10 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 
 - `start_transit` : refuse si un transit est en cours (`55000`), si la destination est inconnue ou est le système courant (`22023`). Distance entre les coordonnées des deux systèmes (`system_xyz`), durée `transit_player_seconds(distance) × transit_time_scale`, arrivée = `now()` + durée.
 - `complete_transit` : avant l'heure d'arrivée (horloge du serveur) ou hors transit, renvoie le vaisseau inchangé ; sinon ajoute le voyage à `ship_travels`, place le vaisseau à destination et incrémente `voyage`.
+
+### RPC `delete_account()` (migration 00051)
+
+`SECURITY DEFINER`, réservée à `authenticated`. Supprime les interprétations du joueur (sinon conservées sans auteur, `ON DELETE SET NULL`), efface son vaisseau de `traces.discovered_by`, puis supprime `auth.users` : profil, vaisseau et toutes ses données suivent en cascade. Appelée depuis Paramètres → Compte.
 
 ### RPC `compute_pulsar_signals(p_ship_id, p_band)` (migrations 00041 → 00047)
 
@@ -822,6 +827,7 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 
 | Date | Modifications |
 |------|---------------|
+| 2026-10-22 | Suppression du compte : RPC delete_account (00051) |
 | 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |

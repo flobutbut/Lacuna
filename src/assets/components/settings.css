@@ -1,0 +1,93 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Paramètres (SettingsModal)
+   Menu des sections à gauche, section active à droite
+   ══════════════════════════════════════════════════════ */
+
+.settings {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: var(--space-10);
+  min-height: 100%;
+}
+
+.settings__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-right: var(--space-8);
+  border-right: var(--border-width) solid var(--border-default);
+}
+
+.settings__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 520px;
+}
+
+.settings__title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-cyan);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+}
+
+.settings__text {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--color-muted);
+}
+
+/* ── Zone d'action irréversible ── */
+.settings-danger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-10);
+  padding: var(--space-8);
+  border: var(--border-width) solid color-mix(in srgb, var(--color-red) 35%, transparent);
+  background: color-mix(in srgb, var(--color-red) 4%, transparent);
+}
+
+.settings-danger__title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-red);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+}
+
+.settings-danger__action {
+  align-self: flex-start;
+}
+
+.settings-danger__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.settings-danger__buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (max-width: 720px) {
+  .settings {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    gap: var(--space-8);
+  }
+
+  .settings__nav {
+    flex-direction: row;
+    padding: 0 0 var(--space-4);
+    border-right: none;
+    border-bottom: var(--border-width) solid var(--border-default);
+  }
+}

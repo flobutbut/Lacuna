@@ -15,6 +15,7 @@ const email = ref('')
 const password = ref('')
 const errors = ref({ email: '', password: '' })
 const formError = ref('')
+const accountDeleted = route.query.compte === 'supprime'
 const submitting = ref(false)
 
 async function submit() {
@@ -45,6 +46,9 @@ onMounted(() => {
 <template>
   <AuthPanel title="Connexion" subtitle="Reprenez le commandement de votre vaisseau.">
     <form class="auth-form" novalidate @submit.prevent="submit">
+      <p v-if="accountDeleted && !formError" class="auth-alert auth-alert--success" role="status">
+        Votre compte et votre partie ont été supprimés.
+      </p>
       <p v-if="formError" class="auth-alert auth-alert--error" role="alert">
         {{ formError }}
       </p>

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useShipStore } from '@/stores/ship'
 import { useDrakeStore } from '@/stores/drake'
@@ -7,6 +7,7 @@ import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useRadarStore } from '@/stores/radar'
 import { useAuthStore } from '@/stores/auth'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
+import SettingsModal from '@/components/settings/SettingsModal.vue'
 
 const shipStore = useShipStore()
 const drakeStore = useDrakeStore()
@@ -14,6 +15,7 @@ const stellarStore = useStellarSystemsStore()
 const radarStore = useRadarStore()
 const authStore = useAuthStore()
 const { radarEnabled } = storeToRefs(radarStore)
+const settingsOpen = ref(false)
 
 // App.vue recharge la page sur /connexion dès que la session disparaît
 function logout() {
@@ -97,6 +99,19 @@ onMounted(async () => {
       <button
         v-if="authStore.isAuthenticated"
         type="button"
+        class="header__stat-block header__settings"
+        title="Paramètres"
+        aria-label="Paramètres"
+        @click="settingsOpen = true"
+      >
+        <svg class="header__settings__icon" viewBox="0 0 16 16" aria-hidden="true">
+          <circle cx="8" cy="5.5" r="3" />
+          <path d="M2.5 14.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
+        </svg>
+      </button>
+      <button
+        v-if="authStore.isAuthenticated"
+        type="button"
         class="header__stat-block header__logout"
         title="Se déconnecter"
         @click="logout"
@@ -104,5 +119,9 @@ onMounted(async () => {
         <span class="header__logout__label">Quitter</span>
       </button>
     </div>
+    <!-- Hors du header : son z-index limiterait la modale -->
+    <Teleport to="body">
+      <SettingsModal v-if="settingsOpen" @close="settingsOpen = false" />
+    </Teleport>
   </header>
 </template>

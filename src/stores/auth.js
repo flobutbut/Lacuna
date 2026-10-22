@@ -18,6 +18,8 @@ export const useAuthStore = defineStore('auth', () => {
   const profile = ref(null)
   /** Le joueur a-t-il un vaisseau ? null = inconnu (pas encore chargé, ou erreur de chargement) */
   const hasShip = ref(null)
+  /** Compte supprimé par le joueur : la page de connexion le confirme */
+  const accountDeleted = ref(false)
 
   const user = computed(() => session.value?.user ?? null)
   const isAuthenticated = computed(() => !!session.value)
@@ -137,6 +139,19 @@ export const useAuthStore = defineStore('auth', () => {
     return data.pseudo
   }
 
+  /**
+   * Supprime définitivement le compte, la partie et les interprétations du joueur (RPC delete_account),
+   * puis ferme la session locale : App.vue recharge alors la page de connexion.
+   */
+  async function deleteAccount() {
+    const { error } = await supabase.rpc('delete_account')
+    if (error) throw error
+    accountDeleted.value = true
+    // Les sessions serveur ont disparu avec le compte : seule la session locale reste à effacer
+    await supabase.auth.signOut({ scope: 'local' })
+    session.value = null
+  }
+
   return {
     session,
     ready,
@@ -155,5 +170,7 @@ export const useAuthStore = defineStore('auth', () => {
     signOut,
     requestPasswordReset,
     updatePassword,
+    accountDeleted,
+    deleteAccount,
   }
 })
