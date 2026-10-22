@@ -15,35 +15,6 @@
   margin-bottom: var(--space-4);
 }
 
-.observatoire-panel__bodies {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.observatoire-body__info {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.observatoire-body__name {
-  font-size: var(--text-base);
-  color: var(--color-white);
-  font-family: var(--font-mono);
-}
-
-.observatoire-body__type {
-  font-size: var(--text-sm);
-  color: var(--color-muted);
-}
-
-.observatoire-body__anomaly {
-  font-size: var(--text-sm);
-  color: var(--color-muted);
-}
-
 .observatoire-body__anomaly.high {
   color: var(--color-amber);
 }
@@ -63,11 +34,6 @@
   0% { transform: scale(1); }
   50% { transform: scale(0.97); background: color-mix(in srgb, var(--color-green) 15%, transparent); }
   100% { transform: scale(1); }
-}
-
-.observatoire-body__actions {
-  display: flex;
-  gap: var(--space-3);
 }
 
 /* ── Modale signal (contenu) ── */

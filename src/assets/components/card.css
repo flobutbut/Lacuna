@@ -1,0 +1,214 @@
+/* ══════════════════════════════════════════════════════
+   LACUNA — Cards
+   Base commune à toutes les cartes : AppCard (et ObservationCard qui l'enveloppe),
+   NavMenuItem, InstrumentButton, ModalCell.
+   Structure : .card > .card__header (icône · titre + méta · aside) > .card__body > .card__actions
+   ══════════════════════════════════════════════════════ */
+
+.card {
+  --card-pad-y: var(--space-5);
+  --card-pad-x: var(--space-6);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: var(--card-pad-y) var(--card-pad-x);
+  background: var(--color-shade-30);
+  border: var(--border-width) solid var(--border-default);
+  color: var(--color-white);
+}
+
+/* ── États (identiques pour toutes les cartes) ── */
+.card--interactive {
+  cursor: pointer;
+  transition: border-color var(--transition-base), background var(--transition-base), color var(--transition-base);
+}
+
+.card--interactive:hover {
+  border-color: var(--border-bright);
+  background: var(--color-cyan-subtle);
+}
+
+.card.is-selected {
+  border-color: var(--color-cyan);
+  background: var(--color-cyan-subtle);
+}
+
+.card.is-done {
+  border-color: var(--color-green);
+  background: color-mix(in srgb, var(--color-green) 10%, transparent);
+}
+
+.card.is-highlight {
+  border-color: var(--color-amber);
+}
+
+.card.is-muted {
+  opacity: 0.6;
+}
+
+.card.is-disabled {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+}
+
+/* ── En-tête : icône, titre + méta, aside (statut · badge · fermer) ── */
+.card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+/* Centrée verticalement sur le titre et la méta (l'aside reste en haut) */
+.card__icon {
+  flex-shrink: 0;
+  align-self: center;
+  /* Compense le retrait du texte (.card__main) pour un centrage exact */
+  margin-top: var(--space-1);
+  width: var(--space-10);
+  height: var(--space-10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Illustrations (étoile, planète) : remplissent la case de 24 px */
+.card__icon .star-svg-inline,
+.card__icon .planet-svg-inline,
+.card__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.card__main {
+  flex: 1;
+  min-width: 0;
+  /* Même retrait que l'aside : titre et statut sur la même ligne */
+  padding-top: var(--space-1);
+}
+
+.card__title {
+  font-size: var(--text-base);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-white);
+  overflow-wrap: anywhere;
+}
+
+.card__title--signal {
+  color: var(--color-signal);
+}
+
+.card__meta {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  color: var(--color-muted);
+}
+
+/* Méta en ligne : éléments séparés par un point médian */
+.card__meta--inline > * + *::before {
+  content: ' · ';
+  white-space: pre;
+}
+
+.card__aside {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
+  padding-top: var(--space-1);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  color: var(--color-muted);
+}
+
+.card__badge--warn {
+  color: var(--color-amber);
+}
+
+.card__dismiss {
+  width: var(--space-9);
+  height: var(--space-9);
+  margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-3)) calc(-1 * var(--space-2)) 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font-size: var(--text-md);
+  cursor: pointer;
+  transition: color var(--transition-base), background var(--transition-base);
+}
+
+.card__dismiss:hover {
+  color: var(--color-white);
+  background: color-mix(in srgb, var(--color-red) 20%, transparent);
+}
+
+/* ── Contenu complémentaire (état, progression) ── */
+.card__body {
+  margin-top: var(--space-3);
+  padding-left: calc(var(--space-10) + var(--space-5));
+}
+
+.card__note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  color: var(--color-amber);
+}
+
+.card__note--done {
+  color: var(--color-green);
+}
+
+.card__body > * + * {
+  margin-top: var(--space-2);
+}
+
+/* ── Actions : pied de carte pleine largeur, boutons sans bordure ── */
+.card__actions {
+  display: flex;
+  margin: var(--card-pad-y) calc(-1 * var(--card-pad-x)) calc(-1 * var(--card-pad-y));
+  border-top: var(--border-width) solid var(--border-default);
+}
+
+.card__actions > .btn {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-4) var(--space-3);
+  border: none;
+  background: transparent;
+  color: var(--color-cyan-muted);
+  font-size: var(--text-sm);
+}
+
+.card__actions > .btn + .btn {
+  border-left: var(--border-width) solid var(--border-default);
+}
+
+.card__actions > .btn:hover:not(:disabled) {
+  background: var(--color-cyan-tint);
+  color: var(--color-white);
+}
+
+/* Action déjà faite (ex. « Ajouté ») : verte, non désactivée visuellement */
+.card__actions > .btn.is-done,
+.card__actions > .btn.is-done:disabled {
+  opacity: 1;
+  color: var(--color-green);
+  background: color-mix(in srgb, var(--color-green) 10%, transparent);
+  cursor: default;
+}
+
+/* ── Liste de cartes ── */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

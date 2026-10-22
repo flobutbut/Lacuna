@@ -377,23 +377,25 @@ onUnmounted(() => {
               {{ opt.label }}
             </button>
           </div>
-          <ObservationCard
-            v-for="obs in filteredObservations"
-            :key="obs.id"
-            :icon-type="getObservationIcon(obs).type"
-            :icon-value="getObservationIcon(obs).value"
-            :title="obs.name"
-            :title-variant="obs.type === 'SIGNAL' ? 'signal' : 'default'"
-            :rows="[
-              `${OBJECT_TYPE_LABELS[obs.type === 'STAR' ? 'ETOILE' : obs.type === 'PLANET' ? 'PLANETE' : obs.type] ?? obs.type}${obs.type === 'SIGNAL' && obs.support ? ` (${getSupportLabel(obs.support, 'long')})` : ''} · ${obs.system}`,
-              obs.date,
-            ]"
-            :state="selectedId === obs.id ? 'selected' : getObservationState(obs)"
-            :state-text="getObservationStateText(obs)"
-            dismiss-label="Supprimer"
-            @click="selectObservation(obs)"
-            @dismiss="() => removeObservation(obs)"
-          />
+          <div class="card-list">
+            <ObservationCard
+              v-for="obs in filteredObservations"
+              :key="obs.id"
+              :icon-type="getObservationIcon(obs).type"
+              :icon-value="getObservationIcon(obs).value"
+              :title="obs.name"
+              :title-variant="obs.type === 'SIGNAL' ? 'signal' : 'default'"
+              :rows="[
+                `${OBJECT_TYPE_LABELS[obs.type === 'STAR' ? 'ETOILE' : obs.type === 'PLANET' ? 'PLANETE' : obs.type] ?? obs.type}${obs.type === 'SIGNAL' && obs.support ? ` (${getSupportLabel(obs.support, 'long')})` : ''} · ${obs.system}`,
+                obs.date,
+              ]"
+              :state="selectedId === obs.id ? 'selected' : getObservationState(obs)"
+              :state-text="getObservationStateText(obs)"
+              dismiss-label="Supprimer"
+              @click="selectObservation(obs)"
+              @dismiss="() => removeObservation(obs)"
+            />
+          </div>
         </template>
       </div>
 

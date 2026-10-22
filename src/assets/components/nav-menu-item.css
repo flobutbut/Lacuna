@@ -1,15 +1,11 @@
 /* ══════════════════════════════════════════════════════
    LACUNA — NavMenuItem
    Item de menu (Systèmes, Population), slot (Artefacts)
+   Base, fond, bordure et états : .card (card.css)
    ══════════════════════════════════════════════════════ */
 
 .nav-menu-item {
   font-family: var(--font-mono);
-  cursor: pointer;
-  transition: all var(--transition-base);
-  position: relative;
-  border: var(--border-width) solid var(--border-default);
-  background: var(--color-shade-30);
   color: var(--color-muted);
   text-decoration: none;
   overflow: hidden;
@@ -26,27 +22,22 @@
 /* ── Variant: menu (Systèmes, Population — colonne gauche) ── */
 .nav-menu-item--menu {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-5);
   width: 100%;
-  padding: var(--space-5) var(--space-4);
   font-size: var(--text-base);
   letter-spacing: var(--tracking-tight);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-2);
   text-align: left;
 }
 
-.nav-menu-item--menu:hover {
-  border-color: var(--border-bright);
-  background: var(--color-cyan-subtle);
+.nav-menu-item:hover {
   color: var(--color-white);
 }
 
-.nav-menu-item--menu.nav-menu-item--selected {
-  border-color: var(--color-cyan);
-  background: var(--color-cyan-subtle);
+.nav-menu-item.is-selected {
   color: var(--color-cyan);
-  box-shadow: 0 0 0 1px var(--color-cyan-dim);
 }
 
 .nav-menu-item__icon {
@@ -70,20 +61,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-4);
-}
-
-.nav-menu-item--slot:hover {
-  border-color: var(--border-bright);
-  background: var(--color-cyan-subtle);
-  color: var(--color-white);
-}
-
-.nav-menu-item--slot.nav-menu-item--selected {
-  border-color: var(--color-cyan);
-  background: var(--color-cyan-subtle);
-  color: var(--color-cyan);
-  box-shadow: 0 0 0 1px var(--color-cyan-dim);
+  padding: var(--card-pad-y);
 }
 
 .nav-menu-item--slot .nav-menu-item__icon {

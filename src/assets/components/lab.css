@@ -431,20 +431,14 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-4);
-  border: var(--border-width) solid var(--border-default);
-  background: var(--color-shade-30);
+  /* Fond, bordure, marges et états : .card (card.css) */
   color: var(--color-muted);
   font-family: var(--font-mono);
-  cursor: pointer;
-  transition: all var(--transition-base);
   -webkit-appearance: none;
   appearance: none;
 }
 
-.instrument-btn:hover:not(:disabled):not(.instrument-btn--running) {
-  border-color: var(--border-bright);
-  background: var(--color-cyan-subtle);
+.instrument-btn.card--interactive:hover {
   color: var(--color-white);
 }
 
@@ -453,19 +447,9 @@
   outline-offset: 2px;
 }
 
-.instrument-btn--disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .instrument-btn--running {
   border-color: var(--color-cyan-dim);
   cursor: wait;
-}
-
-.instrument-btn--done {
-  border-color: var(--color-green);
-  background: color-mix(in srgb, var(--color-green) 10%, transparent);
 }
 
 .instrument-btn__progress-bg {
@@ -505,7 +489,7 @@
   flex-shrink: 0;
 }
 
-.instrument-btn--done .instrument-btn__icon-wrap {
+.instrument-btn.is-done .instrument-btn__icon-wrap {
   color: var(--color-green);
 }
 

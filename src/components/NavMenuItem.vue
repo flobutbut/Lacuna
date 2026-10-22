@@ -29,10 +29,10 @@ defineEmits(['click'])
   <button
     type="button"
     :role="role ?? 'button'"
-    class="nav-menu-item"
+    class="nav-menu-item card card--interactive"
     :class="[
       `nav-menu-item--${variant}`,
-      selected && 'nav-menu-item--selected',
+      selected && 'is-selected',
       iconColor && `nav-menu-item--icon-${iconColor}`,
     ]"
     @click="$emit('click')"

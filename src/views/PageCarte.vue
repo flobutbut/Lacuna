@@ -546,14 +546,15 @@ watch(carteViewMode, (mode) => {
               {{ opt.label }}
             </button>
           </div>
-          <div class="carte-systems__list">
+          <div class="carte-systems__list card-list">
             <AppCard
               v-for="node in displayedSystemsList"
               :key="node.systemId"
               :title="node.name || node.systemId"
               :subtitle="node.exoplanetCount === 0 ? 'Aucune exoplanète' : node.exoplanetCount === 1 ? '1 exoplanète' : `${node.exoplanetCount} exoplanètes`"
               :status="currentSystemItem?.systemId === node.systemId ? 'Système actuel' : (node.visitedAt ? 'Visitée' : '')"
-              :badge="node.tracesFound > 0 ? node.tracesFound : ''"
+              :badge="node.tracesFound > 0 ? `${node.tracesFound} trace${node.tracesFound > 1 ? 's' : ''}` : ''"
+              badge-variant="warn"
               :dismissable="currentSystemItem?.systemId !== node.systemId && !node.visitedAt"
               :clickable="true"
               :selected="selectedSystemId === node.systemId"
@@ -805,8 +806,8 @@ watch(carteViewMode, (mode) => {
           </div>
 
           <div v-if="systemBodiesForAnalyser.length > 0" class="carte-details__section">
-            <div class="carte-details__section-title sw-title">Astres du système</div>
-            <div class="carte-system-bodies">
+            <div class="carte-details__section-title">Astres du système</div>
+            <div class="carte-system-bodies card-list">
               <AppCard
                 v-for="body in systemBodiesForAnalyser"
                 :key="body.designation || body.id"
@@ -828,7 +829,7 @@ watch(carteViewMode, (mode) => {
                   <button
                     type="button"
                     class="btn btn-secondary observatoire-body__add-btn"
-                    :class="{ 'observatoire-body__add-btn--animating': isAnimatingForBody(body), 'observatoire-body__add-btn--added': isAddedForBody(body) }"
+                    :class="{ 'observatoire-body__add-btn--animating': isAnimatingForBody(body), 'is-done': isAddedForBody(body) }"
                     :disabled="isAddedForBody(body)"
                     @click="addOnlyForBody(body)"
                   >

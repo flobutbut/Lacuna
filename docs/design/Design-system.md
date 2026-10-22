@@ -265,14 +265,14 @@ Modal réutilisable avec structure header / content / footer. Toutes les modales
 
 ### 3.2 ModalCell
 
-**Fichier** : `src/components/ModalCell.vue`
+**Fichier** : `src/components/ModalCell.vue` — base `.card` (voir 3.13 bis)
 
-Cellule à bordure solid pour le contenu des modales (grilles, cards).
+Cellule de données dans une modale.
 
 **Props** :
 - `variant` : `'default'` | `'compact'`
-  - `default` : padding `--space-4`, background 0.3 (corps observatoire)
-  - `compact` : padding `--space-3` `--space-5`, background 0.25 (phases transit)
+  - `default` : marges de la carte (10 / 12 px)
+  - `compact` : marges réduites (6 / 10 px), pour des grilles de valeurs denses
 
 **Exemple** :
 ```vue
@@ -282,7 +282,7 @@ Cellule à bordure solid pour le contenu des modales (grilles, cards).
 </ModalCell>
 ```
 
-**Utilisation** : Transit phases (TravelWidget), corps détectables (ObservatoirePanel)
+**Utilisation** : phases du transit (TravelWidget)
 
 ---
 
@@ -419,7 +419,7 @@ Les onglets de la barre du bas sont des `NavTabButton` (`.nav-tab-btn`, `instrum
 
 **Fichier** : `src/components/ObservationCard.vue`
 
-Card cliquable pour signaux et observations.
+Card cliquable pour signaux et observations. Enveloppe `AppCard` (base `.card`, voir 3.13 bis).
 
 **Props** :
 - `iconType` : `'signal'` | `'observation'`
@@ -505,35 +505,45 @@ Liste déroulante native stylée avec les tokens du design system (couleurs, bor
 
 ---
 
-### 3.13 bis AppCard
+### 3.13 bis Cards (card.css) et AppCard
 
-**Fichier** : `src/components/AppCard.vue` (styles scopés, tokens uniquement)
+**Base commune** : `src/assets/components/card.css` (chargé dans `main.js`). Toutes les cartes l'utilisent : `AppCard` (et `ObservationCard` qui l'enveloppe), `NavMenuItem`, `InstrumentButton`, `ModalCell`.
 
-Card de liste : icône, titre, statut, sous-titre et actions. Peut être cliquable (clavier compris : Entrée / Espace), sélectionnée, retirable (×) et porter un badge.
+| Élément | Classe | Règle |
+|---------|--------|-------|
+| Carte | `.card` | Marge intérieure 10 / 12 px (`--card-pad-y` / `--card-pad-x`, surchargeables), fond `--color-shade-30`, bordure `--border-default`, angles droits |
+| En-tête | `.card__header` | Icône 24 px · titre + méta · aside, alignés en haut |
+| Titre | `.card__title` (`--signal`) | `--text-base`, blanc, interligne serré |
+| Méta | `.card__meta` (`--inline`) | `--text-sm`, muted, 2 px sous le titre ; en ligne, éléments séparés par « · » |
+| Aside | `.card__aside` | Statut · badge (`--warn` ambre) · fermer, sur une seule rangée en haut à droite |
+| Contenu | `.card__body`, `.card__note` | Sous l'en-tête, aligné sur le titre (état, progression) |
+| Actions | `.card__actions` | Pied de carte pleine largeur, séparé par un filet ; boutons sans bordure, séparés par un filet vertical ; `.is-done` pour une action déjà faite |
+| Liste | `.card-list` | Colonne, 4 px entre les cartes |
 
-**Props** :
-- `title`, `subtitle`, `status` : textes (remplaçables par les slots du même nom)
-- `badge` : texte ou nombre affiché en haut à droite
-- `dismissable` : affiche le bouton × (`aria-label="Retirer de la liste"`)
-- `clickable` : rend la card focusable (`role="button"`) et émet `@click`
-- `selected` : état sélectionné (bordure et fond accentués)
+**États** (identiques partout) : `.card--interactive` (survol : bordure claire + fond cyan léger), `.is-selected` (bordure cyan, sans ombre), `.is-done` (vert), `.is-highlight` (ambre), `.is-muted`, `.is-disabled` (`--opacity-disabled`).
 
-**Slots** : `#icon`, `#title`, `#status`, `#subtitle`, `#actions`
+**Règle** : pas de bouton encadré dans une carte ; les actions vont dans `.card__actions`.
+
+**AppCard** — `src/components/AppCard.vue`
+
+**Props** : `title`, `titleVariant` (`'signal'`), `subtitle`, `status`, `badge`, `badgeVariant` (`'warn'`), `dismissable`, `dismissLabel`, `clickable` (focusable, `role="button"`, Entrée / Espace), `selected`
+
+**Slots** : `#icon`, `#title`, `#subtitle` (méta en ligne), `#meta` (lignes de méta supplémentaires), `#status`, défaut (contenu sous l'en-tête), `#actions`
 
 **Events** : `@click`, `@dismiss`
 
+**Utilisation** : systèmes et astres de la Carte, corps détectables de l'Observatoire (même carte que les astres), observations du Laboratoire (`ObservationCard`).
+
 **Exemple** :
 ```vue
-<AppCard
-  :title="node.name"
-  :subtitle="`${node.exoplanetCount} exoplanètes`"
-  :badge="node.tracesFound || ''"
-  dismissable
-  clickable
-  :selected="selectedSystemId === node.systemId"
-  @click="selectSystem(node.systemId)"
-  @dismiss="removeFromMap(node.systemId)"
-/>
+<AppCard :title="body.name">
+  <template #icon><PlanetSvgInline :planet="body" :diameter="32" /></template>
+  <template #subtitle><span>Planète tellurique</span><span>Zone habitable</span></template>
+  <template #actions>
+    <button type="button" class="btn btn-secondary">Analyser</button>
+    <button type="button" class="btn btn-secondary" :class="{ 'is-done': added }">Ajouter au laboratoire</button>
+  </template>
+</AppCard>
 ```
 
 **Utilisation** : PageCarte (liste des systèmes)

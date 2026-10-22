@@ -8,7 +8,8 @@ import { useSystemObjectsStore } from '@/stores/systemObjects'
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
 import { buildObservationPayload, getBodyDisplayName as getBodyDisplayNameFromLib, getStarOnlyBody } from '@/lib/observationPayload'
 import AppModal from '@/components/AppModal.vue'
-import ModalCell from '@/components/ModalCell.vue'
+import AppCard from '@/components/AppCard.vue'
+import ObservationTypeIcon from '@/components/icons/ObservationTypeIcon.vue'
 
 const router = useRouter()
 const notificationsStore = useNotificationsStore()
@@ -120,33 +121,35 @@ function isAnimating(body) {
   >
     <div class="observatoire-panel__section">
       <div class="observatoire-panel__section-title">{{ observatoireStore.selectedBody ? 'Corps sélectionné' : 'Corps détectables' }}</div>
-      <div class="observatoire-panel__bodies">
-        <ModalCell
+      <!-- Même carte que les astres de la Carte -->
+      <div class="card-list">
+        <AppCard
           v-for="b in bodies"
           :key="b.id"
+          :title="getBodyDisplayName(b)"
         >
-          <div class="observatoire-body__info">
-            <span class="observatoire-body__name">{{ getBodyDisplayName(b) }}</span>
-            <span class="observatoire-body__type">{{ OBJECT_TYPE_LABELS[b.type] }}</span>
-            <span class="observatoire-body__anomaly" :class="{ high: b.anomaly >= 40 }">
-              Anomalie {{ b.anomaly }}%
-            </span>
-          </div>
-          <div class="observatoire-body__actions">
+          <template #icon>
+            <ObservationTypeIcon :type="b.type" :size="16" />
+          </template>
+          <template #subtitle>
+            <span>{{ OBJECT_TYPE_LABELS[b.type] }}</span>
+            <span class="observatoire-body__anomaly" :class="{ high: b.anomaly >= 40 }">Anomalie {{ b.anomaly }}%</span>
+          </template>
+          <template #actions>
             <button type="button" class="btn btn-secondary" @click="analyser(b)">
               Analyser
             </button>
             <button
               type="button"
               class="btn btn-secondary observatoire-body__add-btn"
-              :class="{ 'observatoire-body__add-btn--animating': isAnimating(b), 'observatoire-body__add-btn--added': isAdded(b) }"
+              :class="{ 'observatoire-body__add-btn--animating': isAnimating(b), 'is-done': isAdded(b) }"
               :disabled="isAdded(b)"
               @click="addOnly(b)"
             >
               {{ isAdded(b) ? 'Ajouté' : 'Ajouter au laboratoire' }}
             </button>
-          </div>
-        </ModalCell>
+          </template>
+        </AppCard>
       </div>
     </div>
   </AppModal>

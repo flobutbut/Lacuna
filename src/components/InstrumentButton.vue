@@ -26,11 +26,12 @@ function handleClick() {
 <template>
   <button
     type="button"
-    class="instrument-btn"
+    class="instrument-btn card"
     :class="{
-      'instrument-btn--disabled': state === 'disabled',
+      'card--interactive': state === 'available' || state === 'done',
+      'is-disabled': state === 'disabled',
       'instrument-btn--running': state === 'running',
-      'instrument-btn--done': state === 'done',
+      'is-done': state === 'done',
     }"
     :disabled="state === 'disabled' || state === 'running'"
     @click="handleClick"

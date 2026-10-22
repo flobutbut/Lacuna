@@ -115,21 +115,14 @@
 }
 
 /* ── ModalCell : cellules dans le contenu des modales ── */
-.modal-cell {
-  display: flex;
-  flex-direction: column;
-  border: var(--border-width) solid var(--border-default);
-  background: var(--color-shade-30);
-}
-
 .modal-cell--default {
-  padding: var(--space-4);
   gap: var(--space-3);
 }
 
+/* Cellule de données dense (phases de transit) : marges réduites, même fond et bordure que .card */
 .modal-cell--compact {
-  padding: var(--space-3) var(--space-5);
-  background: var(--color-shade-25);
+  --card-pad-y: var(--space-3);
+  --card-pad-x: var(--space-5);
   font-size: var(--text-md);
 }
 
