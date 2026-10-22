@@ -10,7 +10,8 @@ const supabaseHost = LEGAL.hosts.find((h) => h.name.startsWith('Supabase'))
   <SiteDoc kicker="Données personnelles" title="Politique de confidentialité" :updated-at="LEGAL.updatedAt">
     <p class="site-doc__intro">
       {{ LEGAL.siteName }} collecte le strict nécessaire pour faire voyager votre vaisseau. Pas de publicité,
-      pas de mesure d’audience, pas de revente, pas de cookie de suivi.
+      pas de revente, pas de cookie de suivi&nbsp;: la mesure d’audience se limite à des statistiques de visite
+      anonymes et agrégées.
     </p>
 
     <h2>Responsable du traitement</h2>
@@ -44,12 +45,19 @@ const supabaseHost = LEGAL.hosts.find((h) => h.name.startsWith('Supabase'))
         Lorsqu’une vérification anti-robot est active sur l’inscription et la connexion, elle est assurée par
         Cloudflare Turnstile, qui analyse des signaux techniques du navigateur sans cookie publicitaire.
       </li>
+      <li>
+        <strong>Mesure d’audience</strong>&nbsp;: Vercel Web Analytics compte les pages vues de façon agrégée (page
+        visitée, site de provenance, pays, type d’appareil, navigateur et système). Il n’utilise pas de cookie&nbsp;;
+        chaque visiteur est représenté par une empreinte anonyme, calculée à partir de la requête et effacée au bout
+        de 24 heures. L’adresse IP n’est pas conservée.
+      </li>
     </ul>
 
     <h2>Pourquoi, et sur quelle base</h2>
     <ul>
       <li><strong>Faire fonctionner le jeu</strong> (compte, partie, emails de service) : exécution des conditions d’utilisation que vous acceptez en créant un compte.</li>
       <li><strong>Protéger le service</strong> (journaux techniques, anti-robot, lutte contre les abus) : intérêt légitime de l’éditeur.</li>
+      <li><strong>Mesurer la fréquentation</strong> (statistiques anonymes et agrégées, pour améliorer le jeu) : intérêt légitime de l’éditeur.</li>
     </ul>
     <p>Aucune donnée n’est utilisée à des fins publicitaires ni pour établir un profil commercial.</p>
 
@@ -67,7 +75,7 @@ const supabaseHost = LEGAL.hosts.find((h) => h.name.startsWith('Supabase'))
         <strong>Supabase</strong> — base de données, comptes et envoi des emails de service.
         Données stockées dans l’{{ supabaseHost?.dataLocation }}.
       </li>
-      <li><strong>Vercel</strong> — hébergement et distribution de l’application.</li>
+      <li><strong>Vercel</strong> — hébergement et distribution de l’application, mesure d’audience.</li>
       <li><strong>Cloudflare</strong> — vérification anti-robot, lorsqu’elle est active.</li>
     </ul>
     <p>
@@ -83,6 +91,7 @@ const supabaseHost = LEGAL.hosts.find((h) => h.name.startsWith('Supabase'))
         <strong>Comptes inactifs</strong> : supprimés après <LegalValue :value="LEGAL.inactiveAccountRetention" /> sans connexion.
       </li>
       <li><strong>Journaux techniques</strong> : quelques jours à quelques semaines, selon les durées de conservation des hébergeurs.</li>
+      <li><strong>Mesure d’audience</strong> : empreinte du visiteur effacée après 24 heures&nbsp;; statistiques conservées sous forme agrégée, sans donnée permettant de vous identifier.</li>
     </ul>
     <p>
       Vous pouvez supprimer votre compte vous-même, à tout moment&nbsp;: <strong>Paramètres → Compte → Supprimer le compte</strong>.
