@@ -208,7 +208,7 @@ Au-delà de 0.15em, l'œil lit des lettres et non plus des mots : réserver `wid
 
 Toutes les icônes de l'interface viennent de ce jeu. Ne pas utiliser de caractères Unicode (◈ ⌬ ⚙ ×…) comme icônes : Share Tech Mono et Syne ne les contiennent pas, ils s'affichent dans une police système différente selon l'OS (voire en emoji).
 
-**Dessin** : grille 24 × 24, trait 1.5, extrémités et angles arrondis, `currentColor`. Un nom = un sens.
+**Dessin** : grille 24 × 24, trait de 1.25 px à l'écran quelle que soit la taille, extrémités et angles arrondis, `currentColor`. Un nom = un sens.
 
 **Props** :
 - `name` (String, requis) : clé de `iconSet.js`

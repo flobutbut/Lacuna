@@ -3,7 +3,7 @@
  *
  * Règles de dessin (toutes les icônes) :
  * - grille 24 × 24, marge de 2 px environ ;
- * - trait 1.5, extrémités et angles arrondis (posés par AppIcon) ;
+ * - trait de 1.25 px à l'écran quelle que soit la taille, extrémités et angles arrondis (posés par AppIcon) ;
  * - couleur héritée (currentColor) ; fill="currentColor" seulement pour les petits points pleins.
  *
  * Un nom = un sens : ne pas réutiliser une icône pour un autre concept.
@@ -77,16 +77,16 @@ export const ICONS = {
   'noise-filter': '<path d="M3 14l2-5 2 6 2-7 2 8 2-6 2 4 2-3 2 2 2-1"/><path d="M4 4l16 16"/>',
 
   // ── Instruments du Laboratoire ──
-  spectrum: '<path d="M4 12v2M8 8v8M12 5v14M16 10v4M20 11v2"/>',
-  pulse: '<path d="M3 12h4l2-5 3 10 2-5h7"/>',
-  polarization: '<ellipse cx="12" cy="12" rx="9" ry="4.5" transform="rotate(-25 12 12)"/><path d="M12 3v18" stroke-dasharray="1.5 2.5"/>',
-  energy: '<path d="M13 2.5L5.5 13.5H11l-1 8 8.5-11H13z"/>',
-  gravity: '<circle cx="12" cy="7" r="3"/><path d="M12 12v8M8.5 16.5L12 20l3.5-3.5"/>',
+  spectrum: '<path d="M3 20.5h18"/><path d="M5.5 17v-3M9 17V8M12.5 17v-6M16 17V4M19.5 17v-8"/>',
+  pulse: '<path d="M2.5 13h4l2-7 3 13 3-10 1.5 4h5.5"/>',
+  polarization: '<circle cx="12" cy="12" r="9.5"/><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(-35 12 12)"/>',
+  energy: '<path d="M13.5 2.5L5 13.5h6.5l-1.5 8 9-11.5h-6.5z"/>',
+  gravity: '<circle cx="12" cy="7" r="3.5"/><path d="M2.5 14.5c3.5 0 5 3.5 9.5 3.5s6-3.5 9.5-3.5"/><path d="M2.5 19c3.5 0 5 2.5 9.5 2.5s6-2.5 9.5-2.5"/>',
   star: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5l-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/>',
-  atmosphere: '<path d="M2.5 20h19"/><path d="M4 20a8 8 0 0 1 16 0"/><path d="M8 20a4 4 0 0 1 8 0"/>',
+  atmosphere: '<circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="9.5" stroke-dasharray="2 2.5"/>',
   volume: '<path d="M12 2.5l8.5 4.75v9.5L12 21.5l-8.5-4.75v-9.5z"/><path d="M3.5 7.25L12 12l8.5-4.75M12 12v9.5"/>',
   'grid-scan': '<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"/><path d="M7 12h10M12 7v10"/>',
-  magnet: '<path d="M7 3v8a5 5 0 0 0 10 0V3"/><path d="M7 7h3.5M13.5 7H17"/><path d="M10.5 3v8a1.5 1.5 0 0 0 3 0V3"/>',
-  probe: '<path d="M9 3h6M12 3v10"/><path d="M9.5 13h5L12 17z"/><path d="M3 20.5h18"/>',
-  'test-tube': '<path d="M9 3h6M10 3v14.5a2 2 0 0 0 4 0V3"/><path d="M10 11h4"/>',
+  magnet: '<path d="M5.5 3v9a6.5 6.5 0 0 0 13 0V3"/><path d="M9.5 3v9a2.5 2.5 0 0 0 5 0V3"/><path d="M5.5 7h4M14.5 7h4"/>',
+  probe: '<path d="M8.5 2.5h7M12 2.5v10"/><path d="M8.5 12.5h7L12 17.5z"/><path d="M2.5 20.5h19"/>',
+  'test-tube': '<path d="M8 3h8M9.5 3v14.5a2.5 2.5 0 0 0 5 0V3"/><path d="M9.5 11.5h5"/>',
 }

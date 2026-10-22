@@ -3,7 +3,7 @@
 Toutes les icônes de l'interface viennent d'un seul jeu : `src/components/icons/iconSet.js`,
 rendu par `src/components/icons/AppIcon.vue`.
 
-- **Dessin** : grille 24 × 24, trait 1.5, extrémités et angles arrondis, couleur `currentColor`.
+- **Dessin** : grille 24 × 24, trait de 1.25 px à l'écran quelle que soit la taille, extrémités et angles arrondis, couleur `currentColor`.
 - **Taille** : `1em` par défaut — l'icône suit la `font-size` de son conteneur (ou prop `size`).
 - **Accessibilité** : décorative par défaut (`aria-hidden`) ; prop `label` pour une icône porteuse de sens.
 - **Un nom = un sens** : ne pas réutiliser une icône pour un autre concept.

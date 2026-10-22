@@ -28,7 +28,7 @@ const dimension = computed(() => (typeof props.size === 'number' ? `${props.size
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    stroke-width="1.5"
+    stroke-width="1.25"
     stroke-linecap="round"
     stroke-linejoin="round"
     :role="label ? 'img' : undefined"
@@ -43,5 +43,11 @@ const dimension = computed(() => (typeof props.size === 'number' ? `${props.size
   display: inline-block;
   flex-shrink: 0;
   vertical-align: middle;
+}
+
+/* Trait de 1.25 px à l'écran quelle que soit la taille : sans ça, une icône
+   de 36 px aurait un trait 2,5 fois plus épais qu'une icône de 14 px */
+.app-icon :deep(*) {
+  vector-effect: non-scaling-stroke;
 }
 </style>
