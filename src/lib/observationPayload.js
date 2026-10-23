@@ -33,7 +33,7 @@ export function getStarOnlyBody(star) {
  * @param {object} body - Corps (type, has_atmosphere)
  * @param {{ systemName: string, systemId: string|null, distance: string|number, displayName: string }} context - Contexte système + nom d'affichage du corps
  * @param {{ ORBITE: string, SYSTEME: string }} niveaux - obsStore.NIVEAUX
- * @returns {{ name, type, system, system_id, distance, coords, niveau }}
+ * @returns {{ name, type, system, system_id, distance, coords, niveau, attributes }}
  */
 export function buildObservationPayload(body, context, niveaux) {
   const { systemName, systemId, distance, displayName } = context
@@ -49,6 +49,8 @@ export function buildObservationPayload(body, context, niveaux) {
     distance: distance ?? '—',
     coords: '—',
     niveau: needsOrbit ? niveaux.ORBITE : niveaux.SYSTEME,
+    // Corps observé : le serveur s'en sert pour débloquer les lectures de traces qui lui sont liées
+    attributes: body.designation ? { body_designation: body.designation } : {},
   }
 }
 
@@ -56,9 +58,10 @@ export function buildObservationPayload(body, context, niveaux) {
  * Payload observation pour obsStore.addObservation à partir d'un signal (niveau = PASSIF).
  * @param {object} s - Signal (support, structure, distanceEst, receivedAt, durationSec, anomalous, polarization, pulsePeriodS)
  * @param {{ PASSIF: string }} niveaux - obsStore.NIVEAUX
+ * @param {string} [systemName] - Nom du système de l'émetteur (signal d'un émetteur du système courant)
  * @returns {object|null}
  */
-export function signalToObsPayload(s, niveaux) {
+export function signalToObsPayload(s, niveaux, systemName) {
   if (!s) return null
   const name = formatSignalObservationName(s)
   return {
@@ -66,8 +69,8 @@ export function signalToObsPayload(s, niveaux) {
     type: 'SIGNAL',
     support: s.support ?? 'EM_RADIO',
     structure: s.structure ?? 'non uniforme',
-    system: '—',
-    system_id: null,
+    system: s.sourceType === 'EMITTER' ? (systemName ?? '—') : '—',
+    system_id: s.sourceType === 'EMITTER' ? (s.sourceSystemId ?? null) : null,
     distance: s.distanceEst ?? '—',
     coords: '—',
     date: s.receivedAt,

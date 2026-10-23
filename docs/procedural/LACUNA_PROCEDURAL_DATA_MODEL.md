@@ -514,6 +514,7 @@ Valeur entre 0 et 1. Elle influence la capacité à interpréter des traces comp
 | Séquence codée | `ENCODED_SEQUENCE` | Structure mathématique dans un signal | Code génétique |
 | Artefact physique | `PHYSICAL_ARTIFACT` | Objet à géométrie non naturelle | — |
 | Trace de joueur | `PLAYER_TRACE` | Déposée par un autre joueur | — |
+| Biologique | `BIOLOGICAL` | Trace de vie (migration `00059`) | — |
 
 #### Origines
 
@@ -663,6 +664,7 @@ Objet global, partagé par tous les joueurs. `fl`, `fi` et `L` sont les seuls te
 | Mars 2026 | Version 0.1 — document initial |
 | 2026-10-22 | §9.2 et exemple de journal : population de départ 15 000 (alignée sur `LACUNA_GDD.md` v0.5). Code aligné le 2026-10-23 (constante `INITIAL_POPULATION`, migration `00052`) |
 | 2026-10-23 | §9.3 : origine `PRÉCURSEUR` et colonnes de scénario sur `traces` (migrations `00054`, `00055`) |
+| 2026-10-23 | §9.3 : lectures par niveau (`trace_levels`) et découverte (`ship_traces`, `ship_trace_levels`) ; type `BIOLOGICAL` (migrations `00059`, `00060`) |
 
 ---
 

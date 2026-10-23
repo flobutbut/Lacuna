@@ -142,6 +142,13 @@ function getObsNiveauKey(obs) {
   return Object.keys(NIVEAUX).find(k => NIVEAUX[k] === obs.niveau) || 'PASSIF'
 }
 
+/** Une observation d'un corps du système où se trouve le vaisseau peut être approfondie jusqu'au contact */
+function canDeepen(obs) {
+  if (!obs || obs.type === 'SIGNAL' || !obs.system_id) return false
+  if (obs.system_id !== shipStore.currentSystemId) return false
+  return getObsNiveauKey(obs) !== 'CONTACT'
+}
+
 function getObservationStateText(obs) {
   if (!obs) return ''
   if (hasRunningForObs(obs)) return 'Analyse en cours…'
@@ -450,6 +457,14 @@ onUnmounted(() => {
                 @click="addSelectedSystemToCarte"
               >
                 {{ isSelectedSystemOnMap ? 'Sur la carte' : 'Ajouter à la carte' }}
+              </button>
+              <button
+                v-if="canDeepen(selectedObs)"
+                type="button"
+                class="btn btn-primary"
+                @click="obsStore.deepenObservation(selectedObs.id)"
+              >
+                Approfondir
               </button>
               <button
                 type="button"

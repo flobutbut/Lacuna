@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Game Design Document
-*Version 0.7 — Octobre 2026*
+*Version 0.8 — Octobre 2026*
 
 ---
 
@@ -30,6 +30,7 @@
 | 0.5 | Octobre 2026 | Mise en cohérence — population de référence 15 000 (alignée sur les principes du projet et `LACUNA_ARCS.md` §1.10) ; quatrième origine de trace `PRÉCURSEUR` (Yael) ; zone profonde 18 h – 6 jours ; références croisées complétées ; §9 État d'implémentation mis à jour (transit serveur, comptes joueurs) et versé dans les deux copies du document |
 | 0.6 | Octobre 2026 | §9 : écarts population de départ (15 000) et durée de génération (25 ans) corrigés dans le code ; écarts restants : répartition des phases, Équation de Drake (valeurs de référence en base, migration `00053` à appliquer) |
 | 0.7 | Octobre 2026 | §9 : émetteurs de système (signaux à fenêtres du Fil des 75, Radar et Laboratoire) ; migrations `00054`–`00058` écrites, non appliquées |
+| 0.8 | Octobre 2026 | §9 : traces de scénario en base (Fil des 75, gradient de lecture, découverte côté serveur) ; Yael : structure sans entrée ; migrations `00059`, `00060` |
 
 ---
 
@@ -309,7 +310,7 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 | **Générations dynamiques** | §4 — passage de génération contextuel, entrée GENERATIONNEL au journal. Le compteur `generation` est affiché mais pas recalculé. |
 | **Journal de bord** | Entrées MANUEL/AUTO/GENERATIONNEL. Page existante ; contenu et persistance à brancher. |
 | **Dilatation gravitationnelle** | `LACUNA_PHYSICS.md` §3. Non calculée ni affichée. |
-| **Traces immuables et scénarios en base** | `LACUNA_TRACES_IMMUABLES.md`, `LACUNA_SCENARIOS.md`. |
+| **Traces immuables hors scénario, scénarios 03 à 08, entrées de Yael** | `LACUNA_TRACES_IMMUABLES.md`, `LACUNA_SCENARIOS.md`. Seuls le Fil des 75 (migration `00060`) et la structure de Yael (sans entrée) sont en base ; les 9 traces du seed sont visibles de tous. |
 | **Galaxie procédurale à la visite** | Ciel alimenté par stellar_systems (HYG/NASA/seed). |
 
 ### Écarts code / design à corriger dans le code

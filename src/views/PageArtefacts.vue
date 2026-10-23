@@ -4,6 +4,7 @@ import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTracesStore } from '@/stores/traces'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useObservationsStore } from '@/stores/observations'
 import { formatDate } from '@/lib/formatUtils'
 import { getTraceIcon } from '@/constants/menus'
 import AppIcon from '@/components/icons/AppIcon.vue'
@@ -12,15 +13,25 @@ import NavMenuItem from '@/components/NavMenuItem.vue'
 const tracesStore = useTracesStore()
 const { artefacts } = storeToRefs(tracesStore)
 const notificationsStore = useNotificationsStore()
+const { NIVEAUX } = useObservationsStore()
 
 const selectedTrace = ref(null)
 const interpretations = ref([])
 const newInterpretation = ref('')
+const levels = ref([])
 const loadingInterpretations = ref(false)
 const submittingInterpretation = ref(false)
 const deletingId = ref(null)
 
 const selectedId = computed(() => selectedTrace.value?.id)
+
+async function loadLevels(traceId) {
+  levels.value = []
+  if (!traceId) return
+  const list = await tracesStore.fetchLevels(traceId)
+  // Ignore une réponse arrivée après un changement de trace
+  if (selectedTrace.value?.id === traceId) levels.value = list
+}
 
 async function loadInterpretations(traceId) {
   if (!traceId) return
@@ -71,7 +82,11 @@ function selectTrace(trace) {
 }
 
 watch(selectedTrace, (trace) => {
-  if (trace) loadInterpretations(trace.id)
+  levels.value = []
+  if (trace) {
+    loadInterpretations(trace.id)
+    loadLevels(trace.id)
+  }
 }, { immediate: true })
 
 function ensureSelection() {
@@ -80,7 +95,7 @@ function ensureSelection() {
   }
 }
 
-tracesStore.fetchImmutableTraces()
+tracesStore.fetchImmutableTraces().then(() => tracesStore.unlockLevels())
 watch(artefacts, ensureSelection, { immediate: true })
 </script>
 
@@ -118,7 +133,19 @@ watch(artefacts, ensureSelection, { immediate: true })
             </div>
           </div>
 
-          <p class="artifact-detail__description">{{ selectedTrace.description }}</p>
+          <template v-if="levels.length">
+            <div v-for="lecture in levels" :key="lecture.level" class="artifact-detail__reading">
+              <div class="artifact-detail__meta">{{ NIVEAUX[lecture.level] }} · {{ lecture.type }}</div>
+              <p class="artifact-detail__description">{{ lecture.description }}</p>
+              <ul v-if="lecture.data?.length" class="artifact-detail__data">
+                <li v-for="fait in lecture.data" :key="fait">{{ fait }}</li>
+              </ul>
+            </div>
+          </template>
+          <p v-else class="artifact-detail__description">{{ selectedTrace.description }}</p>
+          <p v-if="selectedTrace.precursor_generation" class="artifact-detail__meta">
+            Génération {{ selectedTrace.precursor_generation }}
+          </p>
           <p v-if="selectedTrace.discovered" class="artifact-detail__meta">
             Découvert le {{ selectedTrace.discovered }}
           </p>
@@ -196,6 +223,18 @@ watch(artefacts, ensureSelection, { immediate: true })
 .artifact-detail__meta {
   font-size: var(--text-base);
   color: var(--color-muted);
+}
+
+.artifact-detail__reading {
+  margin-bottom: var(--space-4);
+}
+
+.artifact-detail__data {
+  margin: 0 0 var(--space-4);
+  padding-left: var(--space-5);
+  font-size: var(--text-base);
+  color: var(--color-muted);
+  line-height: var(--leading-relaxed);
 }
 
 .artifact-detail--empty {

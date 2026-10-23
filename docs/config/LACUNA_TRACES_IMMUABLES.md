@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-22*
 
 # LACUNA — Traces immuables
-*Version 0.1 — Octobre 2026*
+*Version 0.2 — Octobre 2026*
 
 > Ce document contient les **fiches des traces immuables** qui n'appartiennent pas à un scénario — voisinage solaire, hors voisinage — et le **Journal de Yael** (origine `PRÉCURSEUR`). Les traces appartenant à un scénario ont leurs fiches de nœuds dans `LACUNA_SCENARIOS.md`. La mécanique (définition, chaîne de production, types d'outputs, qualification) vit dans `LACUNA_TRACES.md`. Les faits astronomiques de référence vivent dans `LACUNA_ANOMALIES_REELLES.md`.
 >
@@ -25,6 +25,7 @@
 | Version | Date | Modifications |
 |---------|------|---------------|
 | 0.1 | Octobre 2026 | Document initial — fiches restaurées depuis `LACUNA_TRACES.md` v0.9 (§1.8, §1.9, §2 à §4), que la réécriture v1.0 annonçait déplacées vers `LACUNA_SCENARIOS.md` sans qu'elles y aient été reportées. Mises à jour factuelles : Barnard (quatre planètes confirmées en 2025), Epsilon Eridani b (confirmée en 2019), Proxima b (masse minimale 1,07 M⊕), Tau Ceti (candidates de 2017), Ross 128 (bande C), nucléobases (Bennu 2025, Ryugu 2026), Étoile de Tabby (~1 470 al), PSR B1919+21 (période 1,337 s), HD 40307 ; la résonance 1:2:4 de Gliese 667C est déclarée valeur de jeu. Le Journal de Yael relève de l'origine `PRÉCURSEUR` |
+| 0.2 | Octobre 2026 | §4 : structure des entrées de Yael en base (origine `PRÉCURSEUR`, `precursor_generation`, `linked_trace_id`, `scenario_arc` pour le scénario effleuré) ; une entrée se découvre à l'arrivée dans son système. Aucune entrée écrite |
 
 ---
 
@@ -408,6 +409,8 @@ Scénario lié  : scénario effleuré sans le nommer (optionnel)
 ### Densité et progression
 
 Les entrées sont plus denses dans le voisinage solaire — là où Yael a passé le plus de temps, là où le joueur arrive en premier — dans la limite de 2 fragments dans la zone d'onboarding (`LACUNA_SCENARIOS.md` §4.6). Elles s'espacent dans la zone intermédiaire et deviennent rares dans la zone profonde. Le ton se transforme avec les générations.
+
+*Implémentation : une entrée est une ligne de `traces` d'origine `PRÉCURSEUR`, rendue comme une trace joueur (désignation, texte, génération) ; elle devient lisible quand le vaisseau arrive dans son système. Aucune entrée n'est encore écrite.*
 
 *Pour les fragments canoniques et la table de relation avec les scénarios — voir `LACUNA_SCENARIOS.md` §4 (Scénario 01 — Yael).*
 

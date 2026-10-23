@@ -73,8 +73,8 @@ export const useTracesStore = defineStore('traces', () => {
     tracesError.value = null
     const { data, error } = await supabase
       .from('traces')
-      .select('id, designation, type, system_id, difficulty, description, discovered')
-      .eq('origin', 'IMMUABLE')
+      .select('id, designation, type, origin, system_id, difficulty, description, discovered, precursor_generation')
+      .in('origin', ['IMMUABLE', 'PRÉCURSEUR'])
       .order('discovered', { ascending: true })
     tracesLoading.value = false
     if (error) {
@@ -84,6 +84,31 @@ export const useTracesStore = defineStore('traces', () => {
       return
     }
     immutableTraces.value = (data || []).map((t) => ({ ...t, unread: false }))
+  }
+
+  /**
+   * Débloque côté serveur les lectures de traces accessibles depuis les observations du système courant
+   * (RPC unlock_trace_levels), puis recharge la collection si quelque chose a été découvert.
+   */
+  async function unlockLevels() {
+    if (!useSupabaseStore().isConfigured()) return
+    const { data, error } = await supabase.rpc('unlock_trace_levels')
+    if (error) {
+      console.warn('[traces] unlock_trace_levels:', error.message)
+      return
+    }
+    if (data?.levels > 0 || data?.traces > 0) await fetchImmutableTraces()
+  }
+
+  /** Lectures débloquées d'une trace (par niveau d'observation croissant) ; vide pour une trace sans niveaux */
+  async function fetchLevels(traceId) {
+    if (isLocalTrace(traceId)) return []
+    const { data, error } = await supabase.rpc('get_trace_levels', { p_trace_id: traceId })
+    if (error) {
+      console.warn('[traces] get_trace_levels:', error.message)
+      return []
+    }
+    return data || []
   }
 
   /** Interprétations d'une trace, dans l'ordre chronologique */
@@ -144,6 +169,8 @@ export const useTracesStore = defineStore('traces', () => {
     addTrace,
     markAsRead,
     fetchImmutableTraces,
+    unlockLevels,
+    fetchLevels,
     fetchInterpretations,
     addInterpretation,
     deleteInterpretation,

@@ -5,10 +5,10 @@
 --   scenario_arc          arc d'une trace de scénario (ex. 'scn-02-fil-des-75'), ou de la trace
 --                         effleurée par une entrée de Yael. Jamais exposé au joueur.
 --   linked_trace_id       « Trace liée » d'une entrée de Yael (optionnelle)
---   precursor_generation  génération de voyage de Yael au moment de l'entrée
+--   precursor_generation  génération de voyage de Yael au moment de l'entrée (datation affichée : lisible)
 --
 -- Les droits de lecture des joueurs sur `traces` sont accordés colonne par colonne (00048) :
--- ces colonnes n'y figurent pas, elles ne sont donc pas lisibles côté client.
+-- scenario_arc et linked_trace_id n'y figurent pas, ils ne sont donc pas lisibles côté client.
 -- Non appliquée en production sans accord.
 -- ═══════════════════════════════════════════════════════════════════════════════
 
@@ -27,5 +27,6 @@ COMMENT ON COLUMN public.traces.scenario_arc IS 'Arc de scénario (jamais expos�
 COMMENT ON COLUMN public.traces.linked_trace_id IS 'Trace immuable commentée par une entrée précurseur (optionnelle).';
 COMMENT ON COLUMN public.traces.precursor_generation IS 'Génération de voyage de Yael à la date de l''entrée (origine PRÉCURSEUR uniquement).';
 
--- Rappel explicite : aucune lecture de ces colonnes par les joueurs
-REVOKE SELECT (scenario_arc, linked_trace_id, precursor_generation) ON public.traces FROM anon, authenticated;
+-- Rappel explicite : aucune lecture de ces deux colonnes par les joueurs
+REVOKE SELECT (scenario_arc, linked_trace_id) ON public.traces FROM anon, authenticated;
+GRANT SELECT (precursor_generation) ON public.traces TO authenticated;

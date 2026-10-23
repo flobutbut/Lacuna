@@ -540,6 +540,8 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00056 | observations : attributes (polarisation, période mesurées) |
 | 00057 | signals : source_type EMITTER ; table system_signal_sources (illisible côté client) ; RPC capture_system_signals ; game_settings.scenario_signal_epoch |
 | 00058 | system_objects : tidally_locked, rotation_period_h ; données Proxima b et Ross 128 b |
+| 00059 | trace_type : valeur BIOLOGICAL |
+| 00060 | trace_levels, ship_trace_levels, RPC unlock_trace_levels / get_trace_levels / trace_is_visible ; ship_traces en lecture seule ; traces lisibles seulement une fois découvertes (hors traces sans scénario) ; nœuds du Fil des 75 |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
@@ -561,6 +563,10 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 ### RPC `delete_account()` (migration 00051)
 
 `SECURITY DEFINER`, réservée à `authenticated`. Supprime les interprétations du joueur (sinon conservées sans auteur, `ON DELETE SET NULL`), efface son vaisseau de `traces.discovered_by`, puis supprime `auth.users` : profil, vaisseau et toutes ses données suivent en cascade. Appelée depuis Paramètres → Compte.
+
+### RPC `unlock_trace_levels()` et `get_trace_levels(p_trace_id)` (migration 00060)
+
+`SECURITY DEFINER`, réservées à `authenticated`. `unlock_trace_levels()` débloque pour le vaisseau du joueur les lectures de `trace_levels` accessibles depuis ses observations du système courant (même type, même corps `attributes.body_designation`, niveau au moins égal), découvre les traces correspondantes (`ship_traces`) et les entrées `PRÉCURSEUR` du système. Renvoie `{ levels, traces }`. `get_trace_levels` renvoie les lectures débloquées d'une trace. `trace_levels`, `ship_trace_levels` et les écritures sur `ship_traces` ne sont pas accessibles aux joueurs.
 
 ### RPC `capture_system_signals()` (migration 00057)
 
@@ -840,6 +846,7 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 |------|---------------|
 | 2026-10-22 | Suppression du compte : RPC delete_account (00051) |
 | 2026-10-23 | Migrations 00052–00058 écrites, non appliquées : population 15 000, Drake, origine PRÉCURSEUR, colonnes de scénario sur traces, émetteurs de système (EMITTER, capture_system_signals), données astronomiques du Fil des 75 |
+| 2026-10-23 | Migrations 00059–00060 écrites, non appliquées : niveaux de lecture des traces, découverte côté serveur, nœuds du Fil des 75 |
 | 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |

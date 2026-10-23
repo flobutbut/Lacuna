@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Les Traces
-*Version 1.4 — Octobre 2026*
+*Version 1.5 — Octobre 2026*
 
 > Ce document définit ce qu'est une trace dans LACUNA, comment elle est produite, et quels types de résultats elle peut donner. Il ne catalogue pas les traces immuables — leurs fiches vivent dans `LACUNA_TRACES_IMMUABLES.md` (traces hors scénario, Journal de Yael) et dans `LACUNA_SCENARIOS.md` (nœuds des scénarios). Il ne documente pas les instruments — ceux-ci vivent dans `LACUNA_LABORATOIRE_INSTRUMENTS.md`.
 >
@@ -31,6 +31,7 @@
 | 1.2 | Mars 2026 | Refonte §3 — 9 types de traces (ajout Timing, Comparaison, Référence externe). Questions ouvertes posées pour les 3 nouveaux types. |
 | 1.3 | Octobre 2026 | Mise en cohérence — les fiches retirées en v1.0 n'avaient pas été reportées dans `LACUNA_SCENARIOS.md` comme annoncé : elles sont restaurées dans le nouveau `LACUNA_TRACES_IMMUABLES.md`, et les renvois sont corrigés. Désignations du Fil des 75 alignées sur le Scénario 02 (`…-SCN02-…`). Exemple Timing : Ross 128 b n'est pas verrouillée gravitationnellement dans le jeu (une planète verrouillée n'a pas de cycle d'aube). Exemple Signature : `ROSS128-YAEL-002` (2 fragments maximum dans la zone d'onboarding) et chiralité reportée sur les acides aminés (une nucléobase n'est pas chirale). Exemple Désignation : fondé sur le nœud `GLIESE667-SCN02-001` |
 | 1.4 | Octobre 2026 | §3.7 Timing : un signal hors fenêtre est présent mais inactif (implémentation provisoire, `LACUNA_SCENARIOS.md` §5.7) |
+| 1.5 | Octobre 2026 | §4 : le gradient est implémenté pour les traces de scénario (table `trace_levels`, lectures débloquées par les observations du système courant) |
 
 ---
 
@@ -328,6 +329,8 @@ Output : minimal    Output : précisé         Output : dense
 | **Contact** | La composition fine, la datation, les molécules. La question devient irréductible : d'où vient ça, et qu'est-ce que ça implique ? | Une trace de type séquence ou artefact |
 
 ### Règle de conception
+
+*Implémentation : chaque lecture d'une trace de scénario est une ligne de `trace_levels` (niveau PASSIF, SYSTEME, ORBITE ou CONTACT) ; le serveur la débloque quand une observation du système courant l'atteint (`LACUNA_SCENARIOS.md` §5.7).*
 
 Chaque trace immuable documentée dans `LACUNA_TRACES_IMMUABLES.md` ou `LACUNA_SCENARIOS.md` doit spécifier explicitement ce que le joueur trouve à chaque niveau. Une trace qui donne tout au niveau lointain ne respecte pas ce gradient. Une trace qui ne révèle rien avant le contact est injouable.
 

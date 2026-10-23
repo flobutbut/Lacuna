@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Scénarios
-*Version 0.6 — Octobre 2026*
+*Version 0.7 — Octobre 2026*
 
 > Ce document décrit les **arcs narratifs jouables** : des séquences de traces qui, ensemble, racontent quelque chose et mènent quelque part. Complémentaire de `LACUNA_TRACES.md` (mécanique des traces) et de `LACUNA_TRACES_IMMUABLES.md` (fiches des traces immuables hors scénario) — les scénarios documentent comment les traces se relient et ce qu'elles impliquent collectivement.
 
@@ -34,6 +34,7 @@
 | 0.4 | Mars 2026 | Développement des fiches Scénarios 03 à 08 — grammaires, systèmes d'ancrage, questions terminales, notes de conception. Direction retenue pour le Scénario 08 (La méthode lisible). |
 | 0.5 | Octobre 2026 | Mise en cohérence — fusion des deux entrées 0.4 du changelog ; sous-sections renumérotées selon leur section (3.x, 4.x, 5.x) ; Le Fil des 75 aligné sur sa numérotation : `scn-02-fil-des-75`, désignations `…-SCN02-…`. Scénario 03 : la dilatation exige un objet compact (Sgr A*), pas une étoile de type A ou F où l'effet est négligeable ; durées recalculées ; la lumière de Sol depuis la position d'observation n'a que l'âge de la distance ; chronologie Andromède / Soleil réconciliée (proposition à valider). Scénario 02 : fenêtre de 40 min rendue explicite à Proxima b, rotation de Ross 128 b déclarée valeur de jeu, 82 Eridani à 19,7 al. Scénario 04 : zone et types spectraux corrigés. Scénario 05 : traces au format joueur rattachées à l'origine `IMMUABLE`. Scénario 07 : chiralité des météorites et de Bennu précisée. Scénario 08 : statut, PSR B1919+21 référencé PSR-001. §12 : exception pour les scénarios séquentiels |
 | 0.6 | Octobre 2026 | §5.7 ajouté : valeurs d'implémentation provisoires des signaux du Fil des 75 (cycle de Proxima b, décalage d'aube, intensité, durée de capture, forme de la salve, sens de la polarisation). Un signal hors fenêtre est présent mais inactif |
+| 0.7 | Octobre 2026 | Les quatre nœuds du Fil des 75 sont en base (migration `00060`) avec leur gradient de lecture ; structure de Yael prête, aucune entrée. §5.7 complété : règle de déblocage provisoire, désignations `SCN02` visibles, choix de rédaction des lectures |
 
 ---
 
@@ -254,6 +255,7 @@ La confusion est intentionnelle dans les premières entrées. Dans le module Tra
 
 ### 4.7 À développer
 
+- [x] Structure prête à les recevoir : origine `PRÉCURSEUR`, génération de Yael, trace liée, découverte à l'arrivée dans le système (migrations `00054`, `00055`, `00060`)
 - [ ] Écrire les 2 fragments canoniques du voisinage (maximum fixé en §4.6)
 - [ ] Définir les systèmes d'ancrage
 - [ ] Définir le ton des premières entrées vs les dernières
@@ -541,6 +543,11 @@ La question de niveau supérieur : si le réseau s'étend au-delà du voisinage 
 | Durée de capture au Laboratoire | 300 s (~4 périodes de 73 s) | Aucune durée documentée |
 | Forme de la salve de 73 s | Impulsion identique à celle d'un pulsar | Aucun profil documenté |
 | Polarisation « circulaire gauche » | Stokes V < 0 | Convention de jeu |
+| Déblocage des lectures | Une observation du système courant, de bon type, sur le bon corps, à un niveau au moins égal. Sans coût ni instrument ; bouton « Approfondir » au Laboratoire | Aucune mécanique de descente, de sonde ni de fouille n'est définie |
+| Désignation affichée | `PROXIMA-SCN02-001` etc., telle quelle (conforme à la nomenclature §12) | Annonce un scénario au joueur : à trancher |
+| Lectures affichées | « Ce que le joueur trouve » et les faits chiffrés de « Ce que les données disent » ; jamais « ne disent pas », « lien avec la grammaire » ni « pointe vers » | Notes d'auteur. Écartés aussi : « Ce n'est pas un objet isolé — c'est un système », « Contexte terrestre », « même logique d'aube » (interprétations) |
+| Niveaux sans texte | GLIESE667-SCN02-001 et -002 n'ont rien aux niveaux que la doc ne décrit pas ; PROXIMA et ROSS128 n'ont que deux lectures | Aucun texte inventé |
+| Renvoi « 667Cc-O1 » | Conservé dans GLIESE667-SCN02-002 | Libellé de la doc que le joueur ne connaît pas : à reformuler |
 | Signal de Ross 128 b | 1420 MHz en fenêtre, sans périodicité ni polarisation propres | Rien de documenté : il n'est pas tracé sur le Radar (pas de motif à injecter) |
 
 ---

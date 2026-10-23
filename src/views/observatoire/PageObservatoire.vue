@@ -6,6 +6,7 @@ import { useRadarStore } from '@/stores/radar'
 import { useObservatoireStore } from '@/stores/observatoire'
 import { useShipStore } from '@/stores/ship'
 import { useSignauxStore } from '@/stores/signaux'
+import { useTracesStore } from '@/stores/traces'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { useGalacticPosition } from '@/composables/useGalacticPosition'
 import { useRadarNoise } from '@/composables/useRadarNoise'
@@ -32,6 +33,7 @@ const radarStore = useRadarStore()
 const observatoireStore = useObservatoireStore()
 const shipStore = useShipStore()
 const signauxStore = useSignauxStore()
+const tracesStore = useTracesStore()
 const { radarPaused, radarFrequencyBand, radarEnabled } = storeToRefs(radarStore)
 const { activePulsarSignals } = storeToRefs(signauxStore)
 const isSkyMode = computed(() => observatoireStore.observatoireViewMode === 'sky')
@@ -70,11 +72,16 @@ onMounted(async () => {
   if (radarEnabled.value) radarSpectrogram.start()
   await ensureStoresLoaded(signauxStore, shipStore)
   await callComputePulsarSignals()
-  await signauxStore.captureSystemEmitters()
+  await onSystemEntered()
 })
 
-// Arrivée dans un système : capture de ses émetteurs
-watch(() => shipStore.currentSystemId, () => signauxStore.captureSystemEmitters())
+/** Arrivée dans un système : capture de ses émetteurs, découverte des entrées qui y sont déposées */
+async function onSystemEntered() {
+  await signauxStore.captureSystemEmitters()
+  await tracesStore.unlockLevels()
+}
+
+watch(() => shipStore.currentSystemId, onSystemEntered)
 
 watch(radarEnabled, (val) => {
   if (val) radarSpectrogram.start()

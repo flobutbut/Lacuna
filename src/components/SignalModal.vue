@@ -4,6 +4,7 @@ import { useNotificationsStore } from '@/stores/notifications'
 import { useObservatoireStore } from '@/stores/observatoire'
 import { useSignauxStore } from '@/stores/signaux'
 import { useObservationsStore } from '@/stores/observations'
+import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import AppModal from '@/components/AppModal.vue'
 import Divider from '@/components/Divider.vue'
 import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
@@ -15,6 +16,13 @@ const notificationsStore = useNotificationsStore()
 const observatoireStore = useObservatoireStore()
 const signauxStore = useSignauxStore()
 const obsStore = useObservationsStore()
+const stellarStore = useStellarSystemsStore()
+
+/** Payload d'observation du signal, avec le nom du système pour un émetteur du système courant */
+function buildPayload(s) {
+  const systemName = stellarStore.list.find((x) => x.id === s.sourceSystemId)?.name
+  return signalToObsPayload(s, obsStore.NIVEAUX, systemName)
+}
 
 function close() {
   observatoireStore.closeSignalModal()
@@ -30,7 +38,7 @@ async function analyser() {
     return
   }
   if (!isActive(s)) return
-  const payload = signalToObsPayload(s, obsStore.NIVEAUX)
+  const payload = buildPayload(s)
   if (!payload) return
   const obsId = await obsStore.addObservation(payload)
   if (!s.persistent) signauxStore.removeSignal(s.id)
@@ -42,7 +50,7 @@ async function analyser() {
 async function ajouterAuLabo() {
   const s = observatoireStore.selectedSignal
   if (!s || !isActive(s) || obsStore.findObservationForSignal(s)) return
-  const payload = signalToObsPayload(s, obsStore.NIVEAUX)
+  const payload = buildPayload(s)
   if (!payload) return
   await obsStore.addObservation(payload)
   if (!s.persistent) signauxStore.removeSignal(s.id)
