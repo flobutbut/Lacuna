@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Game Design Document
-*Version 0.11 — Octobre 2026*
+*Version 0.12 — Octobre 2026*
 
 ---
 
@@ -34,6 +34,7 @@
 | 0.9 | Octobre 2026 | §9 : paramètres d'administration — accélération des voyages réservée aux admins, réinitialisation de la partie (migration `00061`) |
 | 0.10 | Octobre 2026 | §9 : statut des migrations corrigé — `00052` à `00065` appliquées en production |
 | 0.11 | Octobre 2026 | §2 : calendrier du vaisseau (départ le 1er janvier 2187, temps physique des voyages, temps réel en orbite) ; §3 et §9 : journal de bord implémenté (migration `00068`) |
+| 0.12 | Octobre 2026 | §4 : règle des générations (1 + années simulées ÷ 25, mise à jour à l'arrivée) ; une seule entrée au journal, au premier passage — contradiction entre « une entrée par passage », POP-001 et `LACUNA_ARCS.md` §1.7 tranchée ; §9 mis à jour |
 
 ---
 
@@ -176,7 +177,13 @@ La durée dépend de l'état du vaisseau : un moteur dégradé voyage plus lente
 
 ### Les Générations
 
-Une génération passe quand le vaisseau a accumulé suffisamment de distance et de temps simulé — ce n'est pas un timer fixe. Chaque passage ajoute une entrée générationnelle au journal, conserve l'héritage complet, et peut modifier la culture à bord. La génération en cours **colore** les nouvelles interprétations.
+Une génération passe quand le vaisseau a accumulé suffisamment de distance et de temps simulé — ce n'est pas un timer fixe. Chaque passage conserve l'héritage complet et peut modifier la culture à bord. La génération en cours **colore** les nouvelles interprétations.
+
+**Règle retenue (octobre 2026, migration `00069`)** — génération = 1 + (années du calendrier du vaisseau ÷ 25), à l'entier inférieur : la même règle que le coût générationnel de la vue de départ (`LACUNA_TRANSIT.md` §4). Le temps simulé vient des voyages, donc de la distance. Le serveur met le compteur à jour à l'arrivée de chaque voyage (`ships.generation`, `populations.generation`) ; il ne bouge pas pendant le transit.
+
+**Entrées au journal** — à 25 ans par génération, un voyage vers Proxima en fait passer trois, et une semaine de jeu des milliers (`LACUNA_ARCS.md` §1.6). Une entrée par passage contredirait POP-001 (« quelques fois par campagne ») et `LACUNA_ARCS.md` §1.7 (pas de série d'événements notifiés). Seul le **premier passage** (génération 1 → 2) écrit une entrée `GENERATIONNEL`, datée de l'instant où le vaisseau franchit 25 ans, en transit (texte : `LACUNA_NOTIFICATIONS.md`, POP-001). Les passages suivants ne changent que le compteur, jusqu'à ce que d'autres entrées soient écrites (jalons, mythification).
+
+**Population** — l'effectif reste à 15 000 : aucune règle démographique n'est définie. *Non implémenté : la coloration des interprétations par la génération.*
 
 ### Laisser une trace
 
@@ -311,7 +318,8 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 | **Artefacts / Traces** | Traces Supabase, interprétations anonymes. |
 | **Population** | Table `populations` (total, generation, will, social_cohesion…). Page à 3 onglets (Générations, Génération actuelle, Registre des Raisons). |
 | **Drake** | Table `drake_equation`, affichage Header + Page Drake. |
-| **Journal de bord** | Table `logbook_entries` (migration `00068`) : entrée fondatrice, départ et arrivée, événements du ciel de départ (SN-001, LPT-001) écrits par le serveur ; entrées du joueur ; filtre par type. Date du vaisseau (§2, Calendrier). Pas encore : passage de génération, notifications archivées, documents trouvés. |
+| **Journal de bord** | Table `logbook_entries` (migration `00068`) : entrée fondatrice, départ et arrivée, événements du ciel de départ (SN-001, LPT-001) écrits par le serveur ; entrées du joueur ; filtre par type. Date du vaisseau (§2, Calendrier). Pas encore : notifications archivées, documents trouvés. |
+| **Générations** | Compteur recalculé à l'arrivée de chaque voyage (1 + années simulées ÷ 25) ; entrée `GENERATIONNEL` au premier passage (migration `00069`). |
 
 ### Non implémenté (design cible uniquement)
 
@@ -319,7 +327,7 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 |---------|-------------|
 | **Onboarding narratif** | `LACUNA_LORE.md` §3 — 5 écrans. Seul l'écran de nommage « Bienvenue à bord » existe. |
 | **Détection en transit, déviation, carburant consommé** | `LACUNA_TRANSIT.md` §6–7, `LACUNA_PHYSICS.md` §5. |
-| **Générations dynamiques** | §4 — passage de génération contextuel, entrée GENERATIONNEL au journal. Le compteur `generation` est affiché mais pas recalculé. |
+| **Générations — suite** | §4 — effectif qui évolue, coloration des interprétations, entrées au-delà du premier passage. |
 | **Dilatation gravitationnelle** | `LACUNA_PHYSICS.md` §3. Non calculée ni affichée. |
 | **Traces immuables hors scénario, scénarios 03 à 08, entrées de Yael** | `LACUNA_TRACES_IMMUABLES.md`, `LACUNA_SCENARIOS.md`. Seuls le Fil des 75 (migration `00060`) et la structure de Yael (sans entrée) sont en base ; les 9 traces du seed sont visibles de tous. |
 | **Galaxie procédurale à la visite** | Ciel alimenté par stellar_systems (HYG/NASA/seed). |

@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-22*
 
 # LACUNA — Arcs de Design
-*Version 0.3 — Octobre 2026*
+*Version 0.4 — Octobre 2026*
 
 > Ce document décrit les **dynamiques de long terme** qui structurent l'expérience sur des semaines ou des mois de jeu. Ces arcs de design sont distincts des scénarios narratifs (`LACUNA_SCENARIOS.md`) : ils ne racontent pas une histoire de traces — ils décrivent comment le temps, la population et les décisions de cap transforment l'expérience de jeu sur la durée.
 
@@ -23,6 +23,7 @@
 | 0.1 | Mars 2026 | Document initial — fusion de LACUNA_ARC_GENERATIONNEL.md (v0.1) et LACUNA_ARC_COLONIES.md (v0.1), ajout section Interconnexions |
 | 0.2 | Mars 2026 | Suppression doublon Arc Colonies, ajout Arc Sociologique (placeholder), mise à jour numérotation |
 | 0.3 | Octobre 2026 | Mise en cohérence avec `LACUNA_PHYSICS.md` v0.2 — §1.4 : Sol en géante rouge relève du temps écoulé (stationnement dilatant), pas de la distance ; §1.6 : exemple de notification corrigé (Sol ne devient pas subgéant en 1,2 Ga), fusion d'Andromède et évolution du Soleil atteignables par stationnement près de Sgr A* (et non « horizons inaccessibles »), fin de l'ère stellaire à la place d'une « fin thermodynamique » mal datée ; §1.10 : cas limite recalculé (~4 Ma vaisseau, ~160 000 générations) ; §4 : « Arc 01 » renommé Scénario 02 — Le Fil des 75, trois arcs au lieu de deux |
+| 0.4 | Octobre 2026 | §1.7 : renvoi vers la règle des générations du GDD (une seule entrée au journal, au premier passage) |
 
 ---
 
@@ -134,6 +135,8 @@ L'arc générationnel ne doit pas devenir :
 - Un arbre généalogique navigable
 
 La civilisation à bord n'est pas une ressource. Elle est une **texture**. Le joueur la perçoit par des détails, pas par des systèmes.
+
+*Application (octobre 2026) : seul le premier passage de génération écrit une entrée au journal ; les suivants ne changent que le compteur (`LACUNA_GDD.md` §4).*
 
 ---
 

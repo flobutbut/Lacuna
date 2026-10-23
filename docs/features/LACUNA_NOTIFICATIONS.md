@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-22*
 
 # LACUNA — Système de Notifications
-*Version 0.4 — Octobre 2026*
+*Version 0.5 — Octobre 2026*
 
 ---
 
@@ -29,6 +29,7 @@
 | 0.2 | Mars 2026 | Corrections — VOY-002 vitesse croisière (3,2%c → 4,8%c), VOY-007 durée HD 40307 (5h12 → 5h44) |
 | 0.3 | Octobre 2026 | Mise en cohérence — population de départ 15 000 (POP-001, TEM-005) ; VOY-005 : Zeta Puppis de type O4 ; TEM-001 : la dernière signature radio est datée *après* le départ ; TEM-002 : exemple remplacé (une étoile G2V ne devient pas subgéante en 847 000 ans) ; TRA-004 : Epsilon Eridani ne peut pas devenir subgéante en 847 ans — l'évolution porte sur son disque de débris (période orbitale de ~500 ans à 60 UA) ; TEM-005 : à 4,8 % c, 100 ans simulés couvrent au plus ~4,8 al, et 100 ans font 4 générations. *Point ouvert : les dates d'exemple (2187 à 2891) ne suivent aucun calendrier défini — à fixer avec la date de départ (`LACUNA_LORE.md`)* |
 | 0.4 | Octobre 2026 | Calendrier fixé (départ le 1er janvier 2187, `LACUNA_GDD.md` §2) — point ouvert de la v0.3 résolu, exemples annotés ; famille 7 « Ciel de départ » (CIE-001 à CIE-004) ; VOY-001 et VOY-007 écrits au journal |
+| 0.5 | Octobre 2026 | POP-001 : écrit au journal au premier passage seulement, sans la ligne d'effectif |
 
 ---
 
@@ -376,6 +377,8 @@ Leurs journaux sont préservés.
 ```
 
 *"La génération qui a regardé la Terre disparaître n'est plus." — pas d'instruction, pas de mécanique. Juste le poids du temps.*
+
+*Journal (migration `00069`) : entrée `GENERATIONNEL` « MÉMOIRE », au premier passage seulement (`LACUNA_GDD.md` §4), titre « Passage de génération — Génération 2 », corps « La génération qui a regardé la Terre disparaître n'est plus. » puis « Leurs journaux sont préservés. » La ligne d'effectif (« 15 000 âmes ont quitté Sol. 14 479 sont en vie aujourd'hui. ») est omise tant qu'aucune règle démographique n'existe.*
 
 ---
 
@@ -824,4 +827,4 @@ L'état de la population colore subtilement le ton des notifications automatique
 
 ---
 
-*LACUNA — Système de Notifications v0.4 — Octobre 2026 — Confidentiel*
+*LACUNA — Système de Notifications v0.5 — Octobre 2026 — Confidentiel*
