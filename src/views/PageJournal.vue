@@ -7,6 +7,7 @@ import '@/assets/components/journal.css'
 import { ref, computed, onMounted } from 'vue'
 import { useJournalStore, JOURNAL_TITLE_MAX, JOURNAL_TEXT_MAX } from '@/stores/journal'
 import AppTextField from '@/components/AppTextField.vue'
+import { NOTICE_TITLE, NOTICE_HEADER, NOTICE_SECTIONS } from '@/constants/notice'
 
 const journalStore = useJournalStore()
 
@@ -82,6 +83,17 @@ onMounted(() => journalStore.fetch())
 
       <!-- Colonne 2 : filtre et fil -->
       <section class="journal-feed" aria-label="Entrées du journal">
+        <!-- Notice de bord (LACUNA_LORE.md §5) : seul document de lore relisible à tout moment -->
+        <details class="journal-notice">
+          <summary class="journal-notice__summary">{{ NOTICE_TITLE }}</summary>
+          <div class="journal-notice__body">
+            <p v-for="(line, i) in NOTICE_HEADER" :key="`h${i}`" class="journal-notice__header">{{ line }}</p>
+            <div v-for="(section, i) in NOTICE_SECTIONS" :key="i" class="journal-notice__section">
+              <h3 v-if="section.title" class="journal-notice__title">{{ section.title }}</h3>
+              <p v-for="(line, j) in section.lines" :key="j" class="journal-notice__line">{{ line }}</p>
+            </div>
+          </div>
+        </details>
         <div class="journal-filters" role="group" aria-label="Filtrer par type">
           <button
             v-for="f in FILTERS"

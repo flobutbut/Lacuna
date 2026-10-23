@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Lore
-*Version 0.13 — Octobre 2026*
+*Version 0.14 — Octobre 2026*
 
 ---
 
@@ -22,6 +22,7 @@
 | 0.11 | Octobre 2026 | §3 : paragraphes des écrans 1 à 4 révélés un à un ; écran 5 en cartouche pointant une destination du catalogue |
 | 0.12 | Octobre 2026 | §3 : l'écran 5 devient une visite en sept étapes (anomalies, signaux, Radar, Neutrinos, Laboratoire, Journal, catalogue) — textes des étapes 1 et 2 d'après la demande du concepteur |
 | 0.13 | Octobre 2026 | §3 : étape 2 de la visite centrée sur PSR B1919+21, audible au Radar (bande L) ; texte de l'étape 3 complété |
+| 0.14 | Octobre 2026 | §5 : notice de bord rédigée (affichée en tête du journal) ; départ et calendrier : le 1er janvier 2041 (§2) fait référence, 2187 abandonné (`LACUNA_GDD.md` §2) |
 
 ---
 
@@ -331,7 +332,51 @@ Les trois anomalies des écrans d'onboarding (WOW!, Oumuamua, Bennu) font partie
 
 Un texte court, une page, disponible dans le journal dès le départ. Le seul document de lore que le joueur peut relire à tout moment. Pas une explication — un contexte. Ce que le Consortium a remis à chaque vaisseau au moment du départ.
 
-*À développer.*
+*Rédigée en octobre 2026 ; chaque fait vient de ce document (§1–3), du GDD (vitesse de croisière, générations) ou de `LACUNA_ARCS.md` (le journal, seule mémoire de ce qui est écrit). Implémentée : en tête du journal, repliable.*
+
+```
+NOTICE DE BORD
+Consortium pour l'Exploration Galactique Profonde
+Programme de vaisseaux générationnels — classe ARCA
+Remise à chaque vaisseau le 1er janvier 2041
+
+Ce vaisseau emporte 15 000 personnes.
+Elles ont choisi de partir. Elles savaient qu'elles ne reviendraient pas.
+
+POURQUOI
+En 2031, le Consortium a publié un catalogue de 847 anomalies
+détectées dans un rayon de 500 années-lumière.
+Douze résistent à toute modélisation naturelle connue.
+Personne ne sait ce qu'elles sont.
+On ne peut pas le savoir depuis la Terre.
+
+CE QUE VOUS EMPORTEZ
+Le catalogue embarqué.
+Trois traces : le signal de 1977, l'objet interstellaire de 2017,
+les nucléobases de Bennu.
+Des instruments pour observer, mesurer, analyser.
+
+LE TEMPS
+À 4,8 % de la vitesse de la lumière, chaque voyage se compte
+en décennies, puis en siècles.
+Ceux qui arriveront ne seront pas ceux qui sont partis.
+Le journal de bord est la mémoire du vaisseau.
+Ce qui n'y est pas écrit sera oublié.
+
+CE QUE NOUS NE SAVONS PAS
+Ce que sont ces anomalies.
+Si d'autres sont passés avant vous.
+Ce que deviendra la Terre après votre départ.
+
+CE QUE NOUS VOUS DEMANDONS
+Rien, sinon de regarder.
+Aucune réponse ne vous sera donnée.
+Celles que vous trouverez vous appartiendront.
+
+Des volontaires ont choisi de partir.
+Ils avaient des questions sans réponse.
+Ils ne reviendront pas.
+```
 
 ---
 

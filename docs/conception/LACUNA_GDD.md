@@ -321,7 +321,7 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 | **Population** | Table `populations` (total, generation, will, social_cohesion…). Page à 3 onglets (Générations, Génération actuelle, Registre des Raisons). |
 | **Drake** | Table `drake_equation`, affichage Header + Page Drake. |
 | **Journal de bord** | Table `logbook_entries` (migration `00068`) : entrée fondatrice, départ et arrivée, événements du ciel de départ (SN-001, LPT-001) écrits par le serveur ; entrées du joueur ; filtre par type. Date du vaisseau (§2, Calendrier). Pas encore : notifications archivées, documents trouvés. |
-| **Onboarding** | Écrans 1 à 4 avant le nommage « Bienvenue à bord », écran 5 en visite de sept étapes sur le ciel, traces embarquées (WOW, Oumuamua, Bennu) et message du premier départ (migration `00071`) — `LACUNA_LORE.md` §3–5. Pas encore : la notice de bord (texte à écrire). |
+| **Onboarding** | Écrans 1 à 4 avant le nommage « Bienvenue à bord », écran 5 en visite de sept étapes sur le ciel, traces embarquées (WOW, Oumuamua, Bennu) et message du premier départ (migration `00071`) — `LACUNA_LORE.md` §3–5. Notice de bord en tête du journal. |
 | **Générations** | Compteur recalculé à l'arrivée de chaque voyage (1 + années simulées ÷ 25) ; entrée `GENERATIONNEL` au premier passage (migration `00069`). |
 
 ### Non implémenté (design cible uniquement)

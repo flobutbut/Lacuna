@@ -208,3 +208,53 @@
         border-bottom: var(--border-width) solid var(--border-default);
     }
 }
+
+/* ── Notice de bord : repliable, en tête du fil ── */
+.journal-notice {
+    border: var(--border-width) solid var(--border-default);
+    margin-bottom: var(--space-6);
+}
+
+.journal-notice__summary {
+    padding: var(--space-3) var(--space-5);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-cyan);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-normal);
+    cursor: pointer;
+}
+
+.journal-notice__summary:hover,
+.journal-notice__summary:focus-visible {
+    color: var(--color-white);
+}
+
+.journal-notice__body {
+    padding: 0 var(--space-5) var(--space-5);
+}
+
+.journal-notice__header {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+}
+
+.journal-notice__section {
+    margin-top: var(--space-5);
+}
+
+.journal-notice__title {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-sm);
+    font-weight: normal;
+    color: var(--color-amber);
+    text-transform: uppercase;
+}
+
+.journal-notice__line {
+    margin: 0;
+    font-size: var(--text-md);
+    line-height: var(--leading-relaxed);
+    color: var(--color-white);
+}

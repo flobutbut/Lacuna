@@ -621,6 +621,7 @@ Les fragments de Yael apparaissent comme `DOCUMENT TROUVÉ` avec l'indication du
 
 **Implémentation** *(octobre 2026 — `PageJournal.vue`, store `journal`, migration `00068`)*
 - Deux colonnes : à gauche, le formulaire de nouvelle entrée (fixe au défilement) ; à droite, le filtre et le fil. Une seule colonne sous 900 px, formulaire au-dessus.
+- En tête du fil, la notice de bord (`LACUNA_LORE.md` §5), repliable.
 - Fil chronologique, du plus récent au plus ancien. Chaque entrée : famille, date du vaisseau (`LACUNA_GDD.md` §2, Calendrier), contexte (« En orbite — Sol »), génération, titre, texte. Filtre par type (Tous, Manuel, Auto, Générationnel).
 - Le serveur écrit seul les entrées `AUTO` et `GENERATIONNEL`, une seule fois chacune :
 
@@ -946,6 +947,7 @@ Ce qui est spécifique à l'interface :
 | 2026-10-23 | §9 : paragraphes révélés un à un ; écran 05 en cartouche (trait et cercle autour d'une destination) |
 | 2026-10-23 | §9 : écran 05 en visite de sept étapes avec [Terminer] / [Suivant] |
 | 2026-10-23 | Exemples de dates au calendrier du vaisseau (départ en 2041) |
+| 2026-10-23 | Module Journal de bord : notice de bord repliable en tête du fil |
 | 2026-10-23 | §2 : Radar — sources du ciel de départ (PSR B1919+21, Synchrotron 408 MHz, SN-2341-K452) ; les autres signaux de départ restent muets |
 
 ---
