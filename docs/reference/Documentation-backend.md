@@ -553,7 +553,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00069 | Générations : ships.generation et populations.generation recalculés à l'arrivée (1 + années simulées ÷ 25) ; entrée GENERATIONNEL au premier passage |
 | 00070 | Modération : table admin_actions (journal, sans accès direct) ; RPC réservées aux admins `is_admin`, `admin_list_players`, `admin_set_suspension` (auth.users.banned_until + sessions fermées), `admin_rename_player`, `admin_list_interpretations`, `admin_delete_interpretation`, `admin_delete_player`, `admin_list_actions` — appliquée le 23/10/2026 après sauvegarde (`backups/avant_00070_20261023_210432.dump`) |
 | 00071 | Onboarding : traces embarquées (WOW-1977-A, OUMUAMUA-2017, BENNU-NB-2023) inscrites dans ship_traces à la création du vaisseau ; entrée de journal au premier départ ; Étoile de Tabby (KIC 8462852) ajoutée à stellar_systems |
-| 00072 | Modération : RPC `admin_reset_player` (admins) — efface vaisseau, données et profil d'un joueur, compte et mot de passe conservés : il refait l'onboarding ; action `reset_game` au journal admin_actions — écrite, **pas encore appliquée** |
+| 00072 | Modération : RPC `admin_reset_player` (admins) — efface vaisseau, données et profil d'un joueur, compte et mot de passe conservés : il refait l'onboarding ; action `reset_game` au journal admin_actions — appliquée le 23/10/2026 après sauvegarde (`backups/avant_00072_20261023_224236.dump`) |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
