@@ -346,20 +346,24 @@
 
 /* Écran étroit : la fiche passe sous la liste */
 @media (max-width: 1100px) {
-    .admin-page,
-    .admin-layout,
-    .admin-layout > .admin-panel--players {
-        height: auto;
-        overflow: visible;
+    /* Une colonne : la page défile d'un bloc, la fiche suit la liste */
+    .admin-page {
+        overflow-y: auto;
     }
 
     .admin-page--split {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto;
+        display: block;
     }
 
-    .admin-players,
+    .admin-layout,
+    .admin-layout > .admin-panel,
     .admin-layout > .admin-panel--players {
+        height: auto;
+        overflow: visible;
+        display: block;
+    }
+
+    .admin-players {
         display: block;
     }
 
@@ -370,6 +374,7 @@
     .admin-detail,
     .admin-placeholder {
         height: auto;
+        overflow: visible;
         border-left: none;
         border-top: var(--border-width) solid var(--border-default);
     }

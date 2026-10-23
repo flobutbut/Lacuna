@@ -6,7 +6,7 @@
  */
 import '@/assets/components/journal.css'
 import '@/assets/components/admin.css'
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, nextTick, onMounted } from 'vue'
 import { useAdminStore, adminErrorMessage } from '@/stores/admin'
 import { useSupabaseStore } from '@/stores/supabase'
 import AdminPlayerDetail from '@/components/admin/AdminPlayerDetail.vue'
@@ -43,6 +43,17 @@ async function load() {
 }
 
 watch(tab, load)
+
+/** Une colonne (écran étroit) : la fiche s'ouvre sous la liste, on y amène l'écran */
+const detailRef = ref(null)
+watch(
+  () => adminStore.selectedPlayerId,
+  async (id) => {
+    if (!id || !window.matchMedia('(max-width: 1100px)').matches) return
+    await nextTick()
+    detailRef.value?.$el?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  },
+)
 onMounted(() => {
   if (configured) load()
 })
@@ -92,6 +103,7 @@ onMounted(() => {
     <template v-if="tab === 'players'">
       <AdminPlayerDetail
         v-if="adminStore.selectedPlayer"
+        ref="detailRef"
         :player="adminStore.selectedPlayer"
         @deleted="adminStore.selectedPlayerId = null"
       />
