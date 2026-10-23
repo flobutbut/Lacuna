@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Écarts et verdict
-*Version 0.4 — Octobre 2026*
+*Version 0.5 — Octobre 2026*
 
 > Spécification de la boucle d'analyse : ce que le Laboratoire fait apparaître (les écarts entre attendu et mesuré), la décision que le joueur prend (le verdict), et ce que cette décision déclenche (voyage, journal, traces, équation de Drake). Ce document comble l'étape « ANALYSER → DÉCIDER » du flux principal (`LACUNA_GDD.md` §4), aujourd'hui absente de l'interface.
 >
@@ -35,6 +35,7 @@
 | 0.2 | Octobre 2026 | Lot 1 implémenté (§10) ; §4.2 : instruments par famille alignés sur le code ; §9.1 : `deviations` nullable (rapports antérieurs recalculés), corroboration calculée à l'affichage |
 | 0.3 | Octobre 2026 | Lot 2 implémenté (§10) ; §5.6 : la case « Consigner au journal » arrive avec le lot 3 ; §9.4 : `record_verdict` sans écriture au journal ni Drake pour l'instant, famille vérifiée contre les écarts mesurés |
 | 0.4 | Octobre 2026 | Lot 3 implémenté (§10) ; §6.2 : texte de l'entrée « Écart principal (famille), mesuré par N rapports » ; §6.3 : un seul artefact par verdict, depuis le verdict courant, désignation rendue unique par un suffixe |
+| 0.5 | Octobre 2026 | Lot 4 implémenté (§10) ; §6.1 : « Préparer le voyage » ouvre la Carte sur le système, la confirmation du départ reste derrière « Fixer le cap » ; un instrument déjà utilisé peut être relancé quand le niveau atteint permet de mesurer le doute qu'il avait deviné |
 
 ---
 
@@ -409,6 +410,13 @@ Les lots 1 et 2 forment le minimum qui rend la boucle compréhensible.
 **Lot 2 — implémenté.** Panneau `LabVerdictPanel` sous les rapports dès le premier rapport, encadré d'ambre quand un écart est mesuré et qu'il n'y a pas encore de verdict ; lecture, confiance (« hypothèse » par défaut), note de 280 caractères au plus. Après le verdict : une ligne (lecture, confiance, génération, date du vaisseau) et « Réviser » (formulaire prérempli) ; les verdicts précédents s'affichent dessous. La carte de la file affiche « Verdict : naturel inexpliqué ». Famille de l'écart principal : celle que mesurent le plus de rapports (`getMainDeviationFamily`, `src/lib/verdicts.js`). Store `src/stores/verdicts.js` (en mémoire hors ligne). Migration 00075 (`lab_verdicts`, `verdict_reading`, RPC `record_verdict`) appliquée en production le 23 octobre 2026. 
 
 **Lot 3 — implémenté.** Case « Consigner au journal », cochée par défaut : `record_verdict(…, p_log_to_journal)` écrit l'entrée `MANUEL` « Verdict — [observation] » (texte : « Naturel inexpliqué (conviction). Écart principal (gravitationnelle), mesuré par 2 rapports. » puis la note), le panneau indique « Consigné au journal ». « Créer un artefact » ne s'active qu'après un verdict ; la modale `LabArtifactModal` préremplit la désignation (nom de l'objet, « PROXIMA-C »), le sous-type suggéré, l'interprétation (note du verdict, avec sa confiance) et montre les écarts déposés et l'avertissement de permanence. RPC `create_artifact` : trace `JOUEUR` persistée, reliée au vaisseau, interprétation ajoutée ; le bouton devient « Artefact déposé » (un seul par verdict ; réviser le verdict pour en déposer un autre). Les artefacts du vaisseau apparaissent dans Artefacts avec leur sous-type. Migration 00076 appliquée en production le 24 octobre 2026.
+
+**Lot 4 — implémenté.** Un doute est un écart resté à l'état d'ombre qu'aucun rapport n'a mesuré (`getOpenDoubts`, `src/lib/doubts.js`). Le panneau `LabDoubtPanel` (« Lever le doute ») s'affiche au-dessus du verdict et dit comment l'atteindre :
+- hors du système : nom du système, distance, générations (`computeTransit`), « Préparer le voyage » ouvre la Carte sur le système (`/carte?select=…`, nœud ajouté au besoin) ; le départ reste confirmé par « Fixer le cap », comme partout ailleurs ;
+- dans le système, niveau encore insuffisant (Contact) : « Approfondir » ;
+- niveau atteint : l'instrument qui avait deviné l'écart redevient disponible (« Niveau atteint — relancer ») ; le nouveau rapport mesure l'écart et le doute disparaît.
+
+Sur la Carte, un système dont une observation porte un doute hors de portée affiche « Doute à lever » dans la liste et le détail du doute au-dessus de « Fixer le cap ». Hors ligne, les rapports sont gardés en mémoire dans le store pour que la Carte les voie. Aucune migration.
 
 ---
 

@@ -260,6 +260,56 @@
   margin: 0 var(--space-2);
 }
 
+/* ── Lever le doute (LACUNA_VERDICT.md §6.1) ── */
+.lab-doubt {
+  padding: var(--space-8) var(--space-9);
+  border: var(--border-width) dashed var(--color-amber-dim);
+  background: var(--color-surface);
+  margin-bottom: var(--space-9);
+}
+
+.lab-doubt__title {
+  font-size: var(--text-sm);
+  color: var(--color-amber);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-6);
+}
+
+.lab-doubt__list {
+  list-style: none;
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  line-height: var(--leading-tight);
+}
+
+.lab-doubt__level {
+  color: var(--color-amber);
+}
+
+.lab-doubt__hint {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.lab-doubt__action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.lab-doubt__route {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
 /* ── Verdict du joueur (LACUNA_VERDICT.md §5) ── */
 .lab-verdict {
   padding: var(--space-8) var(--space-9);
@@ -752,4 +802,8 @@
   color: var(--color-muted);
   line-height: var(--leading-tight);
   text-align: center;
+}
+
+.instrument-btn__reason--note {
+  color: var(--color-amber);
 }

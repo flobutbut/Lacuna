@@ -67,8 +67,11 @@ export const useLabReportsStore = defineStore('labReports', () => {
 
     async function addReport(observationId, report) {
       const supabaseStore = useSupabaseStore()
-      if (!supabaseStore.isConfigured()) return null
-      if (!/^[0-9a-f-]{36}$/i.test(observationId)) return null
+      if (!supabaseStore.isConfigured() || !/^[0-9a-f-]{36}$/i.test(observationId)) {
+        // Hors ligne : gardé en mémoire, pour que la Carte voie aussi les doutes à lever
+        cache.value = { ...cache.value, [observationId]: [...(cache.value[observationId] || []), { ...report }] }
+        return null
+      }
       const row = reportToRow(report, observationId)
       const { data, error } = await supabase
         .from('lab_reports')

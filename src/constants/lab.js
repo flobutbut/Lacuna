@@ -85,6 +85,9 @@ export const LAB_INSTRUMENTS = [
 /** Ordre des niveaux d'observation (enum SQL observation_niveau) */
 export const NIVEAU_ORDER = { PASSIF: 0, SYSTEME: 1, ORBITE: 2, CONTACT: 3 }
 
+/** Libellés des niveaux d'observation (observations.niveau côté client) */
+export const NIVEAU_LABELS = { PASSIF: 'Passif', SYSTEME: 'Système', ORBITE: 'Orbite proche', CONTACT: 'Contact' }
+
 /** Type de corps tel que l'attendent les instruments (STAR → ETOILE, PLANET → PLANETE) */
 export function getBodyType(obs) {
   return obs.type === 'STAR' ? 'ETOILE' : obs.type === 'PLANET' ? 'PLANETE' : obs.type

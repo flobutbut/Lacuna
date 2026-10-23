@@ -1,7 +1,7 @@
 <script setup>
 import '@/assets/components/carte.css'
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useMapNodesStore } from '@/stores/mapNodes'
 import { useShipStore } from '@/stores/ship'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
@@ -16,6 +16,9 @@ import { buildObservationPayload } from '@/lib/observationPayload'
 import { formatCoordinates } from '@/lib/formatUtils'
 import { formatDistanceLy, getStarClassLabel } from '@/lib/starClassification'
 import { computeTransit } from '@/lib/transit'
+import { getEffectiveNiveau, getOpenDoubts } from '@/lib/doubts'
+import { DEVIATION_FAMILIES } from '@/lib/deviations'
+import { NIVEAU_LABELS } from '@/constants/lab'
 import { getSystemXyz } from '@/lib/stellarCoordinates'
 import { xyzToRaDec } from '@/lib/stellarProjection'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
@@ -27,6 +30,7 @@ import CarteMap3D from '@/components/carte/CarteMap3D.vue'
 import AppCard from '@/components/AppCard.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
 
+const route = useRoute()
 const router = useRouter()
 const mapStore = useMapNodesStore()
 const shipStore = useShipStore()
@@ -97,13 +101,40 @@ onMounted(async () => {
   if (nodes?.length > 0) {
     await Promise.all(nodes.map((n) => systemObjectsStore.fetchForSystem(n.systemId)))
   }
-  // Sélection par défaut : système actuel s'il est sur la carte, sinon premier de la liste
-  if (mapStore.nodes?.length > 0) {
+  // Sélection : système demandé (?select=, « Préparer le voyage » du Laboratoire), sinon système actuel, sinon premier
+  const requested = typeof route.query.select === 'string' ? route.query.select : null
+  if (requested && mapStore.isOnMap(requested)) {
+    selectedSystemId.value = requested
+  } else if (mapStore.nodes?.length > 0) {
     selectedSystemId.value = (currentId && mapStore.isOnMap(currentId))
       ? currentId
       : mapStore.nodes[0].systemId
   }
 })
+
+/**
+ * Doutes à lever par système : écarts restés à l'état d'ombre dans les observations du vaisseau,
+ * que le niveau actuel ne permet pas de mesurer (LACUNA_VERDICT.md §6.1, §8).
+ */
+const doubtsBySystem = computed(() => {
+  const out = {}
+  for (const obs of obsStore.list) {
+    if (!obs.system_id) continue
+    const reports = labReportsStore.getReportsForObs(obs.id)
+    if (reports.length === 0) continue
+    const niveau = getEffectiveNiveau(obs, shipStore.currentSystemId)
+    for (const d of getOpenDoubts(obs, reports, niveau)) {
+      if (d.reachable) continue
+      out[obs.system_id] = [...(out[obs.system_id] ?? []), { ...d, observationName: obs.name }]
+    }
+  }
+  return out
+})
+
+function doubtText(d) {
+  const family = (DEVIATION_FAMILIES[d.family]?.label ?? d.family).toLowerCase()
+  return `${d.observationName.split('·')[0].trim()} — écart (${family}), niveau ${NIVEAU_LABELS[d.requiresNiveau]} requis`
+}
 
 // Systèmes stellaires pour les nœuds de la carte
 const stellarBySystemId = computed(() => {
@@ -564,6 +595,9 @@ watch(carteViewMode, (mode) => {
               <template #icon>
                 <StarSvgInline :spectral-type="node.spectralType" />
               </template>
+              <template v-if="doubtsBySystem[node.systemId]" #meta>
+                <span class="carte-node__doubt">Doute à lever</span>
+              </template>
             </AppCard>
           </div>
         </template>
@@ -789,6 +823,12 @@ watch(carteViewMode, (mode) => {
                 <span class="sw-key">Traces</span>
                 <span class="sw-val">{{ mapStore.nodeBySystemId[selectedSystemId].tracesFound }}</span>
               </div>
+            </div>
+            <div v-if="doubtsBySystem[selectedSystemId]" class="carte-doubt">
+              <div class="carte-doubt__title">Doute à lever</div>
+              <ul class="carte-doubt__list">
+                <li v-for="d in doubtsBySystem[selectedSystemId]" :key="d.observationName + d.id">{{ doubtText(d) }}</li>
+              </ul>
             </div>
             <div class="carte-detail-actions">
               <button type="button" class="btn btn-primary" @click="analyserForStar">

@@ -2,7 +2,7 @@
 import '@/assets/components/lab.css'
 import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useObservationsStore } from '@/stores/observations'
 import { useLabReportsStore } from '@/stores/labReports'
 import { useVerdictsStore } from '@/stores/verdicts'
@@ -12,11 +12,20 @@ import { useMapNodesStore } from '@/stores/mapNodes'
 import { useNotificationsStore } from '@/stores/notifications'
 import { OBJECT_TYPE_LABELS, getObsFilterType, getObservationIcon } from '@/constants/objectTypes'
 import { getSupportLabel } from '@/constants/signaux'
-import { getGraphName, getAnalysisConclusion, getInstrumentsForObservation, NIVEAU_ORDER } from '@/constants/lab'
+import { getGraphName, getAnalysisConclusion, getInstrumentsForObservation, NIVEAU_ORDER, NIVEAU_LABELS } from '@/constants/lab'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { seededRandom } from '@/lib/random'
 import { seedFromObsId } from '@/lib/spectrogramData'
 import { DEVIATION_FAMILIES, getReportDeviations, countDeviationSightings } from '@/lib/deviations'
+import {
+  getObsNiveauKey,
+  getEffectiveNiveau as effectiveNiveauOf,
+  getDeviationsOf,
+  getOpenDoubts,
+  isInstrumentRelaunchable,
+  distanceBetweenSystems,
+} from '@/lib/doubts'
+import { computeTransit } from '@/lib/transit'
 import { getMainDeviationFamily, getReadingLabel } from '@/lib/verdicts'
 import LabReportSpectrogram from '@/components/lab/LabReportSpectrogram.vue'
 import LabReportStructureTemporelle from '@/components/lab/LabReportStructureTemporelle.vue'
@@ -34,10 +43,12 @@ import LabReportNeutrinos from '@/components/lab/LabReportNeutrinos.vue'
 import InstrumentButton from '@/components/InstrumentButton.vue'
 import LabVerdictPanel from '@/components/lab/LabVerdictPanel.vue'
 import LabArtifactModal from '@/components/lab/LabArtifactModal.vue'
+import LabDoubtPanel from '@/components/lab/LabDoubtPanel.vue'
 import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
 import ObservationCard from '@/components/ObservationCard.vue'
 
 const route = useRoute()
+const router = useRouter()
 const obsStore = useObservationsStore()
 const labReportsStore = useLabReportsStore()
 const verdictsStore = useVerdictsStore()
@@ -49,7 +60,7 @@ const notificationsStore = useNotificationsStore()
 
 const OBS_STATES = { PENDING: 'En attente', RUNNING: 'Analyse en cours', DONE: 'Analysé' }
 
-const NIVEAUX = { PASSIF: 'Passif', SYSTEME: 'Système', ORBITE: 'Orbite proche', CONTACT: 'Contact' }
+const NIVEAUX = NIVEAU_LABELS
 
 function hasRunningForObs(obs) {
   if (!obs) return false
@@ -112,10 +123,6 @@ function removeObservation(obs) {
   running.value = runNext
 }
 
-function getObsNiveauKey(obs) {
-  return Object.keys(NIVEAUX).find(k => NIVEAUX[k] === obs.niveau) || 'PASSIF'
-}
-
 /** Une observation d'un corps du système où se trouve le vaisseau peut être approfondie jusqu'au contact */
 function canDeepen(obs) {
   if (!obs || obs.type === 'SIGNAL' || !obs.system_id) return false
@@ -142,12 +149,12 @@ function getObservationState(obs) {
 
 /** Niveau effectif : si le vaisseau est dans le système de l'obs, on considère ORBITE atteint */
 function getEffectiveNiveau(obs) {
-  const base = NIVEAU_ORDER[getObsNiveauKey(obs)] ?? 0
-  const inSystem = obs.system_id && shipStore.currentSystemId && obs.system_id === shipStore.currentSystemId
-  if (inSystem && obs.type !== 'SIGNAL') {
-    return Math.max(base, NIVEAU_ORDER.ORBITE)
-  }
-  return base
+  return effectiveNiveauOf(obs, shipStore.currentSystemId)
+}
+
+/** Doutes encore ouverts d'une observation (ombres qu'aucun rapport n'a mesurées) */
+function getDoubtsFor(obs) {
+  return getOpenDoubts(obs, reports.value[obs.id] || [], getEffectiveNiveau(obs))
 }
 
 function isInstrumentCompatible(instr, obs) {
@@ -177,7 +184,11 @@ function instrumentState(instr, obs) {
   if (!obs) return 'disabled'
   const key = `${obs.id}-${instr.id}`
   if (running.value[key]) return 'running'
-  if (reports.value[obs.id]?.some(r => r.instrumentId === instr.id)) return 'done'
+  if (reports.value[obs.id]?.some(r => r.instrumentId === instr.id)) {
+    // Niveau atteint pour un doute que l'instrument avait deviné : il peut être relancé
+    const relaunch = isInstrumentCompatible(instr, obs) && isInstrumentRelaunchable(instr.id, getDoubtsFor(obs))
+    return relaunch ? 'available' : 'done'
+  }
   if (!isInstrumentCompatible(instr, obs)) return 'disabled'
   return 'available'
 }
@@ -204,7 +215,6 @@ function startSimulation() {
       if (r.progress >= 100) {
         // Déterministe : même observation + même instrument → même fiabilité
         const fiability = 50 + Math.floor(seededRandom(seedFromObsId(`${r.obs.id}:${r.instr.id}`))() * 45)
-        const newReports = reports.value[r.obs.id] || []
         const durationSec = r.obs.type === 'SIGNAL' ? (r.obs.durationSec ?? 72) : 72
         const deviations = getReportDeviations(r.obs, r.instr.id, { fiability, niveau: getEffectiveNiveau(r.obs) })
         // Les graphes montrent des résidus quand l'instrument mesure un écart
@@ -245,7 +255,8 @@ function startSimulation() {
                                   ? `Chronologie des événements + spectre en énergie + cône de direction. Fiabilité ${fiability}%.`
                                   : `${r.instr.name} — Données produites. Fiabilité ${fiability}%.`,
         }
-        newReports.push(reportPayload)
+        // Nouveau tableau : celui du store (labReports.cache) est partagé et ne doit pas être modifié ici
+        const newReports = [...(reports.value[r.obs.id] || []), reportPayload]
         reports.value = { ...reports.value, [r.obs.id]: newReports }
         labReportsStore.addReport(r.obs.id, reportPayload)
         const next = { ...running.value }
@@ -305,16 +316,45 @@ const selectedInstruments = computed(() => {
 
 /** Écarts d'un rapport ; recalculés depuis l'objet pour les rapports antérieurs aux écarts */
 function getDeviationsForReport(r) {
-  if (Array.isArray(r.deviations)) return r.deviations
   const obs = selectedObs.value
-  if (!obs) return []
-  return getReportDeviations(obs, r.instrumentId, { fiability: r.fiability, niveau: getEffectiveNiveau(obs) })
+  if (!obs) return Array.isArray(r.deviations) ? r.deviations : []
+  return getDeviationsOf(obs, r, getEffectiveNiveau(obs))
 }
 
 /** Nombre de rapports de l'observation sélectionnée qui mesurent chaque écart */
 const deviationSightings = computed(() =>
   countDeviationSightings(selectedReports.value.map(getDeviationsForReport))
 )
+
+/** Doutes à lever de l'observation sélectionnée (LACUNA_VERDICT.md §6.1) */
+const selectedDoubts = computed(() => (selectedObs.value ? getDoubtsFor(selectedObs.value) : []))
+
+/** Système de l'observation, distance et générations depuis la position du vaisseau */
+const selectedDestination = computed(() => {
+  const obs = selectedObs.value
+  if (!obs?.system_id) return null
+  const target = stellarStore.list.find((s) => s.id === obs.system_id)
+  const here = stellarStore.list.find((s) => s.id === shipStore.currentSystemId)
+  const distanceLy = distanceBetweenSystems(here, target)
+  return {
+    systemId: obs.system_id,
+    name: target?.name ?? obs.system ?? obs.system_id,
+    inSystem: obs.system_id === shipStore.currentSystemId,
+    distanceLy,
+    generations: distanceLy ? computeTransit(distanceLy).generations : null,
+  }
+})
+
+/** Ouvre la Carte sur le système de l'observation (le départ se confirme avec « Fixer le cap ») */
+async function prepareVoyage() {
+  const dest = selectedDestination.value
+  if (!dest) return
+  if (!mapStore.isOnMap(dest.systemId)) {
+    await mapStore.addNode(dest.systemId, dest.name)
+    notificationsStore.setCarteHasNew(true)
+  }
+  router.push({ path: '/carte', query: { select: dest.systemId } })
+}
 
 /** Famille de l'écart principal de l'observation sélectionnée (verdict) */
 const mainDeviationFamily = computed(() =>
@@ -516,6 +556,7 @@ onUnmounted(() => {
                 :state="instrumentState(instr, selectedObs)"
                 :progress="runningForSelected[instr.id]?.progress ?? 0"
                 :disabled-reason="getDisabledReason(instr, selectedObs)"
+                :note="instrumentState(instr, selectedObs) === 'available' && selectedReports.some((r) => r.instrumentId === instr.id) ? 'Niveau atteint — relancer' : ''"
                 @click="launchInstrument(instr, selectedObs)"
               />
             </div>
@@ -528,7 +569,7 @@ onUnmounted(() => {
                 — modèle de référence : {{ getAnalysisConclusion(selectedObs, selectedReports.length) }}
               </span>
             </div>
-            <div v-for="r in selectedReports" :key="r.instrumentId + r.date" class="lab-report">
+            <div v-for="(r, i) in selectedReports" :key="r.id ?? `${r.instrumentId}-${i}`" class="lab-report">
               <div class="lab-report__header">
                 <div class="lab-report__header-left">
                   <div class="lab-report__instrument sw-val">{{ r.instrument }}</div>
@@ -685,6 +726,15 @@ onUnmounted(() => {
             <div v-if="selectedReports.length === 0 && !Object.keys(runningForSelected).length" class="lab-report" style="opacity: 0.7">
               Lancez un instrument ci-dessus.
             </div>
+            <LabDoubtPanel
+              v-if="selectedDoubts.length > 0"
+              :doubts="selectedDoubts"
+              :destination="selectedDestination"
+              :can-deepen="canDeepen(selectedObs)"
+              :in-transit="shipStore.isInTransit"
+              @prepare="prepareVoyage"
+              @deepen="obsStore.deepenObservation(selectedObs.id)"
+            />
             <LabVerdictPanel
               v-if="selectedReports.length > 0"
               :observation-id="selectedObs.id"

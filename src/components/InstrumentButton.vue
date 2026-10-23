@@ -12,6 +12,8 @@ const props = defineProps({
   state: { type: String, required: true }, // 'available' | 'disabled' | 'running' | 'done'
   progress: { type: Number, default: 0 },
   disabledReason: { type: String, default: '' },
+  /** Indication sous le nom quand l'instrument est disponible (ex. relance possible) */
+  note: { type: String, default: '' },
 })
 
 const emit = defineEmits(['click'])
@@ -53,6 +55,9 @@ function handleClick() {
       <div class="instrument-btn__name">{{ instrument.name }}</div>
       <span v-if="state === 'disabled' && disabledReason" class="instrument-btn__reason">
         {{ disabledReason }}
+      </span>
+      <span v-else-if="state === 'available' && note" class="instrument-btn__reason instrument-btn__reason--note">
+        {{ note }}
       </span>
     </div>
   </button>
