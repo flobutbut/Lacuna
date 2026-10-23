@@ -81,7 +81,7 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <div class="side-widget side-widget--signaux">
+    <div class="side-widget side-widget--signaux" data-tour="radar">
       <div
         class="side-widget__header side-widget__header--radar"
         :class="{ 'side-widget__header--collapsed': !radarEnabled }"
@@ -112,7 +112,7 @@ onUnmounted(() => {
       <RadarMiniature v-if="radarEnabled" />
     </div>
 
-    <div class="side-widget">
+    <div class="side-widget" data-tour="neutrinos">
       <div
         class="side-widget__header side-widget__header--radar"
         :class="{ 'side-widget__header--collapsed': !neutrinoMonitorEnabled }"

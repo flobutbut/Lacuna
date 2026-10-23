@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Lore
-*Version 0.11 — Octobre 2026*
+*Version 0.12 — Octobre 2026*
 
 ---
 
@@ -20,6 +20,7 @@
 | 0.9 | Octobre 2026 | §4 : le signal de 22 minutes (LPT-001) est implémenté |
 | 0.10 | Octobre 2026 | §3 : onboarding implémenté — écrans 1 à 4 avant le nommage, écran 5 sur le ciel, « Passer » pour les parties suivantes ; §4 : traces embarquées et message du premier départ ; §5 : les 12 anomalies du catalogue définies (fiches de `LACUNA_TRACES_IMMUABLES.md`) ; numéro de version de l'en-tête rattrapé |
 | 0.11 | Octobre 2026 | §3 : paragraphes des écrans 1 à 4 révélés un à un ; écran 5 en cartouche pointant une destination du catalogue |
+| 0.12 | Octobre 2026 | §3 : l'écran 5 devient une visite en sept étapes (anomalies, signaux, Radar, Neutrinos, Laboratoire, Journal, catalogue) — textes des étapes 1 et 2 d'après la demande du concepteur |
 
 ---
 
@@ -224,7 +225,17 @@ Choisissez celle que vous voulez comprendre.
 **Implémentation (octobre 2026)**
 - Les écrans 1 à 4 précèdent l'écran de nommage « Bienvenue à bord » (pseudo et nom du vaisseau), qui crée la partie. L'horloge du ciel de départ (SN-001, LPT-001) part de là.
 - Écrans 1 à 4 : les paragraphes apparaissent un à un ; un clic ou une touche révèle d'abord le reste de l'écran, puis passe au suivant.
-- L'écran 5 est un cartouche relié par un trait à un cercle autour de la destination du catalogue la plus proche du centre de la vue (texte seul en bas du ciel si aucune n'est dans le champ). Les neuf anomalies-destinations (§5) sont distinguées des autres étoiles ; le cartouche disparaît au premier départ.
+- L'écran 5 devient une courte visite *(décision d'octobre 2026 : elle déroge au principe « pas un tutoriel » pour présenter les outils de bord)*. Chaque étape est un cartouche relié par un trait à ce qu'il décrit — cercle autour d'un objet du ciel (le plus proche du centre de la vue), cadre autour d'un élément de l'interface — avec [Terminer] et [Suivant]. Sans cible visible, le cartouche reste seul en bas de l'écran. La visite terminée ne revient pas pour ce vaisseau ; elle disparaît au premier départ. Les neuf anomalies-destinations (§5) sont distinguées des autres étoiles jusqu'au premier départ.
+
+| Étape | Cible | Texte |
+|---|---|---|
+| 1 | Destination du catalogue | Certains systèmes ne s'expliquent pas entièrement : ils portent des anomalies que personne n'a su expliquer. / Observez-les, analysez-les, et faites-vous votre propre idée. |
+| 2 | Signal capté | Le vaisseau capte des signaux venus de l'espace. La plupart ont une origine connue : pulsars, sursauts gamma… / Il arrive que certains restent inexpliqués. |
+| 3 | Tuile Radar | Le Radar écoute le ciel dans la direction où vous regardez. / Chaque bande de fréquence fait entendre des sources différentes. |
+| 4 | Tuile Neutrinos | Le détecteur compte les neutrinos qui traversent le vaisseau. / Il ne dit pas d'où ils viennent. |
+| 5 | Laboratoire | Le Laboratoire analyse les signaux que vous lui confiez. / Ses rapports donnent des mesures, jamais de réponse. |
+| 6 | Journal | Le journal garde la mémoire du voyage : ce qui s'est passé, et ce que vous en pensez. |
+| 7 | Destination du catalogue | 12 anomalies figurent dans le catalogue embarqué. / Choisissez celle que vous voulez comprendre. *(texte d'origine de l'écran 5)* |
 - Première partie du compte : séquence complète, non sautée (`LACUNA_UI.md` §9). Parties suivantes (après une réinitialisation) : un discret « Passer » sur les écrans 1 à 4.
 
 ---

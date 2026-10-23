@@ -213,20 +213,27 @@ function draw(canvas, starsRef) {
   }
 
   // Écran 5 de l'onboarding : seules les destinations du catalogue embarqué sont distinguées,
-  // et le cartouche montre celle qui est la plus proche du centre de la vue
+  // et la visite montre la destination et le signal les plus proches du centre de la vue
   const anomalyIds = isFirstChoicePending(shipStore.ship) ? CATALOGUE_SYSTEM_IDS : null
   if (anomalyIds) {
-    let best = null
-    for (const id of anomalyIds) {
-      const pos = projectedPositions.get(id)
-      if (!pos) continue
-      const d = Math.hypot(pos.x - w / 2, pos.y - h / 2)
-      if (!best || d < best.d) best = { id, x: pos.x, y: pos.y, d }
+    const nearest = (items) => {
+      let best = null
+      for (const { id, pos } of items) {
+        if (!pos) continue
+        const d = Math.hypot(pos.x - w / 2, pos.y - h / 2)
+        if (!best || d < best.d) best = { id, x: pos.x, y: pos.y, d }
+      }
+      // Position relative (0–1) : le canvas est étiré à la taille de son conteneur
+      return best && { id: best.id, fx: best.x / w, fy: best.y / h }
     }
-    // Position relative (0–1) : le canvas est étiré à la taille de son conteneur
-    observatoireStore.setFirstChoiceAnchor(best && { id: best.id, fx: best.x / w, fy: best.y / h })
+    observatoireStore.setTourAnchor('anomaly', nearest([...anomalyIds].map((id) => ({ id, pos: projectedPositions.get(id) }))))
+    observatoireStore.setTourAnchor('signal', nearest(activeSignals.map((sig) => ({
+      id: sig.id,
+      pos: projectStarInFov(sig.ra ?? sig.azimuth ?? 0, sig.dec ?? sig.elevation ?? 0, vd.ra, vd.dec, w, h),
+    }))))
   } else {
-    observatoireStore.setFirstChoiceAnchor(null)
+    observatoireStore.setTourAnchor('anomaly', null)
+    observatoireStore.setTourAnchor('signal', null)
   }
   drawStars(ctx, starList, vd.ra, vd.dec, w, h, selected, searchedStarId.value, projectedPositions, anomalyIds)
   drawSignals(ctx, activeSignals, vd.ra, vd.dec, w, h)

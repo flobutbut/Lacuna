@@ -41,20 +41,21 @@ export const useObservatoireStore = defineStore('observatoire', () => {
   /** Première arrivée sur le ciel après l'onboarding : l'interface apparaît en fondu (LACUNA_UI.md §9) */
   const introActive = ref(false)
   /**
-   * Écran 5 de l'onboarding : destination du catalogue montrée par le cartouche (la plus proche du centre de la vue),
-   * en position relative dans le ciel (fx, fy entre 0 et 1) ; null si aucune n'est dans le champ
+   * Visite de l'écran 5 de l'onboarding : objets du ciel montrés par le cartouche, les plus proches du centre de la vue
+   * — destination du catalogue (anomaly) et signal capté (signal) — en position relative dans le ciel
+   * (fx, fy entre 0 et 1) ; null si aucun n'est dans le champ
    */
-  const firstChoiceAnchor = ref(null)
+  const tourAnchors = ref({ anomaly: null, signal: null })
 
-  function setFirstChoiceAnchor(anchor) {
-    const prev = firstChoiceAnchor.value
+  function setTourAnchor(kind, anchor) {
+    const prev = tourAnchors.value[kind]
     if (!anchor) {
-      if (prev) firstChoiceAnchor.value = null
+      if (prev) tourAnchors.value = { ...tourAnchors.value, [kind]: null }
       return
     }
     // Évite d'écrire à chaque image quand la vue ne bouge pas
     if (prev && prev.id === anchor.id && Math.abs(prev.fx - anchor.fx) < 0.0005 && Math.abs(prev.fy - anchor.fy) < 0.0005) return
-    firstChoiceAnchor.value = anchor
+    tourAnchors.value = { ...tourAnchors.value, [kind]: anchor }
   }
   const INTRO_MS = 4500
 
@@ -180,8 +181,8 @@ export const useObservatoireStore = defineStore('observatoire', () => {
   }
 
   return {
-    firstChoiceAnchor,
-    setFirstChoiceAnchor,
+    tourAnchors,
+    setTourAnchor,
     introActive,
     startIntro,
     selectedStar,

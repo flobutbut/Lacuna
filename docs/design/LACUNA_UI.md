@@ -901,11 +901,11 @@ Le bouton "Fixer cap" est la seule action irréversible directement accessible d
 | 02 | Les trois questions | Texte narratif — 3 questions sans réponse |
 | 03 | Le pari | Décision collective — population initiale affichée (15 000) |
 | 04 | Le départ | Texte court — ce qui a été laissé derrière |
-| 05 | Le premier choix | Le ciel s'ouvre — 12 anomalies visibles — aucune instruction |
+| 05 | Le premier choix | Le ciel s'ouvre — 12 anomalies visibles — courte visite des outils de bord (octobre 2026) |
 
 L'écran 05 est la transition vers le jeu. Il n'y a pas de bouton "commencer". Le joueur est déjà dedans.
 
-**Implémentation** *(octobre 2026 — `OnboardingStory.vue`, `OnboardingFirstChoice.vue`)* — écrans 01 à 04 en plein écran avant le nommage « Bienvenue à bord » (texte de `LACUNA_LORE.md` §3 ; paragraphes révélés un à un, clic ou touche pour tout révéler puis avancer) ; écran 05 : cartouche relié par un trait à un cercle autour de la destination du catalogue la plus proche du centre de la vue, les neuf anomalies-destinations (`LACUNA_LORE.md` §5) légèrement distinguées, retiré au premier départ ; transition finale en fondu (header, panneaux, barre d'instruments) à la première arrivée sur le ciel.
+**Implémentation** *(octobre 2026 — `OnboardingStory.vue`, `OnboardingFirstChoice.vue`)* — écrans 01 à 04 en plein écran avant le nommage « Bienvenue à bord » (texte de `LACUNA_LORE.md` §3 ; paragraphes révélés un à un, clic ou touche pour tout révéler puis avancer) ; écran 05 : visite en sept étapes (`LACUNA_LORE.md` §3), cartouche relié par un trait à un cercle (objet du ciel) ou à un cadre (élément de l'interface), [Terminer] / [Suivant], les neuf anomalies-destinations (`LACUNA_LORE.md` §5) légèrement distinguées, retirée au premier départ ; transition finale en fondu (header, panneaux, barre d'instruments) à la première arrivée sur le ciel.
 
 ---
 
@@ -944,6 +944,7 @@ Ce qui est spécifique à l'interface :
 | 2026-10-23 | Module Journal de bord : deux colonnes (nouvelle entrée | filtre et fil) |
 | 2026-10-23 | §9 : onboarding implémenté ; « Passer » sur les écrans 01 à 04 pour une nouvelle partie seulement |
 | 2026-10-23 | §9 : paragraphes révélés un à un ; écran 05 en cartouche (trait et cercle autour d'une destination) |
+| 2026-10-23 | §9 : écran 05 en visite de sept étapes avec [Terminer] / [Suivant] |
 | 2026-10-23 | §2 : Radar — sources du ciel de départ (PSR B1919+21, Synchrotron 408 MHz, SN-2341-K452) ; les autres signaux de départ restent muets |
 
 ---
