@@ -4,6 +4,7 @@
  * Filtre visibilité : fetchVisibleForSky(viewerId) via RPC get_visible_systems
  * Chargement trois passes : ciel réel (mag≤6.5), systèmes proches (≤100 al), ciel profond (6.5–18)
  */
+import { CATALOGUE_SYSTEM_IDS } from '@/lib/onboarding'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
@@ -120,6 +121,17 @@ export const useStellarSystemsStore = defineStore('stellarSystems', () => {
       console.warn('[stellarSystems] pass2 nearby:', err2.message)
     } else if (pass2?.length) {
       visibleForSky.value = _mergeWithoutDuplicates(visibleForSky.value, pass2)
+    }
+    // Destinations du catalogue embarqué (LACUNA_LORE.md §5) : toujours au ciel, même sans magnitude connue
+    const { data: catalogue, error: errCat } = await supabase
+      .from('stellar_systems')
+      .select(SKY_COLUMNS)
+      .in('id', [...CATALOGUE_SYSTEM_IDS])
+      .neq('id', viewerSystemId)
+    if (errCat) {
+      console.warn('[stellarSystems] catalogue:', errCat.message)
+    } else if (catalogue?.length) {
+      visibleForSky.value = _mergeWithoutDuplicates(visibleForSky.value, catalogue)
     }
     skyLoadingPass2.value = false
 

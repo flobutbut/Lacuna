@@ -14,10 +14,13 @@
 
 <style scoped>
 .onboarding-first-choice {
+  /* En bas du ciel, au-dessus de l'azimut : libre des barres d'outils et des panneaux latéraux */
   position: absolute;
-  top: var(--space-10);
+  bottom: 56px;
   left: 50%;
   transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 2 * var(--page-gutter));
   z-index: 5;
   pointer-events: none;
   text-align: center;
