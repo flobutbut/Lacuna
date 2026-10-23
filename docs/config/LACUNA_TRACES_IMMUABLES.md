@@ -1,7 +1,7 @@
-*Dernière modification : 2026-10-22*
+*Dernière modification : 2026-10-23*
 
 # LACUNA — Traces immuables
-*Version 0.2 — Octobre 2026*
+*Version 0.3 — Octobre 2026*
 
 > Ce document contient les **fiches des traces immuables** qui n'appartiennent pas à un scénario — voisinage solaire, hors voisinage — et le **Journal de Yael** (origine `PRÉCURSEUR`). Les traces appartenant à un scénario ont leurs fiches de nœuds dans `LACUNA_SCENARIOS.md`. La mécanique (définition, chaîne de production, types d'outputs, qualification) vit dans `LACUNA_TRACES.md`. Les faits astronomiques de référence vivent dans `LACUNA_ANOMALIES_REELLES.md`.
 >
@@ -17,6 +17,7 @@
 2. [Traces immuables — Voisinage solaire](#2-traces-immuables--voisinage-solaire)
 3. [Traces immuables — Hors voisinage](#3-traces-immuables--hors-voisinage)
 4. [Traces précurseur — Le Journal de Yael](#4-traces-précurseur--le-journal-de-yael)
+5. [Phénomènes de départ — propositions](#5-phénomènes-de-départ--propositions)
 
 ---
 
@@ -26,6 +27,7 @@
 |---------|------|---------------|
 | 0.1 | Octobre 2026 | Document initial — fiches restaurées depuis `LACUNA_TRACES.md` v0.9 (§1.8, §1.9, §2 à §4), que la réécriture v1.0 annonçait déplacées vers `LACUNA_SCENARIOS.md` sans qu'elles y aient été reportées. Mises à jour factuelles : Barnard (quatre planètes confirmées en 2025), Epsilon Eridani b (confirmée en 2019), Proxima b (masse minimale 1,07 M⊕), Tau Ceti (candidates de 2017), Ross 128 (bande C), nucléobases (Bennu 2025, Ryugu 2026), Étoile de Tabby (~1 470 al), PSR B1919+21 (période 1,337 s), HD 40307 ; la résonance 1:2:4 de Gliese 667C est déclarée valeur de jeu. Le Journal de Yael relève de l'origine `PRÉCURSEUR` |
 | 0.2 | Octobre 2026 | §4 : structure des entrées de Yael en base (origine `PRÉCURSEUR`, `precursor_generation`, `linked_trace_id`, `scenario_arc` pour le scénario effleuré) ; une entrée se découvre à l'arrivée dans son système. Aucune entrée écrite |
+| 0.3 | Octobre 2026 | §5 ajouté : deux propositions de phénomènes visibles dès Sol pour donner de la matière au départ — une supernova lointaine (SN-001, ancrage SN 1987A) et un transitoire radio à longue période (LPT-001, ancrage GPM J1839−10). Non intégrées au jeu ; faits vérifiés le 23 octobre 2026 |
 
 ---
 
@@ -418,4 +420,104 @@ Les entrées sont plus denses dans le voisinage solaire — là où Yael a pass�
 
 ---
 
-*LACUNA — Traces immuables v0.1 — Octobre 2026 — Confidentiel*
+## 5. Phénomènes de départ — propositions
+
+*Statut : propositions de design, non intégrées au jeu. Les désignations sont provisoires.*
+
+Au lancement de la partie, le vaisseau est à Sol et aucune trace de scénario n'est captable (les signaux du Fil des 75 ne se reçoivent qu'à l'arrivée). Ces deux phénomènes donnent de la matière au joueur dès les premières minutes, sans l'appeler vers une destination :
+
+- la **supernova** est un spectacle et une leçon de lumière — ce que le joueur voit est déjà du passé ;
+- le **signal à longue période** est un premier objet d'analyse — des données nettes, aucune conclusion.
+
+La supernova n'est pas une trace au sens de `LACUNA_TRACES.md` §1 : elle ne s'écarte d'aucun modèle. Aucun des deux n'invite au voyage. Ils peuvent s'inscrire dans la séquence de démarrage (`LACUNA_LORE.md` §4).
+
+---
+
+### SN-001 — La supernova (proposition)
+**Système :** Bételgeuse (α Orionis), ~550 al — *valeur de jeu*
+**Type :** ÉVÉNEMENT — neutrinos, puis lumière
+**Difficulté :** 1 — passif, aucune manœuvre
+
+**Ancrage réel**
+Le 23 février 1987, trois détecteurs souterrains (Kamiokande II, IMB, Baksan) enregistrent en quelques secondes environ deux douzaines de neutrinos. Environ trois heures plus tard, la supernova SN 1987A devient visible dans le Grand Nuage de Magellan, à ~168 000 al : c'est la seule supernova dont on ait détecté les neutrinos. Les neutrinos s'échappent du cœur effondré avant que l'onde de choc n'atteigne la surface de l'étoile ; la lumière suit.
+Bételgeuse est une supergéante rouge à ~550 al (168 pc, Joyce et al. 2020). Elle brûle encore de l'hélium en son cœur : les modèles ne prévoient pas son explosion avant environ 100 000 ans.
+
+*Valeur de jeu :* dans LACUNA, Bételgeuse a explosé il y a ~550 ans ; sa lumière atteint Sol au moment du départ. Le choix de l'étoile reste ouvert (voir questions).
+
+**Ce que le joueur voit**
+1. Peu après le départ, les capteurs enregistrent une bouffée de particules de quelques secondes — sans contrepartie visible dans le ciel.
+2. Quelques heures plus tard, une étoile d'Orion s'embrase et devient l'objet le plus brillant du ciel après Sol. Son éclat décline ensuite lentement.
+
+Le joueur fait lui-même le lien entre les deux : rien ne le lui dit.
+
+**Ce que les données disent**
+- Bouffée de neutrinos : quelques secondes, direction approximative
+- Délai neutrinos → lumière : quelques heures, comme pour SN 1987A
+- Spectre : celui d'une supernova à effondrement de cœur
+- Distance : ~550 al — la lumière a voyagé ~550 ans
+
+**Ce que les données ne disent pas**
+- Rien d'anormal : c'est un phénomène naturel connu. Sa force est ailleurs — l'étoile n'existe plus depuis des siècles, et le joueur ne le sait que maintenant.
+
+**Ce que le phénomène apprend sans le dire**
+- L'observation est toujours du passé (`LACUNA_GDD.md` §2).
+- L'échelle du voyage : d'après la table de référence (`LACUNA_PHYSICS.md` §2), y aller prendrait ~19 h joueur et ~11 400 ans simulés (~457 générations). À l'arrivée, il ne resterait qu'un rémanent en expansion. Ce n'est pas un appel à y aller.
+
+**Questions ouvertes**
+- Faire exploser une vraie étoile (Bételgeuse, visible de tous et connue) ou une étoile anonyme plus lointaine, moins invraisemblable ?
+- Événement propre à chaque partie (déclenché au départ) ou partagé par tous les joueurs à une date fixe ?
+- Le support « neutrinos » est décrit dans la mécanique des signaux mais absent du code (radio, gamma/X, gravitationnel aujourd'hui).
+- Éclat apparent au maximum et durée du déclin (temps réel ou simulé) : à fixer avec une source.
+- Le ciel garde-t-il le rémanent ? Les étoiles proches de Bételgeuse en sont-elles affectées dans le jeu ?
+
+---
+
+### LPT-001 — Le signal de 22 minutes (proposition)
+**Système :** GPM J1839−10, ~5,7 kpc (~18 600 al)
+**Type :** SIGNAL — radio, périodique
+**Difficulté :** 1 (capté depuis Sol) — 2 (analysé)
+
+**Ancrage réel**
+Découvert en 2022 par le Murchison Widefield Array lors d'un relevé du plan galactique, GPM J1839−10 émet une impulsion radio toutes les 1 318,1957 s (~22 min). Les impulsions durent de 30 à 300 s et leur intensité varie d'un facteur ~100. Les archives montrent qu'il émet depuis au moins 1988 (VLA). Polarisation linéaire variable (10 à 100 %), faible polarisation circulaire. Mesure de dispersion 273,5 pc cm⁻³, d'où une distance de 5,7 ± 2,9 kpc (Hurley-Walker et al., *Nature*, 2023). Sa période est trop longue pour un pulsar classique et elle ne dérive presque pas ; les auteurs le jugent « extrêmement déroutant ». Hypothèses discutées : magnétar à période ultra-longue, naine blanche magnétique.
+Il appartient à la classe des transitoires radio à longue période. Pour certains d'entre eux (ILT J1101+5521, GLEAM-X J0704−37), une binaire naine blanche – naine rouge a été identifiée ; pour GPM J1839−10, la nature reste ouverte.
+
+*Valeur de jeu :* le signal est toujours actif au départ du vaisseau.
+
+**Ce que le joueur voit**
+Dès Sol, le Radar capte une impulsion large bande, puis plus rien pendant ~22 minutes, puis une autre — plus forte ou plus faible. Rien ne la signale comme importante.
+
+**Ce que les données disent**
+- Période : 1 318,2 s, stable sur des décennies
+- Durée d'impulsion : 30 à 300 s ; intensité très variable d'une impulsion à l'autre
+- Polarisation : linéaire, degré variable
+- Distance estimée : ~18 600 al — inatteignable en pratique
+
+**Ce que les données ne disent pas**
+- Ce qui émet : aucun objet connu ne tourne aussi lentement en émettant autant
+- Pourquoi la période ne dérive pas
+- Pourquoi l'intensité varie autant d'une impulsion à l'autre
+
+**Output**
+SIGNATURE — une période de ~1 318 s à reconnaître si elle réapparaît ailleurs.
+
+**Interprétations canoniques**
+- Magnétar à période ultra-longue
+- Naine blanche magnétique, isolée ou en binaire
+- Classe d'objets encore inconnue
+
+**Questions ouvertes**
+- Utiliser l'objet réel ou un objet inspiré de la classe (GLEAM-X J162759.5−523504.3, ~18 min, ~1,3 kpc, actif quelques mois en 2018) ?
+- Le Radar ne garde que 12 minutes d'historique : une période de 22 minutes n'y montre qu'une impulsion à la fois. L'analyse de la périodicité passe donc par le Laboratoire, sur une capture longue.
+- La signature doit-elle réapparaître plus tard (un autre système, une autre génération) pour que l'output ait un sens ?
+
+### Sources consultées (23 octobre 2026)
+
+- Hurley-Walker et al., « A long-period radio transient active for three decades », *Nature* 2023 — [arXiv:2503.08036](https://arxiv.org/html/2503.08036v1)
+- Hurley-Walker et al., GLEAM-X J162759.5−523504.3, *Nature* 2022 — [ATNF](https://www.atnf.csiro.au/?p=10564)
+- Revue des transitoires à longue période — [arXiv:2601.10393](https://arxiv.org/pdf/2601.10393) ; ILT J1101+5521 et GLEAM-X J0704−37 — [arXiv:2408.15757](https://arxiv.org/pdf/2408.15757), [A&A 2025](https://www.aanda.org/articles/aa/full_html/2025/03/aa53684-25/aa53684-25.html)
+- SN 1987A, neutrinos — [Astrophysics Spectator](https://astrophysicsspectator.org/topics/supernovae/CoreCollapseNeutrinos1987a.html), [arXiv:astro-ph/0107260](https://arxiv.org/pdf/astro-ph/0107260)
+- Bételgeuse, Joyce et al. 2020 (ApJ 902, 63) — [ANU](https://science.anu.edu.au/news-events/news/supergiant-star-betelgeuse-smaller-closer-first-thought)
+
+---
+
+*LACUNA — Traces immuables v0.3 — Octobre 2026 — Confidentiel*
