@@ -14,6 +14,8 @@ import { OBJECT_TYPE_LABELS, getObsFilterType, getObservationIcon } from '@/cons
 import { getSupportLabel } from '@/constants/signaux'
 import { getGraphName, getAnalysisConclusion } from '@/constants/lab'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
+import { seededRandom } from '@/lib/random'
+import { seedFromObsId } from '@/lib/spectrogramData'
 import LabReportSpectrogram from '@/components/lab/LabReportSpectrogram.vue'
 import LabReportStructureTemporelle from '@/components/lab/LabReportStructureTemporelle.vue'
 import LabReportPolarisation from '@/components/lab/LabReportPolarisation.vue'
@@ -140,6 +142,13 @@ function getObsNiveauKey(obs) {
   return Object.keys(NIVEAUX).find(k => NIVEAUX[k] === obs.niveau) || 'PASSIF'
 }
 
+/** Une observation d'un corps du système où se trouve le vaisseau peut être approfondie jusqu'au contact */
+function canDeepen(obs) {
+  if (!obs || obs.type === 'SIGNAL' || !obs.system_id) return false
+  if (obs.system_id !== shipStore.currentSystemId) return false
+  return getObsNiveauKey(obs) !== 'CONTACT'
+}
+
 function getObservationStateText(obs) {
   if (!obs) return ''
   if (hasRunningForObs(obs)) return 'Analyse en cours…'
@@ -217,7 +226,8 @@ function startSimulation() {
       const step = 0.85 /* ~2s pour prototype — rétablir durées par delay plus tard */
       r.progress = Math.min(100, r.progress + step)
       if (r.progress >= 100) {
-        const fiability = 50 + Math.floor(Math.random() * 45)
+        // Déterministe : même observation + même instrument → même fiabilité
+        const fiability = 50 + Math.floor(seededRandom(seedFromObsId(`${r.obs.id}:${r.instr.id}`))() * 45)
         const newReports = reports.value[r.obs.id] || []
         const durationSec = r.obs.type === 'SIGNAL' ? (r.obs.durationSec ?? 72) : 72
         const anomalous = r.obs.type === 'SIGNAL' ? (r.obs.anomalous ?? false) : false
@@ -449,6 +459,14 @@ onUnmounted(() => {
                 {{ isSelectedSystemOnMap ? 'Sur la carte' : 'Ajouter à la carte' }}
               </button>
               <button
+                v-if="canDeepen(selectedObs)"
+                type="button"
+                class="btn btn-primary"
+                @click="obsStore.deepenObservation(selectedObs.id)"
+              >
+                Approfondir
+              </button>
+              <button
                 type="button"
                 class="btn btn-primary"
                 :disabled="!canFormalize()"
@@ -500,6 +518,7 @@ onUnmounted(() => {
                 :duration-sec="r.durationSec ?? 72"
                 :anomalous="r.anomalous ?? false"
                 :structure="selectedObs?.type === 'SIGNAL' ? (selectedObs?.structure ?? 'non uniforme') : 'non uniforme'"
+                :pulse-period-sec="selectedObs?.attributes?.pulse_period_s ?? 0"
                 class="lab-report__output"
               />
               <LabReportPolarisation
@@ -507,6 +526,7 @@ onUnmounted(() => {
                 :obs-id="selectedObs?.id ?? ''"
                 :fiability="r.fiability"
                 :anomalous="r.anomalous ?? false"
+                :polarization="selectedObs?.attributes?.polarization ?? ''"
                 class="lab-report__output"
               />
               <LabReportSpectreEnergetique

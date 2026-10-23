@@ -7,6 +7,7 @@ import { POPULATION_MENU_ITEMS } from '@/constants/menus'
 import NavMenuItem from '@/components/NavMenuItem.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import { formatEffectifTrend, formatNumber } from '@/lib/formatUtils'
+import { INITIAL_POPULATION } from '@/constants/population'
 
 const shipStore = useShipStore()
 const activeTab = ref('current')
@@ -14,7 +15,7 @@ const activeTab = ref('current')
 // Données de repli si pas de vaisseau / Supabase
 const FALLBACK_GEN = {
   number: 1,
-  effectif: 10247,
+  effectif: INITIAL_POPULATION,
   effectifTrend: 'stable', // 'up' | 'down' | 'stable'
   will: 0.82,
   cohesion: 0.67,
@@ -43,9 +44,9 @@ const generations = ref([
   {
     number: 1,
     startYear: 2187,
-    endYear: 2241,
+    endYear: 2212,
     systems: ['Sol'],
-    events: ['Départ. 10 247 âmes embarquées.', 'Signal WOW-1977-A analysé.', 'Première trace interprétée.'],
+    events: [`Départ. ${formatNumber(INITIAL_POPULATION)} âmes embarquées.`, 'Signal WOW-1977-A analysé.', 'Première trace interprétée.'],
   },
 ])
 

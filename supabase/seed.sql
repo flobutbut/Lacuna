@@ -60,7 +60,7 @@ VALUES ('SOL', 'PLANET', 'i', 'Neptune', 8, 30.0690, 60190.03, 0.0086, 1.77, 17.
 INSERT INTO system_objects (system_id, type, designation, name, sort_order, spectral_type, stellar_activity, mass_stellar)
 VALUES ('PROXIMA', 'STAR', 'a', 'Proxima Centauri', 0, 'M5.5V', 'ACTIVE', 0.12);
 INSERT INTO system_objects (system_id, type, designation, name, sort_order, orbital_period_days, mass_earth, in_habitable_zone, has_atmosphere, atmosphere_detected, atmosphere_notes, confirmation_status)
-VALUES ('PROXIMA', 'PLANET', 'b', 'Proxima b', 1, 11.2, 1.17, true, true, false, 'Érosion stellaire présumée — non confirmée', 'CONFIRMED');
+VALUES ('PROXIMA', 'PLANET', 'b', 'Proxima b', 1, 11.2, 1.07, true, true, false, 'Érosion stellaire présumée — non confirmée', 'CONFIRMED');
 
 -- BARNARD — étoile seule (planètes non confirmées)
 INSERT INTO system_objects (system_id, type, designation, name, sort_order, spectral_type, stellar_activity, mass_stellar)

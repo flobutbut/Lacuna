@@ -110,7 +110,7 @@ export const useAuthStore = defineStore('auth', () => {
     playerUserId = uid
     playerPromise = (async () => {
       const [profileRes, shipRes] = await Promise.all([
-        supabase.from('profiles').select('pseudo, role').eq('id', uid).maybeSingle(),
+        supabase.from('profiles').select('pseudo, role, fast_transit').eq('id', uid).maybeSingle(),
         supabase.from('ships').select('id', { count: 'exact', head: true }).eq('user_id', uid),
       ])
       if (profileRes.error) console.warn('[auth] Erreur profil:', profileRes.error.message)
@@ -143,6 +143,25 @@ export const useAuthStore = defineStore('auth', () => {
     if (error) throw error
     profile.value = { ...profile.value, pseudo: data.pseudo }
     return data.pseudo
+  }
+
+  /** Admin : active ou coupe l'accélération des voyages de ce compte (RPC set_fast_transit) */
+  async function setFastTransit(enabled) {
+    const { data, error } = await supabase.rpc('set_fast_transit', { p_enabled: enabled })
+    if (error) throw error
+    profile.value = { ...profile.value, fast_transit: data }
+    return data
+  }
+
+  /**
+   * Admin : efface la partie (vaisseau et toutes ses données) puis recharge l'écran de création de partie.
+   * Le rechargement remet tous les stores à zéro.
+   */
+  async function resetGame() {
+    const { error } = await supabase.rpc('reset_my_game')
+    if (error) throw error
+    hasShip.value = false
+    window.location.assign('/bienvenue')
   }
 
   /**
@@ -178,5 +197,7 @@ export const useAuthStore = defineStore('auth', () => {
     updatePassword,
     accountDeleted,
     deleteAccount,
+    setFastTransit,
+    resetGame,
   }
 })

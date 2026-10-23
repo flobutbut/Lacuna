@@ -1,7 +1,7 @@
-*Dernière modification : 2026-03-10 15:11*
+*Dernière modification : 2026-10-22*
 
 # LACUNA — Arcs de Design
-*Version 0.2 — Mars 2026*
+*Version 0.3 — Octobre 2026*
 
 > Ce document décrit les **dynamiques de long terme** qui structurent l'expérience sur des semaines ou des mois de jeu. Ces arcs de design sont distincts des scénarios narratifs (`LACUNA_SCENARIOS.md`) : ils ne racontent pas une histoire de traces — ils décrivent comment le temps, la population et les décisions de cap transforment l'expérience de jeu sur la durée.
 
@@ -22,6 +22,7 @@
 |---------|------|---------------|
 | 0.1 | Mars 2026 | Document initial — fusion de LACUNA_ARC_GENERATIONNEL.md (v0.1) et LACUNA_ARC_COLONIES.md (v0.1), ajout section Interconnexions |
 | 0.2 | Mars 2026 | Suppression doublon Arc Colonies, ajout Arc Sociologique (placeholder), mise à jour numérotation |
+| 0.3 | Octobre 2026 | Mise en cohérence avec `LACUNA_PHYSICS.md` v0.2 — §1.4 : Sol en géante rouge relève du temps écoulé (stationnement dilatant), pas de la distance ; §1.6 : exemple de notification corrigé (Sol ne devient pas subgéant en 1,2 Ga), fusion d'Andromède et évolution du Soleil atteignables par stationnement près de Sgr A* (et non « horizons inaccessibles »), fin de l'ère stellaire à la place d'une « fin thermodynamique » mal datée ; §1.10 : cas limite recalculé (~4 Ma vaisseau, ~160 000 générations) ; §4 : « Arc 01 » renommé Scénario 02 — Le Fil des 75, trois arcs au lieu de deux |
 
 ---
 
@@ -74,9 +75,9 @@ Cette logique appliquée à Sol lui-même crée un arc émotionnel complet.
 | Départ | Sol tel qu'il était. Émissions radio humaines. Civilisation active. |
 | Quelques dizaines d'années joueur | Le silence radio. Les émissions ont changé ou cessé. Raison inconnue. |
 | Voyages longs | Sol brille différemment dans les données spectrales. |
-| Très longs voyages | À la bonne distance, Sol en géante rouge observable en temps réel. La Terre n'est plus. |
+| Très longs stationnements dilatants | Après des milliards d'années galactiques écoulés (près de Sgr A*, `LACUNA_PHYSICS.md` §3), Sol en géante rouge. La Terre n'est plus. |
 
-Le joueur construit cette progression lui-même, par ses choix de navigation. Il n'est jamais forcé de regarder en arrière. Mais s'il le fait, la géométrie de la lumière lui raconte l'histoire.
+Le joueur construit cette progression lui-même, par ses choix de navigation et de stationnement. Il n'est jamais forcé de regarder en arrière. Mais s'il le fait, la géométrie de la lumière lui raconte l'histoire : ce qu'il voit de Sol a toujours le retard de sa distance.
 
 C'est la disparition froide de Tau Zéro — sans l'emballement, par la seule physique de l'observation.
 
@@ -98,7 +99,9 @@ Ce n'est pas un bug. C'est ce que la carte **est**.
 
 Les événements cosmiques réels sont datés. Ils peuvent arriver comme notifications sobres, sans drama, pendant que le joueur est en train d'analyser une trace banale.
 
-*"OBSERVATION — Les données de l'observatoire indiquent que le spectre de Sol a évolué vers le stade subgéant. Durée simulée depuis le départ : 1,2 milliard d'années."*
+*"OBSERVATION — Les données de l'observatoire indiquent que la luminosité de Sol a augmenté d'environ 10 % depuis le départ. Durée simulée depuis le départ : 1,1 milliard d'années."*
+
+*(Le Soleil gagne ~1 % de luminosité tous les ~100 Ma ; il ne quitte la séquence principale que dans ~5 Ga.)*
 
 #### Estimation de temps réel joueur
 
@@ -108,15 +111,16 @@ Basée sur un comportement majoritairement en voyages courts avec quelques voyag
 |-----------|----------------|--------------------|-|
 | Silence radio de la Terre | ~10 000 ans | Quelques semaines | **Oui — prioritaire** |
 | Systèmes visités qui ont évolué | Variable | Dès les premiers grands voyages | **Oui** |
-| Fusion Voie Lactée / Andromède | 4,5 milliards d'années | ~770 ans réels | Non — horizon |
-| Sol géante rouge, Terre absorbée | 5 milliards d'années | ~860 ans réels | Non — horizon |
-| Fin de l'univers thermodynamique | 10³⁶ ans | Indéfini | Non — concept |
+| Fusion Voie Lactée / Andromède | ~4,5 milliards d'années (scénario classique ; ~50 % de probabilité sous 10 Ga selon Sawala et al., 2025) | ~770 ans réels sans dilatation — ~2 mois de stationnement près de Sgr A* | Non au rythme normal — oui au prix fort |
+| Sol quitte la séquence principale | ~5 milliards d'années | ~860 ans réels — ~2,3 mois près de Sgr A* | Non au rythme normal — oui au prix fort |
+| Sol au sommet des géantes rouges, Terre probablement absorbée | ~7,6 milliards d'années | ~3,5 mois près de Sgr A* | Non au rythme normal — oui au prix fort |
+| Fin de l'ère stellaire | ~10¹⁴ ans | ~3 800 ans réels même près de Sgr A* | Non — concept |
 
 #### Ce qui est réellement à construire
 
 **Le silence radio de la Terre** est le seul jalon cosmique atteignable par un joueur normal en quelques semaines de jeu. C'est le moment émotionnel fort, concret, réel. C'est là que la disparition froide devient sensible.
 
-La fusion d'Andromède, la mort du Soleil, la fin de l'univers — ce sont des **horizons conceptuels**, pas des états à atteindre. Ils donnent une direction au jeu sans nécessiter d'être construits. Le ciel qui change progressivement sur les très longs voyages, une notification sobre, suffit.
+La fusion d'Andromède et l'évolution du Soleil ne sont pas atteignables au rythme normal du jeu. Elles le deviennent par un choix délibéré et coûteux : plusieurs mois réels de stationnement près de Sgr A* (`LACUNA_PHYSICS.md` §3), avec la rupture généalogique qui l'accompagne. C'est la mécanique du Scénario 03 — Le Témoin (`LACUNA_SCENARIOS.md` §6). La fin de l'ère stellaire reste un **horizon conceptuel**. Le ciel qui change progressivement, une notification sobre, suffit.
 
 ---
 
@@ -278,11 +282,11 @@ Huit points de bascule définis sur trois domaines. Les bascules irréversibles 
 
 #### Cas limite — stationnement dilatant prolongé
 
-Un stationnement de 2 mois joueur près de Sgr A* représente ~4,6 millions d'années vaisseau et ~184 000 générations. C'est 15 fois l'histoire humaine depuis l'écriture.
+Un stationnement de 2 mois joueur près de Sgr A* représente ~4 millions d'années vaisseau (~4,3 milliards d'années galactiques) et ~160 000 générations — plus de dix fois l'âge d'*Homo sapiens*.
 
-Tous les points de bascule culturels sont franchis et irréversibles. La population à bord n'est plus génétiquement *Homo sapiens* au sens strict. Elle a développé sa propre cosmologie, sa propre mythologie du capitaine, peut-être sa propre langue inintelligible.
+Tous les points de bascule culturels sont franchis et irréversibles. Génétiquement, la population approche du palier de la sous-espèce (~5,7 Ma, tableau ci-dessus). Elle a développé sa propre cosmologie, sa propre mythologie du capitaine, peut-être sa propre langue inintelligible.
 
-À la sortie de l'orbite, le joueur ne retrouve pas "sa" population. Il rencontre une civilisation. Elle est à traiter comme une découverte — avec les mêmes outils d'interprétation que les traces extraterrestres. Ce qui s'est passé à bord pendant ces 4,6 millions d'années est **la plus grande lacuna interne du jeu** — inaccessible même au joueur lui-même.
+À la sortie de l'orbite, le joueur ne retrouve pas "sa" population. Il rencontre une civilisation. Elle est à traiter comme une découverte — avec les mêmes outils d'interprétation que les traces extraterrestres. Ce qui s'est passé à bord pendant ces 4 millions d'années est **la plus grande lacuna interne du jeu** — inaccessible même au joueur lui-même.
 
 
 ## 2. Arc Colonies
@@ -469,7 +473,7 @@ Une mécanique de long terme qui traduit les tensions internes de la population 
 
 ## 4. Interconnexions
 
-Les deux arcs ne sont pas parallèles — ils se croisent naturellement à plusieurs points.
+Les arcs ne sont pas parallèles — ils se croisent naturellement à plusieurs points.
 
 ### La séparation comme événement générationnel
 
@@ -483,7 +487,7 @@ Les planètes-colonies apparaissent sur la carte personnelle du joueur. Avec le 
 
 ### L'anomalie et sa propre origine
 
-Le signal de la colonie au jalon 3 peut entrer dans le catalogue des traces immuables générées — ou des traces joueurs, selon l'implémentation. Une colonie qui a atteint le stade de civilisation émergente émet dans des fréquences détectables. Cette émission peut croiser l'arc narratif de l'Arc 01 ou d'un scénario futur, sans que le lien soit établi.
+Le signal de la colonie au jalon 3 peut entrer dans le catalogue des traces immuables générées — ou des traces joueurs, selon l'implémentation. Une colonie qui a atteint le stade de civilisation émergente émet dans des fréquences détectables. Cette émission peut croiser le Scénario 02 — Le Fil des 75 — ou un scénario futur, sans que le lien soit établi.
 
 ### Questions ouvertes communes
 
@@ -493,4 +497,4 @@ Le signal de la colonie au jalon 3 peut entrer dans le catalogue des traces immu
 
 ---
 
-*LACUNA — Arcs de Design v0.1 — Mars 2026 — Confidentiel*
+*LACUNA — Arcs de Design v0.3 — Octobre 2026 — Confidentiel*

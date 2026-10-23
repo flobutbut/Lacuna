@@ -6,6 +6,8 @@ const props = defineProps({
   obsId: { type: String, default: '' },
   fiability: { type: Number, default: 80 },
   anomalous: { type: Boolean, default: false },
+  /** Polarisation mesurée du signal (ex. « circulaire gauche »), vide si inconnue */
+  polarization: { type: String, default: '' },
 })
 
 const containerRef = ref(null)
@@ -26,6 +28,7 @@ function render() {
     obsId: props.obsId,
     fiability: props.fiability,
     anomalous: props.anomalous,
+    polarization: props.polarization,
   })
   const { angle, ellipticity, degree, stokes } = data
 
@@ -72,7 +75,7 @@ onUnmounted(() => {
 })
 
 watch(
-  () => [props.obsId, props.fiability, props.anomalous],
+  () => [props.obsId, props.fiability, props.anomalous, props.polarization],
   () => render(),
   { deep: true }
 )

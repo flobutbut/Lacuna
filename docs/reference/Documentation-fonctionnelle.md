@@ -1,8 +1,8 @@
-*Dernière modification : 2026-03-25*
+*Dernière modification : 2026-10-22*
 
 # LACUNA — Documentation fonctionnelle
 
-*Synthèse des règles métier — Référence : GDD v0.3 — LACUNA_GDD.md, LACUNA_TRACES.md*
+*Synthèse des règles métier — Référence : GDD v0.5 — LACUNA_GDD.md, LACUNA_TRANSIT.md, LACUNA_TRACES.md*
 
 ---
 
@@ -14,7 +14,7 @@ LACUNA est une simulation d'exploration galactique **persistante, asynchrone et 
 - **Solitude réelle** — Pas de communication directe entre joueurs
 - **Ambiguïté irréductible** — Pas de bonne réponse unique
 - **Science ancrée** — Références réelles (WOW!, Oumuamua, Bennu...)
-- **Temps long** — Voyages en temps réel ; durée joueur par compression non-linéaire (ex. Proxima 1 h, bord galaxie 90 j). Voir LACUNA_GDD §2 et §5, `transit.js`.
+- **Temps long** — Voyages en temps réel ; durée joueur par table de référence non linéaire (ex. Proxima 1 h, bord galaxie 90 j). Voir `LACUNA_PHYSICS.md` §2, `transit.js` et la fonction SQL `transit_player_seconds`.
 - **Émergence** — Cosmologie construite par les joueurs
 
 ---
@@ -27,7 +27,7 @@ LACUNA est une simulation d'exploration galactique **persistante, asynchrone et 
 - Pseudo et nom du vaisseau sont **privés** (jamais montrés aux autres joueurs, conformément à l'anonymat du GDD) et **non uniques** ; modifiables dans Systèmes → Identité
 - Rôle `admin` (attribué à la main) : accès à la Vue 3D étoiles, outil de conception
 - **Paramètres** (icône joueur du header, à côté de Quitter) : grande modale à sections, prévue pour accueillir les futurs réglages. Section Compte : email, **suppression du compte** (saisir « SUPPRIMER ») — compte, vaisseau, partie et interprétations effacés définitivement, retour à la connexion avec confirmation
-- Évolution prévue : le pseudo pourra signer les traces déposées par le joueur — copie texte au moment du dépôt, sans lien vers le compte
+- ~~Évolution prévue : le pseudo pourra signer les traces déposées par le joueur~~ — **en suspens** : contredit le pilier « Solitude réelle » et l'anonymat total des traces et interprétations (`LACUNA_GDD.md` §3 et §5). À ne pas implémenter sans décision de design
 
 ### Vaisseau
 - 1 par joueur, persistant (tables `ships`, `ship_systems`) ; nom choisi par le joueur, classe ARCA
@@ -37,15 +37,15 @@ LACUNA est une simulation d'exploration galactique **persistante, asynchrone et 
 - Position : système courant (`current_system_id`), pas de coordonnées x/y/z en base
 
 ### Population
-- Effectif, génération, âge moyen
+- Effectif (15 000 au départ), génération, âge moyen
 - **Volonté** (0–1) : influence interprétations et tolérance aux voyages
 - Barres : cohésion, alimentation, soins
 - Événements rares : épidémie, schisme, renaissance...
 
 ### Traces
 - Types : Signal radio, Objet interstellaire, Anomalie chimique, Anomalie stellaire, Séquence codée, Artefact, Trace joueur
-- Origines : `IMMUABLE` (créateurs), `GENERÉE` (procédural), `JOUEUR`
-- Difficulté : 1 (évidente) à 4 (secrète)
+- Origines : `IMMUABLE` (créateurs), `GÉNÉRÉE` (procédural), `JOUEUR`, `PRÉCURSEUR` (Yael)
+- Qualification : coût physique 1 à 4, coût intellectuel A à D (`LACUNA_TRACES.md` §7)
 
 ### Interprétations
 - Texte libre, anonyme : datée par la génération du vaisseau d'origine, l'auteur n'est jamais exposé
@@ -128,11 +128,12 @@ Référence technique : `Documentation-technique.md` § Vue Radar.
 ## Règles métier clés
 
 ### Voyage
-- Durée = distance en al (en secondes réelles)
-- Pendant le voyage : journal, artefacts, Drake en lecture — pas d'observatoire, pas de navigation
-- À l'arrivée : scan automatique, traces selon difficulté + contexte
+- Durée joueur = table de référence (`LACUNA_PHYSICS.md` §2), calculée par le serveur (`start_transit`) ; mode test : réglage `transit_time_scale` (5 s pour 1 h joueur)
+- Quatre phases : accélération, inertie, retournement, décélération. Disponibilité des modules par phase : `LACUNA_TRANSIT.md` §5 — Observatoire passif, Laboratoire et déviation uniquement pendant l'inertie ; retournement réduit au Journal
+- À l'arrivée : `complete_transit`, ligne `ship_travels`, scan automatique, traces selon difficulté + contexte
 
 ### Générations
+- Une génération = 25 ans simulés
 - Passage après distance parcourue + temps simulé
 - Entrée GENERATIONNEL dans le journal
 - Héritage conservé, propriétés population modifiées
@@ -145,4 +146,4 @@ Référence technique : `Documentation-technique.md` § Vue Radar.
 
 ## Référence complète
 
-Voir `docs/conception/LACUNA_GDD.md` pour les spécifications détaillées (structures JSON, onboarding, séquence secrète, etc.).
+Voir `docs/conception/LACUNA_GDD.md` pour les spécifications détaillées (séquence secrète, Drake, état d'implémentation §9), `LACUNA_LORE.md` §3 pour l'onboarding (5 écrans), `LACUNA_PROCEDURAL_DATA_MODEL.md` pour les structures JSON.

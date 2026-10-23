@@ -14,6 +14,8 @@ const props = defineProps({
   durationSec: { type: Number, default: 72 },
   anomalous: { type: Boolean, default: false },
   structure: { type: String, default: 'non uniforme' },
+  /** Période mesurée du signal (s) : prioritaire sur la période dérivée de l'observation */
+  pulsePeriodSec: { type: Number, default: 0 },
 })
 
 const containerRef = ref(null)
@@ -33,13 +35,16 @@ function render() {
   const isSursaut = /sursaut|burst/.test(struct)
   const isContinuDecroit = /continu décroissant|decroissant/.test(struct)
   const isPulse = !isSursaut && !isContinuDecroit && /pulsé|périodique|continu/.test(struct)
+  const measuredPeriod = props.pulsePeriodSec > 0 ? props.pulsePeriodSec : null
   const pulsePeriodSec =
-    !props.anomalous && !isSursaut && !isContinuDecroit && (isPulse || seed % 5 === 2)
+    measuredPeriod ??
+    (!props.anomalous && !isSursaut && !isContinuDecroit && (isPulse || seed % 5 === 2)
       ? 0.4 + (seed % 3) * 0.2
-      : undefined
+      : undefined)
   const noiseLevel = Math.max(0.05, 0.4 - (props.fiability / 100) * 0.35)
 
-  const durationSec = Math.min(props.durationSec ?? 72, 120)
+  // Une période mesurée est affichée sur au moins 4 cycles pour que l'autocorrélation la montre
+  const durationSec = Math.min(props.durationSec ?? 72, Math.max(120, measuredPeriod ? 4 * measuredPeriod : 0))
 
   const rawData = generateStructureTemporelleData({
     durationSec,
@@ -106,7 +111,7 @@ onUnmounted(() => {
 })
 
 watch(
-  () => [props.obsId, props.fiability, props.durationSec, props.anomalous, props.structure],
+  () => [props.obsId, props.fiability, props.durationSec, props.anomalous, props.structure, props.pulsePeriodSec],
   () => render(),
   { deep: true }
 )

@@ -12,6 +12,8 @@ import { seededRandom } from './random'
  * @param {string} opts.obsId - ID observation (détermine le seed)
  * @param {number} opts.fiability - Fiabilité 0-100 (ajoute du bruit sur les paramètres)
  * @param {boolean} opts.anomalous - Signal artificiel : polarisation linéaire, degré élevé (contrôlée)
+ * @param {string|null} opts.polarization - Polarisation mesurée du signal (ex. « circulaire gauche ») : si elle
+ *   est circulaire, l'ellipse est un cercle et V porte le sens (convention de jeu : V < 0 = gauche, V > 0 = droite)
  * @returns {{ angle: number, ellipticity: number, degree: number, stokes: { I: number, Q: number, U: number, V: number } }}
  */
 export function generatePolarisationData(opts = {}) {
@@ -22,6 +24,19 @@ export function generatePolarisationData(opts = {}) {
   const rng = seededRandom(seed)
   const rng2 = seededRandom(seed + 1)
   const rng3 = seededRandom(seed + 2)
+
+  const handedness = circularHandedness(opts.polarization)
+  if (handedness) {
+    const degree = 0.9 + rng3() * 0.09
+    const noise = (1 - fiability / 100) * 0.05
+    const d = Math.max(0.1, Math.min(1, degree + (rng() - 0.5) * noise))
+    return {
+      angle: 0,
+      ellipticity: handedness,
+      degree: d,
+      stokes: { I: 1, Q: 0, U: 0, V: handedness * d },
+    }
+  }
 
   let angle, ellipticity, degree
 
@@ -57,6 +72,15 @@ export function generatePolarisationData(opts = {}) {
 
   const stokes = stokesFromEllipse(angle, ellipticity, degree)
   return { angle, ellipticity, degree, stokes }
+}
+
+/** Sens d'une polarisation circulaire : -1 gauche, +1 droite, null si le signal n'est pas circulaire à sens connu */
+export function circularHandedness(polarization) {
+  const p = String(polarization ?? '').toLowerCase()
+  if (!p.includes('circulaire')) return null
+  if (p.includes('gauche')) return -1
+  if (p.includes('droite')) return 1
+  return null
 }
 
 function stokesFromEllipse(angle, ellipticity, degree) {

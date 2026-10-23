@@ -3,7 +3,7 @@
  * - Durées simulées (physiques) : accélération, inertie, freinage — en années
  * - Durée joueur : compression non-linéaire (table réf. GDD)
  * - Carburant : proportionnel à durée physique (Tsiolkovsky simplifié)
- * - Génération : t_physique / 80 ans
+ * - Génération : t_physique / 25 ans
  */
 
 const REF = [
@@ -15,7 +15,7 @@ const REF = [
   { d: 100000, tPhys: 2083333, tJoueurH: 2160 },
 ]
 
-const ANNEES_PAR_GENERATION = 80
+export const ANNEES_PAR_GENERATION = 25
 
 function interpPhysique(d) {
   if (d <= REF[0].d) return (d / REF[0].d) * REF[0].tPhys
@@ -56,8 +56,8 @@ export function computeTransit(distanceAl) {
 
   const carburantPct = Math.min(45, Math.max(2, Math.round(2 + tPhysTotal * 0.00002)))
 
-  const generations = tPhysTotal / ANNEES_PAR_GENERATION
-  const genDisplay = generations < 0.05 ? '~0' : generations < 1 ? generations.toFixed(2) : generations.toFixed(1)
+  // Entier inférieur, comme dans la vue de confirmation du départ (LACUNA_TRANSIT.md §4)
+  const generations = Math.floor(tPhysTotal / ANNEES_PAR_GENERATION)
 
   return {
     tAccel,
@@ -66,7 +66,7 @@ export function computeTransit(distanceAl) {
     tPhysTotal,
     tJoueurSec,
     carburantPct,
-    generations: genDisplay,
+    generations,
   }
 }
 

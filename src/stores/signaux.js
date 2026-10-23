@@ -12,6 +12,7 @@ import { useRadarStore } from '@/stores/radar'
 import { useObservatoireStore } from '@/stores/observatoire'
 import { pulsarsInBeam } from '@/lib/radarSpectrum'
 import { formatFrequency, parseFrequency } from '@/lib/formatUtils'
+import { parseSignalWindow } from '@/lib/signalWindow'
 
 const LIFETIME_MS = 2 * 60 * 60 * 1000 // 2h temps joueur par défaut
 
@@ -24,6 +25,8 @@ const FALLBACK_LIST = [
 function dbToSignal(row) {
   const att = row.attributes ?? {}
   const capturedAt = row.captured_at ? new Date(row.captured_at).getTime() : Date.now()
+  // Émetteur du système courant : présent tant que le vaisseau y est, jamais retiré à l'analyse
+  const persistent = row.source_type === 'EMITTER'
   const receivedAt = att.receivedAt ?? `2341-${new Date(row.captured_at).toISOString().slice(5, 10)}`
   const distanceEst = att.distanceEst ?? (att.distance_al != null ? `~${att.distance_al} al` : null)
   return {
@@ -40,7 +43,9 @@ function dbToSignal(row) {
     anomalous: att.anomalous ?? false,
     support: row.support ?? 'EM_RADIO',
     createdAt: capturedAt,
-    lifetimeMs: LIFETIME_MS,
+    lifetimeMs: persistent ? Infinity : LIFETIME_MS,
+    persistent,
+    window: parseSignalWindow(att.window),
     sourceType: row.source_type ?? 'UNKNOWN',
     band: att.band ?? null,
     fluxRelative: att.flux_relative ?? null,
@@ -126,8 +131,8 @@ export const useSignauxStore = defineStore('signaux', () => {
   })
 
   /**
-   * Pulsars captés par le radar : ceux de la bande active, dans le faisceau pointé vers la direction de la vue ciel,
-   * chacun avec son gain de faisceau (`beamGain`)
+   * Sources captées par le radar, dans la bande active : pulsars dans le faisceau pointé vers la direction de la vue ciel
+   * (chacun avec son gain `beamGain`), et émetteurs du système courant
    */
   const activePulsarSignals = computed(() => {
     const activeBand = useRadarStore().radarFrequencyBand
@@ -137,7 +142,20 @@ export const useSignauxStore = defineStore('signaux', () => {
       s.fluxRelative != null &&
       s.frequencyHz != null
     )
-    return pulsarsInBeam(bandPulsars, useObservatoireStore().viewDirection, activeBand)
+    const pulsarsInView = pulsarsInBeam(bandPulsars, useObservatoireStore().viewDirection, activeBand)
+    // Émetteurs du système où se trouve le vaisseau : pas de direction à viser, gain de faisceau plein
+    const systemId = useShipStore().currentSystemId
+    const emitters = list.value
+      .filter(s =>
+        s.sourceType === 'EMITTER' &&
+        s.sourceSystemId === systemId &&
+        s.band === activeBand &&
+        s.pulsePeriodS > 0 &&
+        s.fluxRelative != null &&
+        s.frequencyHz != null
+      )
+      .map(s => ({ ...s, beamGain: 1 }))
+    return [...pulsarsInView, ...emitters]
   })
 
   async function fetch() {
@@ -274,6 +292,20 @@ export const useSignauxStore = defineStore('signaux', () => {
     return inserted
   }
 
+  /** Capture côté base les émetteurs du système courant (RPC capture_system_signals), puis recharge la liste si besoin */
+  async function captureSystemEmitters() {
+    const supabaseStore = useSupabaseStore()
+    if (!supabaseStore.isConfigured()) return
+    const { data, error } = await supabase.rpc('capture_system_signals')
+    if (error) {
+      console.warn('[signaux] capture_system_signals:', error.message)
+      return
+    }
+    if (data?.inserted > 0) {
+      await fetch()
+    }
+  }
+
   /** Calcule côté base les signaux pulsars visibles dans la bande (RPC), puis recharge la liste si besoin */
   async function computePulsarSignals(band = 'L') {
     const shipStore = useShipStore()
@@ -291,6 +323,7 @@ export const useSignauxStore = defineStore('signaux', () => {
 
   return {
     computePulsarSignals,
+    captureSystemEmitters,
     list,
     listWithRemaining,
     activePulsarSignals,

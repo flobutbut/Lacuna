@@ -1,7 +1,7 @@
-*Dernière modification : 2026-03-15 17:30*
+*Dernière modification : 2026-10-22*
 
 # LACUNA — Système de Notifications
-*Version 0.2 — Mars 2026*
+*Version 0.3 — Octobre 2026*
 
 ---
 
@@ -26,6 +26,7 @@
 |---------|------|---------------|
 | 0.1 | Mars 2026 | Document initial |
 | 0.2 | Mars 2026 | Corrections — VOY-002 vitesse croisière (3,2%c → 4,8%c), VOY-007 durée HD 40307 (5h12 → 5h44) |
+| 0.3 | Octobre 2026 | Mise en cohérence — population de départ 15 000 (POP-001, TEM-005) ; VOY-005 : Zeta Puppis de type O4 ; TEM-001 : la dernière signature radio est datée *après* le départ ; TEM-002 : exemple remplacé (une étoile G2V ne devient pas subgéante en 847 000 ans) ; TRA-004 : Epsilon Eridani ne peut pas devenir subgéante en 847 ans — l'évolution porte sur son disque de débris (période orbitale de ~500 ans à 60 UA) ; TEM-005 : à 4,8 % c, 100 ans simulés couvrent au plus ~4,8 al, et 100 ans font 4 générations. *Point ouvert : les dates d'exemple (2187 à 2891) ne suivent aucun calendrier défini — à fixer avec la date de départ (`LACUNA_LORE.md`)* |
 
 ---
 
@@ -174,7 +175,7 @@ Déviation possible — coût carburant estimé : 14%
 TRANSIT — J+12 — 06h03
 Alerte destination — Zeta Puppis — 1 100 al
 Réévaluation spectrale en cours.
-Type O5 — durée de vie estimée : 3 Ma.
+Type O4 — âge estimé : ~3 Ma.
 Distance-temps observée : 1 100 ans.
 Statut actuel : INCONNU.
 ```
@@ -322,7 +323,7 @@ C'est la durée pendant laquelle nous pouvions l'entendre."
 ARRIVÉE — 2341-08-03 — Epsilon Eridani (2ème visite)
 Dernière visite : génération 1 — il y a 847 ans simulés.
 Statut système : ÉVOLUÉ.
-L'étoile a progressé vers le stade subgéant.
+L'asymétrie de l'anneau externe s'est déplacée.
 Les données de votre première visite ne correspondent plus au système actuel.
 ```
 
@@ -361,7 +362,7 @@ Notifications liées à l'état de la civilisation embarquée. Rares, non annonc
 ```
 MÉMOIRE — 2341-11-12
 Passage de génération — Génération 2
-10 247 âmes ont quitté Sol. 9 891 sont en vie aujourd'hui.
+15 000 âmes ont quitté Sol. 14 479 sont en vie aujourd'hui.
 La génération qui a regardé la Terre disparaître n'est plus.
 Leurs journaux sont préservés.
 ```
@@ -620,7 +621,7 @@ OBSERVATOIRE — 2389-03-12
 Analyse du spectre radio — direction Sol
 Les émissions caractéristiques de la civilisation humaine
 ne sont plus détectables dans cette bande.
-Dernière signature connue : environ 10 400 ans avant notre départ.
+Dernière signature reçue : émise environ 10 400 ans après notre départ.
 Ce que ça signifie : inconnu.
 ```
 
@@ -636,9 +637,9 @@ Ce que ça signifie : inconnu.
 
 ```
 CARTE — 2391-07-04
-HD 44594 — visite : génération 1
+Spica — visite : génération 1
 Temps simulé écoulé depuis la visite : 847 000 ans.
-Statut recalculé : ÉVOLUÉ probable (type G2V → subgéante possible)
+Statut recalculé : ÉVOLUÉ probable (type B1 — sortie de séquence principale possible)
 Les données de votre carte reflètent un passé inaccessible.
 ```
 
@@ -688,9 +689,9 @@ Votre carte est un document historique.
 ```
 MÉMOIRE — 2287-01-01
 100 ans simulés depuis le départ de Sol.
-Génération 1 au départ : 10 247 âmes.
-Génération actuelle : 2
-Distance parcourue : 127,4 al.
+Génération 1 au départ : 15 000 âmes.
+Génération actuelle : 5
+Distance parcourue : 4,24 al.
 Journal de bord : 847 entrées.
 ```
 
@@ -777,4 +778,4 @@ L'état de la population colore subtilement le ton des notifications automatique
 
 ---
 
-*LACUNA — Système de Notifications v0.2 — Mars 2026 — Confidentiel*
+*LACUNA — Système de Notifications v0.3 — Octobre 2026 — Confidentiel*

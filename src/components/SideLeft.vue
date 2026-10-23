@@ -1,8 +1,11 @@
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSignauxStore } from '@/stores/signaux'
 import { useRadarStore } from '@/stores/radar'
+import { useShipStore } from '@/stores/ship'
+import { useObservatoireStore } from '@/stores/observatoire'
+import { isWindowOpen } from '@/lib/signalWindow'
 import AppSwitch from '@/components/AppSwitch.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import RadarMiniature from '@/components/RadarMiniature.vue'
@@ -10,15 +13,28 @@ import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const signauxStore = useSignauxStore()
 const radarStore = useRadarStore()
+const shipStore = useShipStore()
+const observatoireStore = useObservatoireStore()
 const { radarEnabled, radarNoiseEnabled } = storeToRefs(radarStore)
 /** Filtre de bruit actif = bruit de fond retiré du spectrogramme */
 const noiseFiltered = computed(() => radarNoiseEnabled.value === false)
+
+/** Émetteurs du système où se trouve le vaisseau : présents en permanence, actifs seulement pendant leur fenêtre */
+const now = ref(Date.now())
+const systemEmitters = computed(() =>
+  signauxStore.list
+    .filter((s) => s.sourceType === 'EMITTER' && s.sourceSystemId === shipStore.currentSystemId)
+    .map((s) => ({ signal: s, active: isWindowOpen(s.window, now.value) }))
+)
 
 let expiryInterval = null
 onMounted(async () => {
   await ensureStoresLoaded(signauxStore)
   signauxStore.removeExpired()
-  expiryInterval = setInterval(() => signauxStore.removeExpired(), 60000)
+  expiryInterval = setInterval(() => {
+    signauxStore.removeExpired()
+    now.value = Date.now()
+  }, 10000)
 })
 onUnmounted(() => {
   if (expiryInterval) clearInterval(expiryInterval)
@@ -41,6 +57,20 @@ onUnmounted(() => {
         <div class="sw-key">Scan en cours</div>
         <div class="sw-val ok">ACTIF</div>
       </div>
+    </div>
+
+    <div v-if="systemEmitters.length" class="side-widget">
+      <div class="sw-title">Signaux du système</div>
+      <button
+        v-for="e in systemEmitters"
+        :key="e.signal.id"
+        type="button"
+        class="sw-row side-widget__emitter"
+        @click="observatoireStore.selectSignal(e.signal)"
+      >
+        <span class="sw-key">{{ e.signal.frequency }}</span>
+        <span class="sw-val" :class="e.active ? 'ok' : 'warn'">{{ e.active ? 'ACTIF' : 'INACTIF' }}</span>
+      </button>
     </div>
 
     <div class="side-widget side-widget--signaux">
@@ -77,6 +107,15 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.side-widget__emitter {
+  width: 100%;
+  padding: var(--space-2) 0;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}
+
 .side-widget__header--radar {
   display: flex;
   align-items: center;

@@ -1,7 +1,7 @@
-*Dernière modification : 2026-03-16*
+*Dernière modification : 2026-10-22*
 
 # LACUNA — Lore
-*Version 0.3 — Mars 2026*
+*Version 0.4 — Octobre 2026*
 
 ---
 
@@ -12,6 +12,7 @@
 | 0.1 | Mars 2026 | Document initial — lore fondateur, séquence d'onboarding, flux de démarrage |
 | 0.2 | Mars 2026 | Corrections — clarification 34 nations (Consortium) vs 67 (financement vaisseaux), population 10 247 définie comme valeur narrative fixe |
 | 0.3 | Mars 2026 | Renommage (Lore & Onboarding → Lore), ajout §6 Le Registre des Raisons, §5 renommé en §5 Ce qui vient ensuite, clarification rôle du document |
+| 0.4 | Octobre 2026 | Mise en cohérence — population de départ 15 000 (remplace 10 247, alignée sur les principes du projet et `LACUNA_ARCS.md` §1.10). Correction factuelle des nucléobases : les échantillons de Bennu ne sont revenus qu'en septembre 2023 ; les cinq nucléobases y ont été identifiées en janvier 2025 (Glavin et al., *Nature Astronomy*), après l'uracile sur Ryugu (2023) ; elles sont compatibles avec une origine abiotique — la mention « incompatible avec les modèles abiotiques » était fausse. « Les 5 nucléobases de l'ARN » corrigé (l'ARN en compte quatre ; cinq pour l'ADN et l'ARN réunis). Flux de démarrage : la détection latérale n'est mentionnée que pour une première destination lointaine (`LACUNA_TRANSIT.md` §6) |
 
 ---
 
@@ -67,7 +68,7 @@ Le mot résonne. Il n'est pas défini.
 Entre 2017 et 2031, une série d'observations convergentes change la nature du débat scientifique sur la question de la vie extraterrestre. Ce ne sont pas des certitudes — ce sont des anomalies qui résistent à l'explication.
 
 - **2017** — Oumuamua traverse le système solaire. Trajectoire hyperbolique. Accélération non-gravitationnelle. Forme estimée très allongée. Origine et nature : inconnues.
-- **2023** — Les missions Hayabusa2 et OSIRIS-REx confirment la présence des 5 nucléobases de l'ARN dans des astéroïdes carbonés primitifs non contaminés. La chimie prébiotique semble universelle.
+- **2023 – 2025** — Les échantillons rapportés intacts par Hayabusa2 (astéroïde Ryugu) et OSIRIS-REx (astéroïde Bennu) livrent leurs molécules : de l'uracile sur Ryugu en 2023, puis les cinq nucléobases de l'ADN et de l'ARN sur Bennu en 2025. Elles sont plus anciennes que la Terre. La chimie prébiotique semble universelle.
 - **2031** — Le Consortium pour l'Exploration Galactique Profonde publie un catalogue de 847 anomalies détectées dans un rayon de 500 années-lumière. Parmi elles, 12 résistent à toute modélisation naturelle connue après 8 années d'analyse collective.
 
 Le signal WOW! de 1977 figure dans ce catalogue. Il n'a jamais été expliqué.
@@ -94,7 +95,7 @@ La construction commence en 2036. Le premier vaisseau — classe ARCA — est op
 
 112 000 personnes se sont portées candidates au programme de sélection entre 2036 et 2040. Elles savaient qu'elles ne reverraient pas la Terre. Que leurs enfants non plus. Que la première destination serait atteinte longtemps après leur mort.
 
-10 247 ont été sélectionnées par vaisseau.
+15 000 ont été sélectionnées par vaisseau.
 
 Ce ne sont pas des soldats, pas des héros, pas des saints. Ce sont des gens qui ont dit oui à une question sans réponse.
 
@@ -145,9 +146,10 @@ accélération non-gravitationnelle.
 Origine : inconnue.
 
 
-9 juin 2023 — JAXA / NASA
-Nucléobases ARN complètes — astéroïde Bennu.
-Concentration : incompatible avec les modèles abiotiques connus.
+29 janvier 2025 — NASA / OSIRIS-REx
+Échantillons de l'astéroïde Bennu.
+Les cinq nucléobases de l'ADN et de l'ARN.
+Antérieures à la formation de la Terre.
 ```
 
 *Silence. Pas de conclusion. Pas de flèche.*
@@ -174,7 +176,7 @@ longtemps après leur mort.
 
 112 000 personnes se sont portées candidates.
 
-10 247 ont été sélectionnées.
+15 000 ont été sélectionnées.
 ```
 
 ---
@@ -242,12 +244,12 @@ Notification immédiate :
   Vous avez le temps de les lire."
         ↓
 Le joueur ouvre sa collection
-— WOW! (1977), Oumuamua (2017), Nucléobases Bennu (2023)
+— WOW! (1977), Oumuamua (2017), Nucléobases Bennu (2025)
 — Données brutes disponibles dans le laboratoire
 — Champ d'interprétation disponible dans le journal
         ↓
 Notification — entrée en phase d'inertie
-Premier système latéral potentiellement détectable
+(destination lointaine : premiers systèmes latéraux détectables)
         ↓
 Arrivée dans le premier système
 Scan automatique — première trace in situ
@@ -331,4 +333,4 @@ Sur les voyages très longs, les entrées anciennes deviennent étranges — com
 
 ---
 
-*LACUNA — Lore v0.3 — Mars 2026 — Confidentiel*
+*LACUNA — Lore v0.4 — Octobre 2026 — Confidentiel*

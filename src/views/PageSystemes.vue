@@ -12,6 +12,7 @@ import Divider from '@/components/Divider.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import EditableValueRow from '@/components/EditableValueRow.vue'
 import { formatNumber } from '@/lib/formatUtils'
+import { INITIAL_POPULATION } from '@/constants/population'
 import { PSEUDO_MAX, PSEUDO_MIN, SHIP_NAME_MAX, SHIP_NAME_MIN, validatePseudo, validateShipName } from '@/lib/playerProfile'
 
 const shipStore = useShipStore()
@@ -118,7 +119,7 @@ const ship = computed(() => ({
   ageGap: 6,         // TODO: ageReal - ageRelative
   dryMass: shipStore.dryMass,
   capacity: shipStore.capacity,
-  population: shipStore.population?.total ?? 10247,
+  population: shipStore.population?.total ?? INITIAL_POPULATION,
   generation: shipStore.generation,
 }))
 

@@ -3,6 +3,7 @@ import { storeToRefs } from 'pinia'
 import { useRadarStore } from '@/stores/radar'
 import { SAMPLE_RATE } from '@/lib/spectrogramData'
 import { addPulsarPulses } from '@/lib/radarSpectrum'
+import { isWindowOpen } from '@/lib/signalWindow'
 
 const NOISE_CONFIG = {
   P: { base: 0.8, galacticFactor: 0.30 },
@@ -58,7 +59,7 @@ function nextGaussian(rng) {
  * Signal temporel du radar (250 Hz) : bruit de fond de la bande et impulsions des pulsars actifs.
  * @param {import('vue').Ref<string>} band - Bande active
  * @param {import('vue').Ref<number>} galacticLatitude - Latitude galactique (°)
- * @param {import('vue').Ref<Array>} activeSignals - Pulsars de la bande active
+ * @param {import('vue').Ref<Array>} activeSignals - Sources de la bande active (pulsars, émetteurs à fenêtres)
  */
 export function useRadarNoise(band, galacticLatitude, activeSignals) {
   const radarStore = useRadarStore()
@@ -83,9 +84,15 @@ export function useRadarNoise(band, galacticLatitude, activeSignals) {
     arState = 0
   })
 
+  /** Sources en train d'émettre : un signal à fenêtres est muet hors de sa fenêtre */
+  function emittingSignals() {
+    const now = Date.now()
+    return activeSignals.value.filter((s) => isWindowOpen(s.window, now))
+  }
+
   function getNoiseSample(sampleCount, seed, totalOffset) {
     if (radarNoiseEnabled.value === false) {
-      return addPulsarPulses(new Float32Array(sampleCount), activeSignals.value, { startSample: totalOffset })
+      return addPulsarPulses(new Float32Array(sampleCount), emittingSignals(), { startSample: totalOffset })
     }
 
     const level = noiseLevel.value
@@ -114,7 +121,7 @@ export function useRadarNoise(band, galacticLatitude, activeSignals) {
       chunk[i] = Math.max(-1, Math.min(1, v * gain))
     }
 
-    return addPulsarPulses(chunk, activeSignals.value, { startSample: totalOffset })
+    return addPulsarPulses(chunk, emittingSignals(), { startSample: totalOffset })
   }
 
   return { noiseLevel, getNoiseSample }

@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-15 15:11*
+*Dernière modification : 2026-10-22*
 
 # Documentation LACUNA
 
@@ -13,11 +13,14 @@ Organisation du dossier de documentation par catégories.
 | **procedural/** | Génération procédurale — modèle de données, planètes, traces (seed, field_sources, lazy generation) |
 | **design/** | Design system, spécifications UI (LACUNA_UI, composants) |
 | **features/** | Spécifications par feature — Laboratoire (instruments), extrapolation instrumentale, notifications ; TODOs (Transit, Carte Map) |
-| **config/** | Configuration et catalogues — i18n, catalogue des traces (LACUNA_TRACES) |
+| **config/** | Configuration et catalogues — i18n, mécanique des traces (LACUNA_TRACES), fiches des traces immuables (LACUNA_TRACES_IMMUABLES) |
 | **architecture/** | Schémas techniques, mapping DB, propositions (Interface-DB-mapping, Observatoire, secteurs) |
 | **analyses/** | Analyses techniques, diagnostics, rapports d’import |
 | **audits/** | Audits de code (AUDIT_*), diagnostics ciblés (DIAGNOSTIC_*) |
 | **assets/** | Ressources — SVG, maquettes HTML, JSON |
+| **archive/** | Versions retirées, conservées pour mémoire (LACUNA_TRACES v0.9) |
+
+Les documents de conception sont tenus en cohérence avec le projet Claude « Lacuna » (dernière synchronisation : 2026-10-22). Le fichier `LACUNA_GDD.md` correspond à `LACUNA_GDD_v04.md` dans le projet.
 
 ## Documents de référence
 

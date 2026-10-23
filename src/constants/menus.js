@@ -57,4 +57,7 @@ export function getTraceIcon(type) {
 }
 
 /** Paramètres (modale du header) — une entrée par section */
-export const SETTINGS_SECTIONS = [{ id: 'account', label: 'Compte', icon: 'account' }]
+export const SETTINGS_SECTIONS = [
+  { id: 'account', label: 'Compte', icon: 'account' },
+  { id: 'admin', label: 'Administration', icon: 'shield', adminOnly: true },
+]

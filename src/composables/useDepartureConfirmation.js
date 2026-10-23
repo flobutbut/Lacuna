@@ -3,9 +3,7 @@
  * Réf. Design-system.md (sw-row, sw-key, sw-val), LACUNA_TRANSIT / spécification vue confirmation.
  */
 import { computed, watch, onMounted } from 'vue'
-import { formatDuration } from '@/lib/transit'
-
-const YEARS_PER_GENERATION = 25
+import { formatDuration, ANNEES_PAR_GENERATION } from '@/lib/transit'
 
 /**
  * @param {import('vue').ComputedRef<object|null>} pendingRef - ui.pendingDeparture (computed)
@@ -25,7 +23,7 @@ export function useDepartureConfirmation(pendingRef, shipStore) {
     return t != null ? Number(t) : 0
   })
 
-  const generationsCount = computed(() => Math.floor(simulatedYears.value / YEARS_PER_GENERATION))
+  const generationsCount = computed(() => Math.floor(simulatedYears.value / ANNEES_PAR_GENERATION))
 
   const durationPlayerLabel = computed(() => {
     const sec = pendingRef.value?.transitMeta?.tJoueurSec
@@ -39,12 +37,12 @@ export function useDepartureConfirmation(pendingRef, shipStore) {
     return `${Math.round(y * 12)} mois simulés`
   })
 
-  /** Phrase générationnelle — règle d'affichage par tranche de générations */
+  /** Phrase générationnelle — tranches de LACUNA_TRANSIT.md §4 (1–3, 4–9, 10–999, ≥ 1000) */
   const generationPhrase = computed(() => {
     const n = generationsCount.value
     if (n < 1) return null
-    if (n <= 2) return "La génération actuelle ne verra pas l'arrivée."
-    if (n <= 10) return "Personne vivant à bord aujourd'hui ne sera en vie à l'arrivée."
+    if (n <= 3) return "La génération actuelle ne verra pas l'arrivée."
+    if (n <= 9) return "Personne vivant à bord aujourd'hui ne sera en vie à l'arrivée."
     if (n < 1000) return `${n} générations naîtront et mourront avant l'arrivée.`
     return "L'arrivée est une abstraction pour les personnes qui partent aujourd'hui."
   })

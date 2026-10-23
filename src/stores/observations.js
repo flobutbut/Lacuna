@@ -7,13 +7,14 @@ import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 import { useShipStore } from '@/stores/ship'
+import { useTracesStore } from '@/stores/traces'
 import { formatSignalObservationName } from '@/lib/formatUtils'
 
 const OBS_STATES = { PENDING: 'En attente', RUNNING: 'Analyse en cours', DONE: 'Analysé' }
 const NIVEAUX = { PASSIF: 'Passif', SYSTEME: 'Système', ORBITE: 'Orbite proche', CONTACT: 'Contact' }
 
 const OBSERVATIONS_SELECT_COLUMNS =
-  'id, type, system_id, system_display, name, state, niveau, coords, distance, support, structure, duration_sec, date, anomalous'
+  'id, type, system_id, system_display, name, state, niveau, coords, distance, support, structure, duration_sec, date, anomalous, attributes'
 
 function dbToObs(row) {
   return {
@@ -31,6 +32,7 @@ function dbToObs(row) {
     structure: row.structure ?? null,
     durationSec: row.duration_sec,
     anomalous: row.anomalous ?? false,
+    attributes: row.attributes ?? {},
   }
 }
 
@@ -51,6 +53,7 @@ function obsToDb(obs, shipId) {
     duration_sec: obs.type === 'SIGNAL' ? (obs.durationSec ?? 72) : null,
     date: obs.date ?? null,
     anomalous: obs.type === 'SIGNAL' ? (obs.anomalous ?? false) : null,
+    attributes: obs.attributes ?? {},
   }
 }
 
@@ -179,6 +182,7 @@ export const useObservationsStore = defineStore('observations', () => {
     }
     const item = { ...dbToObs(data), anomalous: payload.anomalous }
     list.value = [item, ...list.value]
+    useTracesStore().unlockLevels()
     return item.id
   }
 
@@ -193,6 +197,27 @@ export const useObservationsStore = defineStore('observations', () => {
         list.value = previous
       }
     }
+  }
+
+  /** Passe une observation au niveau suivant (Passif → Système → Orbite proche → Contact), sans coût */
+  async function deepenObservation(id) {
+    const obs = list.value.find((o) => o.id === id)
+    if (!obs) return
+    const order = Object.keys(NIVEAUX)
+    const current = order.findIndex((k) => NIVEAUX[k] === obs.niveau)
+    const nextKey = order[current + 1]
+    if (!nextKey) return
+    const previous = obs.niveau
+    obs.niveau = NIVEAUX[nextKey]
+    const supabaseStore = useSupabaseStore()
+    if (!supabaseStore.isConfigured()) return
+    const { error } = await supabase.from('observations').update({ niveau: nextKey }).eq('id', id)
+    if (error) {
+      console.warn('[observations] Erreur update niveau:', error.message)
+      obs.niveau = previous
+      return
+    }
+    useTracesStore().unlockLevels()
   }
 
   async function updateObservationState(id, state) {
@@ -216,6 +241,7 @@ export const useObservationsStore = defineStore('observations', () => {
     addObservation,
     removeObservation,
     updateObservationState,
+    deepenObservation,
     hasUnanalyzed,
     findObservationForSignal,
     findObservationForBody,

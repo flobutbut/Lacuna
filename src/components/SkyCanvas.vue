@@ -40,7 +40,8 @@ const mouseDown = ref(false)
 /** Signaux affichés sur le ciel : encore actifs, et seulement quand le radar est allumé */
 function visibleSignals(now) {
   if (!radarStore.radarEnabled) return []
-  return signauxStore.list.filter((s) => now - s.createdAt < s.lifetimeMs)
+  // Un émetteur du système courant n'a pas de direction sur le ciel
+  return signauxStore.list.filter((s) => s.sourceType !== 'EMITTER' && now - s.createdAt < s.lifetimeMs)
 }
 
 const PAN_SENSITIVITY = 0.15

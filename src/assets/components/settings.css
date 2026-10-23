@@ -40,6 +40,10 @@
   color: var(--color-muted);
 }
 
+.settings__text--error {
+  color: var(--color-red);
+}
+
 /* ── Zone d'action irréversible ── */
 .settings-danger {
   display: flex;
