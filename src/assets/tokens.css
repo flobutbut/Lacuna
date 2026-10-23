@@ -10,6 +10,7 @@
   --color-bg-alt:          #060c18;
   --color-panel:           rgba(6, 14, 28, 0.92);
   --color-panel-solid:     #060e1c;
+  --color-surface:         rgba(150, 200, 235, 0.045);  /* Cartes, rapports : un cran plus clair que le fond */
 
   /* ── Couleurs d'accent ── */
   --color-cyan:            #00b4c8;
