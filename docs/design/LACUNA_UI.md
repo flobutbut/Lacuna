@@ -100,6 +100,17 @@ Quand le vaisseau capte un signal, deux effets cohabitent simultanément :
 
 **Tuile Neutrinos** *(octobre 2026, implémentée : `NeutrinoMonitor.vue`)* — sous le Radar, dans le panneau gauche, avec son interrupteur. Courbe du taux d'événements par seconde sur les 10 dernières minutes et taux courant. Échelle logarithmique ajustée au pic de la fenêtre (une montée de quelques év./s remplit la tuile, la bouffée l'élargit), graduations par décade, taux moyenné par pixel et courbe de tendance lissée sur ~30 s. Aucune direction : seulement « combien, et quand ».
 
+**Radar — sources du ciel de départ** *(octobre 2026, implémenté : `lib/startSources.js`, `useRadarNoise.js`)* — le Radar ne montre que les sources qui émettent quand on les vise ; un signal de la liste n'émet pas par lui-même. L'émission suit la source, pas l'entrée de la liste : elle continue après l'envoi du signal au Laboratoire ou son expiration. Sources : pulsars du catalogue (bande active), émetteurs du système courant (pendant leur fenêtre), LPT-001 (pendant une impulsion), rémanent de SN-001, et trois des signaux donnés au départ :
+
+| Signal de départ | Direction | Au Radar | Bande |
+|---|---|---|---|
+| PSR B1919+21 (1420 MHz, pulsé régulier) | 290° / +22° | Une impulsion toutes les 1,337 s, comme un pulsar du catalogue ; flux relatif 0,1 *(provisoire)* | L |
+| Synchrotron (408 MHz, continu) | 89° / −5° | Bruit large bande permanent, au niveau du rémanent de SN-001 *(provisoire)* ; se mêle au rémanent quand on vise Orion (faisceau P de 20°) | P |
+| SN-2341-K452 (1,4 GHz, continu décroissant) | 290° / +45° | Bruit large bande au même niveau, qui décroît linéairement jusqu'à s'éteindre 1 h après la création de la partie *(provisoire)* | L |
+| Sagittaire WOW-like (1420,4056 MHz, non uniforme) | 280° / −25° | Rien : événement unique, jamais revu | — |
+| GRB-2341-G667 (sursaut gamma) | 260° / −35° | Rien : sursaut terminé | — |
+| GW-2341 (sursaut gravitationnel) | 200° / −35° | Rien : pas un signal radio | — |
+
 **Pulse sur le ciel** — un gradient radial diffus apparaît directement sur la carte stellaire, centré sur la direction estimée du signal. Visible uniquement depuis le ciel (Observatoire). Plus précis que le halo — il indique approximativement d'où vient le signal dans l'espace.
 
 Le pulse sur le ciel s'estompe en quelques secondes et ne se répète pas. Le signal est ensuite représenté dans la zone signaux captés du panel gauche.
@@ -909,6 +920,7 @@ Ce qui est spécifique à l'interface :
 | 2026-10-23 | §2 : tuile Neutrinos, moniteur en direct du détecteur |
 | 2026-10-23 | §2 : tuile Neutrinos — échelle ajustée à la fenêtre, tendance lissée |
 | 2026-10-23 | §2 : halo de LPT-001 — à la capture, puis à chaque impulsion seulement si le Radar vise l'Écu |
+| 2026-10-23 | §2 : Radar — sources du ciel de départ (PSR B1919+21, Synchrotron 408 MHz, SN-2341-K452) ; les autres signaux de départ restent muets |
 
 ---
 

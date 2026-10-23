@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Traces immuables
-*Version 0.9 — Octobre 2026*
+*Version 0.10 — Octobre 2026*
 
 > Ce document contient les **fiches des traces immuables** qui n'appartiennent pas à un scénario — voisinage solaire, hors voisinage — et le **Journal de Yael** (origine `PRÉCURSEUR`). Les traces appartenant à un scénario ont leurs fiches de nœuds dans `LACUNA_SCENARIOS.md`. La mécanique (définition, chaîne de production, types d'outputs, qualification) vit dans `LACUNA_TRACES.md`. Les faits astronomiques de référence vivent dans `LACUNA_ANOMALIES_REELLES.md`.
 >
@@ -34,6 +34,7 @@
 | 0.7 | Octobre 2026 | SN-001, après test joueur : silence ramené à 6 min ; halo orienté vers Orion à la sortie du choc ; explosion répartie par bande (éclair UV, visible avec aigrettes et refroidissement, IR tardif, source radio sur le Radar) ; nébuleuse du rémanent (valeur de jeu) |
 | 0.8 | Octobre 2026 | SN-001 : montée des neutrinos de pré-supernova implémentée (création + 3 min, 5 min) ; la bouffée passe à création + 8 min (migration `00065`) |
 | 0.9 | Octobre 2026 | LPT-001 implémenté : objet réel GPM J1839−10 (position MeerKAT ajoutée), phase commune à tous les joueurs, première impulsion captée après création + 20 min, impulsions tirées une à une (durée, intensité, polarisation), Radar, halo, Laboratoire (migration `00066`, `src/lib/lpt.js`) ; signature : réapparition reportée |
+| 0.10 | Octobre 2026 | PSR-001 : visible au Radar dès le départ (impulsions en bande L) |
 
 ---
 
@@ -377,7 +378,7 @@ La combinaison GLIESE667-001 + GLIESE667-002 est une clé d'accès à une trace 
 | TABBY-001 | Étoile de Tabby (KIC 8462852) | ~1 470 al | ANOMALIE_STELLAIRE | 2 | Baisses de luminosité apériodiques jusqu'à 22% |
 | TABBY-002 | Étoile de Tabby | ~1 470 al | SEQUENCE | 3 | Pattern des baisses — structure non aléatoire débattue |
 | OUMUAMUA-001 | Trajectoire interstellaire | Variable | OBJET | 2 | Accélération non-gravitationnelle, forme allongée |
-| PSR-001 | PSR B1919+21 | ~2 280 al | SIGNAL | 3 | Premier pulsar découvert (1967) — surnommé LGM-1 (Little Green Men). Période 1,337 s (~0,75 Hz). *Modèle backend* : `system_object` PULSAR avec émission périodique. Voir Documentation-backend.md § Sources de signaux. Nœud d'entrée du Scénario 08 (`LACUNA_SCENARIOS.md` §11). |
+| PSR-001 | PSR B1919+21 | ~2 280 al | SIGNAL | 3 | Premier pulsar découvert (1967) — surnommé LGM-1 (Little Green Men). Période 1,337 s (~0,75 Hz). *Modèle backend* : `system_object` PULSAR avec émission périodique. Voir Documentation-backend.md § Sources de signaux. Nœud d'entrée du Scénario 08 (`LACUNA_SCENARIOS.md` §11). Fait partie des signaux de départ : au Radar dès Sol, une impulsion toutes les 1,337 s en bande L, flux relatif 0,1 *(provisoire)* (`LACUNA_UI.md` §2). |
 | HD40307-001 | HD 40307 | 41,8 al | ANOMALIE_GEOMETRIQUE | 2 | Jusqu'à six planètes proposées, dont une super-Terre candidate (g) en zone habitable — débattue. Candidat d'ancrage du Scénario 03 |
 
 ---
@@ -603,4 +604,4 @@ Les tirages dépendent du seul numéro de l'impulsion : tous les joueurs reçoiv
 
 ---
 
-*LACUNA — Traces immuables v0.9 — Octobre 2026 — Confidentiel*
+*LACUNA — Traces immuables v0.10 — Octobre 2026 — Confidentiel*
