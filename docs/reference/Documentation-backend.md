@@ -551,6 +551,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00067 | Signaux modèles de départ : doublon du sursaut gravitationnel (objet BNS GW-2341) retiré |
 | 00068 | Journal de bord : logbook_entries (famille, contexte, clé), date du vaisseau (ship_galactic_date), entrées écrites par déclencheurs (fondatrice, départ, arrivée, neutrinos) et RPC log_sky_event (sortie du choc, LPT-001) ; le joueur n'écrit que des entrées MANUEL ; date de réception des signaux au calendrier du vaisseau |
 | 00069 | Générations : ships.generation et populations.generation recalculés à l'arrivée (1 + années simulées ÷ 25) ; entrée GENERATIONNEL au premier passage |
+| 00070 | Modération : table admin_actions (journal, sans accès direct) ; RPC réservées aux admins `is_admin`, `admin_list_players`, `admin_set_suspension` (auth.users.banned_until + sessions fermées), `admin_rename_player`, `admin_list_interpretations`, `admin_delete_interpretation`, `admin_delete_player`, `admin_list_actions` — appliquée le 23/10/2026 après sauvegarde (`backups/avant_00070_20261023_210432.dump`) |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
@@ -867,6 +868,7 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 | 2026-10-23 | 00068 appliquée : journal de bord (entrée fondatrice et neutrinos rattrapés pour la partie en cours) |
 | 2026-10-23 | 00069 écrite : générations |
 | 2026-10-23 | 00069 appliquée : générations |
+| 2026-10-23 | 00070 appliquée : modération (RPC admin, journal des actions) |
 | 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |

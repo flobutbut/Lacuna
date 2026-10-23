@@ -26,6 +26,7 @@ LACUNA est une simulation d'exploration galactique **persistante, asynchrone et 
 - Première connexion : écran **Bienvenue à bord** — le joueur choisit son **pseudo** (nom de commandant) et le **nom de son vaisseau** ; la partie démarre à Sol
 - Pseudo et nom du vaisseau sont **privés** (jamais montrés aux autres joueurs, conformément à l'anonymat du GDD) et **non uniques** ; modifiables dans Systèmes → Identité
 - Rôle `admin` (attribué à la main) : accès à la Vue 3D étoiles, outil de conception
+- Page **Administration** (`/admin`, admins seulement) : liste des comptes (recherche, filtre par statut), fiche du compte (suspendre avec motif / réactiver, renommer pseudo et vaisseau, supprimer), interprétations des traces (suppression), journal des actions de modération. Le journal de bord des joueurs reste privé, non exposé
 - **Paramètres** (icône joueur du header, à côté de Quitter) : grande modale à sections, prévue pour accueillir les futurs réglages. Section Compte : email, **suppression du compte** (saisir « SUPPRIMER ») — compte, vaisseau, partie et interprétations effacés définitivement, retour à la connexion avec confirmation
 - ~~Évolution prévue : le pseudo pourra signer les traces déposées par le joueur~~ — **en suspens** : contredit le pilier « Solitude réelle » et l'anonymat total des traces et interprétations (`LACUNA_GDD.md` §3 et §5). À ne pas implémenter sans décision de design
 
@@ -93,7 +94,7 @@ Les informations légales viennent de `src/content/legal.js` ; une valeur absent
 - **Ciel** : Interface principale (étoiles, hover, clic)
 - **Indicateurs gauche** : Systèmes vaisseau (propulsion, carburant, coque...) — **Observatoire** : panneau gauche avec widget « Observatoire » (placeholders) et spectrogramme miniature (`RadarMiniature.vue` dans `SideLeft`) en vues ciel / radar (liste de signaux retirée de ce panneau)
 - **Indicateurs droite** : Population, dernière trace
-- **Barre instruments** : 8 modules (Observatoire, Carte, Laboratoire, Artefacts, Journal, Drake, Population, Systèmes), plus Vue 3D étoiles pour les comptes admin (outil de conception)
+- **Barre instruments** : 8 modules (Observatoire, Carte, Laboratoire, Artefacts, Journal, Drake, Population, Systèmes), plus Vue 3D étoiles (outil de conception) et Admin (modération) pour les comptes admin
 
 ### Modules (contenu par route / page)
 | Module | Contenu |

@@ -30,6 +30,8 @@ export const INSTRUMENTS = [
   { id: 'systemes', path: '/systemes', icon: 'gauge', label: 'Systèmes' },
   // Outil de conception : visible pour les admins (et hors ligne)
   { id: 'conception-etoiles', path: '/conception-etoiles', icon: 'sparkle', label: 'Vue 3D étoiles', adminOnly: true },
+  // Modération des joueurs : admins seulement
+  { id: 'admin', path: '/admin', icon: 'shield', label: 'Admin', adminOnly: true },
 ]
 
 /** Menu Population — onglets */
