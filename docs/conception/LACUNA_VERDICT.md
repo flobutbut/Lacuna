@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Écarts et verdict
-*Version 0.6 — Octobre 2026*
+*Version 0.7 — Octobre 2026*
 
 > Spécification de la boucle d'analyse : ce que le Laboratoire fait apparaître (les écarts entre attendu et mesuré), la décision que le joueur prend (le verdict), et ce que cette décision déclenche (voyage, journal, traces, équation de Drake). Ce document comble l'étape « ANALYSER → DÉCIDER » du flux principal (`LACUNA_GDD.md` §4), aujourd'hui absente de l'interface.
 >
@@ -37,6 +37,7 @@
 | 0.4 | Octobre 2026 | Lot 3 implémenté (§10) ; §6.2 : texte de l'entrée « Écart principal (famille), mesuré par N rapports » ; §6.3 : un seul artefact par verdict, depuis le verdict courant, désignation rendue unique par un suffixe |
 | 0.5 | Octobre 2026 | Lot 4 implémenté (§10) ; §6.1 : « Préparer le voyage » ouvre la Carte sur le système, la confirmation du départ reste derrière « Fixer le cap » ; un instrument déjà utilisé peut être relancé quand le niveau atteint permet de mesurer le doute qu'il avait deviné |
 | 0.6 | Octobre 2026 | Lot 5 implémenté (§10) ; §7.3 : L borné à [100 ; 10⁷] ans confirmé ; le N de bord affiché est calculé côté client (`src/lib/drake.js`), `ship_drake` le stocke côté serveur pour l'agrégation du lot 6 |
+| 0.7 | Octobre 2026 | Lot 6 implémenté (§10) ; §7.4 : recalcul par `pg_cron` à 04:00 UTC, poids par terme stockés dans `ship_drake` ; la page Drake liste les dernières variations du N collectif |
 
 ---
 
@@ -420,6 +421,8 @@ Les lots 1 et 2 forment le minimum qui rend la boucle compréhensible.
 Sur la Carte, un système dont une observation porte un doute hors de portée affiche « Doute à lever » dans la liste et le détail du doute au-dessus de « Fixer le cap ». Hors ligne, les rapports sont gardés en mémoire dans le store pour que la Carte les voie. Aucune migration.
 
 **Lot 5 — implémenté.** `src/lib/drake.js` (`computeShipDrake`, références, poids, bornes) calcule le Drake de bord à partir des verdicts courants ; même calcul côté serveur (`ship_drake_compute`, déclencheur sur `lab_verdicts`, table `ship_drake` — migration 00077 appliquée en production le 24 octobre 2026, calcul identique au JS). Après un verdict qui déplace un terme, le panneau l'indique (« fc de bord : 0,20 → 0,224 »), sans notification. La page Drake montre le N de bord et le N collectif côte à côte avec une phrase sur leur écart, puis chaque terme (référence, bord, collectif) et, sous les termes variables, les verdicts qui l'ont fait bouger, chacun menant à son observation. Le N= de l'en-tête reste le N collectif. Hors ligne, le N collectif est la valeur de référence (72).
+
+**Lot 6 — implémenté.** `drake_collective_compute` (migration 00078) recalcule chaque jour à 04:00 UTC (`pg_cron`, tâche `drake-collective-daily`) le N collectif : moyenne géométrique des termes de bord, pondérée par le nombre de verdicts du vaisseau sur le terme (plafond 20), référence sans contributeur. Une variation met à jour `drake_equation` (N, delta, date) et écrit une ligne dans `drake_history` ; le N= et le delta de l'en-tête suivent sans autre changement. Même calcul côté client (`computeCollectiveDrake`, testé). La page Drake liste les cinq dernières variations. Migration 00078 appliquée le 24 octobre 2026 (extension `pg_cron` activée) ; son recalcul échouait dès qu'un terme variait, corrigé par 00079, appliquée le même jour.
 
 ---
 

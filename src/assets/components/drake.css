@@ -139,6 +139,37 @@
   color: var(--color-amber);
 }
 
+.drake-history {
+  margin-top: var(--space-12);
+}
+
+.drake-history__title {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-5);
+}
+
+.drake-history__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.drake-history__list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+}
+
+.drake-history__terms {
+  color: var(--color-muted);
+}
+
 .drake-empty {
   margin-top: var(--space-9);
   color: var(--color-muted);

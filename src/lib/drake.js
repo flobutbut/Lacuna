@@ -72,6 +72,37 @@ export function computeShipDrake(currentVerdicts) {
   return { terms, n: computeN(terms), contributions }
 }
 
+/** Poids maximal d'un vaisseau dans le N collectif, par terme (LACUNA_VERDICT.md §7.4) */
+export const COLLECTIVE_WEIGHT_CAP = 20
+
+/**
+ * N collectif (LACUNA_VERDICT.md §7.4) — même calcul que drake_collective_compute (migration 00078).
+ * Chaque terme variable est la moyenne géométrique des termes de bord des vaisseaux qui ont au moins
+ * un verdict sur ce terme, pondérée par leur nombre de verdicts (plafonné à 20). Sans vaisseau : référence.
+ * @param {Array<{ terms: object, counts: Record<string, number> }>} ships
+ * @returns {{ terms: object, n: number }}
+ */
+export function computeCollectiveDrake(ships) {
+  const terms = { ...DRAKE_REFERENCE }
+  for (const term of VARIABLE_TERMS) {
+    let weighted = 0
+    let total = 0
+    for (const s of ships) {
+      const w = Math.min(s.counts?.[term] ?? 0, COLLECTIVE_WEIGHT_CAP)
+      if (w < 1) continue
+      weighted += w * Math.log(s.terms[term])
+      total += w
+    }
+    if (total > 0) terms[term] = Math.exp(weighted / total)
+  }
+  return { terms, n: computeN(terms) }
+}
+
+/** Nombre de verdicts qui contribuent, par terme (pour le poids d'un vaisseau dans le N collectif) */
+export function countContributions(contributions) {
+  return Object.fromEntries(VARIABLE_TERMS.map((t) => [t, contributions[t]?.length ?? 0]))
+}
+
 /** Valeur d'un terme à l'affichage : fractions à trois décimales, L en années */
 export function formatTerm(term, value) {
   if (value == null || !Number.isFinite(Number(value))) return '—'

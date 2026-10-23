@@ -58,7 +58,10 @@ function direction(key) {
 
 onMounted(async () => {
   await ensureStoresLoaded(drakeStore, obsStore)
-  await verdictsStore.fetchForObservations(obsStore.list.map((o) => o.id))
+  await Promise.all([
+    verdictsStore.fetchForObservations(obsStore.list.map((o) => o.id)),
+    drakeStore.fetchHistory(),
+  ])
 })
 </script>
 
@@ -76,10 +79,7 @@ onMounted(async () => {
         <div class="drake-compare__cell">
           <div class="drake-compare__label">N collectif</div>
           <div class="drake-compare__value">{{ formatN(collectiveN) }}</div>
-          <div class="drake-compare__sub">
-            ce que croient les vaisseaux
-            <template v-if="drakeStore.lastUpdated"> — variation {{ formatRelativeTime(drakeStore.lastUpdated) }}</template>
-          </div>
+          <div class="drake-compare__sub">ce que croient les vaisseaux — recalculé chaque jour</div>
         </div>
       </div>
       <p v-if="gap" class="drake-gap">{{ gap }}</p>
@@ -113,6 +113,17 @@ onMounted(async () => {
             </li>
           </ul>
         </template>
+      </div>
+
+      <div v-if="drakeStore.history.length" class="drake-history">
+        <div class="drake-history__title">Variations du N collectif</div>
+        <ul class="drake-history__list">
+          <li v-for="h in drakeStore.history" :key="h.id">
+            <span class="sw-key">{{ formatRelativeTime(h.created_at) }}</span>
+            <span class="sw-val">N = {{ formatN(h.n) }}</span>
+            <span v-if="h.changed_term" class="drake-history__terms">{{ h.changed_term }}</span>
+          </li>
+        </ul>
       </div>
 
       <p v-if="!verdictsStore.currentVerdicts.length" class="drake-empty">

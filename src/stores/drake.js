@@ -1,5 +1,6 @@
 /**
- * Store Équation de Drake — chargement depuis Supabase
+ * Store Équation de Drake — N collectif (drake_equation) et ses variations (drake_history),
+ * recalculés une fois par jour par le serveur (drake_collective_compute, migration 00078)
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -9,6 +10,8 @@ import { useSupabaseStore } from '@/stores/supabase'
 export const useDrakeStore = defineStore('drake', () => {
   const row = ref(null)
   const loaded = ref(false)
+  /** Dernières variations du N collectif, de la plus récente à la plus ancienne */
+  const history = ref([])
 
   const n = computed(() => row.value?.n ?? 12.4)
   const lastDelta = computed(() => row.value?.last_delta ?? 0)
@@ -45,5 +48,20 @@ export const useDrakeStore = defineStore('drake', () => {
     return data
   }
 
-  return { row, loaded, n, lastDelta, lastUpdated, terms, fetch }
+  async function fetchHistory(limit = 5) {
+    if (!useSupabaseStore().isConfigured()) return history.value
+    const { data, error } = await supabase
+      .from('drake_history')
+      .select('id, date, n, changed_term, reason, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+    if (error) {
+      console.warn('[drake] historique:', error.message)
+      return history.value
+    }
+    history.value = data ?? []
+    return history.value
+  }
+
+  return { row, loaded, n, lastDelta, lastUpdated, terms, history, fetch, fetchHistory }
 })
