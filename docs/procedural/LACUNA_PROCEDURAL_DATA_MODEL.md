@@ -1,5 +1,5 @@
 # LACUNA — Modèle de données procédural
-*Version 0.1 — Mars 2026*
+*Version 0.2 — Octobre 2026*
 
 > Contrat transversal qui gouverne toute génération procédurale et toute extrapolation
 > dans LACUNA. Tous les scripts de génération, d'import et de migration doivent
@@ -389,7 +389,7 @@ ORDER BY table_name, column_name;
   "name": "ARK TESSERA",
   "voyage": 1,
   "generation": 1,
-  "departureDate": "2187-01-01",
+  "departureDate": "2041-01-01",
   "position": {
     "x": 0.0,
     "y": 0.0,
@@ -497,7 +497,7 @@ Valeur entre 0 et 1. Elle influence la capacité à interpréter des traces comp
   "visual": "waveform",
   "interpretations": [ ],
   "pointsTo": null,
-  "discovered": "2187-01-01",
+  "discovered": "2041-01-01",
   "discoveredBy": null
 }
 ```
@@ -538,11 +538,11 @@ Colonnes de `traces` réservées au serveur (jamais lisibles par les joueurs, mi
   "playerId": null,
   "generation": 1,
   "shipAge": "47 jours",
-  "galacticDate": "2187-02-17",
+  "galacticDate": "2041-02-17",
   "text": "...",
   "direction": "Sagittarius — axe galactique central",
   "confidence": "HYPOTHÈSE",
-  "timestamp": "2187-02-17T14:32:00Z"
+  "timestamp": "2041-02-17T14:32:00Z"
 }
 ```
 
@@ -568,7 +568,7 @@ Les joueurs sont **anonymes**. Pas de pseudo, pas d'identité. L'interprétation
       "id": "log-001",
       "type": "MANUEL",
       "generation": 1,
-      "date": "2187-01-01",
+      "date": "2041-01-01",
       "title": "Départ",
       "text": "15 000 âmes embarquées. On a regardé la Terre disparaître pendant 4 heures.",
       "linkedTraces": [],
@@ -578,7 +578,7 @@ Les joueurs sont **anonymes**. Pas de pseudo, pas d'identité. L'interprétation
       "id": "log-002",
       "type": "AUTO",
       "generation": 1,
-      "date": "2187-03-15",
+      "date": "2041-03-15",
       "title": "Arrivée — HD 44594",
       "text": "Système atteint après 12s. Scan initial : 3 planètes, zone habitable, anomalie de niveau 1 détectée.",
       "linkedTraces": ["trace-hd44594-a"],
@@ -606,7 +606,7 @@ Les joueurs sont **anonymes**. Pas de pseudo, pas d'identité. L'interprétation
     {
       "systemId": "SOL",
       "name": "Sol",
-      "visitedAt": "2187-01-01",
+      "visitedAt": "2041-01-01",
       "generation": 1,
       "tracesFound": 2
     }
@@ -664,6 +664,7 @@ Objet global, partagé par tous les joueurs. `fl`, `fi` et `L` sont les seuls te
 | Mars 2026 | Version 0.1 — document initial |
 | 2026-10-22 | §9.2 et exemple de journal : population de départ 15 000 (alignée sur `LACUNA_GDD.md` v0.5). Code aligné le 2026-10-23 (constante `INITIAL_POPULATION`, migration `00052`) |
 | 2026-10-23 | §9.3 : origine `PRÉCURSEUR` et colonnes de scénario sur `traces` (migrations `00054`, `00055`) |
+| 2026-10-23 | Version 0.2 — dates des exemples au calendrier du vaisseau (départ le 1er janvier 2041, `LACUNA_GDD.md` §2) |
 | 2026-10-23 | §9.3 : lectures par niveau (`trace_levels`) et découverte (`ship_traces`, `ship_trace_levels`) ; type `BIOLOGICAL` (migrations `00059`, `00060`) |
 
 ---

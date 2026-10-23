@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-22*
 
 # LACUNA — Système de Notifications
-*Version 0.5 — Octobre 2026*
+*Version 0.6 — Octobre 2026*
 
 ---
 
@@ -30,6 +30,7 @@
 | 0.3 | Octobre 2026 | Mise en cohérence — population de départ 15 000 (POP-001, TEM-005) ; VOY-005 : Zeta Puppis de type O4 ; TEM-001 : la dernière signature radio est datée *après* le départ ; TEM-002 : exemple remplacé (une étoile G2V ne devient pas subgéante en 847 000 ans) ; TRA-004 : Epsilon Eridani ne peut pas devenir subgéante en 847 ans — l'évolution porte sur son disque de débris (période orbitale de ~500 ans à 60 UA) ; TEM-005 : à 4,8 % c, 100 ans simulés couvrent au plus ~4,8 al, et 100 ans font 4 générations. *Point ouvert : les dates d'exemple (2187 à 2891) ne suivent aucun calendrier défini — à fixer avec la date de départ (`LACUNA_LORE.md`)* |
 | 0.4 | Octobre 2026 | Calendrier fixé (départ le 1er janvier 2187, `LACUNA_GDD.md` §2) — point ouvert de la v0.3 résolu, exemples annotés ; famille 7 « Ciel de départ » (CIE-001 à CIE-004) ; VOY-001 et VOY-007 écrits au journal |
 | 0.5 | Octobre 2026 | POP-001 : écrit au journal au premier passage seulement, sans la ligne d'effectif |
+| 0.6 | Octobre 2026 | Calendrier : départ le 1er janvier 2041 (et non 2187) |
 
 ---
 
@@ -87,7 +88,7 @@ Il n'y a pas de niveau `URGENT`. LACUNA n'a pas d'urgences.
 ### Horodatage
 
 Toutes les notifications sont datées doublement :
-- **Date galactique simulée** — la date du vaisseau (`LACUNA_GDD.md` §2, Calendrier du vaisseau : départ le 1er janvier 2187)
+- **Date galactique simulée** — la date du vaisseau (`LACUNA_GDD.md` §2, Calendrier du vaisseau : départ le 1er janvier 2041)
 - **Contexte de voyage** — "En orbite — [système]" ou "En transit vers [système]"
 
 *Les dates des exemples ci-dessous (2341…) sont antérieures à ce calendrier : elles illustrent le format, pas la chronologie.*
@@ -827,4 +828,4 @@ L'état de la population colore subtilement le ton des notifications automatique
 
 ---
 
-*LACUNA — Système de Notifications v0.5 — Octobre 2026 — Confidentiel*
+*LACUNA — Système de Notifications v0.6 — Octobre 2026 — Confidentiel*

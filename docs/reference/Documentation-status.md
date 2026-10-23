@@ -74,7 +74,7 @@
 - [x] Sélection système, fixation cap — TravelWidget, vue de confirmation du départ
 - [x] Voyage — transit décidé par le serveur (start_transit / complete_transit, 00050), quatre phases, historique ship_travels ; pas encore : détection en transit, déviation, carburant consommé
 - [x] Journal de bord — entrées écrites par le serveur (fondatrice, départ, arrivée, ciel de départ, premier passage de génération), entrées du joueur, filtre par type (00068, 00069)
-- [x] Calendrier du vaisseau et générations — date de bord depuis 2187, génération = 1 + années ÷ 25 (00068, 00069)
+- [x] Calendrier du vaisseau et générations — date de bord depuis 2041, génération = 1 + années ÷ 25 (00068, 00069)
 - [x] Ciel de départ — supernova de Bételgeuse (SN-001), signal de 22 minutes (LPT-001), détecteur et analyseur de neutrinos, sources de départ au Radar (00062–00067)
 - [x] Page Artefacts — grille, détail trace, interprétations, suppression (conformité LACUNA_UI)
 - [x] Page Laboratoire — 3 colonnes (file d'observations | observation sélectionnée | instruments), clic instrument, rapports + fiabilité, [GARDER UNE TRACE], sorties visuelles : spectrogramme, structure temporelle, polarisation, spectre énergétique, gravimétrique, spectre stellaire, analyseur orbital, spectromètre atmosphérique (profil moléculaire)

@@ -358,7 +358,7 @@ Vaisseaux joueurs (1 par compte, créé par `start_new_game`). Nom choisi et mod
 | user_id | UUID FK | → auth.users (CASCADE), UNIQUE |
 | name | TEXT | Nom du vaisseau, 2–32 caractères (contrainte `ships_name_length`) ; la classe reste ARCA |
 | classe | TEXT | Classe du vaisseau (ex. Vaisseau générationnel de classe I) |
-| built_year | INT | Année construction fiction = année(created_at) + 212 (trigger) |
+| built_year | INT | Année de construction : 2041, entrée en service du premier vaisseau ARCA (`LACUNA_LORE.md` §2) — trigger, migration 00072 (avant : année(created_at) + 212) |
 | voyage | INT | |
 | generation | INT | |
 | current_system_id | TEXT FK | Système actuel (IDLE/ARRIVED) → stellar_systems |
@@ -553,6 +553,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00069 | Générations : ships.generation et populations.generation recalculés à l'arrivée (1 + années simulées ÷ 25) ; entrée GENERATIONNEL au premier passage |
 | 00070 | Modération : table admin_actions (journal, sans accès direct) ; RPC réservées aux admins `is_admin`, `admin_list_players`, `admin_set_suspension` (auth.users.banned_until + sessions fermées), `admin_rename_player`, `admin_list_interpretations`, `admin_delete_interpretation`, `admin_delete_player`, `admin_list_actions` — appliquée le 23/10/2026 après sauvegarde (`backups/avant_00070_20261023_210432.dump`) |
 | 00071 | Onboarding : traces embarquées (WOW-1977-A, OUMUAMUA-2017, BENNU-NB-2023) inscrites dans ship_traces à la création du vaisseau ; entrée de journal au premier départ ; Étoile de Tabby (KIC 8462852) ajoutée à stellar_systems |
+| 00072 | Calendrier du vaisseau : départ le 1er janvier 2041 (et non 2187) ; built_year = 2041 ; dates du journal et des signaux recalculées |
 | 00072 | Modération : RPC `admin_reset_player` (admins) — efface vaisseau, données et profil d'un joueur, compte et mot de passe conservés : il refait l'onboarding ; action `reset_game` au journal admin_actions — appliquée le 23/10/2026 après sauvegarde (`backups/avant_00072_20261023_224236.dump`) |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
@@ -873,6 +874,7 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 | 2026-10-23 | 00070 appliquée : modération (RPC admin, journal des actions) |
 | 2026-10-23 | 00071 écrite : onboarding (traces embarquées, Étoile de Tabby) — renumérotée, 00070 étant déjà prise par la modération |
 | 2026-10-23 | 00071 appliquée : onboarding (traces embarquées rattrapées pour les parties en cours, Étoile de Tabby) |
+| 2026-10-23 | 00072 écrite : départ en 2041, année de construction |
 | 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |

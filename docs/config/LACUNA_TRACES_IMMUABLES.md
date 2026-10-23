@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Traces immuables
-*Version 0.10 — Octobre 2026*
+*Version 0.11 — Octobre 2026*
 
 > Ce document contient les **fiches des traces immuables** qui n'appartiennent pas à un scénario — voisinage solaire, hors voisinage — et le **Journal de Yael** (origine `PRÉCURSEUR`). Les traces appartenant à un scénario ont leurs fiches de nœuds dans `LACUNA_SCENARIOS.md`. La mécanique (définition, chaîne de production, types d'outputs, qualification) vit dans `LACUNA_TRACES.md`. Les faits astronomiques de référence vivent dans `LACUNA_ANOMALIES_REELLES.md`.
 >
@@ -35,6 +35,7 @@
 | 0.8 | Octobre 2026 | SN-001 : montée des neutrinos de pré-supernova implémentée (création + 3 min, 5 min) ; la bouffée passe à création + 8 min (migration `00065`) |
 | 0.9 | Octobre 2026 | LPT-001 implémenté : objet réel GPM J1839−10 (position MeerKAT ajoutée), phase commune à tous les joueurs, première impulsion captée après création + 20 min, impulsions tirées une à une (durée, intensité, polarisation), Radar, halo, Laboratoire (migration `00066`, `src/lib/lpt.js`) ; signature : réapparition reportée |
 | 0.10 | Octobre 2026 | PSR-001 : visible au Radar dès le départ (impulsions en bande L) |
+| 0.11 | Octobre 2026 | SN-001 : date de départ commune corrigée (2041) |
 
 ---
 
@@ -449,7 +450,7 @@ La supernova n'est pas une trace au sens de `LACUNA_TRACES.md` §1 : elle ne s'�
 **Décisions**
 - L'étoile est **Bételgeuse**.
 - L'événement est **propre à chaque partie** : il se déclenche au départ du vaisseau.
-- Cohérence avec la galaxie partagée : tous les vaisseaux partent à la même date du jeu (2187). L'explosion est donc un même événement fixe, que chaque joueur vit au début de sa partie. Après les premières heures, l'état du ciel est commun : Bételgeuse est une supernova, puis un rémanent, pour tout le monde.
+- Cohérence avec la galaxie partagée : tous les vaisseaux partent à la même date du jeu (1er janvier 2041, `LACUNA_GDD.md` §2). L'explosion est donc un même événement fixe, que chaque joueur vit au début de sa partie. Après les premières heures, l'état du ciel est commun : Bételgeuse est une supernova, puis un rémanent, pour tout le monde.
 
 **Ancrage réel**
 Le 23 février 1987, trois détecteurs souterrains (Kamiokande II, IMB, Baksan) enregistrent environ deux douzaines de neutrinos. À Kamiokande II, douze événements s'étalent sur 12,4 s, d'énergies comprises entre ~6 et ~35 MeV (moyenne ~15 MeV). Environ trois heures plus tard, la supernova SN 1987A devient visible dans le Grand Nuage de Magellan, à ~168 000 al : c'est la seule supernova dont on ait détecté les neutrinos. Les neutrinos s'échappent du cœur effondré dès l'effondrement ; la lumière attend que l'onde de choc atteigne la surface de l'étoile (« sortie du choc »).
@@ -604,4 +605,4 @@ Les tirages dépendent du seul numéro de l'impulsion : tous les joueurs reçoiv
 
 ---
 
-*LACUNA — Traces immuables v0.10 — Octobre 2026 — Confidentiel*
+*LACUNA — Traces immuables v0.11 — Octobre 2026 — Confidentiel*

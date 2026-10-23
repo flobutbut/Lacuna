@@ -135,7 +135,7 @@ Référence technique : `Documentation-technique.md` § Vue Radar.
 
 ### Générations
 - Génération = 1 + années du calendrier du vaisseau ÷ 25, recalculée à l'arrivée de chaque voyage (`LACUNA_GDD.md` §4)
-- Calendrier : départ le 1er janvier 2187, plus la durée physique des voyages et le temps réel en orbite (`LACUNA_GDD.md` §2)
+- Calendrier : départ le 1er janvier 2041, plus la durée physique des voyages et le temps réel en orbite (`LACUNA_GDD.md` §2)
 - Entrée GENERATIONNEL au journal au premier passage seulement (POP-001)
 - Effectif fixe (15 000) tant qu'aucune règle démographique n'existe
 

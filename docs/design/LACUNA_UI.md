@@ -302,7 +302,7 @@ Signal capté
 Fréquence       1420 MHz
 Direction       azimut 217° · plan +12°
 Distance est.   ~340 al
-Reçu le         2187-04-12
+Reçu le         2041-04-12
 ```
 
 **Comportement des cards :**
@@ -329,7 +329,7 @@ Même pattern que la modale système. Flottante, centrée dans l'interface. Disp
 │ 1420 MHz     │ azimut 217°      │
 ├──────────────┼──────────────────┤
 │ DISTANCE EST.│ REÇU LE          │
-│ ~340 al      │ 2187-04-12       │
+│ ~340 al      │ 2041-04-12       │
 ├──────────────┴──────────────────┤
 │ Durée du signal   72 secondes   │
 │ Polarisation      circulaire    │
@@ -945,6 +945,7 @@ Ce qui est spécifique à l'interface :
 | 2026-10-23 | §9 : onboarding implémenté ; « Passer » sur les écrans 01 à 04 pour une nouvelle partie seulement |
 | 2026-10-23 | §9 : paragraphes révélés un à un ; écran 05 en cartouche (trait et cercle autour d'une destination) |
 | 2026-10-23 | §9 : écran 05 en visite de sept étapes avec [Terminer] / [Suivant] |
+| 2026-10-23 | Exemples de dates au calendrier du vaisseau (départ en 2041) |
 | 2026-10-23 | §2 : Radar — sources du ciel de départ (PSR B1919+21, Synchrotron 408 MHz, SN-2341-K452) ; les autres signaux de départ restent muets |
 
 ---

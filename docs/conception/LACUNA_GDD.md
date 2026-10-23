@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Game Design Document
-*Version 0.13 — Octobre 2026*
+*Version 0.14 — Octobre 2026*
 
 ---
 
@@ -36,6 +36,7 @@
 | 0.11 | Octobre 2026 | §2 : calendrier du vaisseau (départ le 1er janvier 2187, temps physique des voyages, temps réel en orbite) ; §3 et §9 : journal de bord implémenté (migration `00068`) |
 | 0.12 | Octobre 2026 | §4 : règle des générations (1 + années simulées ÷ 25, mise à jour à l'arrivée) ; une seule entrée au journal, au premier passage — contradiction entre « une entrée par passage », POP-001 et `LACUNA_ARCS.md` §1.7 tranchée ; §9 mis à jour |
 | 0.13 | Octobre 2026 | §9 : onboarding implémenté (migration `00071`) |
+| 0.14 | Octobre 2026 | §2 : départ ramené au 1er janvier 2041 (`LACUNA_LORE.md` §2) — 2187 contredisait le lore ; année de construction alignée (2041) |
 
 ---
 
@@ -96,7 +97,7 @@ La dilatation gravitationnelle s'applique lors des stationnements près d'objets
 
 ### Calendrier du vaisseau
 
-Tous les vaisseaux partent le **1er janvier 2187** (`LACUNA_PROCEDURAL_DATA_MODEL.md`). La date du vaisseau est la date de départ, plus :
+Tous les vaisseaux partent le **1er janvier 2041**, année où le premier vaisseau de classe ARCA devient opérationnel (`LACUNA_LORE.md` §2). *Corrigé en octobre 2026 : le départ était fixé en 2187, ce qui contredisait le lore — volontaires sélectionnés entre 2036 et 2040, vaisseau opérationnel en 2041.* La date du vaisseau est la date de départ, plus :
 - la durée **physique** de chaque voyage (table de référence de `LACUNA_PHYSICS.md` §2 ; un voyage en cours compte au prorata de sa progression) ;
 - le temps **réel** passé en orbite (une journée en orbite est une journée de bord).
 
