@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-16*
+*Dernière modification : 2026-10-23*
 
 # LACUNA — Documentation Backend
 
@@ -333,7 +333,8 @@ Rapports d'analyse persistés (instruments Laboratoire).
 | instrument | TEXT | Nom affiché |
 | fiability | INT | Fiabilité du rapport |
 | date, duration, duration_sec | | Métadonnées temporelles |
-| anomalous | BOOLEAN | Signal atypique |
+| anomalous | BOOLEAN | L'instrument mesure un écart (pilote les résidus des graphes) ; avant 00074 : signal atypique |
+| deviations | JSONB | Écarts relevés `[{ id, family, label, expected, measured, requiresNiveau }]` (`LACUNA_VERDICT.md` §4) ; NULL avant 00074, recalculés par le client — migration 00074 |
 | results | TEXT | Résultats bruts ou JSON |
 | created_at | TIMESTAMPTZ | |
 
@@ -555,6 +556,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00071 | Onboarding : traces embarquées (WOW-1977-A, OUMUAMUA-2017, BENNU-NB-2023) inscrites dans ship_traces à la création du vaisseau ; entrée de journal au premier départ ; Étoile de Tabby (KIC 8462852) ajoutée à stellar_systems |
 | 00072 | Modération : RPC `admin_reset_player` (admins) — efface vaisseau, données et profil d'un joueur, compte et mot de passe conservés : il refait l'onboarding ; action `reset_game` au journal admin_actions — appliquée le 23/10/2026 après sauvegarde (`backups/avant_00072_20261023_224236.dump`) |
 | 00073 | Calendrier du vaisseau : départ le 1er janvier 2041 (et non 2187) ; built_year = 2041 ; dates du journal et des signaux recalculées |
+| 00074 | Laboratoire : colonne `lab_reports.deviations` (écarts attendu / mesuré, `LACUNA_VERDICT.md` §4) — appliquée le 23/10/2026 (table vide en production, aucun rapport antérieur) |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
@@ -876,6 +878,8 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 | 2026-10-23 | 00071 appliquée : onboarding (traces embarquées rattrapées pour les parties en cours, Étoile de Tabby) |
 | 2026-10-23 | 00073 écrite : départ en 2041, année de construction — renumérotée, 00072 étant prise par la réinitialisation admin |
 | 2026-10-23 | 00073 appliquée : départ en 2041 (vaisseaux, journal et signaux en production alignés) |
+| 2026-10-23 | 00074 écrite : écarts des rapports du Laboratoire (`lab_reports.deviations`) |
+| 2026-10-23 | 00074 appliquée : colonne `lab_reports.deviations` en production |
 | 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |

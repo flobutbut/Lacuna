@@ -12,10 +12,11 @@ import { useMapNodesStore } from '@/stores/mapNodes'
 import { useNotificationsStore } from '@/stores/notifications'
 import { OBJECT_TYPE_LABELS, getObsFilterType, getObservationIcon } from '@/constants/objectTypes'
 import { getSupportLabel } from '@/constants/signaux'
-import { getGraphName, getAnalysisConclusion } from '@/constants/lab'
+import { getGraphName, getAnalysisConclusion, getInstrumentsForObservation, NIVEAU_ORDER } from '@/constants/lab'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { seededRandom } from '@/lib/random'
 import { seedFromObsId } from '@/lib/spectrogramData'
+import { DEVIATION_FAMILIES, getReportDeviations, countDeviationSightings } from '@/lib/deviations'
 import LabReportSpectrogram from '@/components/lab/LabReportSpectrogram.vue'
 import LabReportStructureTemporelle from '@/components/lab/LabReportStructureTemporelle.vue'
 import LabReportPolarisation from '@/components/lab/LabReportPolarisation.vue'
@@ -46,40 +47,6 @@ const notificationsStore = useNotificationsStore()
 const OBS_STATES = { PENDING: 'En attente', RUNNING: 'Analyse en cours', DONE: 'Analysé' }
 
 const NIVEAUX = { PASSIF: 'Passif', SYSTEME: 'Système', ORBITE: 'Orbite proche', CONTACT: 'Contact' }
-
-/**
- * Instruments du Laboratoire — Réf. LACUNA_LABORATOIRE_INSTRUMENTS.md
- * signalSupports = pour observations SIGNAL (support du signal)
- * niveau + objectTypes = pour observations actives (corps, étoile, etc.)
- */
-const INSTRUMENTS = [
-  { id: 'analyseur-spectral', name: 'Analyseur spectral', signalSupports: ['EM_RADIO'], delay: 'Court' },
-  { id: 'analyseur-structure-temporelle', name: 'Analyseur de structure temporelle', signalSupports: ['EM_RADIO', 'GAMMA_X', 'GRAVITATIONNEL', 'NEUTRINO'], delay: 'Court' },
-  { id: 'analyseur-polarisation', name: 'Analyseur de polarisation', signalSupports: ['EM_RADIO'], delay: 'Moyen' },
-  { id: 'analyseur-spectre-energetique', name: 'Analyseur de spectre énergétique', signalSupports: ['GAMMA_X'], delay: 'Moyen' },
-  { id: 'analyseur-neutrinos', name: 'Analyseur de neutrinos', signalSupports: ['NEUTRINO'], delay: 'Moyen' },
-  { id: 'analyseur-gravimetrique', name: 'Analyseur gravimétrique', signalSupports: ['GRAVITATIONNEL'], niveau: 'SYSTEME', objectTypes: ['ETOILE', 'PLANETE', 'MINEUR', 'OBJET'], delay: 'Long' },
-  { id: 'spectro-stellaire', name: 'Spectromètre stellaire', niveau: 'SYSTEME', objectTypes: ['ETOILE', 'PLANETE'], delay: 'Moyen' },
-  { id: 'analyseur-orbital', name: 'Analyseur orbital', niveau: 'SYSTEME', objectTypes: ['ETOILE', 'PLANETE', 'MINEUR', 'OBJET'], delay: 'Long' },
-  { id: 'spectro-atmo', name: 'Spectromètre atmosphérique', niveau: 'ORBITE', objectTypes: ['PLANETE', 'ATMOSPHERE'], delay: 'Moyen' },
-  { id: 'analyseur-vol', name: 'Analyseur volumétrique', niveau: 'ORBITE', objectTypes: ['ETOILE', 'PLANETE', 'MINEUR', 'OBJET'], delay: 'Long' },
-  { id: 'scanner-morpho', name: 'Scanner morphologique', niveau: 'ORBITE', objectTypes: ['PLANETE', 'MINEUR', 'OBJET'], delay: 'Moyen' },
-  { id: 'magnetometre', name: 'Magnétomètre', niveau: 'ORBITE', objectTypes: ['PLANETE', 'MINEUR'], delay: 'Court' },
-  { id: 'spectro-contact', name: 'Spectromètre de contact', niveau: 'CONTACT', objectTypes: ['OBJET'], delay: 'Long' },
-  { id: 'analyseur-echantillon', name: 'Analyseur d\'échantillon', niveau: 'CONTACT', objectTypes: ['OBJET'], delay: 'Très long' },
-]
-
-const NIVEAU_ORDER = { PASSIF: 0, SYSTEME: 1, ORBITE: 2, CONTACT: 3 }
-
-function getInstrumentsForObservation(obs) {
-  if (!obs) return []
-  if (obs.type === 'SIGNAL') {
-    const support = obs.support ?? 'EM_RADIO'
-    return INSTRUMENTS.filter(i => i.signalSupports?.includes(support))
-  }
-  const bodyType = obs.type === 'STAR' ? 'ETOILE' : obs.type === 'PLANET' ? 'PLANETE' : obs.type
-  return INSTRUMENTS.filter(i => i.objectTypes?.includes(bodyType))
-}
 
 function hasRunningForObs(obs) {
   if (!obs) return false
@@ -233,7 +200,9 @@ function startSimulation() {
         const fiability = 50 + Math.floor(seededRandom(seedFromObsId(`${r.obs.id}:${r.instr.id}`))() * 45)
         const newReports = reports.value[r.obs.id] || []
         const durationSec = r.obs.type === 'SIGNAL' ? (r.obs.durationSec ?? 72) : 72
-        const anomalous = r.obs.type === 'SIGNAL' ? (r.obs.anomalous ?? false) : false
+        const deviations = getReportDeviations(r.obs, r.instr.id, { fiability, niveau: getEffectiveNiveau(r.obs) })
+        // Les graphes montrent des résidus quand l'instrument mesure un écart
+        const anomalous = deviations.some((d) => !d.requiresNiveau)
         const reportPayload = {
           instrumentId: r.instr.id,
           instrument: r.instr.name,
@@ -242,6 +211,7 @@ function startSimulation() {
           duration: '2h',
           durationSec,
           anomalous,
+          deviations,
           results:
             r.instr.id === 'analyseur-spectral'
               ? `Spectrogramme — fréquence × temps. Bande passante, raies, stabilité. Fiabilité ${fiability}%.`
@@ -331,6 +301,19 @@ const selectedInstruments = computed(() => {
     ...list.filter(i => instrumentState(i, obs) === 'disabled'),
   ]
 })
+
+/** Écarts d'un rapport ; recalculés depuis l'objet pour les rapports antérieurs aux écarts */
+function getDeviationsForReport(r) {
+  if (Array.isArray(r.deviations)) return r.deviations
+  const obs = selectedObs.value
+  if (!obs) return []
+  return getReportDeviations(obs, r.instrumentId, { fiability: r.fiability, niveau: getEffectiveNiveau(obs) })
+}
+
+/** Nombre de rapports de l'observation sélectionnée qui mesurent chaque écart */
+const deviationSightings = computed(() =>
+  countDeviationSightings(selectedReports.value.map(getDeviationsForReport))
+)
 
 const runningForSelected = computed(() => {
   const obs = selectedObs.value
@@ -514,7 +497,7 @@ onUnmounted(() => {
             <div class="lab-selected__section-title">
               Rapports d'analyse
               <span v-if="getAnalysisConclusion(selectedObs, selectedReports.length)" class="lab-selected__conclusion">
-                — {{ getAnalysisConclusion(selectedObs, selectedReports.length) }}
+                — modèle de référence : {{ getAnalysisConclusion(selectedObs, selectedReports.length) }}
               </span>
             </div>
             <div v-for="r in selectedReports" :key="r.instrumentId + r.date" class="lab-report">
@@ -527,7 +510,6 @@ onUnmounted(() => {
                   </div>
                 </div>
                 <div class="lab-report__header-right">
-                  <div v-if="r.anomalous" class="lab-report__badge">Signal atypique</div>
                   <div class="lab-report__meta-row lab-report__meta-row--right">
                     <span class="sw-key">Fiabilité</span>
                     <span class="sw-val">{{ r.fiability }}%</span>
@@ -643,6 +625,34 @@ onUnmounted(() => {
                 :anomalous="r.anomalous ?? false"
                 class="lab-report__output"
               />
+              <div class="lab-report__deviations">
+                <div class="lab-report__deviations-title">Écarts</div>
+                <ul v-if="getDeviationsForReport(r).length" class="lab-deviations">
+                  <li
+                    v-for="d in getDeviationsForReport(r)"
+                    :key="d.id"
+                    class="lab-deviation"
+                    :class="{ 'lab-deviation--shadow': d.requiresNiveau }"
+                  >
+                    <div class="lab-deviation__head">
+                      <span class="lab-deviation__family">{{ DEVIATION_FAMILIES[d.family]?.label ?? d.family }}</span>
+                      <span class="lab-deviation__label">— {{ d.requiresNiveau ? 'écart au-delà de la résolution' : d.label }}</span>
+                      <span v-if="!d.requiresNiveau && (deviationSightings.get(d.id) ?? 0) >= 2" class="lab-deviation__tag">corroboré</span>
+                    </div>
+                    <div v-if="d.requiresNiveau" class="lab-deviation__values">
+                      Niveau {{ NIVEAUX[d.requiresNiveau] }} requis pour le caractériser.
+                    </div>
+                    <div v-else class="lab-deviation__values">
+                      <span class="sw-key">attendu</span> <span class="sw-val">{{ d.expected }}</span>
+                      <span class="lab-deviation__sep">·</span>
+                      <span class="sw-key">mesuré</span> <span class="sw-val">{{ d.measured }}</span>
+                    </div>
+                  </li>
+                </ul>
+                <div v-else class="lab-deviation lab-deviation--none">
+                  Aucun écart au-delà du bruit (fiabilité {{ r.fiability }} %).
+                </div>
+              </div>
             </div>
             <div v-if="selectedReports.length === 0 && !Object.keys(runningForSelected).length" class="lab-report" style="opacity: 0.7">
               Lancez un instrument ci-dessus.

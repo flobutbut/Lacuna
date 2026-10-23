@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Écarts et verdict
-*Version 0.1 — Octobre 2026*
+*Version 0.2 — Octobre 2026*
 
 > Spécification de la boucle d'analyse : ce que le Laboratoire fait apparaître (les écarts entre attendu et mesuré), la décision que le joueur prend (le verdict), et ce que cette décision déclenche (voyage, journal, traces, équation de Drake). Ce document comble l'étape « ANALYSER → DÉCIDER » du flux principal (`LACUNA_GDD.md` §4), aujourd'hui absente de l'interface.
 >
@@ -32,6 +32,7 @@
 | Version | Date | Modifications |
 |---------|------|---------------|
 | 0.1 | Octobre 2026 | Document initial — écarts attendu/mesuré, verdict, liens voyage/journal/traces, Drake de bord et Drake collectif |
+| 0.2 | Octobre 2026 | Lot 1 implémenté (§10) ; §4.2 : instruments par famille alignés sur le code ; §9.1 : `deviations` nullable (rapports antérieurs recalculés), corroboration calculée à l'affichage |
 
 ---
 
@@ -97,7 +98,7 @@ L'écart ne dit pas ce qu'il signifie. Il dit seulement que le modèle ne suffit
 
 ### 4.2 Familles
 
-Les familles sont celles de `LACUNA_LABORATOIRE_INSTRUMENTS.md` §8, chacune liée à ses instruments :
+Les familles sont celles de `LACUNA_LABORATOIRE_INSTRUMENTS.md` §8, chacune liée à ses instruments (liste exacte : `DEVIATION_FAMILIES`, `src/lib/deviations.js`). Deux ajouts au §8 : l'analyseur gravimétrique relève aussi les écarts orbitaux (accélération sans source), ce qui rend la famille corroborable ; le magnétomètre relève les écarts morphologiques (structure interne) et d'absence (champ attendu, absent). L'analyseur de neutrinos relève les écarts temporels.
 
 | Famille | Exemple d'écart | Terme de Drake (§7.2) |
 |---------|-----------------|------------------------|
@@ -334,13 +335,15 @@ L'onboarding (`LACUNA_LORE.md` §3–5) pourrait faire parcourir une boucle comp
 Les écarts d'un rapport sont figés au moment de l'analyse dans `lab_reports` :
 
 ```sql
-ALTER TABLE lab_reports ADD COLUMN deviations JSONB NOT NULL DEFAULT '[]';
--- [{ "family": "GRAVITATIONNELLE", "label": "Résidu non expliqué",
---    "expected": "0", "measured": "0,3 M⊕ éq.", "corroborated": false,
---    "requires_niveau": null }]
+ALTER TABLE lab_reports ADD COLUMN deviations JSONB;   -- migration 00074
+-- [{ "id": "objet-0", "family": "GRAVITATIONNELLE", "label": "Résidu non expliqué",
+--    "expected": "0", "measured": "0,3 M⊕ éq.", "requiresNiveau": null }]
 ```
 
-`requires_niveau` non nul signale une ombre (§4.7). `lab_reports.anomalous` devient obsolète et peut être retiré une fois la migration des données faite.
+- `requiresNiveau` non nul signale une ombre (§4.7), sans valeurs.
+- `NULL` : rapport antérieur à la colonne. Les écarts étant déterminés par l'objet, le client les recalcule.
+- La corroboration n'est pas stockée : elle se calcule à l'affichage (même `id` mesuré par au moins deux rapports).
+- `lab_reports.anomalous` reste, dérivé des écarts mesurés : il pilote les résidus des graphes.
 
 ### 9.2 Verdicts
 
@@ -396,6 +399,10 @@ Chaque lot est jouable seul et améliore la boucle sans attendre les suivants.
 | **7 — Fil conducteur** | Lignes d'étape suivante (§8), boucle dans l'onboarding | 2, 4 |
 
 Les lots 1 et 2 forment le minimum qui rend la boucle compréhensible.
+
+### État (23 octobre 2026)
+
+**Lot 1 — implémenté.** `src/lib/deviations.js` (familles, gabarits, graine par objet, écart parasite, ombres, corroboration), tests `src/lib/deviations.test.js`. Section Écarts à la fin de chaque rapport, badge « Signal atypique » retiré, modèle de référence affiché (« modèle de référence : pulsar »). Écarts scénarisés : lus dans `observations.attributes.deviations` (`{ id, family, label, expected, measured, instruments?, min_niveau? }`) ; aucune fiche ne les déclare encore. Migration 00074 appliquée en production le 23 octobre 2026.
 
 ---
 

@@ -16,6 +16,7 @@ function rowToReport(row) {
     duration: row.duration ?? '2h',
     durationSec: row.duration_sec ?? 72,
     anomalous: row.anomalous ?? false,
+    deviations: row.deviations ?? null,
     results: row.results ?? '',
   }
 }
@@ -30,6 +31,7 @@ function reportToRow(report, observationId) {
     duration: report.duration ?? null,
     duration_sec: report.durationSec ?? null,
     anomalous: report.anomalous ?? false,
+    deviations: report.deviations ?? null,
     results: report.results ?? null,
   }
 }
@@ -71,7 +73,7 @@ export const useLabReportsStore = defineStore('labReports', () => {
       const { data, error } = await supabase
         .from('lab_reports')
         .insert(row)
-        .select('id, instrument_id, instrument, fiability, date, duration, duration_sec, anomalous, results')
+        .select('id, instrument_id, instrument, fiability, date, duration, duration_sec, anomalous, deviations, results')
         .single()
       if (error) {
         console.warn('[labReports] Erreur insert:', error.message)

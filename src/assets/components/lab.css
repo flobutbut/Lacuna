@@ -183,21 +183,81 @@
   margin-bottom: 0;
 }
 
-.lab-report__badge {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--color-amber);
-  background: var(--color-amber-glow);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--border-radius-sm);
-  border: 1px solid var(--color-amber-dim);
-  flex-shrink: 0;
-}
-
 .lab-report__graph-label {
   font-size: var(--text-sm);
   color: var(--color-muted);
   margin-bottom: var(--space-2);
+}
+
+/* ── Écarts — attendu / mesuré (LACUNA_VERDICT.md §4.4) ── */
+.lab-report__deviations {
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--border-default);
+}
+
+.lab-report__deviations-title {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-3);
+}
+
+.lab-deviations {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.lab-deviation {
+  padding-left: var(--space-5);
+  border-left: 2px solid var(--color-amber);
+  line-height: var(--leading-tight);
+}
+
+.lab-deviation--shadow {
+  border-left-style: dashed;
+  border-left-color: var(--color-amber-dim);
+}
+
+.lab-deviation--none {
+  padding-left: 0;
+  border-left: none;
+  color: var(--color-muted);
+}
+
+.lab-deviation__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.lab-deviation__family {
+  color: var(--color-amber);
+}
+
+.lab-deviation--shadow .lab-deviation__family,
+.lab-deviation--shadow .lab-deviation__values {
+  color: var(--color-muted);
+}
+
+.lab-deviation__tag {
+  font-size: var(--text-xs);
+  color: var(--color-amber);
+  border: 1px solid var(--color-amber-dim);
+  padding: 0 var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.lab-deviation__sep {
+  color: var(--color-muted);
+  margin: 0 var(--space-2);
 }
 
 /* Spectrogramme — sortie Analyseur spectral */
