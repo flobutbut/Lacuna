@@ -6,9 +6,10 @@
  */
 import '@/assets/components/journal.css'
 import '@/assets/components/admin.css'
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, nextTick, onMounted } from 'vue'
 import { useAdminStore, adminErrorMessage } from '@/stores/admin'
 import { useSupabaseStore } from '@/stores/supabase'
+import AdminPlayerDetail from '@/components/admin/AdminPlayerDetail.vue'
 import AdminPlayers from '@/components/admin/AdminPlayers.vue'
 import AdminInterpretations from '@/components/admin/AdminInterpretations.vue'
 import AdminActions from '@/components/admin/AdminActions.vue'
@@ -42,13 +43,24 @@ async function load() {
 }
 
 watch(tab, load)
+
+/** Une colonne (écran étroit) : la fiche s'ouvre sous la liste, on y amène l'écran */
+const detailRef = ref(null)
+watch(
+  () => adminStore.selectedPlayerId,
+  async (id) => {
+    if (!id || !window.matchMedia('(max-width: 1100px)').matches) return
+    await nextTick()
+    detailRef.value?.$el?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  },
+)
 onMounted(() => {
   if (configured) load()
 })
 </script>
 
 <template>
-  <div class="page-full">
+  <div class="page-full admin-page" :class="{ 'admin-page--split': tab === 'players' }">
     <div class="page-content admin-layout">
       <h1 class="page-title">Administration</h1>
 
@@ -75,11 +87,27 @@ onMounted(() => {
 
       <p v-if="error" class="admin-message admin-message--error" role="alert">{{ error }}</p>
 
-      <div :id="`admin-panel-${tab}`" role="tabpanel" :aria-labelledby="`admin-tab-${tab}`">
+      <div
+        :id="`admin-panel-${tab}`"
+        class="admin-panel"
+        :class="`admin-panel--${tab}`"
+        role="tabpanel"
+        :aria-labelledby="`admin-tab-${tab}`"
+      >
         <AdminPlayers v-if="tab === 'players'" />
         <AdminInterpretations v-else-if="tab === 'interpretations'" />
         <AdminActions v-else />
       </div>
     </div>
+
+    <template v-if="tab === 'players'">
+      <AdminPlayerDetail
+        v-if="adminStore.selectedPlayer"
+        ref="detailRef"
+        :player="adminStore.selectedPlayer"
+        @deleted="adminStore.selectedPlayerId = null"
+      />
+      <p v-else class="admin-empty admin-placeholder">Sélectionnez un compte pour le modérer.</p>
+    </template>
   </div>
 </template>

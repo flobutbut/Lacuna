@@ -4,7 +4,7 @@
  * Les erreurs sont relancées telles quelles (les RPC lèvent des messages en français, voir adminErrorMessage).
  */
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 
 /** Message affichable pour une erreur de RPC admin (les messages métier des RPC sont déjà en français) */
@@ -17,6 +17,9 @@ export function adminErrorMessage(err) {
 export const useAdminStore = defineStore('admin', () => {
   const players = ref([])
   const playersLoaded = ref(false)
+  /** Compte ouvert dans la colonne de droite (relu dans la liste à chaque rechargement) */
+  const selectedPlayerId = ref(null)
+  const selectedPlayer = computed(() => players.value.find((p) => p.user_id === selectedPlayerId.value) ?? null)
   const interpretations = ref([])
   const interpretationsLoaded = ref(false)
   const actions = ref([])
@@ -72,6 +75,8 @@ export const useAdminStore = defineStore('admin', () => {
   return {
     players,
     playersLoaded,
+    selectedPlayerId,
+    selectedPlayer,
     interpretations,
     interpretationsLoaded,
     actions,
