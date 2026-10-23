@@ -2,7 +2,10 @@ import { computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRadarStore } from '@/stores/radar'
 import { SAMPLE_RATE } from '@/lib/spectrogramData'
-import { addPulsarPulses } from '@/lib/radarSpectrum'
+import { addPulsarPulses, angularSeparationDeg, beamGain, RADAR_BEAM_FWHM_DEG } from '@/lib/radarSpectrum'
+import { supernovaBands, SUPERNOVA_DIRECTION } from '@/lib/supernova'
+import { useShipStore } from '@/stores/ship'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { isWindowOpen } from '@/lib/signalWindow'
 
 const NOISE_CONFIG = {
@@ -20,6 +23,13 @@ const AR_ALPHA = {
 }
 
 const F_H = 12.5
+
+/**
+ * Rémanent de la supernova : émission synchrotron, plus forte aux basses fréquences (P > L > X), absente en γ.
+ * Ajoutée comme bruit large bande quand le faisceau vise Orion.
+ */
+const SYNCHROTRON_BAND_FACTOR = { P: 1, L: 0.6, X: 0.25, G: 0 }
+const SYNCHROTRON_STD = 0.5
 
 /** Écart-type des échantillons au niveau de bruit le plus fort (bande P, plan galactique) */
 export const NOISE_STD_MAX = 0.3
@@ -63,7 +73,19 @@ function nextGaussian(rng) {
  */
 export function useRadarNoise(band, galacticLatitude, activeSignals) {
   const radarStore = useRadarStore()
+  const shipStore = useShipStore()
+  const observatoireStore = useObservatoireStore()
   const { radarNoiseEnabled } = storeToRefs(radarStore)
+
+  /** Écart-type du bruit synchrotron du rémanent dans le faisceau (0 avant le déclin ou hors d'Orion) */
+  function synchrotronStd() {
+    const radio = supernovaBands(shipStore.supernovaT0)?.radio ?? 0
+    const factor = SYNCHROTRON_BAND_FACTOR[band.value] ?? 0
+    if (!radio || !factor) return 0
+    const view = observatoireStore.viewDirection
+    const sep = angularSeparationDeg(SUPERNOVA_DIRECTION.ra, SUPERNOVA_DIRECTION.dec, view.ra, view.dec)
+    return SYNCHROTRON_STD * radio * factor * beamGain(sep, RADAR_BEAM_FWHM_DEG[band.value] ?? RADAR_BEAM_FWHM_DEG.L)
+  }
 
   const noiseLevel = computed(() => {
     const config = NOISE_CONFIG[band.value] ?? NOISE_CONFIG['L']
@@ -132,6 +154,13 @@ export function useRadarNoise(band, galacticLatitude, activeSignals) {
       }
 
       chunk[i] = Math.max(-1, Math.min(1, v * gain))
+    }
+
+    const synchro = synchrotronStd()
+    if (synchro > 0) {
+      for (let i = 0; i < sampleCount; i++) {
+        chunk[i] = Math.max(-1, Math.min(1, chunk[i] + nextGaussian(rng) * synchro))
+      }
     }
 
     return addPulsarPulses(chunk, emittingSignals(), { startSample: absoluteStartSample(totalOffset, sampleCount) })

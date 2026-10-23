@@ -13,6 +13,7 @@ import { useShipStore } from '@/stores/ship'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { isWindowOpen } from '@/lib/signalWindow'
 import { haloEdges, pulseIndex, isSlowPulsed } from '@/lib/signalHalo'
+import { supernovaState, SUPERNOVA_DIRECTION } from '@/lib/supernova'
 
 /** Montée puis maintien du halo (ms) ; l'extinction (3 s) est portée par la transition CSS */
 const RISE_MS = 600
@@ -39,7 +40,12 @@ function directionOf(signal) {
 
 function flash(signal) {
   if (!radarStore.radarEnabled) return
-  edges.value = haloEdges(directionOf(signal), observatoireStore.viewDirection)
+  flashToward(directionOf(signal))
+}
+
+/** Allume le halo vers une direction (null = uniforme) */
+function flashToward(direction) {
+  edges.value = haloEdges(direction, observatoireStore.viewDirection)
   phase.value = 'rise'
   clearTimeout(fadeTimer)
   fadeTimer = setTimeout(() => {
@@ -74,8 +80,15 @@ watch(
 // Fenêtres qui s'ouvrent et impulsions des signaux lents, suivies à intervalle court
 const lastOpen = new Map()
 const lastPulse = new Map()
+// Sortie du choc de la supernova : un phénomène lumineux nouveau, le halo guide le regard vers Orion
+let lastSupernovaPhase = null
 function tick() {
   const now = Date.now()
+  const snPhase = supernovaState(shipStore.supernovaT0, now).phase
+  if (lastSupernovaPhase !== null && lastSupernovaPhase !== 'breakout' && snPhase === 'breakout') {
+    flashToward(SUPERNOVA_DIRECTION)
+  }
+  lastSupernovaPhase = snPhase
   for (const s of list.value) {
     if (!isReceivable(s)) continue
     const open = isWindowOpen(s.window, now)

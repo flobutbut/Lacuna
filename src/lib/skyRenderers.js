@@ -118,23 +118,69 @@ export function drawConstellationLines(ctx, lines, projectedPositions, w, h, opa
 /** Étoiles avec scintillement, palettes spectrales et transition d'opacité.
  * @param {Map<string, {x:number, y:number}>} [projectedPositions] - si fourni, réutilise au lieu de recalculer
  */
+/** Couleur de la supernova selon la bande : UV bleu-violet, IR rouge ; visible et R suivent le refroidissement */
+const SUPERNOVA_BAND_COLORS = { uv: { r: 190, g: 175, b: 255 }, ir: { r: 255, g: 120, b: 90 } }
+
 /**
- * Étoile en supernova : cœur et halo proportionnels à l'éclat relatif (0–1, 1 = maximum).
- * Au maximum, l'objet le plus brillant du ciel ; au rémanent, un point faible.
+ * Étoile en supernova, dans la bande affichée : cœur, halo, aigrettes quand elle est très brillante,
+ * nébuleuse du rémanent (valeur de jeu, agrandie pour être visible).
+ * @param {{ level: number, color: {r,g,b}, nebula: number, band: string }} sn
  */
-function drawSupernova(ctx, pos, baseR, level, opacity) {
-  const core = baseR * (1 + 4 * level)
-  const halo = core * (2 + 6 * level)
+function drawSupernova(ctx, pos, baseR, sn) {
+  const { level, nebula, band } = sn
+  const c = SUPERNOVA_BAND_COLORS[band] ?? sn.color
+  const rgba = (a) => `rgba(${c.r},${c.g},${c.b},${a})`
+
+  // Nébuleuse du rémanent : coquille irrégulière, plus nette en IR (poussière), absente en UV
+  if (nebula > 0 && band !== 'uv') {
+    const strength = band === 'ir' ? 1.5 : 1
+    const R = 8 + 24 * nebula
+    const fill = ctx.createRadialGradient(pos.x, pos.y, R * 0.3, pos.x, pos.y, R * 1.2)
+    fill.addColorStop(0, rgba(0))
+    fill.addColorStop(0.7, rgba(0.14 * nebula * strength))
+    fill.addColorStop(1, rgba(0))
+    ctx.beginPath()
+    ctx.arc(pos.x, pos.y, R * 1.2, 0, Math.PI * 2)
+    ctx.fillStyle = fill
+    ctx.fill()
+    for (let i = 0; i < 12; i++) {
+      const a0 = (i / 12) * Math.PI * 2
+      const r = R * (1 + 0.12 * Math.sin(i * 2.3))
+      ctx.beginPath()
+      ctx.arc(pos.x, pos.y, r, a0, a0 + Math.PI / 7)
+      ctx.strokeStyle = rgba(Math.min(1, (0.3 + 0.12 * Math.sin(i * 1.7)) * nebula * strength))
+      ctx.lineWidth = 2
+      ctx.stroke()
+    }
+  }
+
+  if (level < 0.01) return
+  const core = baseR * (1 + 5 * level)
+  const halo = core * (2 + 8 * level)
   const gradient = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, halo)
-  gradient.addColorStop(0, `rgba(235,242,255,${0.45 * level * opacity})`)
-  gradient.addColorStop(1, 'rgba(235,242,255,0)')
+  gradient.addColorStop(0, rgba(0.5 * level))
+  gradient.addColorStop(1, rgba(0))
   ctx.beginPath()
   ctx.arc(pos.x, pos.y, halo, 0, Math.PI * 2)
   ctx.fillStyle = gradient
   ctx.fill()
+
+  // Aigrettes de diffraction quand la source devient éblouissante
+  if (level > 0.35) {
+    const len = core * (4 + 10 * level)
+    ctx.strokeStyle = rgba(0.6 * level)
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(pos.x - len, pos.y)
+    ctx.lineTo(pos.x + len, pos.y)
+    ctx.moveTo(pos.x, pos.y - len)
+    ctx.lineTo(pos.x, pos.y + len)
+    ctx.stroke()
+  }
+
   ctx.beginPath()
   ctx.arc(pos.x, pos.y, core, 0, Math.PI * 2)
-  ctx.fillStyle = `rgba(245,248,255,${Math.min(1, 0.25 + level) * opacity})`
+  ctx.fillStyle = `rgba(${Math.min(255, c.r + 20)},${Math.min(255, c.g + 20)},${Math.min(255, c.b + 20)},${Math.min(1, 0.25 + level)})`
   ctx.fill()
 }
 
@@ -160,9 +206,9 @@ export function drawStars(ctx, starList, raView, decView, w, h, selectedStar, se
       ? resolveStarColor(s.star, s.colorOverride ?? null)
       : { r: 255, g: 255, b: 255 }
 
-    // Supernova : l'éclat relatif remplace le rendu de l'étoile (lumière bleutée, halo large)
-    if (s.supernovaLevel != null) {
-      drawSupernova(ctx, pos, s.r, s.supernovaLevel, opacity)
+    // Supernova : remplace le rendu de l'étoile, quelle que soit sa visibilité habituelle dans la bande
+    if (s.supernova) {
+      drawSupernova(ctx, pos, s.r, s.supernova)
       return
     }
 

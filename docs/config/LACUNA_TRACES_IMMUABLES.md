@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Traces immuables
-*Version 0.6 — Octobre 2026*
+*Version 0.7 — Octobre 2026*
 
 > Ce document contient les **fiches des traces immuables** qui n'appartiennent pas à un scénario — voisinage solaire, hors voisinage — et le **Journal de Yael** (origine `PRÉCURSEUR`). Les traces appartenant à un scénario ont leurs fiches de nœuds dans `LACUNA_SCENARIOS.md`. La mécanique (définition, chaîne de production, types d'outputs, qualification) vit dans `LACUNA_TRACES.md`. Les faits astronomiques de référence vivent dans `LACUNA_ANOMALIES_REELLES.md`.
 >
@@ -31,6 +31,7 @@
 | 0.4 | Octobre 2026 | SN-001 : décisions prises (Bételgeuse, événement déclenché au départ de chaque partie), déroulé détaillé (neutrinos de pré-supernova, bouffée, sortie du choc, maximum), état du ciel après l'événement, question de l'horloge face à la compression du temps ; données neutrinos vérifiées |
 | 0.5 | Octobre 2026 | SN-001 implémentée : déroulé en temps réel joueur (durées ci-dessous), T0 par partie, bouffée captée une fois, état du ciel calculé à partir de T0 (migration `00063`) |
 | 0.6 | Octobre 2026 | SN-001 : T0 ramené à création + 3 minutes |
+| 0.7 | Octobre 2026 | SN-001, après test joueur : silence ramené à 6 min ; halo orienté vers Orion à la sortie du choc ; explosion répartie par bande (éclair UV, visible avec aigrettes et refroidissement, IR tardif, source radio sur le Radar) ; nébuleuse du rémanent (valeur de jeu) |
 
 ---
 
@@ -472,11 +473,22 @@ T0 = création de la partie + 3 minutes (`ships.supernova_t0`, migration `00064`
 | Phase | Début | Durée réelle | Réalité astrophysique | Rendu |
 |---|---|---|---|---|
 | Bouffée de neutrinos | T0 | 10 s | ~10 s | Signal « Neutrinos » sans direction, halo uniforme ; le ciel ne change pas |
-| Silence | T0 → T0 + 20 min | 20 min | ~3 h pour SN 1987A | Le temps d'analyser la bouffée (direction : Orion) et de regarder Bételgeuse |
-| Sortie du choc | T0 + 20 min | 2 min | quelques minutes | Éclair bref, puis palier |
-| Montée | T0 + 22 min → T0 + 2 h | ~1 h 40 | ~10 jours | Jusqu'à l'objet le plus brillant du ciel |
-| Déclin | T0 + 2 h → T0 + 7 jours | 7 jours | des mois | Baisse exponentielle |
-| Rémanent | après T0 + 7 jours | permanent | — | Point faible |
+| Silence | T0 → T0 + 6 min | 6 min | ~3 h pour SN 1987A | Le temps d'analyser la bouffée (direction : Orion) et de regarder Bételgeuse |
+| Sortie du choc | T0 + 6 min | 2 min | quelques minutes | Éclair bref, surtout en UV ; le halo s'allume, orienté vers Orion |
+| Montée | T0 + 8 min → T0 + 2 h | ~1 h 50 | ~10 jours | Jusqu'à l'objet le plus brillant du ciel, avec aigrettes |
+| Déclin | T0 + 2 h → T0 + 7 jours | 7 jours | des mois | Baisse progressive ; la couleur passe du blanc bleuté au jaune puis à l'orangé ; une coquille se forme |
+| Rémanent | après T0 + 7 jours | permanent | — | Point faible au centre d'une petite nébuleuse |
+
+**Par bande** (filtres de l'Observatoire et Radar) :
+
+| Bande | Ce qu'on voit | Ancrage réel |
+|---|---|---|
+| UV | L'éclair de la sortie du choc, puis un déclin rapide | Le flash de sortie du choc culmine en UV et en X |
+| Visible / R | La montée, les aigrettes, le refroidissement de la couleur | Enveloppe en expansion qui refroidit |
+| IR | Plus fort en fin de déclin ; la nébuleuse y est plus nette | Formation de poussière, écho sur la poussière (SN 1987A) |
+| Radio (Radar, P > L > X, rien en γ) | Bruit large bande en direction d'Orion, qui monte pendant le déclin puis reste | Émission synchrotron du rémanent |
+
+*Valeur de jeu :* la nébuleuse du rémanent est agrandie pour être visible. À ~550 al, un rémanent qui s'étend à ~10 000 km/s ne grandit que de quelques secondes d'arc par an.
 
 - La pré-supernova (étape 1) n'est pas implémentée.
 - La bouffée reste disponible 24 h ; elle n'est captée qu'une fois par partie (`ships.supernova_captured_at`), même si le joueur la supprime en l'analysant.
@@ -561,4 +573,4 @@ SIGNATURE — une période de ~1 318 s à reconnaître si elle réapparaît aill
 
 ---
 
-*LACUNA — Traces immuables v0.6 — Octobre 2026 — Confidentiel*
+*LACUNA — Traces immuables v0.7 — Octobre 2026 — Confidentiel*
