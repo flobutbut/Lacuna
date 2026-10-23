@@ -75,6 +75,7 @@ const ACTION_LABELS = {
   suspend: 'Suspension',
   unsuspend: 'Réactivation',
   rename: 'Renommage',
+  reset_game: 'Partie réinitialisée',
   delete_player: 'Suppression du compte',
   delete_interpretation: 'Interprétation supprimée',
 }
@@ -91,6 +92,7 @@ export function describeAction(entry) {
   if (details.reason) lines.push(`Motif : ${details.reason}`)
   if (details.pseudo) lines.push(`Pseudo : ${details.pseudo.before} → ${details.pseudo.after}`)
   if (details.ship_name) lines.push(`Vaisseau : ${details.ship_name.before} → ${details.ship_name.after}`)
+  if (details.ship) lines.push(`Vaisseau : ${details.ship}`)
   if (details.text) lines.push(`« ${details.text} »`)
   return { label, detail: lines.join(' · ') }
 }

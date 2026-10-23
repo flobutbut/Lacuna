@@ -70,6 +70,8 @@ watch(
 <style scoped>
 .lacuna-app {
   display: grid;
+  /* Colonne bornée à l'écran : une barre d'instruments trop large défile au lieu d'élargir toute la page */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: var(--header-height) 1fr var(--instruments-height);
   width: 100vw;
   height: 100vh;

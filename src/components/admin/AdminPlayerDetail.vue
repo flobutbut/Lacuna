@@ -1,7 +1,8 @@
 <script setup>
 /**
  * AdminPlayerDetail — fiche d'un compte et actions de modération :
- * suspendre / réactiver (motif obligatoire), renommer (pseudo, vaisseau), supprimer le compte.
+ * suspendre / réactiver (motif obligatoire), renommer (pseudo, vaisseau), réinitialiser la partie
+ * (le joueur refait l'onboarding), supprimer le compte.
  * Les comptes admin sont en lecture seule (rôles attribués à la main en SQL).
  */
 import { ref, computed, watch } from 'vue'
@@ -11,6 +12,7 @@ import AppTextField from '@/components/AppTextField.vue'
 import Divider from '@/components/Divider.vue'
 
 const CONFIRM_WORD = 'SUPPRIMER'
+const RESET_WORD = 'RÉINITIALISER'
 const REASON_MAX = 300
 
 const props = defineProps({
@@ -24,12 +26,16 @@ const isAdminAccount = computed(() => props.player.role === 'admin')
 const suspended = computed(() => isSuspended(props.player))
 const status = computed(() => playerStatus(props.player))
 const hasGame = computed(() => !!props.player.ship_id)
+/** Une partie à effacer : vaisseau, ou profil d'une création de partie interrompue */
+const canBeReset = computed(() => hasGame.value || !!props.player.pseudo)
 
 const reason = ref('')
 const pseudo = ref('')
 const shipName = ref('')
 const confirming = ref(false)
 const confirmText = ref('')
+const resetConfirming = ref(false)
+const resetText = ref('')
 const busy = ref(false)
 const error = ref('')
 const notice = ref('')
@@ -43,6 +49,8 @@ watch(
     shipName.value = ''
     confirming.value = false
     confirmText.value = ''
+    resetConfirming.value = false
+    resetText.value = ''
     error.value = ''
     notice.value = ''
   },
@@ -51,6 +59,14 @@ watch(
 const canSuspend = computed(() => !busy.value && reason.value.trim().length > 0 && reason.value.length <= REASON_MAX)
 const canRename = computed(() => !busy.value && (pseudo.value.trim() || shipName.value.trim()))
 const canDelete = computed(() => !busy.value && confirmText.value.trim().toUpperCase() === CONFIRM_WORD)
+/** Accents facultatifs : « reinitialiser » vaut « RÉINITIALISER » */
+const fold = (value) =>
+  value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .trim()
+    .toUpperCase()
+const canReset = computed(() => !busy.value && fold(resetText.value) === fold(RESET_WORD))
 
 /** Exécute une action : verrouille les boutons, affiche l'erreur ou la confirmation */
 async function run(action, successMessage) {
@@ -91,6 +107,16 @@ async function rename() {
     pseudo.value = ''
     shipName.value = ''
   }
+}
+
+function cancelReset() {
+  resetConfirming.value = false
+  resetText.value = ''
+}
+
+async function resetGame() {
+  if (!canReset.value) return
+  if (await run(() => adminStore.resetPlayer(props.player.user_id), 'Partie réinitialisée.')) cancelReset()
 }
 
 function cancelDelete() {
@@ -186,6 +212,31 @@ async function deletePlayer() {
             hint="2 à 32 caractères. Vide : inchangé."
           />
           <button type="submit" class="btn btn-secondary admin-section__action" :disabled="!canRename">Renommer</button>
+        </form>
+      </section>
+
+      <!-- Réinitialisation de la partie -->
+      <section v-if="canBeReset" class="admin-danger">
+        <h3 class="admin-danger__title">Réinitialiser la partie</h3>
+        <p class="admin-hint">
+          Efface le vaisseau, toute la progression et le pseudo. Le compte, l’email confirmé et le mot de passe restent : au prochain
+          chargement, le joueur revoit « Bienvenue à bord » et tout l’onboarding. Cette action ne peut pas être annulée.
+        </p>
+        <button
+          v-if="!resetConfirming"
+          type="button"
+          class="btn btn-danger admin-section__action"
+          :disabled="busy"
+          @click="resetConfirming = true"
+        >
+          Réinitialiser la partie
+        </button>
+        <form v-else class="admin-form" novalidate @submit.prevent="resetGame">
+          <AppTextField v-model="resetText" :label="`Saisissez ${RESET_WORD} pour confirmer`" autocomplete="off" :disabled="busy" />
+          <div class="admin-form__buttons">
+            <button type="button" class="btn btn-ghost" :disabled="busy" @click="cancelReset">Annuler</button>
+            <button type="submit" class="btn btn-danger" :disabled="!canReset">Réinitialiser définitivement</button>
+          </div>
         </form>
       </section>
 

@@ -62,6 +62,12 @@ export const useAdminStore = defineStore('admin', () => {
     await refresh()
   }
 
+  /** Efface la partie et le profil : le joueur refait l'onboarding (compte et mot de passe conservés) */
+  async function resetPlayer(userId) {
+    await rpc('admin_reset_player', { p_user: userId })
+    await refresh()
+  }
+
   async function deletePlayer(userId) {
     await rpc('admin_delete_player', { p_user: userId })
     await refresh()
@@ -86,6 +92,7 @@ export const useAdminStore = defineStore('admin', () => {
     fetchActions,
     setSuspension,
     renamePlayer,
+    resetPlayer,
     deletePlayer,
     deleteInterpretation,
   }
