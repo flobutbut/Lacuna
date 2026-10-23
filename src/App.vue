@@ -2,6 +2,8 @@
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useShipStore } from '@/stores/ship'
+import { useSignauxStore } from '@/stores/signaux'
 import { Analytics } from '@vercel/analytics/vue'
 import AppHeader from '@/components/AppHeader.vue'
 import InstrumentsBar from '@/components/InstrumentsBar.vue'
@@ -12,6 +14,8 @@ import LptWatcher from '@/components/LptWatcher.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
+const shipStore = useShipStore()
+const signauxStore = useSignauxStore()
 /** Mise en page sans header ni barre d'instruments (Vue 3D conception, pages d'authentification) */
 const isBareLayout = computed(() => route.meta.bareLayout === true)
 
@@ -20,6 +24,17 @@ watch(
   () => authStore.isAuthenticated,
   (now, before) => {
     if (before && !now) window.location.assign(authStore.accountDeleted ? '/connexion?compte=supprime' : '/connexion')
+  }
+)
+
+// Jeton rafraîchi après un échec (réseau coupé, mise en veille) : le vaisseau chargé pendant la coupure
+// est resté vide — on le recharge, avec les signaux, au retour de la session
+watch(
+  () => authStore.session?.access_token,
+  async (token, before) => {
+    if (!token || !before || token === before || !shipStore.loaded || shipStore.ship) return
+    await shipStore.fetch()
+    if (shipStore.ship) await signauxStore.fetch()
   }
 )
 </script>
