@@ -35,7 +35,10 @@ function dbToSignal(row) {
   return {
     id: row.id,
     // Un détecteur de neutrinos compte des événements : pas de fréquence
-    frequency: row.support === 'NEUTRINO' ? 'Neutrinos' : (formatFrequency(row.frequency_hz) || att.frequency || '1420 MHz'),
+    // Sans fréquence en base (signal large bande, LPT-001) : le libellé stocké dans les attributs
+    frequency: row.support === 'NEUTRINO'
+      ? 'Neutrinos'
+      : (row.frequency_hz == null && att.frequency) || formatFrequency(row.frequency_hz) || att.frequency || '1420 MHz',
     sourceName: att.sourceName ?? null,
     azimuth: att.azimuth ?? 0,
     elevation: att.elevation ?? 0,
