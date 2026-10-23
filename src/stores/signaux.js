@@ -13,6 +13,7 @@ import { useObservatoireStore } from '@/stores/observatoire'
 import { pulsarsInBeam } from '@/lib/radarSpectrum'
 import { formatFrequency, parseFrequency } from '@/lib/formatUtils'
 import { parseSignalWindow } from '@/lib/signalWindow'
+import { parseLpt, lptPulse } from '@/lib/lpt'
 
 const LIFETIME_MS = 2 * 60 * 60 * 1000 // 2h temps joueur par défaut
 
@@ -27,6 +28,8 @@ function dbToSignal(row) {
   const capturedAt = row.captured_at ? new Date(row.captured_at).getTime() : Date.now()
   // Émetteur du système courant : présent tant que le vaisseau y est, jamais retiré à l'analyse
   const persistent = row.source_type === 'EMITTER'
+  // Signal de 22 minutes (LPT-001) : reste dans la liste et accumule ses impulsions
+  const lpt = parseLpt(att.lpt)
   const receivedAt = att.receivedAt ?? `2341-${new Date(row.captured_at).toISOString().slice(5, 10)}`
   const distanceEst = att.distanceEst ?? (att.distance_al != null ? `~${att.distance_al} al` : null)
   return {
@@ -38,14 +41,16 @@ function dbToSignal(row) {
     elevation: att.elevation ?? 0,
     distanceEst,
     receivedAt,
-    durationSec: row.duration_sec ?? 72,
+    durationSec: lpt ? lptPulse(lpt, lpt.firstK).durationS : (row.duration_sec ?? 72),
     polarization: att.polarization ?? 'circulaire',
     structure: att.structure ?? 'non uniforme',
     anomalous: att.anomalous ?? false,
     support: row.support ?? 'EM_RADIO',
     createdAt: capturedAt,
-    lifetimeMs: persistent ? Infinity : (Number(att.lifetime_ms) || LIFETIME_MS),
+    lifetimeMs: persistent || lpt ? Infinity : (Number(att.lifetime_ms) || LIFETIME_MS),
     persistent,
+    lpt,
+    lptRaw: att.lpt ?? null,
     window: parseSignalWindow(att.window),
     neutrino: att.neutrino ?? null,
     sourceType: row.source_type ?? 'UNKNOWN',
@@ -323,6 +328,29 @@ export const useSignauxStore = defineStore('signaux', () => {
     }
   }
 
+  /**
+   * Capte côté base la première impulsion de LPT-001 (RPC capture_lpt_signal), recharge la liste si besoin.
+   * @returns {Promise<number|null>} Heure (ms) de la première impulsion si elle n'est pas encore arrivée
+   */
+  async function captureLptSignal() {
+    const supabaseStore = useSupabaseStore()
+    if (!supabaseStore.isConfigured()) return null
+    const { data, error } = await supabase.rpc('capture_lpt_signal')
+    if (error) {
+      console.warn('[signaux] capture_lpt_signal:', error.message)
+      return null
+    }
+    if (data?.inserted > 0) {
+      await fetch()
+      return null
+    }
+    const firstAt = Date.parse(data?.first_at)
+    return Number.isFinite(firstAt) && firstAt > Date.now() ? firstAt : null
+  }
+
+  /** Signal de 22 minutes (LPT-001), s'il a été capté */
+  const lptSignal = computed(() => list.value.find((s) => s.lpt) ?? null)
+
   /** Calcule côté base les signaux pulsars visibles dans la bande (RPC), puis recharge la liste si besoin */
   async function computePulsarSignals(band = 'L') {
     const shipStore = useShipStore()
@@ -342,6 +370,8 @@ export const useSignauxStore = defineStore('signaux', () => {
     computePulsarSignals,
     captureSystemEmitters,
     captureSupernovaNeutrinos,
+    captureLptSignal,
+    lptSignal,
     list,
     listWithRemaining,
     activePulsarSignals,

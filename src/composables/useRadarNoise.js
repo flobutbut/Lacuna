@@ -7,6 +7,8 @@ import { supernovaBands, SUPERNOVA_DIRECTION } from '@/lib/supernova'
 import { useShipStore } from '@/stores/ship'
 import { useObservatoireStore } from '@/stores/observatoire'
 import { isWindowOpen } from '@/lib/signalWindow'
+import { useSignauxStore } from '@/stores/signaux'
+import { lptActivePulse, LPT_DIRECTION } from '@/lib/lpt'
 
 const NOISE_CONFIG = {
   P: { base: 0.8, galacticFactor: 0.30 },
@@ -30,6 +32,13 @@ const F_H = 12.5
  */
 const SYNCHROTRON_BAND_FACTOR = { P: 1, L: 0.6, X: 0.25, G: 0 }
 const SYNCHROTRON_STD = 0.5
+
+/**
+ * Signal de 22 minutes (LPT-001) : impulsion large bande en radio (P, L, X), rien en γ.
+ * Écart-type ajouté au bruit = LPT_STD × enveloppe × √intensité × gain du faisceau (intensité 1 à 100).
+ */
+const LPT_BAND_FACTOR = { P: 1, L: 1, X: 1, G: 0 }
+const LPT_STD = 0.06
 
 /** Écart-type des échantillons au niveau de bruit le plus fort (bande P, plan galactique) */
 export const NOISE_STD_MAX = 0.3
@@ -75,7 +84,29 @@ export function useRadarNoise(band, galacticLatitude, activeSignals) {
   const radarStore = useRadarStore()
   const shipStore = useShipStore()
   const observatoireStore = useObservatoireStore()
+  const signauxStore = useSignauxStore()
   const { radarNoiseEnabled } = storeToRefs(radarStore)
+
+  /** Écart-type de l'impulsion de LPT-001 en cours dans le faisceau (0 hors impulsion, hors bande ou hors de l'Écu) */
+  function lptStd(tMs) {
+    const factor = LPT_BAND_FACTOR[band.value] ?? 0
+    const active = factor ? lptActivePulse(signauxStore.lptSignal?.lpt, tMs) : null
+    if (!active) return 0
+    const view = observatoireStore.viewDirection
+    const sep = angularSeparationDeg(LPT_DIRECTION.ra, LPT_DIRECTION.dec, view.ra, view.dec)
+    const gain = beamGain(sep, RADAR_BEAM_FWHM_DEG[band.value] ?? RADAR_BEAM_FWHM_DEG.L)
+    return LPT_STD * factor * active.envelope * Math.sqrt(active.pulse.intensity) * gain
+  }
+
+  /** Ajoute l'impulsion de LPT-001 au bloc (enveloppe lente : évaluée au milieu du bloc) */
+  function addLptPulse(chunk, startSample, rng) {
+    const std = lptStd(((startSample + chunk.length / 2) / SAMPLE_RATE) * 1000)
+    if (std <= 0) return chunk
+    for (let i = 0; i < chunk.length; i++) {
+      chunk[i] = Math.max(-1, Math.min(1, chunk[i] + nextGaussian(rng) * std))
+    }
+    return chunk
+  }
 
   /** Écart-type du bruit synchrotron du rémanent dans le faisceau (0 avant le déclin ou hors d'Orion) */
   function synchrotronStd() {
@@ -125,9 +156,9 @@ export function useRadarNoise(band, galacticLatitude, activeSignals) {
 
   function getNoiseSample(sampleCount, seed, totalOffset) {
     if (radarNoiseEnabled.value === false) {
-      return addPulsarPulses(new Float32Array(sampleCount), emittingSignals(), {
-        startSample: absoluteStartSample(totalOffset, sampleCount),
-      })
+      const startSample = absoluteStartSample(totalOffset, sampleCount)
+      const chunk = addLptPulse(new Float32Array(sampleCount), startSample, createLcg(seed, totalOffset))
+      return addPulsarPulses(chunk, emittingSignals(), { startSample })
     }
 
     const level = noiseLevel.value
@@ -163,7 +194,9 @@ export function useRadarNoise(band, galacticLatitude, activeSignals) {
       }
     }
 
-    return addPulsarPulses(chunk, emittingSignals(), { startSample: absoluteStartSample(totalOffset, sampleCount) })
+    const startSample = absoluteStartSample(totalOffset, sampleCount)
+    addLptPulse(chunk, startSample, rng)
+    return addPulsarPulses(chunk, emittingSignals(), { startSample })
   }
 
   return { noiseLevel, getNoiseSample }

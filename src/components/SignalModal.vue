@@ -11,6 +11,7 @@ import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
 import { signalToObsPayload } from '@/lib/observationPayload'
 import { isWindowOpen } from '@/lib/signalWindow'
 import { formatNumber } from '@/lib/formatUtils'
+import { lptPulses } from '@/lib/lpt'
 
 const router = useRouter()
 const notificationsStore = useNotificationsStore()
@@ -42,7 +43,7 @@ async function analyser() {
   const payload = buildPayload(s)
   if (!payload) return
   const obsId = await obsStore.addObservation(payload)
-  if (!s.persistent) signauxStore.removeSignal(s.id)
+  if (!s.persistent && !s.lpt) signauxStore.removeSignal(s.id)
   notificationsStore.setLabHasNew(true)
   observatoireStore.closeSignalModal()
   router.push({ path: '/laboratoire', query: { select: obsId } })
@@ -54,7 +55,7 @@ async function ajouterAuLabo() {
   const payload = buildPayload(s)
   if (!payload) return
   await obsStore.addObservation(payload)
-  if (!s.persistent) signauxStore.removeSignal(s.id)
+  if (!s.persistent && !s.lpt) signauxStore.removeSignal(s.id)
   notificationsStore.setLabHasNew(true)
 }
 
@@ -66,6 +67,11 @@ function isNeutrino(signal) {
 /** Direction affichée : ni pour un émetteur du système courant, ni pour des neutrinos (direction reconstruite au Laboratoire) */
 function hasDirection(signal) {
   return !!signal && !signal.persistent && !isNeutrino(signal)
+}
+
+/** Impulsions reçues d'un signal à impulsions accumulées (LPT-001), 0 sinon */
+function pulseCount(signal) {
+  return signal?.lpt ? lptPulses(signal.lpt).length : 0
 }
 
 /** Un signal à fenêtres n'est analysable que pendant sa fenêtre d'émission */
@@ -125,8 +131,12 @@ function isAdded() {
           <span class="sw-key">Direction</span>
           <span class="sw-val">azimut {{ observatoireStore.selectedSignal?.azimuth }}°</span>
         </div>
+        <div v-if="pulseCount(observatoireStore.selectedSignal)" class="sw-row">
+          <span class="sw-key">Impulsions reçues</span>
+          <span class="sw-val">{{ pulseCount(observatoireStore.selectedSignal) }}</span>
+        </div>
         <div class="sw-row">
-          <span class="sw-key">Durée</span>
+          <span class="sw-key">{{ pulseCount(observatoireStore.selectedSignal) ? 'Durée (1re impulsion)' : 'Durée' }}</span>
           <span class="sw-val">{{ observatoireStore.selectedSignal?.durationSec }} secondes</span>
         </div>
         <div v-if="!isNeutrino(observatoireStore.selectedSignal)" class="sw-row">

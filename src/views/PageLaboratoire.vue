@@ -19,6 +19,7 @@ import { seedFromObsId } from '@/lib/spectrogramData'
 import LabReportSpectrogram from '@/components/lab/LabReportSpectrogram.vue'
 import LabReportStructureTemporelle from '@/components/lab/LabReportStructureTemporelle.vue'
 import LabReportPolarisation from '@/components/lab/LabReportPolarisation.vue'
+import LabReportLpt from '@/components/lab/LabReportLpt.vue'
 import LabReportSpectreEnergetique from '@/components/lab/LabReportSpectreEnergetique.vue'
 import LabReportGravimetrique from '@/components/lab/LabReportGravimetrique.vue'
 import LabReportSpectreStellaire from '@/components/lab/LabReportSpectreStellaire.vue'
@@ -245,7 +246,9 @@ function startSimulation() {
             r.instr.id === 'analyseur-spectral'
               ? `Spectrogramme — fréquence × temps. Bande passante, raies, stabilité. Fiabilité ${fiability}%.`
               : r.instr.id === 'analyseur-structure-temporelle'
-                ? `Forme d'onde + autocorrélation. Périodicité, modulation, structure vs bruit. Fiabilité ${fiability}%.`
+                ? (r.obs.attributes?.lpt
+                    ? `Train d'impulsions. Durées, intensités, période. Fiabilité ${fiability}%.`
+                    : `Forme d'onde + autocorrélation. Périodicité, modulation, structure vs bruit. Fiabilité ${fiability}%.`)
                 : r.instr.id === 'analyseur-polarisation'
                   ? `Ellipse de polarisation + Stokes (I/Q/U/V). Linéaire, circulaire, elliptique. Fiabilité ${fiability}%.`
                   : r.instr.id === 'analyseur-gravimetrique'
@@ -505,7 +508,7 @@ onUnmounted(() => {
                   </div>
                 </div>
               </div>
-              <div v-if="getGraphName(r.instrumentId)" class="lab-report__graph-label">{{ getGraphName(r.instrumentId) }}</div>
+              <div v-if="getGraphName(r.instrumentId) && !selectedObs?.attributes?.lpt" class="lab-report__graph-label">{{ getGraphName(r.instrumentId) }}</div>
               <LabReportSpectrogram
                 v-if="r.instrumentId === 'analyseur-spectral'"
                 :obs-id="selectedObs?.id ?? ''"
@@ -513,6 +516,12 @@ onUnmounted(() => {
                 :duration-sec="r.durationSec ?? 72"
                 :anomalous="r.anomalous ?? false"
                 :structure="selectedObs?.type === 'SIGNAL' ? (selectedObs?.structure ?? 'non uniforme') : 'non uniforme'"
+                class="lab-report__output"
+              />
+              <LabReportLpt
+                v-else-if="selectedObs?.attributes?.lpt && (r.instrumentId === 'analyseur-structure-temporelle' || r.instrumentId === 'analyseur-polarisation')"
+                :lpt="selectedObs.attributes.lpt"
+                :mode="r.instrumentId === 'analyseur-polarisation' ? 'polarisation' : 'temporel'"
                 class="lab-report__output"
               />
               <LabReportStructureTemporelle

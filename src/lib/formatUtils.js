@@ -124,8 +124,14 @@ export function formatCoordinates(stellar) {
   return typeof c === 'string' ? c : '—'
 }
 
-/** Nom d'observation pour un signal — aligné création (SignalModal) / recherche (store) */
-export function formatSignalObservationName(signal) {
+/**
+ * Nom d'observation pour un signal — aligné création (SignalModal) / recherche (store).
+ * Signal à impulsions accumulées (LPT-001) : le nombre d'impulsions reçues distingue chaque envoi au Laboratoire.
+ * @param {object} signal
+ * @param {number} [pulseCount] - Impulsions reçues (LPT-001)
+ */
+export function formatSignalObservationName(signal, pulseCount) {
   if (!signal) return ''
-  return `${signal.frequency} · azimut ${signal.azimuth}°`
+  const base = `${signal.frequency} · azimut ${signal.azimuth}°`
+  return pulseCount ? `${base} · ${pulseCount} impulsion${pulseCount > 1 ? 's' : ''}` : base
 }

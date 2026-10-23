@@ -2,6 +2,7 @@
 /**
  * SignalHalo — halo violet sur les bords de toute l'application quand un signal commence (LACUNA_UI.md §2).
  * Déclencheurs : nouvelle capture, ouverture d'une fenêtre d'émission, impulsion d'un signal lent.
+ * LPT-001 : halo à la capture, puis à chaque impulsion seulement si le Radar vise sa direction.
  * Plus intense du côté du signal par rapport à la direction de vue ; uniforme pour un signal sans direction.
  */
 import { ref, watch, onMounted, onUnmounted } from 'vue'
@@ -14,6 +15,8 @@ import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { isWindowOpen } from '@/lib/signalWindow'
 import { haloEdges, pulseIndex, isSlowPulsed } from '@/lib/signalHalo'
 import { supernovaState, SUPERNOVA_DIRECTION } from '@/lib/supernova'
+import { lptPulseIndex, LPT_DIRECTION } from '@/lib/lpt'
+import { angularSeparationDeg, beamGain, RADAR_BEAM_FWHM_DEG } from '@/lib/radarSpectrum'
 
 /** Montée puis maintien du halo (ms) ; l'extinction (3 s) est portée par la transition CSS */
 const RISE_MS = 600
@@ -54,6 +57,17 @@ function flashToward(direction) {
   }, RISE_MS + HOLD_MS)
 }
 
+/** Gain du faisceau du Radar à partir duquel une impulsion de LPT-001 rallume le halo */
+const LPT_BEAM_MIN_GAIN = 0.5
+
+/** Le faisceau du Radar vise-t-il LPT-001 (dans la bande active) ? */
+function radarOnLpt() {
+  const view = observatoireStore.viewDirection
+  const sep = angularSeparationDeg(LPT_DIRECTION.ra, LPT_DIRECTION.dec, view.ra, view.dec)
+  const band = radarStore.radarFrequencyBand
+  return band !== 'G' && beamGain(sep, RADAR_BEAM_FWHM_DEG[band] ?? RADAR_BEAM_FWHM_DEG.L) >= LPT_BEAM_MIN_GAIN
+}
+
 /** Un émetteur ne se reçoit que dans son système */
 function isReceivable(signal) {
   return signal.sourceType !== 'EMITTER' || signal.sourceSystemId === shipStore.currentSystemId
@@ -82,6 +96,7 @@ const lastOpen = new Map()
 const lastPulse = new Map()
 // Sortie du choc de la supernova : un phénomène lumineux nouveau, le halo guide le regard vers Orion
 let lastSupernovaPhase = null
+let lastLptPulse = null
 function tick() {
   const now = Date.now()
   const snPhase = supernovaState(shipStore.supernovaT0, now).phase
@@ -89,6 +104,15 @@ function tick() {
     flashToward(SUPERNOVA_DIRECTION)
   }
   lastSupernovaPhase = snPhase
+  // LPT-001 : la première impulsion allume le halo à la capture ; les suivantes, seulement dans le faisceau
+  const lpt = signauxStore.lptSignal?.lpt
+  if (lpt) {
+    const k = lptPulseIndex(lpt, now)
+    if (lastLptPulse !== null && k !== lastLptPulse && k > lpt.firstK && radarOnLpt()) flash(signauxStore.lptSignal)
+    lastLptPulse = k
+  } else {
+    lastLptPulse = null
+  }
   for (const s of list.value) {
     if (!isReceivable(s)) continue
     const open = isWindowOpen(s.window, now)

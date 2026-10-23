@@ -9,6 +9,7 @@ import { useSupabaseStore } from '@/stores/supabase'
 import { useShipStore } from '@/stores/ship'
 import { useTracesStore } from '@/stores/traces'
 import { formatSignalObservationName } from '@/lib/formatUtils'
+import { lptPulses } from '@/lib/lpt'
 
 const OBS_STATES = { PENDING: 'En attente', RUNNING: 'Analyse en cours', DONE: 'Analysé' }
 const NIVEAUX = { PASSIF: 'Passif', SYSTEME: 'Système', ORBITE: 'Orbite proche', CONTACT: 'Contact' }
@@ -117,7 +118,7 @@ export const useObservationsStore = defineStore('observations', () => {
   /** Trouve une observation SIGNAL correspondant au signal (même name = fréquence · azimut) */
   function findObservationForSignal(signal) {
     if (!signal) return null
-    const expectedName = formatSignalObservationName(signal)
+    const expectedName = formatSignalObservationName(signal, signal.lpt ? lptPulses(signal.lpt).length : undefined)
     return list.value.find(
       (o) => o.type === 'SIGNAL' && o.name === expectedName
     ) ?? null

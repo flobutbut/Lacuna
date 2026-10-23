@@ -5,6 +5,7 @@
 
 import { OBJECT_TYPE_LABELS } from '@/constants/objectTypes'
 import { formatSignalObservationName } from '@/lib/formatUtils'
+import { lptPulses } from '@/lib/lpt'
 
 /**
  * Nom d'affichage d'un corps : name prioritaire, sinon système + désignation, sinon système ou '—'.
@@ -59,11 +60,13 @@ export function buildObservationPayload(body, context, niveaux) {
  * @param {object} s - Signal (support, structure, distanceEst, receivedAt, durationSec, anomalous, polarization, pulsePeriodS, neutrino)
  * @param {{ PASSIF: string }} niveaux - obsStore.NIVEAUX
  * @param {string} [systemName] - Nom du système de l'émetteur (signal d'un émetteur du système courant)
+ * @param {number} [nowMs] - Heure de l'envoi : un signal à impulsions (LPT-001) emporte celles reçues jusque-là
  * @returns {object|null}
  */
-export function signalToObsPayload(s, niveaux, systemName) {
+export function signalToObsPayload(s, niveaux, systemName, nowMs = Date.now()) {
   if (!s) return null
-  const name = formatSignalObservationName(s)
+  const pulseCount = s.lpt ? lptPulses(s.lpt, nowMs).length : 0
+  const name = formatSignalObservationName(s, pulseCount || undefined)
   return {
     name,
     type: 'SIGNAL',
@@ -83,6 +86,8 @@ export function signalToObsPayload(s, niveaux, systemName) {
       ...(s.pulsePeriodS ? { pulse_period_s: s.pulsePeriodS } : {}),
       // Bouffée de neutrinos : nombre d'événements, durée, énergie moyenne, direction et son incertitude
       ...(s.neutrino ?? {}),
+      // Signal de 22 minutes : phase et heure de l'envoi, d'où les impulsions reçues
+      ...(s.lptRaw ? { lpt: { ...s.lptRaw, until: new Date(nowMs).toISOString() } } : {}),
     },
   }
 }
