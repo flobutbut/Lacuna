@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Game Design Document
-*Version 0.9 — Octobre 2026*
+*Version 0.11 — Octobre 2026*
 
 ---
 
@@ -33,6 +33,7 @@
 | 0.8 | Octobre 2026 | §9 : traces de scénario en base (Fil des 75, gradient de lecture, découverte côté serveur) ; Yael : structure sans entrée ; migrations `00059`, `00060` |
 | 0.9 | Octobre 2026 | §9 : paramètres d'administration — accélération des voyages réservée aux admins, réinitialisation de la partie (migration `00061`) |
 | 0.10 | Octobre 2026 | §9 : statut des migrations corrigé — `00052` à `00065` appliquées en production |
+| 0.11 | Octobre 2026 | §2 : calendrier du vaisseau (départ le 1er janvier 2187, temps physique des voyages, temps réel en orbite) ; §3 et §9 : journal de bord implémenté (migration `00068`) |
 
 ---
 
@@ -91,6 +92,14 @@ La dilatation gravitationnelle s'applique lors des stationnements près d'objets
 
 > Référence complète : **`LACUNA_PHYSICS.md`** — paramètres ARCA, compression temporelle, dilatation gravitationnelle, profil de voyage, calculs.
 
+### Calendrier du vaisseau
+
+Tous les vaisseaux partent le **1er janvier 2187** (`LACUNA_PROCEDURAL_DATA_MODEL.md`). La date du vaisseau est la date de départ, plus :
+- la durée **physique** de chaque voyage (table de référence de `LACUNA_PHYSICS.md` §2 ; un voyage en cours compte au prorata de sa progression) ;
+- le temps **réel** passé en orbite (une journée en orbite est une journée de bord).
+
+Format : `AAAA-MM-JJ` (année de 365 jours). Chaque entrée de journal et chaque notification porte cette date, avec un contexte : « En orbite — [système] » ou « En transit vers [système] ». La dilatation gravitationnelle n'y est pas encore comptée.
+
 ### L'observation est toujours du passé
 
 Quand le joueur observe un système à 500 al, il voit son état d'il y a 500 ans. Le système actuel est inconnu. L'interface le signale systématiquement. À l'arrivée, un système peut être `CONFORME`, `ÉVOLUÉ` ou `DISPARU`.
@@ -125,7 +134,7 @@ Chaque trace accumule des interprétations de joueurs. Anonymes — pas de pseud
 
 ### Le Carnet de Bord
 
-Objet persistant, unique par vaisseau. Mélange d'entrées manuelles (joueur), automatiques (système) et générationnelles. Les entrées manuelles influencent la demi-vie culturelle à bord.
+Objet persistant, unique par vaisseau. Mélange d'entrées manuelles (joueur), automatiques (système) et générationnelles. Les entrées manuelles influencent la demi-vie culturelle à bord. Le serveur écrit seul les entrées automatiques et générationnelles ; le joueur n'écrit que les siennes (`LACUNA_UI.md`, module Journal de bord).
 
 ### La Carte
 
@@ -302,6 +311,7 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 | **Artefacts / Traces** | Traces Supabase, interprétations anonymes. |
 | **Population** | Table `populations` (total, generation, will, social_cohesion…). Page à 3 onglets (Générations, Génération actuelle, Registre des Raisons). |
 | **Drake** | Table `drake_equation`, affichage Header + Page Drake. |
+| **Journal de bord** | Table `logbook_entries` (migration `00068`) : entrée fondatrice, départ et arrivée, événements du ciel de départ (SN-001, LPT-001) écrits par le serveur ; entrées du joueur ; filtre par type. Date du vaisseau (§2, Calendrier). Pas encore : passage de génération, notifications archivées, documents trouvés. |
 
 ### Non implémenté (design cible uniquement)
 
@@ -310,7 +320,6 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 | **Onboarding narratif** | `LACUNA_LORE.md` §3 — 5 écrans. Seul l'écran de nommage « Bienvenue à bord » existe. |
 | **Détection en transit, déviation, carburant consommé** | `LACUNA_TRANSIT.md` §6–7, `LACUNA_PHYSICS.md` §5. |
 | **Générations dynamiques** | §4 — passage de génération contextuel, entrée GENERATIONNEL au journal. Le compteur `generation` est affiché mais pas recalculé. |
-| **Journal de bord** | Entrées MANUEL/AUTO/GENERATIONNEL. Page existante ; contenu et persistance à brancher. |
 | **Dilatation gravitationnelle** | `LACUNA_PHYSICS.md` §3. Non calculée ni affichée. |
 | **Traces immuables hors scénario, scénarios 03 à 08, entrées de Yael** | `LACUNA_TRACES_IMMUABLES.md`, `LACUNA_SCENARIOS.md`. Seuls le Fil des 75 (migration `00060`) et la structure de Yael (sans entrée) sont en base ; les 9 traces du seed sont visibles de tous. |
 | **Galaxie procédurale à la visite** | Ciel alimenté par stellar_systems (HYG/NASA/seed). |

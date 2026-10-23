@@ -619,6 +619,22 @@ Le Journal contient quatre types d'entrées, distingués visuellement :
 
 Les fragments de Yael apparaissent comme `DOCUMENT TROUVÉ` avec l'indication du système de découverte et la génération de voyage au moment de la trouvaille. Ils ne sont pas des traces — ils ne figurent pas dans la Collection. Ils sont lus, pas analysés.
 
+**Implémentation** *(octobre 2026 — `PageJournal.vue`, store `journal`, migration `00068`)*
+- Fil chronologique, du plus récent au plus ancien. Chaque entrée : famille, date du vaisseau (`LACUNA_GDD.md` §2, Calendrier), contexte (« En orbite — Sol »), génération, titre, texte. Filtre par type (Tous, Manuel, Auto, Générationnel).
+- Le serveur écrit seul les entrées `AUTO` et `GENERATIONNEL`, une seule fois chacune :
+
+| Entrée | Type | Famille | Moment |
+|---|---|---|---|
+| Fondatrice — « Départ confirmé. 15 000 âmes embarquées. Les réservoirs sont pleins. Le bouclier plasma est actif. On a regardé la Terre disparaître dans l'observatoire pendant 4 heures. Personne n'a dit grand chose. » (`LACUNA_ARCS.md`) | `GENERATIONNEL` | MÉMOIRE | Création de la partie |
+| Départ (VOY-001) | `AUTO` | VOYAGE | Début d'un transit |
+| Arrivée (VOY-007) | `AUTO` | ARRIVÉE | Fin d'un transit |
+| Montée et bouffée de neutrinos (CIE-001, CIE-002) | `AUTO` | DÉTECTEUR | Capture |
+| Sortie du choc (CIE-003) | `AUTO` | OBSERVATOIRE | SN-001, T0 + 6 min |
+| Première impulsion de LPT-001 (CIE-004) | `AUTO` | RADAR | Capture |
+
+- Le joueur écrit des entrées `MANUEL` (titre et texte) depuis la page ; il ne peut ni écrire d'autre type, ni modifier une entrée.
+- Pas encore : passage de génération, notifications archivées, `DOCUMENT TROUVÉ`.
+
 ---
 
 ## 4. États de l'interface selon l'état du vaisseau
@@ -920,6 +936,7 @@ Ce qui est spécifique à l'interface :
 | 2026-10-23 | §2 : tuile Neutrinos, moniteur en direct du détecteur |
 | 2026-10-23 | §2 : tuile Neutrinos — échelle ajustée à la fenêtre, tendance lissée |
 | 2026-10-23 | §2 : halo de LPT-001 — à la capture, puis à chaque impulsion seulement si le Radar vise l'Écu |
+| 2026-10-23 | Module Journal de bord implémenté : entrées écrites par le serveur (fondatrice, départ, arrivée, ciel de départ), entrées du joueur, filtre par type |
 | 2026-10-23 | §2 : Radar — sources du ciel de départ (PSR B1919+21, Synchrotron 408 MHz, SN-2341-K452) ; les autres signaux de départ restent muets |
 
 ---

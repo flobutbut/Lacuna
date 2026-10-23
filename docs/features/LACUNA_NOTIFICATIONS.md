@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-22*
 
 # LACUNA — Système de Notifications
-*Version 0.3 — Octobre 2026*
+*Version 0.4 — Octobre 2026*
 
 ---
 
@@ -15,6 +15,7 @@
 6. [Famille 4 — Vaisseau](#6-famille-4--vaisseau)
 7. [Famille 5 — Galactique](#7-famille-5--galactique)
 8. [Famille 6 — Temporelle](#8-famille-6--temporelle)
+8 bis. [Famille 7 — Ciel de départ](#8-bis-famille-7--ciel-de-départ)
 9. [Règles globales](#9-règles-globales)
 10. [Schéma JSON](#10-schéma-json)
 
@@ -27,6 +28,7 @@
 | 0.1 | Mars 2026 | Document initial |
 | 0.2 | Mars 2026 | Corrections — VOY-002 vitesse croisière (3,2%c → 4,8%c), VOY-007 durée HD 40307 (5h12 → 5h44) |
 | 0.3 | Octobre 2026 | Mise en cohérence — population de départ 15 000 (POP-001, TEM-005) ; VOY-005 : Zeta Puppis de type O4 ; TEM-001 : la dernière signature radio est datée *après* le départ ; TEM-002 : exemple remplacé (une étoile G2V ne devient pas subgéante en 847 000 ans) ; TRA-004 : Epsilon Eridani ne peut pas devenir subgéante en 847 ans — l'évolution porte sur son disque de débris (période orbitale de ~500 ans à 60 UA) ; TEM-005 : à 4,8 % c, 100 ans simulés couvrent au plus ~4,8 al, et 100 ans font 4 générations. *Point ouvert : les dates d'exemple (2187 à 2891) ne suivent aucun calendrier défini — à fixer avec la date de départ (`LACUNA_LORE.md`)* |
+| 0.4 | Octobre 2026 | Calendrier fixé (départ le 1er janvier 2187, `LACUNA_GDD.md` §2) — point ouvert de la v0.3 résolu, exemples annotés ; famille 7 « Ciel de départ » (CIE-001 à CIE-004) ; VOY-001 et VOY-007 écrits au journal |
 
 ---
 
@@ -84,8 +86,10 @@ Il n'y a pas de niveau `URGENT`. LACUNA n'a pas d'urgences.
 ### Horodatage
 
 Toutes les notifications sont datées doublement :
-- **Date galactique simulée** — l'année dans la chronologie du vaisseau
-- **Contexte de voyage** — J+N depuis le départ, ou "En orbite — [système]"
+- **Date galactique simulée** — la date du vaisseau (`LACUNA_GDD.md` §2, Calendrier du vaisseau : départ le 1er janvier 2187)
+- **Contexte de voyage** — "En orbite — [système]" ou "En transit vers [système]"
+
+*Les dates des exemples ci-dessous (2341…) sont antérieures à ce calendrier : elles illustrent le format, pas la chronologie.*
 
 ---
 
@@ -109,6 +113,8 @@ Moteurs allumés.
 ```
 
 *Note : sobre, factuel. Pas d'émotion forcée. L'émotion vient du joueur.*
+
+*Journal (migration `00068`) : entrée `AUTO` « VOYAGE », titre « Cap fixé — [destination] — [distance] al », corps « Durée estimée : [durée joueur]. Phase d'accélération en cours. » puis « Moteurs allumés. »*
 
 ---
 
@@ -215,6 +221,8 @@ Durée du voyage : 5h12. Distance totale cumulée : 87,4 al.
 ```
 
 *Suivi immédiatement par les notifications de scan et de traces éventuelles.*
+
+*Journal (migration `00068`) : entrée `AUTO` « ARRIVÉE », titre « [système] — [distance] al », corps « Durée du voyage : [durée joueur]. Distance totale cumulée : [distance] al. » La ligne « Scan automatique en cours. » est omise tant que le scan automatique n'existe pas.*
 
 ---
 
@@ -697,6 +705,44 @@ Journal de bord : 847 entrées.
 
 ---
 
+## 8 bis. Famille 7 — Ciel de départ
+
+Événements du début de partie (`LACUNA_TRACES_IMMUABLES.md` §5). *Implémentés comme entrées `AUTO` du journal seulement (migration `00068`) : le fil de notifications n'existe pas encore.* Uniquement des mesures, aucune interprétation.
+
+### CIE-001 — Montée des neutrinos (SN-001)
+
+```
+DÉTECTEUR — [date]
+Montée du taux de neutrinos
+~200 événements en 5 min. Énergie moyenne ~3 MeV. Direction non reconstruite.
+```
+
+### CIE-002 — Bouffée de neutrinos (SN-001)
+
+```
+DÉTECTEUR — [date]
+Bouffée de neutrinos
+~5 000 000 événements en 10 s. Énergie moyenne ~15 MeV. Direction reconstruite à ±3°.
+```
+
+### CIE-003 — Sortie du choc (SN-001)
+
+```
+OBSERVATOIRE — [date]
+Nouvelle source lumineuse
+Direction : Orion (5h55m, +7,4°). Éclat en hausse.
+```
+
+### CIE-004 — Première impulsion de LPT-001
+
+```
+RADAR — [date]
+Impulsion radio large bande
+Direction : Écu (18h39m, −10,5°). Durée : [N] s.
+```
+
+---
+
 ## 9. Règles globales
 
 ### Fréquence et saturation
@@ -778,4 +824,4 @@ L'état de la population colore subtilement le ton des notifications automatique
 
 ---
 
-*LACUNA — Système de Notifications v0.3 — Octobre 2026 — Confidentiel*
+*LACUNA — Système de Notifications v0.4 — Octobre 2026 — Confidentiel*
