@@ -5,7 +5,7 @@
  * Hors ligne (mode démo) : verdicts gardés en mémoire.
  */
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 import { useShipStore } from '@/stores/ship'
@@ -36,6 +36,9 @@ const isUuid = (id) => /^[0-9a-f-]{36}$/i.test(id)
 export const useVerdictsStore = defineStore('verdicts', () => {
   /** Verdicts par observation, du plus récent au plus ancien */
   const byObs = ref({})
+
+  /** Verdict courant de chaque observation (seuls ceux-là comptent pour le Drake de bord) */
+  const currentVerdicts = computed(() => Object.values(byObs.value).map((list) => list[0]).filter(Boolean))
 
   async function fetchForObservations(observationIds) {
     const supabaseStore = useSupabaseStore()
@@ -139,5 +142,5 @@ export const useVerdictsStore = defineStore('verdicts', () => {
     byObs.value = next
   }
 
-  return { byObs, fetchForObservations, record, getCurrent, getHistory, setTrace, clearForObs }
+  return { byObs, currentVerdicts, fetchForObservations, record, getCurrent, getHistory, setTrace, clearForObs }
 })

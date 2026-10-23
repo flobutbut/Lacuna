@@ -358,6 +358,17 @@ Verdicts du joueur sur ses observations (`LACUNA_VERDICT.md` §5, migration 0007
 | trace_id | UUID FK | → traces (SET NULL), unique : artefact déposé depuis ce verdict (00076) |
 | created_at | TIMESTAMPTZ | |
 
+#### `ship_drake`
+Drake de bord : ce que chaque vaisseau croit, d'après ses verdicts (`LACUNA_VERDICT.md` §7.3, migration 00077). Une ligne par vaisseau, recalculée par le déclencheur `tr_lab_verdicts_drake` à chaque verdict ajouté ou supprimé.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| ship_id | UUID PK FK | → ships (CASCADE) |
+| fl, fi, fc, l_val | DECIMAL | Termes variables de bord (références et bornes : `src/lib/drake.js`) |
+| n | DECIMAL | N de bord |
+| verdicts | INT | Verdicts courants qui contribuent |
+| updated_at | TIMESTAMPTZ | |
+
 #### `profiles`
 Profil privé du joueur (00046). Jamais exposé aux autres joueurs.
 
@@ -580,6 +591,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00074 | Laboratoire : colonne `lab_reports.deviations` (écarts attendu / mesuré, `LACUNA_VERDICT.md` §4) — appliquée le 23/10/2026 (table vide en production, aucun rapport antérieur) |
 | 00075 | Laboratoire : table `lab_verdicts`, enum `verdict_reading`, RPC `record_verdict` (`LACUNA_VERDICT.md` §5) — appliquée le 23/10/2026 ; RPC testée en rôle joueur dans une transaction annulée (8 cas : sans rapport, famille d'une ombre, note trop longue, verdict valide, lecture RLS, écriture directe refusée, observation inconnue, sans connexion) |
 | 00076 | Verdict : entrée MANUEL au journal (`record_verdict(…, p_log_to_journal)`), RPC `create_artifact` (trace JOUEUR permanente, interprétation), `traces.player_subtype`, `traces.verdict_id`, `lab_verdicts.trace_id` (`LACUNA_VERDICT.md` §6.2, §6.3) — appliquée le 24/10/2026 ; testée en rôle joueur dans des transactions annulées (verdict avec et sans journal, artefact valide, verdict révisé refusé, sous-type et désignation invalides, second artefact refusé, suffixe de désignation, sous-type lisible et `verdict_id` caché, verdict d'un autre compte) |
+| 00077 | Drake de bord : table `ship_drake`, fonction `ship_drake_compute`, déclencheur sur `lab_verdicts`, une ligne par vaisseau existant (`LACUNA_VERDICT.md` §7.3) — appliquée le 24/10/2026 ; testée en rôle joueur dans une transaction annulée (cinq verdicts dont un indéterminé et un sans écart, révision, suppression d'une observation, lecture RLS, appel direct refusé) ; parité avec `computeShipDrake` vérifiée sur les trois états (écart relatif ≤ 3·10⁻¹⁵) |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
@@ -605,6 +617,10 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 ### RPC `record_verdict(p_observation_id, p_reading, p_confidence, p_note, p_family, p_log_to_journal)` (migrations 00075, 00076)
 
 `SECURITY DEFINER`, réservée à `authenticated`. Seule voie d'écriture de `lab_verdicts`. Vérifie que l'observation appartient au vaisseau du joueur et a au moins un rapport, que la note fait au plus 280 caractères, et que `p_family` (facultative) est la famille d'un écart **mesuré** (pas une ombre) dans `lab_reports.deviations` de l'observation. Fixe `generation` et `ship_date`. Avec `p_log_to_journal` (00076, défaut `false`), écrit aussi une entrée `MANUEL` « Verdict — [observation] » (texte : `verdict_journal_text`) et la relie par `logbook_entry_id`. Renvoie la ligne insérée. N'écrit pas dans Drake (lot 5).
+
+### Fonction `ship_drake_compute(p_ship_id)` et déclencheur `tr_lab_verdicts_drake` (migration 00077)
+
+`SECURITY DEFINER`, non exposée aux rôles de l'API. Recalcule `ship_drake` d'un vaisseau à partir de ses verdicts courants (le plus récent par observation) : contribution = s(lecture) × w(confiance) sur le terme de la famille de l'écart, terme = référence × 10^(0,05 × Σ), borné. Même calcul que `computeShipDrake` (`src/lib/drake.js`). Appelée par le déclencheur `AFTER INSERT OR DELETE` de `lab_verdicts` (y compris la suppression d'une observation en cascade). Ne touche pas `drake_equation` (N collectif, lot 6).
 
 ### RPC `create_artifact(p_verdict_id, p_designation, p_subtype, p_interpretation)` (migration 00076)
 
@@ -707,6 +723,7 @@ En cas de conflit entre sources, l'ID retenu suit cet ordre :
 | signals, observations | son vaisseau | son vaisseau |
 | lab_reports | via ses observations | via ses observations |
 | lab_verdicts | son vaisseau | aucune (→ `record_verdict`) |
+| ship_drake | son vaisseau | aucune (déclencheur sur `lab_verdicts`) |
 | ship_travels | son vaisseau | aucune (→ `complete_transit`) |
 | map_nodes, map_edges, ship_traces, logbook_entries | son vaisseau | son vaisseau |
 | game_settings | aucune | aucune (dashboard) |
@@ -918,6 +935,8 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 | 2026-10-23 | 00075 appliquée : `lab_verdicts`, `verdict_reading`, RPC `record_verdict` en production ; tests sans donnée laissée |
 | 2026-10-24 | 00076 écrite : verdict consigné au journal, dépôt d'artefact (`create_artifact`) |
 | 2026-10-24 | 00076 appliquée : `record_verdict` avec journal, `create_artifact`, `traces.player_subtype` / `verdict_id`, `lab_verdicts.trace_id` en production ; tests sans donnée laissée |
+| 2026-10-24 | 00077 écrite : Drake de bord (`ship_drake`) |
+| 2026-10-24 | 00077 appliquée : `ship_drake` (une ligne, N = 72), `ship_drake_compute`, déclencheur `tr_lab_verdicts_drake` en production ; tests sans donnée laissée |
 | 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |

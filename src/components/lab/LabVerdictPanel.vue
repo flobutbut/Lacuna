@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useVerdictsStore } from '@/stores/verdicts'
 import { DEVIATION_FAMILIES } from '@/lib/deviations'
+import { computeShipDrake, FAMILY_TERM, formatTerm } from '@/lib/drake'
 import {
   VERDICT_READINGS,
   CONFIDENCE_LEVELS,
@@ -38,6 +39,10 @@ const note = ref('')
 const logToJournal = ref(true)
 const saving = ref(false)
 const error = ref('')
+/** Variation du Drake de bord due au dernier verdict rendu ici : { term, from, to } */
+const drakeChange = ref(null)
+
+const TERM_LABELS = { fl: 'fl', fi: 'fi', fc: 'fc', l_val: 'L' }
 
 function resetForm() {
   reading.value = current.value?.reading ?? null
@@ -49,6 +54,7 @@ function resetForm() {
 
 watch(() => props.observationId, () => {
   editing.value = false
+  drakeChange.value = null
   resetForm()
 }, { immediate: true })
 
@@ -69,6 +75,7 @@ async function submit() {
   if (!canSubmit.value) return
   saving.value = true
   error.value = ''
+  const before = computeShipDrake(verdictsStore.currentVerdicts).terms
   const res = await verdictsStore.record(props.observationId, {
     reading: reading.value,
     confidence: confidence.value,
@@ -84,6 +91,11 @@ async function submit() {
     return
   }
   editing.value = false
+  const term = FAMILY_TERM[props.family]
+  const after = computeShipDrake(verdictsStore.currentVerdicts).terms
+  drakeChange.value = term && Math.abs(after[term] - before[term]) > 1e-9
+    ? { term, from: before[term], to: after[term] }
+    : null
 }
 
 function familyLabel(family) {
@@ -169,6 +181,10 @@ function familyLabel(family) {
       </div>
       <p v-if="current.note" class="lab-verdict__quote">« {{ current.note }} »</p>
       <p v-if="current.logbookEntryId" class="lab-verdict__logged">Consigné au journal.</p>
+      <p v-if="drakeChange" class="lab-verdict__logged">
+        {{ TERM_LABELS[drakeChange.term] }} de bord : {{ formatTerm(drakeChange.term, drakeChange.from) }}
+        → {{ formatTerm(drakeChange.term, drakeChange.to) }}
+      </p>
     </div>
 
     <div v-if="previous.length" class="lab-verdict__history">
