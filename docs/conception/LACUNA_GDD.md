@@ -32,6 +32,7 @@
 | 0.7 | Octobre 2026 | §9 : émetteurs de système (signaux à fenêtres du Fil des 75, Radar et Laboratoire) ; migrations `00054`–`00058` écrites, non appliquées |
 | 0.8 | Octobre 2026 | §9 : traces de scénario en base (Fil des 75, gradient de lecture, découverte côté serveur) ; Yael : structure sans entrée ; migrations `00059`, `00060` |
 | 0.9 | Octobre 2026 | §9 : paramètres d'administration — accélération des voyages réservée aux admins, réinitialisation de la partie (migration `00061`) |
+| 0.10 | Octobre 2026 | §9 : statut des migrations corrigé — `00052` à `00065` appliquées en production |
 
 ---
 
@@ -316,11 +317,10 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 
 ### Écarts code / design à corriger dans le code
 
-*Corrigés dans le code (octobre 2026) : population de départ 15 000 (constante `INITIAL_POPULATION`, migration `00052` à appliquer pour le défaut SQL) et génération de 25 ans (`ANNEES_PAR_GENERATION`).*
+*Corrigés dans le code (octobre 2026) : population de départ 15 000 (constante `INITIAL_POPULATION`, migration `00052` appliquée pour le défaut SQL) et génération de 25 ans (`ANNEES_PAR_GENERATION`). Équation de Drake alignée (`fl` = 0,30, N = 72, migration `00053` appliquée).*
 
 | Écart | Design | Code actuel |
 |-------|--------|-------------|
-| Équation de Drake | `fl` = 0,30 et N = 72 (§7) | `fl` = 0,31 et `n` = 12,4 en base : migration `00053` écrite, non appliquée |
 | Répartition des phases en temps joueur | À calibrer (`LACUNA_TRANSIT.md` §3, §11) | 40 / 20 / 10 / 30 % (`ship.js`) |
 
 ### Mapping objet Vaisseau (GDD §3) ↔ schéma actuel
