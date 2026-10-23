@@ -7,6 +7,7 @@ import AppHeader from '@/components/AppHeader.vue'
 import InstrumentsBar from '@/components/InstrumentsBar.vue'
 import NotificationToast from '@/components/NotificationToast.vue'
 import SignalHalo from '@/components/SignalHalo.vue'
+import SupernovaWatcher from '@/components/SupernovaWatcher.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -41,6 +42,7 @@ watch(
     <InstrumentsBar v-if="!isBareLayout" />
     <NotificationToast />
     <SignalHalo v-if="!isBareLayout && authStore.isAuthenticated" />
+    <SupernovaWatcher v-if="!isBareLayout && authStore.isAuthenticated" />
     <Analytics />
   </div>
 </template>

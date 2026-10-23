@@ -44,7 +44,7 @@ function dbToSignal(row) {
     anomalous: att.anomalous ?? false,
     support: row.support ?? 'EM_RADIO',
     createdAt: capturedAt,
-    lifetimeMs: persistent ? Infinity : LIFETIME_MS,
+    lifetimeMs: persistent ? Infinity : (Number(att.lifetime_ms) || LIFETIME_MS),
     persistent,
     window: parseSignalWindow(att.window),
     neutrino: att.neutrino ?? null,
@@ -309,6 +309,20 @@ export const useSignauxStore = defineStore('signaux', () => {
     }
   }
 
+  /** Capte côté base la bouffée de neutrinos de la supernova, une fois son T0 passé (RPC capture_supernova_neutrinos) */
+  async function captureSupernovaNeutrinos() {
+    const supabaseStore = useSupabaseStore()
+    if (!supabaseStore.isConfigured()) return
+    const { data, error } = await supabase.rpc('capture_supernova_neutrinos')
+    if (error) {
+      console.warn('[signaux] capture_supernova_neutrinos:', error.message)
+      return
+    }
+    if (data?.inserted > 0) {
+      await fetch()
+    }
+  }
+
   /** Calcule côté base les signaux pulsars visibles dans la bande (RPC), puis recharge la liste si besoin */
   async function computePulsarSignals(band = 'L') {
     const shipStore = useShipStore()
@@ -327,6 +341,7 @@ export const useSignauxStore = defineStore('signaux', () => {
   return {
     computePulsarSignals,
     captureSystemEmitters,
+    captureSupernovaNeutrinos,
     list,
     listWithRemaining,
     activePulsarSignals,

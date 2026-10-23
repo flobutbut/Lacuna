@@ -118,6 +118,26 @@ export function drawConstellationLines(ctx, lines, projectedPositions, w, h, opa
 /** Étoiles avec scintillement, palettes spectrales et transition d'opacité.
  * @param {Map<string, {x:number, y:number}>} [projectedPositions] - si fourni, réutilise au lieu de recalculer
  */
+/**
+ * Étoile en supernova : cœur et halo proportionnels à l'éclat relatif (0–1, 1 = maximum).
+ * Au maximum, l'objet le plus brillant du ciel ; au rémanent, un point faible.
+ */
+function drawSupernova(ctx, pos, baseR, level, opacity) {
+  const core = baseR * (1 + 4 * level)
+  const halo = core * (2 + 6 * level)
+  const gradient = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, halo)
+  gradient.addColorStop(0, `rgba(235,242,255,${0.45 * level * opacity})`)
+  gradient.addColorStop(1, 'rgba(235,242,255,0)')
+  ctx.beginPath()
+  ctx.arc(pos.x, pos.y, halo, 0, Math.PI * 2)
+  ctx.fillStyle = gradient
+  ctx.fill()
+  ctx.beginPath()
+  ctx.arc(pos.x, pos.y, core, 0, Math.PI * 2)
+  ctx.fillStyle = `rgba(245,248,255,${Math.min(1, 0.25 + level) * opacity})`
+  ctx.fill()
+}
+
 export function drawStars(ctx, starList, raView, decView, w, h, selectedStar, searchedStarId, projectedPositions) {
   starList.forEach((s) => {
     const pos = projectedPositions
@@ -139,6 +159,12 @@ export function drawStars(ctx, starList, raView, decView, w, h, selectedStar, se
     const rgb = s.star
       ? resolveStarColor(s.star, s.colorOverride ?? null)
       : { r: 255, g: 255, b: 255 }
+
+    // Supernova : l'éclat relatif remplace le rendu de l'étoile (lumière bleutée, halo large)
+    if (s.supernovaLevel != null) {
+      drawSupernova(ctx, pos, s.r, s.supernovaLevel, opacity)
+      return
+    }
 
     const fillStyleMain = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`
     const fillStyleHalo = s.r > 1.2 ? `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha * 0.08})` : null

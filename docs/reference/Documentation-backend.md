@@ -544,6 +544,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00060 | trace_levels, ship_trace_levels, RPC unlock_trace_levels / get_trace_levels / trace_is_visible ; ship_traces en lecture seule ; traces lisibles seulement une fois découvertes (hors traces sans scénario) ; nœuds du Fil des 75 |
 | 00061 | profiles.fast_transit ; start_transit n'accélère que pour un admin qui l'a activé ; RPC set_fast_transit et reset_my_game (admins) |
 | 00062 | signal_support : valeur NEUTRINO (détecteur de neutrinos) |
+| 00063 | ships.supernova_t0 (création + 10 min) et supernova_captured_at ; événement SN-001 (signal_events) ; RPC capture_supernova_neutrinos |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
@@ -851,6 +852,7 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 | 2026-10-23 | Migrations 00059–00060 écrites, non appliquées : niveaux de lecture des traces, découverte côté serveur, nœuds du Fil des 75 |
 | 2026-10-23 | Migrations 00052–00061 appliquées en production ; 00061 : réglages d'administration |
 | 2026-10-23 | 00062 appliquée : support de signal NEUTRINO |
+| 2026-10-23 | 00063 appliquée : supernova de Bételgeuse (T0 par partie, bouffée de neutrinos) |
 | 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |

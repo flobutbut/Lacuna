@@ -13,6 +13,7 @@ import { distanceToSegment, lerpAngle } from '@/lib/geometry'
 import { getSystemXyz } from '@/lib/stellarCoordinates'
 import { drawCurvedGrid, drawMilkyWay, drawNebulas, drawStars, drawSignals, drawSpectralBorder, drawConstellationLines } from '@/lib/skyRenderers'
 import { useSkyStars } from '@/composables/useSkyStars'
+import { supernovaState, SUPERNOVA_STAR_ID } from '@/lib/supernova'
 import { useStarSelection } from '@/composables/useStarSelection'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
@@ -202,6 +203,10 @@ function draw(canvas, starsRef) {
     const constellationOpacity = exoplanetFilter.value ? 0.15 : 0.35
     drawConstellationLines(ctx, stellarSystemsStore.constellationLines, constellationPositions, w, h, constellationOpacity)
   }
+
+  const supernovaLevel = supernovaState(shipStore.supernovaT0).level
+  const supernovaStar = starList.find((s) => s.id === SUPERNOVA_STAR_ID)
+  if (supernovaStar) supernovaStar.supernovaLevel = supernovaLevel
 
   drawStars(ctx, starList, vd.ra, vd.dec, w, h, selected, searchedStarId.value, projectedPositions)
   drawSignals(ctx, activeSignals, vd.ra, vd.dec, w, h)

@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Traces immuables
-*Version 0.4 — Octobre 2026*
+*Version 0.5 — Octobre 2026*
 
 > Ce document contient les **fiches des traces immuables** qui n'appartiennent pas à un scénario — voisinage solaire, hors voisinage — et le **Journal de Yael** (origine `PRÉCURSEUR`). Les traces appartenant à un scénario ont leurs fiches de nœuds dans `LACUNA_SCENARIOS.md`. La mécanique (définition, chaîne de production, types d'outputs, qualification) vit dans `LACUNA_TRACES.md`. Les faits astronomiques de référence vivent dans `LACUNA_ANOMALIES_REELLES.md`.
 >
@@ -29,6 +29,7 @@
 | 0.2 | Octobre 2026 | §4 : structure des entrées de Yael en base (origine `PRÉCURSEUR`, `precursor_generation`, `linked_trace_id`, `scenario_arc` pour le scénario effleuré) ; une entrée se découvre à l'arrivée dans son système. Aucune entrée écrite |
 | 0.3 | Octobre 2026 | §5 ajouté : deux propositions de phénomènes visibles dès Sol pour donner de la matière au départ — une supernova lointaine (SN-001, ancrage SN 1987A) et un transitoire radio à longue période (LPT-001, ancrage GPM J1839−10). Non intégrées au jeu ; faits vérifiés le 23 octobre 2026 |
 | 0.4 | Octobre 2026 | SN-001 : décisions prises (Bételgeuse, événement déclenché au départ de chaque partie), déroulé détaillé (neutrinos de pré-supernova, bouffée, sortie du choc, maximum), état du ciel après l'événement, question de l'horloge face à la compression du temps ; données neutrinos vérifiées |
+| 0.5 | Octobre 2026 | SN-001 implémentée : déroulé en temps réel joueur (durées ci-dessous), T0 par partie, bouffée captée une fois, état du ciel calculé à partir de T0 (migration `00063`) |
 
 ---
 
@@ -438,7 +439,7 @@ La supernova n'est pas une trace au sens de `LACUNA_TRACES.md` §1 : elle ne s'�
 **Système :** Bételgeuse (α Orionis), ~550 al — *valeur de jeu*
 **Type :** ÉVÉNEMENT — neutrinos, puis lumière
 **Difficulté :** 1 — passif, aucune manœuvre
-**Statut :** proposition retenue le 23 octobre 2026 — non implémentée
+**Statut :** implémentée le 23 octobre 2026 (migration `00063`, `src/lib/supernova.js`)
 
 **Décisions**
 - L'étoile est **Bételgeuse**.
@@ -463,6 +464,25 @@ Ordres de grandeur pour une supernova galactique :
 
 Le joueur fait lui-même le lien entre la bouffée et l'étoile : rien ne le lui dit.
 
+**Déroulé implémenté — temps réel joueur**
+
+T0 = création de la partie + 10 minutes (`ships.supernova_t0`). L'ordre réel des phases est conservé, les durées sont raccourcies pour tenir dans une première session :
+
+| Phase | Début | Durée réelle | Réalité astrophysique | Rendu |
+|---|---|---|---|---|
+| Bouffée de neutrinos | T0 | 10 s | ~10 s | Signal « Neutrinos » sans direction, halo uniforme ; le ciel ne change pas |
+| Silence | T0 → T0 + 20 min | 20 min | ~3 h pour SN 1987A | Le temps d'analyser la bouffée (direction : Orion) et de regarder Bételgeuse |
+| Sortie du choc | T0 + 20 min | 2 min | quelques minutes | Éclair bref, puis palier |
+| Montée | T0 + 22 min → T0 + 2 h | ~1 h 40 | ~10 jours | Jusqu'à l'objet le plus brillant du ciel |
+| Déclin | T0 + 2 h → T0 + 7 jours | 7 jours | des mois | Baisse exponentielle |
+| Rémanent | après T0 + 7 jours | permanent | — | Point faible |
+
+- La pré-supernova (étape 1) n'est pas implémentée.
+- La bouffée reste disponible 24 h ; elle n'est captée qu'une fois par partie (`ships.supernova_captured_at`), même si le joueur la supprime en l'analysant.
+- L'éclat est exprimé sur l'échelle du rendu du ciel, pas en magnitude (aucune source fiable retenue).
+- *Valeurs provisoires de la bouffée :* 5 000 000 événements (extrapolation non vérifiée), 15 MeV de moyenne et ~10 s (SN 1987A), direction à ±3°.
+- *Écart relevé :* la base place Bételgeuse à 497,95 al (HYG, donnée sourcée, non modifiée) ; cette fiche retient ~550 al (Joyce et al. 2020).
+
 **Ce que les données disent**
 - Bouffée de neutrinos : une dizaine de secondes, énergies de l'ordre de 10 MeV, direction à quelques degrés près
 - Délai neutrinos → lumière : quelques heures
@@ -481,10 +501,10 @@ Le joueur fait lui-même le lien entre la bouffée et l'étoile : rien ne le lui
 - Le Ciel affiche la supernova pendant son déclin, puis un rémanent faible.
 
 **Questions ouvertes**
-- **L'horloge.** Avec la compression du temps, une heure de voyage vaut ~88 ans simulés (Proxima) et un stationnement ~2 740 ans par heure (`LACUNA_PHYSICS.md` §2). En temps simulé, neutrinos, sortie du choc et maximum seraient quasi simultanés dès le premier voyage. *Recommandation :* dérouler l'événement en **temps réel joueur**, comme les fenêtres des signaux (`LACUNA_SCENARIOS.md` §5.7), avec des durées réelles réduites mais l'ordre des phases conservé.
-- Éclat apparent au maximum et durée du déclin : à fixer avec une source scientifique.
-- Les neutrinos de pré-supernova (étape 1) : à garder ou non.
-- Le support « neutrinos » : capteur et instrument spécifiés dans `LACUNA_LABORATOIRE_INSTRUMENTS.md` §3.4 et §4.14 ; non implémentés.
+- ~~L'horloge~~ — Tranché : temps réel joueur, durées raccourcies, ordre conservé (voir le déroulé implémenté). En temps simulé, compressé (~88 ans par heure de voyage), les phases seraient quasi simultanées.
+- Éclat apparent au maximum : exprimé sur l'échelle du rendu, à recaler si une source fiable est retenue.
+- Les neutrinos de pré-supernova (étape 1) : non implémentés, à ajouter éventuellement.
+- Le support « neutrinos » : implémenté (`LACUNA_LABORATOIRE_INSTRUMENTS.md` §3.4 et §4.14).
 
 ---
 
@@ -540,4 +560,4 @@ SIGNATURE — une période de ~1 318 s à reconnaître si elle réapparaît aill
 
 ---
 
-*LACUNA — Traces immuables v0.4 — Octobre 2026 — Confidentiel*
+*LACUNA — Traces immuables v0.5 — Octobre 2026 — Confidentiel*
