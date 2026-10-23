@@ -860,6 +860,7 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 | 2026-10-23 | 00064–00065 appliquées : montée de pré-supernova ; 00066 écrite : signal de 22 minutes (LPT-001) |
 | 2026-10-23 | 00066 appliquée : signal de 22 minutes (LPT-001) |
 | 2026-10-23 | 00067 écrite : doublon GW retiré des signaux modèles de départ |
+| 2026-10-23 | 00067 appliquée : 6 signaux modèles de départ |
 | 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |
