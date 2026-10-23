@@ -9,6 +9,7 @@ import { useObservatoireStore } from '@/stores/observatoire'
 import { isWindowOpen } from '@/lib/signalWindow'
 import { useSignauxStore } from '@/stores/signaux'
 import { lptActivePulse, LPT_DIRECTION } from '@/lib/lpt'
+import { START_CONTINUUM, continuumLevel } from '@/lib/startSources'
 
 const NOISE_CONFIG = {
   P: { base: 0.8, galacticFactor: 0.30 },
@@ -108,14 +109,29 @@ export function useRadarNoise(band, galacticLatitude, activeSignals) {
     return chunk
   }
 
-  /** Écart-type du bruit synchrotron du rémanent dans le faisceau (0 avant le déclin ou hors d'Orion) */
+  /**
+   * Écart-type du bruit synchrotron dans le faisceau : rémanent de SN-001 (0 avant le déclin ou hors d'Orion)
+   * et sources continues du ciel de départ (une seule bande chacune) ; les variances s'additionnent.
+   */
   function synchrotronStd() {
+    const view = observatoireStore.viewDirection
+    const fwhm = RADAR_BEAM_FWHM_DEG[band.value] ?? RADAR_BEAM_FWHM_DEG.L
+    let variance = 0
     const radio = supernovaBands(shipStore.supernovaT0)?.radio ?? 0
     const factor = SYNCHROTRON_BAND_FACTOR[band.value] ?? 0
-    if (!radio || !factor) return 0
-    const view = observatoireStore.viewDirection
-    const sep = angularSeparationDeg(SUPERNOVA_DIRECTION.ra, SUPERNOVA_DIRECTION.dec, view.ra, view.dec)
-    return SYNCHROTRON_STD * radio * factor * beamGain(sep, RADAR_BEAM_FWHM_DEG[band.value] ?? RADAR_BEAM_FWHM_DEG.L)
+    if (radio && factor) {
+      const sep = angularSeparationDeg(SUPERNOVA_DIRECTION.ra, SUPERNOVA_DIRECTION.dec, view.ra, view.dec)
+      variance += (SYNCHROTRON_STD * radio * factor * beamGain(sep, fwhm)) ** 2
+    }
+    const now = Date.now()
+    for (const source of START_CONTINUUM) {
+      if (source.band !== band.value) continue
+      const level = continuumLevel(source, shipStore.gameStartMs, now)
+      if (!level) continue
+      const sep = angularSeparationDeg(source.ra, source.dec, view.ra, view.dec)
+      variance += (SYNCHROTRON_STD * level * beamGain(sep, fwhm)) ** 2
+    }
+    return Math.sqrt(variance)
   }
 
   const noiseLevel = computed(() => {

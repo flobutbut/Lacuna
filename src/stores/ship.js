@@ -34,6 +34,11 @@ export const useShipStore = defineStore('ship', () => {
   const travelDestination = computed(() => ship.value?.travel_destination ?? null)
   /** Bouffée de neutrinos de la supernova de Bételgeuse pour cette partie (src/lib/supernova.js) */
   const supernovaT0 = computed(() => ship.value?.supernova_t0 ?? null)
+  /** Création de la partie (ms), null si inconnue */
+  const gameStartMs = computed(() => {
+    const t = Date.parse(ship.value?.created_at)
+    return Number.isFinite(t) ? t : null
+  })
 
   const transitProgress = computed(() => {
     if (!isInTransit.value || !travelDepartureAt.value || !travelArrivalAt.value) return 0
@@ -206,7 +211,7 @@ export const useShipStore = defineStore('ship', () => {
     }
     const { data: ships, error } = await supabase
       .from('ships')
-      .select('id, name, classe, built_year, voyage, generation, current_system_id, travel_state, travel_destination, travel_departure_at, travel_arrival_at, supernova_t0')
+      .select('id, name, classe, built_year, voyage, generation, current_system_id, travel_state, travel_destination, travel_departure_at, travel_arrival_at, supernova_t0, created_at')
       .eq('user_id', userId)
       .limit(1)
     if (error) {
@@ -247,6 +252,7 @@ export const useShipStore = defineStore('ship', () => {
     travelArrivalAt,
     travelDestination,
     supernovaT0,
+    gameStartMs,
     transitProgress,
     currentTransitPhase,
     systems,

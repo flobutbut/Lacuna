@@ -14,6 +14,7 @@ import { pulsarsInBeam } from '@/lib/radarSpectrum'
 import { formatFrequency, parseFrequency } from '@/lib/formatUtils'
 import { parseSignalWindow } from '@/lib/signalWindow'
 import { parseLpt, lptPulse } from '@/lib/lpt'
+import { START_PULSARS } from '@/lib/startSources'
 
 const LIFETIME_MS = 2 * 60 * 60 * 1000 // 2h temps joueur par défaut
 
@@ -147,7 +148,8 @@ export const useSignauxStore = defineStore('signaux', () => {
    */
   const activePulsarSignals = computed(() => {
     const activeBand = useRadarStore().radarFrequencyBand
-    const bandPulsars = list.value.filter(s =>
+    // Pulsars captés, plus ceux du ciel de départ (PSR B1919+21), qui émettent même sans signal dans la liste
+    const bandPulsars = [...list.value, ...START_PULSARS].filter(s =>
       s.sourceType === 'PULSAR' &&
       s.band === activeBand &&
       s.fluxRelative != null &&
