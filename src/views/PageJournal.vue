@@ -1,45 +1,110 @@
 <script setup>
+/**
+ * Journal de bord — fil chronologique du vaisseau (LACUNA_UI.md, module Journal de bord).
+ * Entrées écrites par le serveur (AUTO, GENERATIONNEL) et par le joueur (MANUEL), filtre par type.
+ */
 import '@/assets/components/journal.css'
-import { formatNumber } from '@/lib/formatUtils'
-import { INITIAL_POPULATION } from '@/constants/population'
+import { ref, computed, onMounted } from 'vue'
+import { useJournalStore, JOURNAL_TITLE_MAX, JOURNAL_TEXT_MAX } from '@/stores/journal'
+import AppTextField from '@/components/AppTextField.vue'
 
-const entries = [
-  {
-    date: 'JOUR 1 — AN 2187.042',
-    gen: 'GÉNÉRATION I — FONDATEURS',
-    text: `Départ confirmé. ${formatNumber(INITIAL_POPULATION)} âmes embarquées. Les réservoirs sont pleins. Le bouclier plasma est actif. On a regardé la Terre disparaître dans l'observatoire pendant 4 heures. Personne n'a dit grand chose.`,
-    anomaly: false,
-  },
-  {
-    date: 'JOUR 47 — AN 2187.089',
-    gen: 'GÉNÉRATION I — FONDATEURS',
-    text: "Premier scan approfondi du signal WOW-1977-A. La fréquence 1420 MHz correspond exactement à la raie de l'hydrogène. Ce n'est pas une coïncidence naturelle. Tout le monde le sait. Personne ne le dit encore.",
-    anomaly: false,
-  },
-  {
-    date: 'JOUR 91 — AN 2187.133',
-    gen: 'GÉNÉRATION I — FONDATEURS',
-    text: "Anomalie détectée dans le système Tau Ceti. Géométrie orbitale irrégulière. Le laboratoire demande 72h d'analyse. On attend.",
-    anomaly: true,
-  },
+const journalStore = useJournalStore()
+
+const FILTERS = [
+  { id: 'ALL', label: 'Tous' },
+  { id: 'MANUEL', label: 'Manuel' },
+  { id: 'AUTO', label: 'Auto' },
+  { id: 'GENERATIONNEL', label: 'Générationnel' },
 ]
+const filter = ref('ALL')
+const visibleEntries = computed(() =>
+  filter.value === 'ALL' ? journalStore.entries : journalStore.entries.filter((e) => e.type === filter.value)
+)
+
+/** En-tête d'une entrée : famille (ou type pour une entrée du joueur), date du vaisseau, contexte */
+function entryHeader(entry) {
+  return [entry.family ?? entry.type, entry.date, entry.context].filter(Boolean).join(' — ')
+}
+
+const title = ref('')
+const text = ref('')
+const saving = ref(false)
+const saveError = ref('')
+const canSave = computed(
+  () =>
+    !saving.value &&
+    title.value.trim().length > 0 &&
+    title.value.trim().length <= JOURNAL_TITLE_MAX &&
+    text.value.trim().length > 0 &&
+    text.value.trim().length <= JOURNAL_TEXT_MAX
+)
+
+async function save() {
+  if (!canSave.value) return
+  saving.value = true
+  saveError.value = ''
+  try {
+    await journalStore.addManual({ title: title.value, text: text.value })
+    title.value = ''
+    text.value = ''
+  } catch (e) {
+    console.warn('[journal] addManual:', e?.message)
+    saveError.value = 'Enregistrement impossible. Réessayez.'
+  } finally {
+    saving.value = false
+  }
+}
+
+onMounted(() => journalStore.fetch())
 </script>
 
 <template>
   <div class="page-full">
     <div class="page-content">
       <h1 class="page-title">Journal de Bord</h1>
-      <div
-        v-for="(entry, i) in entries"
-        :key="i"
-        class="journal-entry"
-        :class="{ 'journal-entry--anomaly': entry.anomaly }"
-      >
-        <div class="je-date">{{ entry.date }}</div>
-        <div class="je-gen">{{ entry.gen }}</div>
-        <div class="je-text">{{ entry.text }}</div>
+
+      <div class="journal-filters" role="group" aria-label="Filtrer par type">
+        <button
+          v-for="f in FILTERS"
+          :key="f.id"
+          type="button"
+          class="journal-filter-btn"
+          :class="{ active: filter === f.id }"
+          :aria-pressed="filter === f.id"
+          @click="filter = f.id"
+        >
+          {{ f.label }}
+        </button>
       </div>
+
+      <form class="journal-editor journal-editor--top" @submit.prevent="save">
+        <AppTextField v-model="title" label="Titre" autocomplete="off" :hint="`${JOURNAL_TITLE_MAX} caractères au plus.`" />
+        <label class="journal-editor__label" for="journal-text">Entrée</label>
+        <textarea
+          id="journal-text"
+          v-model="text"
+          class="journal-editor__textarea"
+          :maxlength="JOURNAL_TEXT_MAX"
+          rows="4"
+        />
+        <p v-if="saveError" class="journal-editor__error" role="alert">{{ saveError }}</p>
+        <button type="submit" class="btn btn-primary" :disabled="!canSave">
+          {{ saving ? 'Enregistrement…' : 'Ajouter au journal' }}
+        </button>
+      </form>
+
+      <p v-if="journalStore.loaded && !visibleEntries.length" class="journal-empty">Aucune entrée.</p>
+      <article
+        v-for="entry in visibleEntries"
+        :key="entry.id"
+        class="journal-entry"
+        :class="{ 'journal-entry--generational': entry.type === 'GENERATIONNEL' }"
+      >
+        <div class="journal-entry__date">{{ entryHeader(entry) }}</div>
+        <div class="journal-entry__gen">Génération {{ entry.generation }}</div>
+        <h2 class="journal-entry__title">{{ entry.title }}</h2>
+        <div class="journal-entry__text">{{ entry.text }}</div>
+      </article>
     </div>
   </div>
 </template>
-

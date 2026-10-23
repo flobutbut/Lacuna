@@ -6,6 +6,8 @@
 import { watch, onUnmounted } from 'vue'
 import { useShipStore } from '@/stores/ship'
 import { useSignauxStore } from '@/stores/signaux'
+import { useJournalStore } from '@/stores/journal'
+import { lptPulse } from '@/lib/lpt'
 
 /** Marge après l'heure prévue avant d'interroger le serveur (horloges légèrement décalées) */
 const MARGIN_MS = 1500
@@ -14,6 +16,7 @@ const MAX_DELAY_MS = 2 ** 31 - 1
 
 const shipStore = useShipStore()
 const signauxStore = useSignauxStore()
+const journalStore = useJournalStore()
 let timer = null
 
 async function capture() {
@@ -30,6 +33,16 @@ watch(
   () => shipStore.ship?.id,
   (id) => {
     if (id) capture()
+  },
+  { immediate: true }
+)
+
+// Première impulsion captée : entrée au journal avec sa durée (tirée côté client, bornée par le serveur)
+watch(
+  () => signauxStore.lptSignal?.id,
+  (id) => {
+    const lpt = signauxStore.lptSignal?.lpt
+    if (id && lpt) journalStore.logSkyEvent('cie-004', lptPulse(lpt, lpt.firstK).durationS)
   },
   { immediate: true }
 )

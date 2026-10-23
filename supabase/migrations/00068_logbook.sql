@@ -299,7 +299,7 @@ AS $$
 DECLARE
   v_ship ships;
 BEGIN
-  IF NEW.ship_id IS NULL OR coalesce(NEW.attributes, '{}'::jsonb) ? 'receivedAt' THEN
+  IF NEW.ship_id IS NULL OR NEW.attributes->>'receivedAt' IS NOT NULL THEN
     RETURN NEW;
   END IF;
   SELECT * INTO v_ship FROM ships WHERE id = NEW.ship_id;

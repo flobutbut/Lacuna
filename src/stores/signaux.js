@@ -19,9 +19,9 @@ import { START_PULSARS } from '@/lib/startSources'
 const LIFETIME_MS = 2 * 60 * 60 * 1000 // 2h temps joueur par défaut
 
 const FALLBACK_LIST = [
-  { frequency: '1420 MHz', azimuth: 217, elevation: 12, distanceEst: '~340 al', receivedAt: '2341-04-12', durationSec: 72, polarization: 'circulaire', structure: 'non uniforme', support: 'EM_RADIO' },
-  { frequency: '408 MHz', azimuth: 89, elevation: -5, distanceEst: null, receivedAt: '2341-04-11', durationSec: 120, polarization: 'linéaire', structure: 'pulsé', support: 'EM_RADIO' },
-  { frequency: '1420.4058 MHz', azimuth: 271, elevation: 18, distanceEst: null, receivedAt: '2341-04-14', durationSec: 72, polarization: 'linéaire', structure: 'pulsé régulier', anomalous: true, support: 'EM_RADIO' },
+  { frequency: '1420 MHz', azimuth: 217, elevation: 12, distanceEst: '~340 al', receivedAt: '2187-01-02', durationSec: 72, polarization: 'circulaire', structure: 'non uniforme', support: 'EM_RADIO' },
+  { frequency: '408 MHz', azimuth: 89, elevation: -5, distanceEst: null, receivedAt: '2187-01-01', durationSec: 120, polarization: 'linéaire', structure: 'pulsé', support: 'EM_RADIO' },
+  { frequency: '1420.4058 MHz', azimuth: 271, elevation: 18, distanceEst: null, receivedAt: '2187-01-04', durationSec: 72, polarization: 'linéaire', structure: 'pulsé régulier', anomalous: true, support: 'EM_RADIO' },
 ]
 
 function dbToSignal(row) {
@@ -31,7 +31,7 @@ function dbToSignal(row) {
   const persistent = row.source_type === 'EMITTER'
   // Signal de 22 minutes (LPT-001) : reste dans la liste et accumule ses impulsions
   const lpt = parseLpt(att.lpt)
-  const receivedAt = att.receivedAt ?? `2341-${new Date(row.captured_at).toISOString().slice(5, 10)}`
+  const receivedAt = att.receivedAt ?? '—'
   const distanceEst = att.distanceEst ?? (att.distance_al != null ? `~${att.distance_al} al` : null)
   return {
     id: row.id,
@@ -97,7 +97,7 @@ function signalToDb(payload, shipId) {
 function createSignal(payload) {
   const id = `sig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const createdAt = Date.now()
-  const receivedAt = payload.receivedAt ?? `2341-${new Date().toISOString().slice(5, 10)}`
+  const receivedAt = payload.receivedAt ?? '—'
   return {
     id,
     frequency: payload.support === 'NEUTRINO' ? 'Neutrinos' : (payload.frequency ?? '1420 MHz'),
@@ -277,7 +277,6 @@ export const useSignauxStore = defineStore('signaux', () => {
     const coord = sys?.coordinates ?? { ra: 0, dec: 0 }
     const azimuth = Number(coord.ra ?? coord.x ?? 0)
     const elevation = Number(coord.dec ?? coord.y ?? 0)
-    const receivedAt = `2341-${new Date().toISOString().slice(5, 10)}`
     const inserted = []
     for (const obj of objects) {
       if (existingIds.has(obj.id)) continue
@@ -291,7 +290,8 @@ export const useSignauxStore = defineStore('signaux', () => {
         frequency_hz: freqHzStored,
         support: obj.emission_support ?? 'EM_RADIO',
         duration_sec: 72,
-        attributes: { azimuth, elevation, receivedAt, sourceName: obj.name },
+        // Date de réception : fixée par le serveur au calendrier du vaisseau (migration 00068)
+        attributes: { azimuth, elevation, sourceName: obj.name },
       }
       const { data, error } = await supabase.from('signals').insert(row).select('id, frequency_hz, support, duration_sec, captured_at, attributes').single()
       if (error) {

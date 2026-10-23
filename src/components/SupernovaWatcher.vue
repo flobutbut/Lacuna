@@ -7,7 +7,8 @@
 import { watch, onUnmounted } from 'vue'
 import { useShipStore } from '@/stores/ship'
 import { useSignauxStore } from '@/stores/signaux'
-import { PRE_SUPERNOVA_LEAD_MS } from '@/lib/supernova'
+import { PRE_SUPERNOVA_LEAD_MS, SUPERNOVA_PHASES } from '@/lib/supernova'
+import { useJournalStore } from '@/stores/journal'
 
 /** Marge après l'heure prévue avant d'interroger le serveur (horloges légèrement décalées) */
 const MARGIN_MS = 1500
@@ -16,6 +17,7 @@ const MAX_DELAY_MS = 2 ** 31 - 1
 
 const shipStore = useShipStore()
 const signauxStore = useSignauxStore()
+const journalStore = useJournalStore()
 let timers = []
 
 function clearTimers() {
@@ -34,6 +36,11 @@ watch(
       const wait = at + MARGIN_MS - Date.now()
       if (wait > MAX_DELAY_MS) continue
       timers.push(setTimeout(() => signauxStore.captureSupernovaNeutrinos(), Math.max(0, wait)))
+    }
+    // Sortie du choc : entrée au journal (le serveur vérifie l'heure et n'écrit qu'une fois)
+    const breakoutWait = t0Ms + SUPERNOVA_PHASES.BREAKOUT_START + MARGIN_MS - Date.now()
+    if (breakoutWait <= MAX_DELAY_MS) {
+      timers.push(setTimeout(() => journalStore.logSkyEvent('cie-003'), Math.max(0, breakoutWait)))
     }
   },
   { immediate: true }

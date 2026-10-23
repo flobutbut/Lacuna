@@ -134,3 +134,48 @@
     border-color: var(--color-cyan-dim);
     background: var(--color-cyan-tint);
 }
+/* ── Journal : titre, texte sur plusieurs lignes, éditeur en tête du fil ── */
+.journal-entry__title {
+    font-size: var(--text-md);
+    font-weight: normal;
+    color: var(--color-cyan);
+    margin: 0 0 var(--space-2);
+}
+
+.journal-entry__text {
+    white-space: pre-line;
+}
+
+.journal-editor--top {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-6);
+    border-bottom: var(--border-width) solid var(--border-default);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    align-items: flex-start;
+}
+
+.journal-editor__label {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    text-transform: uppercase;
+}
+
+.journal-editor__error {
+    color: var(--color-amber);
+    font-size: var(--text-sm);
+    margin: 0;
+}
+
+.journal-empty {
+    color: var(--color-muted);
+}
+
+.journal-editor--top .app-text-field,
+.journal-editor--top .journal-editor__textarea {
+    align-self: stretch;
+}
