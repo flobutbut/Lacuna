@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Game Design Document
-*Version 0.14 — Octobre 2026*
+*Version 0.15 — Octobre 2026*
 
 ---
 
@@ -37,6 +37,7 @@
 | 0.12 | Octobre 2026 | §4 : règle des générations (1 + années simulées ÷ 25, mise à jour à l'arrivée) ; une seule entrée au journal, au premier passage — contradiction entre « une entrée par passage », POP-001 et `LACUNA_ARCS.md` §1.7 tranchée ; §9 mis à jour |
 | 0.13 | Octobre 2026 | §9 : onboarding implémenté (migration `00071`) |
 | 0.14 | Octobre 2026 | §2 : départ ramené au 1er janvier 2041 (`LACUNA_LORE.md` §2) — 2187 contredisait le lore ; année de construction alignée (2041) |
+| 0.15 | Octobre 2026 | §4 et §7 : renvoi vers `LACUNA_VERDICT.md` (écarts attendu/mesuré, verdict du joueur, Drake de bord et collectif) ; §8 complété |
 
 ---
 
@@ -169,6 +170,8 @@ INTERPRÉTER — ÉCRIRE DANS LE JOURNAL
 DÉCIDER : repartir / laisser une trace / rester analyser
 ```
 
+> L'étape « ANALYSER → DÉCIDER » (écarts relevés par le Laboratoire, verdict du joueur, conséquences sur le voyage, le journal, les traces et Drake) : **`LACUNA_VERDICT.md`**.
+
 ### Le Voyage
 
 Quatre phases : accélération, inertie, retournement, décélération. Pendant la phase d'inertie, l'observatoire scanne en continu — c'est là que les découvertes non planifiées arrivent, et que les déroutes sont possibles.
@@ -278,6 +281,8 @@ N = R* × fp × ne × fl × fi × fc × L
 
 Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les joueurs actifs. La variation est visible dans le header (N= + delta) sans explication immédiate.
 
+> Ce qui fait varier les termes (verdicts des joueurs), N de bord et N collectif : **`LACUNA_VERDICT.md`** §7.
+
 > Schéma JSON complet : **`LACUNA_PROCEDURAL_DATA_MODEL.md`** §9.7.
 
 ---
@@ -291,6 +296,7 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 | Interface utilisateur, modules, Observatoire | `LACUNA_UI.md` |
 | Lore, onboarding, séquence de départ | `LACUNA_LORE.md` |
 | Transit — phases, confirmation du départ, détection, déviation | `LACUNA_TRANSIT.md` |
+| Écarts du Laboratoire, verdict, Drake de bord et collectif | `LACUNA_VERDICT.md` |
 | Traces — mécanique, types d'outputs, règles de conception | `LACUNA_TRACES.md` |
 | Traces immuables — fiches système, Journal de Yael | `LACUNA_TRACES_IMMUABLES.md` |
 | Anomalies astronomiques réelles — faits de référence | `LACUNA_ANOMALIES_REELLES.md` |
