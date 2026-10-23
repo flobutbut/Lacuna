@@ -9,6 +9,12 @@ import { formatDate } from '@/lib/formatUtils'
 import { getTraceIcon } from '@/constants/menus'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import NavMenuItem from '@/components/NavMenuItem.vue'
+import { PLAYER_TRACE_SUBTYPES } from '@/lib/verdicts'
+
+/** Libellé du sous-type d'une trace JOUEUR (Annotation, Découverte…) */
+function getSubtypeLabel(id) {
+  return PLAYER_TRACE_SUBTYPES.find((t) => t.id === id)?.label ?? id
+}
 
 const tracesStore = useTracesStore()
 const { artefacts } = storeToRefs(tracesStore)
@@ -95,7 +101,7 @@ function ensureSelection() {
   }
 }
 
-tracesStore.fetchImmutableTraces().then(() => tracesStore.unlockLevels())
+Promise.all([tracesStore.fetchImmutableTraces(), tracesStore.fetchPlayerTraces()]).then(() => tracesStore.unlockLevels())
 watch(artefacts, ensureSelection, { immediate: true })
 </script>
 
@@ -129,7 +135,7 @@ watch(artefacts, ensureSelection, { immediate: true })
             <div class="artifact-detail__icon"><AppIcon :name="getTraceIcon(selectedTrace.type)" /></div>
             <div class="artifact-detail__info">
               <div class="artifact-detail__name">{{ selectedTrace.designation }}</div>
-              <div class="artifact-detail__type">{{ selectedTrace.type }} · {{ selectedTrace.system_id }}</div>
+              <div class="artifact-detail__type">{{ selectedTrace.player_subtype ? getSubtypeLabel(selectedTrace.player_subtype) : selectedTrace.type }} · {{ selectedTrace.system_id ?? '—' }}</div>
             </div>
           </div>
 

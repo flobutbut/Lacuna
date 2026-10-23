@@ -6,7 +6,6 @@ import { useRoute } from 'vue-router'
 import { useObservationsStore } from '@/stores/observations'
 import { useLabReportsStore } from '@/stores/labReports'
 import { useVerdictsStore } from '@/stores/verdicts'
-import { useTracesStore } from '@/stores/traces'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useShipStore } from '@/stores/ship'
 import { useMapNodesStore } from '@/stores/mapNodes'
@@ -34,6 +33,7 @@ import LabReportMagneto from '@/components/lab/LabReportMagneto.vue'
 import LabReportNeutrinos from '@/components/lab/LabReportNeutrinos.vue'
 import InstrumentButton from '@/components/InstrumentButton.vue'
 import LabVerdictPanel from '@/components/lab/LabVerdictPanel.vue'
+import LabArtifactModal from '@/components/lab/LabArtifactModal.vue'
 import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
 import ObservationCard from '@/components/ObservationCard.vue'
 
@@ -41,7 +41,6 @@ const route = useRoute()
 const obsStore = useObservationsStore()
 const labReportsStore = useLabReportsStore()
 const verdictsStore = useVerdictsStore()
-const tracesStore = useTracesStore()
 const stellarStore = useStellarSystemsStore()
 const shipStore = useShipStore()
 const mapStore = useMapNodesStore()
@@ -268,28 +267,23 @@ function startSimulation() {
   animationFrame.value = requestAnimationFrame(tick)
 }
 
-function canFormalize() {
-  const obs = selectedObs.value
-  if (!obs) return false
-  const list = reports.value[obs.id] || []
-  return list.length > 0
-}
+/** Verdict courant de l'observation sélectionnée */
+const currentVerdict = computed(() => (selectedObs.value ? verdictsStore.getCurrent(selectedObs.value.id) : null))
 
-function formalize() {
-  const obs = selectedObs.value
-  if (!obs || !canFormalize()) return
-  const reportList = reports.value[obs.id] || []
-  const description = reportList
-    .map((r) => `${r.instrument} (Fiab. ${r.fiability}%) — ${r.results}`)
-    .join('\n\n')
-  tracesStore.addTrace({
-    designation: obs.name,
-    type: obs.type,
-    systemId: obs.system_id ?? obs.system,
-    description,
-    discovered: obs.date,
-  })
-  notificationsStore.showNotification(`Trace « ${obs.name} » ajoutée aux Artefacts`)
+/** « Créer un artefact » : après un verdict, un seul artefact par verdict (LACUNA_VERDICT.md §6.3) */
+const canCreateArtifact = computed(() => !!currentVerdict.value && !currentVerdict.value.traceId)
+
+const artifactButtonTitle = computed(() => {
+  if (!currentVerdict.value) return 'Rendez d’abord un verdict sur cette observation.'
+  if (currentVerdict.value.traceId) return 'Un artefact a déjà été déposé pour ce verdict ; révisez-le pour en déposer un autre.'
+  return ''
+})
+
+const showArtifactModal = ref(false)
+
+function onArtifactCreated(designation) {
+  showArtifactModal.value = false
+  notificationsStore.showNotification(`Trace « ${designation} » ajoutée aux Artefacts`)
 }
 
 const selectedReports = computed(() => {
@@ -326,6 +320,27 @@ const deviationSightings = computed(() =>
 const mainDeviationFamily = computed(() =>
   getMainDeviationFamily(selectedReports.value.map(getDeviationsForReport))
 )
+
+/** Nombre de rapports qui mesurent l'écart principal */
+const mainFamilySightings = computed(() => {
+  const family = mainDeviationFamily.value
+  if (!family) return 0
+  return selectedReports.value.filter((r) =>
+    getDeviationsForReport(r).some((d) => d.family === family && !d.requiresNiveau)
+  ).length
+})
+
+/** Écarts mesurés de l'observation, un par écart — données déposées avec l'artefact */
+const measuredDeviationLines = computed(() => {
+  const seen = new Map()
+  for (const r of selectedReports.value) {
+    for (const d of getDeviationsForReport(r)) {
+      if (d.requiresNiveau || seen.has(d.id)) continue
+      seen.set(d.id, `${DEVIATION_FAMILIES[d.family]?.label ?? d.family} — ${d.label} : attendu ${d.expected}, mesuré ${d.measured}.`)
+    }
+  }
+  return [...seen.values()]
+})
 
 const runningForSelected = computed(() => {
   const obs = selectedObs.value
@@ -482,10 +497,11 @@ onUnmounted(() => {
               <button
                 type="button"
                 class="btn btn-primary"
-                :disabled="!canFormalize()"
-                @click="formalize"
+                :disabled="!canCreateArtifact"
+                :title="artifactButtonTitle"
+                @click="showArtifactModal = true"
               >
-                Créer un artefact
+                {{ currentVerdict?.traceId ? 'Artefact déposé' : 'Créer un artefact' }}
               </button>
             </div>
           </div>
@@ -672,11 +688,21 @@ onUnmounted(() => {
             <LabVerdictPanel
               v-if="selectedReports.length > 0"
               :observation-id="selectedObs.id"
+              :observation-name="selectedObs.name"
               :family="mainDeviationFamily"
+              :family-sightings="mainFamilySightings"
             />
           </div>
         </template>
       </div>
     </div>
+    <LabArtifactModal
+      v-if="showArtifactModal && selectedObs && currentVerdict"
+      :observation="selectedObs"
+      :verdict="currentVerdict"
+      :deviation-lines="measuredDeviationLines"
+      @close="showArtifactModal = false"
+      @created="onArtifactCreated"
+    />
   </div>
 </template>

@@ -269,6 +269,8 @@ Traces collectables (Artefacts, Collection).
 | points_to | UUID FK | → traces (lien narratif) |
 | discovered | DATE | |
 | discovered_by | UUID | ship_id, nullable pour IMMUABLE |
+| player_subtype | TEXT | Trace JOUEUR : ANNOTATION, WARNING, DIRECTION, DISCOVERY (00076) ; NULL sinon |
+| verdict_id | UUID FK | → lab_verdicts (SET NULL) : verdict d'où l'artefact a été déposé ; jamais exposé (00076) |
 
 #### `observations`
 File d'observations Laboratoire.
@@ -352,7 +354,8 @@ Verdicts du joueur sur ses observations (`LACUNA_VERDICT.md` §5, migration 0007
 | family | TEXT | Famille de l'écart principal ; NULL si aucun écart mesuré |
 | generation | INT | Génération du vaisseau au moment du verdict (serveur) |
 | ship_date | TEXT | Date du calendrier du vaisseau (serveur, `ship_galactic_date`) |
-| logbook_entry_id | UUID FK | → logbook_entries (SET NULL) ; entrée écrite avec le verdict (lot 3), NULL pour l'instant |
+| logbook_entry_id | UUID FK | → logbook_entries (SET NULL) ; entrée MANUEL écrite avec le verdict (00076) |
+| trace_id | UUID FK | → traces (SET NULL), unique : artefact déposé depuis ce verdict (00076) |
 | created_at | TIMESTAMPTZ | |
 
 #### `profiles`
@@ -576,6 +579,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00073 | Calendrier du vaisseau : départ le 1er janvier 2041 (et non 2187) ; built_year = 2041 ; dates du journal et des signaux recalculées |
 | 00074 | Laboratoire : colonne `lab_reports.deviations` (écarts attendu / mesuré, `LACUNA_VERDICT.md` §4) — appliquée le 23/10/2026 (table vide en production, aucun rapport antérieur) |
 | 00075 | Laboratoire : table `lab_verdicts`, enum `verdict_reading`, RPC `record_verdict` (`LACUNA_VERDICT.md` §5) — appliquée le 23/10/2026 ; RPC testée en rôle joueur dans une transaction annulée (8 cas : sans rapport, famille d'une ombre, note trop longue, verdict valide, lecture RLS, écriture directe refusée, observation inconnue, sans connexion) |
+| 00076 | Verdict : entrée MANUEL au journal (`record_verdict(…, p_log_to_journal)`), RPC `create_artifact` (trace JOUEUR permanente, interprétation), `traces.player_subtype`, `traces.verdict_id`, `lab_verdicts.trace_id` (`LACUNA_VERDICT.md` §6.2, §6.3) — appliquée le 24/10/2026 ; testée en rôle joueur dans des transactions annulées (verdict avec et sans journal, artefact valide, verdict révisé refusé, sous-type et désignation invalides, second artefact refusé, suffixe de désignation, sous-type lisible et `verdict_id` caché, verdict d'un autre compte) |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
@@ -598,9 +602,13 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 
 `SECURITY DEFINER`, réservée à `authenticated`. Supprime les interprétations du joueur (sinon conservées sans auteur, `ON DELETE SET NULL`), efface son vaisseau de `traces.discovered_by`, puis supprime `auth.users` : profil, vaisseau et toutes ses données suivent en cascade. Appelée depuis Paramètres → Compte.
 
-### RPC `record_verdict(p_observation_id, p_reading, p_confidence, p_note, p_family)` (migration 00075)
+### RPC `record_verdict(p_observation_id, p_reading, p_confidence, p_note, p_family, p_log_to_journal)` (migrations 00075, 00076)
 
-`SECURITY DEFINER`, réservée à `authenticated`. Seule voie d'écriture de `lab_verdicts`. Vérifie que l'observation appartient au vaisseau du joueur et a au moins un rapport, que la note fait au plus 280 caractères, et que `p_family` (facultative) est la famille d'un écart **mesuré** (pas une ombre) dans `lab_reports.deviations` de l'observation. Fixe `generation` et `ship_date`. Renvoie la ligne insérée. N'écrit ni au journal ni dans Drake (lots 3 et 5).
+`SECURITY DEFINER`, réservée à `authenticated`. Seule voie d'écriture de `lab_verdicts`. Vérifie que l'observation appartient au vaisseau du joueur et a au moins un rapport, que la note fait au plus 280 caractères, et que `p_family` (facultative) est la famille d'un écart **mesuré** (pas une ombre) dans `lab_reports.deviations` de l'observation. Fixe `generation` et `ship_date`. Avec `p_log_to_journal` (00076, défaut `false`), écrit aussi une entrée `MANUEL` « Verdict — [observation] » (texte : `verdict_journal_text`) et la relie par `logbook_entry_id`. Renvoie la ligne insérée. N'écrit pas dans Drake (lot 5).
+
+### RPC `create_artifact(p_verdict_id, p_designation, p_subtype, p_interpretation)` (migration 00076)
+
+`SECURITY DEFINER`, réservée à `authenticated`. « Créer un artefact » depuis le **verdict courant** (pas un verdict révisé) d'une de ses observations, un seul par verdict. Dépose une trace `JOUEUR` / `PLAYER_TRACE` permanente, visible des autres vaisseaux : désignation de 2 à 40 caractères, rendue unique par un suffixe (-2, -3…) ; `description` = écarts mesurés (un par identifiant), pas le texte des rapports ; `system_id` si le système existe ; `discovered` = date du vaisseau. Relie la trace au vaisseau (`ship_traces`), ajoute l'interprétation (texte fourni, sinon la note du verdict, avec sa confiance et sa génération) et renseigne `lab_verdicts.trace_id`. Renvoie `{ trace_id, designation }`. « Verdict courant » se lit sur `created_at` : deux verdicts d'une même transaction auraient la même date (`now()`), ce qui n'arrive pas par l'API (un appel RPC = une transaction).
 
 ### RPC `unlock_trace_levels()` et `get_trace_levels(p_trace_id)` (migration 00060)
 
@@ -737,8 +745,8 @@ Sans compte (`anon`) : aucune donnée de jeu, données du monde en lecture. `TRU
 | systemObjects | system_objects | SELECT par system_id (corps Observatoire) |
 | observations | observations | SELECT, INSERT, UPDATE (state), DELETE. Filtre ship_id (vaisseau du joueur) |
 | labReports | lab_reports | SELECT par observation, INSERT (écarts dans `deviations`) |
-| verdicts | lab_verdicts, RPC record_verdict | SELECT par observation (plus récent d'abord) ; écriture par la RPC. Hors ligne : en mémoire |
-| traces | traces, interpretations | SELECT traces immuables, interpretations (sans ship_id). INSERT interpretation (ship_id, génération). DELETE de ses interprétations. Traces joueur en mémoire (playerTraces) — à brancher sur ship_traces |
+| verdicts | lab_verdicts, RPC record_verdict | SELECT par observation (plus récent d'abord) ; écriture par la RPC (entrée de journal facultative). Hors ligne : en mémoire |
+| traces | traces, ship_traces, interpretations, RPC create_artifact | SELECT traces immuables ; artefacts du vaisseau (traces JOUEUR via ship_traces) ; interpretations (sans ship_id). INSERT interpretation (ship_id, génération). DELETE de ses interprétations. Dépôt d'artefact par create_artifact. Hors ligne : en mémoire |
 | signaux | signals, RPC compute_pulsar_signals | SELECT / INSERT / DELETE filtrés par ship_id ; calcul des pulsars par bande |
 | ship | ships, ship_systems, populations, ship_travels | SELECT du vaisseau du joueur (attend la session). UPDATE ships (transit, renameShip). INSERT ship_travels à chaque arrivée |
 | auth | auth (Supabase), profiles, ships, RPC start_new_game | Session, inscription, connexion, mot de passe ; profil (pseudo, rôle), hasShip ; startNewGame, updatePseudo |
@@ -908,6 +916,8 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 | 2026-10-23 | 00074 appliquée : colonne `lab_reports.deviations` en production |
 | 2026-10-23 | 00075 écrite : verdicts du Laboratoire (`lab_verdicts`, RPC `record_verdict`) |
 | 2026-10-23 | 00075 appliquée : `lab_verdicts`, `verdict_reading`, RPC `record_verdict` en production ; tests sans donnée laissée |
+| 2026-10-24 | 00076 écrite : verdict consigné au journal, dépôt d'artefact (`create_artifact`) |
+| 2026-10-24 | 00076 appliquée : `record_verdict` avec journal, `create_artifact`, `traces.player_subtype` / `verdict_id`, `lab_verdicts.trace_id` en production ; tests sans donnée laissée |
 | 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |

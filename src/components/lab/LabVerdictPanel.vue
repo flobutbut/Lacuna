@@ -18,8 +18,12 @@ import {
  */
 const props = defineProps({
   observationId: { type: String, required: true },
+  /** Nom de l'observation (titre de l'entrée de journal) */
+  observationName: { type: String, default: '' },
   /** Famille de l'écart principal (getMainDeviationFamily), null si aucun écart mesuré */
   family: { type: String, default: null },
+  /** Nombre de rapports qui mesurent l'écart principal */
+  familySightings: { type: Number, default: 0 },
 })
 
 const verdictsStore = useVerdictsStore()
@@ -31,6 +35,7 @@ const editing = ref(false)
 const reading = ref(null)
 const confidence = ref('HYPOTHÈSE')
 const note = ref('')
+const logToJournal = ref(true)
 const saving = ref(false)
 const error = ref('')
 
@@ -38,6 +43,7 @@ function resetForm() {
   reading.value = current.value?.reading ?? null
   confidence.value = current.value?.confidence ?? 'HYPOTHÈSE'
   note.value = current.value?.note ?? ''
+  logToJournal.value = true
   error.value = ''
 }
 
@@ -68,6 +74,9 @@ async function submit() {
     confidence: confidence.value,
     note: note.value,
     family: props.family,
+    logToJournal: logToJournal.value,
+    observationName: props.observationName,
+    sightings: props.familySightings,
   })
   saving.value = false
   if (res.error) {
@@ -137,6 +146,11 @@ function familyLabel(family) {
         <span class="lab-verdict__count">{{ note.length }} / {{ VERDICT_NOTE_MAX }}</span>
       </label>
 
+      <label class="lab-verdict__journal">
+        <input v-model="logToJournal" type="checkbox" />
+        <span>Consigner au journal</span>
+      </label>
+
       <div v-if="error" class="lab-verdict__error" role="alert">{{ error }}</div>
 
       <div class="lab-verdict__actions">
@@ -154,6 +168,7 @@ function familyLabel(family) {
         <button type="button" class="btn btn-secondary lab-verdict__revise" @click="startRevision">Réviser</button>
       </div>
       <p v-if="current.note" class="lab-verdict__quote">« {{ current.note }} »</p>
+      <p v-if="current.logbookEntryId" class="lab-verdict__logged">Consigné au journal.</p>
     </div>
 
     <div v-if="previous.length" class="lab-verdict__history">

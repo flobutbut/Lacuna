@@ -57,3 +57,53 @@ export function formatVerdict(verdict) {
   if (!verdict) return ''
   return `${getReadingLabel(verdict.reading)} · ${getConfidenceLabel(verdict.confidence).toLowerCase()}`
 }
+
+/** Libellés des familles dans le texte du journal — même texte que verdict_journal_text (migration 00076) */
+const FAMILY_TEXT = {
+  ELECTROMAGNETIQUE: 'électromagnétique',
+  ORBITALE: 'orbitale',
+  CHIMIQUE: 'chimique',
+  MORPHOLOGIQUE: 'morphologique',
+  THERMIQUE: 'thermique',
+  TEMPORELLE: 'temporelle',
+  GRAVITATIONNELLE: 'gravitationnelle',
+  ABSENCE: 'absence',
+}
+
+/**
+ * Texte de l'entrée de journal d'un verdict (LACUNA_VERDICT.md §6.2).
+ * En ligne, le serveur l'écrit lui-même (verdict_journal_text) ; ce texte sert au mode démo.
+ * @param {{ reading: string, confidence: string, family: string|null, sightings: number, note?: string }} v
+ */
+export function buildVerdictJournalText({ reading, confidence, family, sightings, note }) {
+  const head = `${getReadingLabel(reading)} (${confidence.toLowerCase()}). `
+  const body = family
+    ? `Écart principal (${FAMILY_TEXT[family] ?? family.toLowerCase()}), mesuré par ${sightings} rapport${sightings > 1 ? 's' : ''}.`
+    : 'Aucun écart mesuré.'
+  const quote = note?.trim() ? `\n« ${note.trim()} »` : ''
+  return head + body + quote
+}
+
+/** Sous-types d'une trace JOUEUR (LACUNA_GDD.md §4, traces.player_subtype) */
+export const PLAYER_TRACE_SUBTYPES = [
+  { id: 'ANNOTATION', label: 'Annotation', hint: 'Une remarque sur ce système.' },
+  { id: 'DISCOVERY', label: 'Découverte', hint: 'Quelque chose que le modèle n’explique pas.' },
+  { id: 'WARNING', label: 'Avertissement', hint: 'Une mise en garde pour les vaisseaux suivants.' },
+  { id: 'DIRECTION', label: 'Direction', hint: 'Une piste vers un autre système.' },
+]
+
+/** Sous-type suggéré d'après la lecture du verdict (LACUNA_VERDICT.md §6.3) */
+export function suggestSubtype(reading) {
+  return reading === 'NATUREL_INEXPLIQUE' || reading === 'ARTIFICIEL_POSSIBLE' ? 'DISCOVERY' : 'ANNOTATION'
+}
+
+/** Longueur maximale d'une désignation d'artefact (create_artifact) */
+export const ARTIFACT_DESIGNATION_MAX = 40
+/** Longueur maximale de l'interprétation déposée avec l'artefact (create_artifact) */
+export const ARTIFACT_INTERPRETATION_MAX = 2000
+
+/** Désignation suggérée : le nom de l'objet, sans le type (« Proxima c · Corps planétaire » → « PROXIMA-C ») */
+export function suggestDesignation(observationName) {
+  const base = String(observationName ?? '').split('·')[0].trim()
+  return base.toUpperCase().replace(/\s+/g, '-').slice(0, ARTIFACT_DESIGNATION_MAX) || 'TRACE'
+}

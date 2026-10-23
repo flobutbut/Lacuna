@@ -1,6 +1,6 @@
 /**
- * Store Traces — traces immuables (Supabase), traces créées par le joueur depuis le Laboratoire,
- * et interprétations associées (onglet Artefacts)
+ * Store Traces — traces immuables (Supabase), artefacts déposés par le joueur depuis un verdict
+ * du Laboratoire (RPC create_artifact, LACUNA_VERDICT.md §6.3), et interprétations associées (onglet Artefacts)
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -8,14 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 import { useShipStore } from '@/stores/ship'
 
-const OBS_TYPE_TO_TRACE_TYPE = {
-  SIGNAL: 'SIGNAL_RADIO',
-  PLANETE: 'ORBITAL_ANOMALY',
-  MINEUR: 'INTERSTELLAR_OBJECT',
-  OBJET: 'PHYSICAL_ARTIFACT',
-  ATMOSPHERE: 'CHEMICAL_ANOMALY',
-  ETOILE: 'STELLAR_ANOMALY',
-}
+const TRACE_COLUMNS = 'id, designation, type, origin, system_id, difficulty, description, discovered, player_subtype'
 
 // Données de repli si Supabase non configuré
 const FALLBACK_TRACES = [
@@ -42,21 +35,73 @@ export const useTracesStore = defineStore('traces', () => {
   /** Traces joueur (récentes en tête) puis traces immuables */
   const artefacts = computed(() => [...playerTraces.value, ...immutableTraces.value])
 
-  function addTrace({ designation, type, systemId, description, discovered }) {
-    const id = `player-${Date.now()}`
-    const trace = {
-      id,
-      designation,
-      type: OBS_TYPE_TO_TRACE_TYPE[type] ?? 'PLAYER_TRACE',
-      system_id: systemId ?? '—',
-      difficulty: '1',
-      description: description ?? '',
-      discovered: discovered ?? '',
-      unread: true,
-      origin: 'JOUEUR',
+  /** Artefacts déposés par ce vaisseau (traces JOUEUR reliées par ship_traces), récents en tête */
+  async function fetchPlayerTraces() {
+    if (!useSupabaseStore().isConfigured()) return
+    const shipStore = useShipStore()
+    if (!shipStore.loaded) await shipStore.fetch()
+    const shipId = shipStore.ship?.id
+    if (!shipId) return
+    const { data, error } = await supabase
+      .from('ship_traces')
+      .select(`discovered_at, traces!inner(${TRACE_COLUMNS})`)
+      .eq('ship_id', shipId)
+      .eq('traces.origin', 'JOUEUR')
+      .order('discovered_at', { ascending: false })
+    if (error) {
+      console.warn('[traces] Erreur fetch artefacts joueur:', error.message)
+      return
     }
-    playerTraces.value = [trace, ...playerTraces.value]
-    return id
+    const unread = new Set(playerTraces.value.filter((t) => t.unread).map((t) => t.id))
+    playerTraces.value = (data || []).map((row) => ({ ...row.traces, unread: unread.has(row.traces.id) }))
+  }
+
+  /**
+   * Dépose un artefact depuis le verdict courant d'une observation (LACUNA_VERDICT.md §6.3).
+   * En ligne : RPC create_artifact (trace JOUEUR permanente, écarts mesurés, interprétation).
+   * Hors ligne : trace et interprétation gardées en mémoire.
+   * @param {{ verdict: object, observation: object, designation: string, subtype: string,
+   *           interpretation: string, deviationLines: string[] }} payload
+   * @returns {Promise<{ traceId: string, designation: string }>} lève une erreur si le dépôt échoue
+   */
+  async function createArtifact({ verdict, observation, designation, subtype, interpretation, deviationLines }) {
+    if (!useSupabaseStore().isConfigured() || String(verdict.id).startsWith('local-')) {
+      const id = `player-${Date.now()}`
+      const trace = {
+        id,
+        designation: designation.trim(),
+        type: 'PLAYER_TRACE',
+        origin: 'JOUEUR',
+        player_subtype: subtype,
+        system_id: observation.system_id ?? '—',
+        difficulty: '1',
+        description: deviationLines.length ? deviationLines.join('\n') : 'Aucun écart mesuré au-delà du bruit.',
+        discovered: verdict.shipDate,
+        unread: true,
+      }
+      playerTraces.value = [trace, ...playerTraces.value]
+      const interp = {
+        id: 'local-' + Date.now(),
+        text: interpretation.trim() || verdict.note || '',
+        confidence: verdict.confidence,
+        generation: verdict.generation,
+        galactic_date: verdict.shipDate,
+        created_at: new Date().toISOString(),
+      }
+      localInterpretations.value = { ...localInterpretations.value, [id]: [interp] }
+      return { traceId: id, designation: trace.designation }
+    }
+    const { data, error } = await supabase.rpc('create_artifact', {
+      p_verdict_id: verdict.id,
+      p_designation: designation,
+      p_subtype: subtype,
+      p_interpretation: interpretation?.trim() || null,
+    })
+    if (error) throw error
+    await fetchPlayerTraces()
+    const created = playerTraces.value.find((t) => t.id === data.trace_id)
+    if (created) created.unread = true
+    return { traceId: data.trace_id, designation: data.designation }
   }
 
   function markAsRead(id) {
@@ -166,7 +211,8 @@ export const useTracesStore = defineStore('traces', () => {
     tracesLoading,
     tracesError,
     artefacts,
-    addTrace,
+    fetchPlayerTraces,
+    createArtifact,
     markAsRead,
     fetchImmutableTraces,
     unlockLevels,

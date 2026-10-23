@@ -65,6 +65,23 @@ export const useJournalStore = defineStore('journal', () => {
     return data
   }
 
+  /** Entrée MANUEL gardée en mémoire (mode démo, sans Supabase) ; renvoie l'entrée */
+  function addLocal({ title, text, date, generation }) {
+    const entry = {
+      id: `local-${Date.now()}`,
+      type: 'MANUEL',
+      family: null,
+      date,
+      context: null,
+      generation,
+      title,
+      text,
+      created_at: new Date().toISOString(),
+    }
+    entries.value = [entry, ...entries.value]
+    return entry
+  }
+
   /**
    * Écrit au journal un événement du ciel de départ, une fois qu'il a eu lieu (RPC log_sky_event).
    * @param {'cie-003'|'cie-004'} key - Sortie du choc de SN-001, première impulsion de LPT-001
@@ -81,5 +98,5 @@ export const useJournalStore = defineStore('journal', () => {
     if (data?.logged > 0 && loaded.value) await fetch()
   }
 
-  return { entries, loaded, fetch, addManual, logSkyEvent }
+  return { entries, loaded, fetch, addManual, addLocal, logSkyEvent }
 })

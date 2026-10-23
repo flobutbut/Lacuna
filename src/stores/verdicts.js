@@ -9,9 +9,11 @@ import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 import { useShipStore } from '@/stores/ship'
+import { useJournalStore } from '@/stores/journal'
 import { DEPARTURE_YEAR } from '@/constants/calendar'
+import { buildVerdictJournalText } from '@/lib/verdicts'
 
-const COLUMNS = 'id, observation_id, reading, confidence, note, family, generation, ship_date, created_at'
+const COLUMNS = 'id, observation_id, reading, confidence, note, family, generation, ship_date, logbook_entry_id, trace_id, created_at'
 
 function rowToVerdict(row) {
   return {
@@ -23,6 +25,8 @@ function rowToVerdict(row) {
     family: row.family ?? null,
     generation: row.generation,
     shipDate: row.ship_date,
+    logbookEntryId: row.logbook_entry_id ?? null,
+    traceId: row.trace_id ?? null,
     createdAt: row.created_at,
   }
 }
@@ -58,10 +62,15 @@ export const useVerdictsStore = defineStore('verdicts', () => {
   }
 
   /**
-   * Rend un verdict (ou en révise un) sur une observation.
+   * Rend un verdict (ou en révise un) sur une observation ; avec logToJournal, une entrée MANUEL
+   * « Verdict — [observation] » est écrite au journal (LACUNA_VERDICT.md §6.2).
+   * @param {string} observationId
+   * @param {{ reading: string, confidence: string, note?: string, family: string|null,
+   *           logToJournal?: boolean, observationName?: string, sightings?: number }} payload
    * @returns {Promise<{ verdict: object|null, error: string|null }>}
    */
-  async function record(observationId, { reading, confidence, note, family }) {
+  async function record(observationId, { reading, confidence, note, family, logToJournal = false, observationName = '', sightings = 0 }) {
+    const journalStore = useJournalStore()
     const supabaseStore = useSupabaseStore()
     let verdict
     if (supabaseStore.isConfigured() && isUuid(observationId)) {
@@ -71,12 +80,14 @@ export const useVerdictsStore = defineStore('verdicts', () => {
         p_confidence: confidence,
         p_note: note?.trim() || null,
         p_family: family ?? null,
+        p_log_to_journal: logToJournal,
       })
       if (error) {
         console.warn('[verdicts] record_verdict:', error.message)
         return { verdict: null, error: error.message }
       }
       verdict = rowToVerdict(data)
+      if (verdict.logbookEntryId && journalStore.loaded) await journalStore.fetch()
     } else {
       const shipStore = useShipStore()
       verdict = {
@@ -88,7 +99,18 @@ export const useVerdictsStore = defineStore('verdicts', () => {
         family: family ?? null,
         generation: shipStore.generation,
         shipDate: `${DEPARTURE_YEAR}-01-01`,
+        logbookEntryId: null,
+        traceId: null,
         createdAt: new Date().toISOString(),
+      }
+      if (logToJournal) {
+        const entry = journalStore.addLocal({
+          title: `Verdict — ${observationName}`.slice(0, 120),
+          text: buildVerdictJournalText({ reading, confidence, family, sightings, note }),
+          date: verdict.shipDate,
+          generation: verdict.generation,
+        })
+        verdict.logbookEntryId = entry.id
       }
     }
     byObs.value = { ...byObs.value, [observationId]: [verdict, ...(byObs.value[observationId] ?? [])] }
@@ -105,11 +127,17 @@ export const useVerdictsStore = defineStore('verdicts', () => {
     return byObs.value[observationId] ?? []
   }
 
+  /** Relie un verdict à l'artefact déposé depuis lui (create_artifact) */
+  function setTrace(observationId, verdictId, traceId) {
+    const list = byObs.value[observationId] ?? []
+    byObs.value = { ...byObs.value, [observationId]: list.map((v) => (v.id === verdictId ? { ...v, traceId } : v)) }
+  }
+
   function clearForObs(observationId) {
     const next = { ...byObs.value }
     delete next[observationId]
     byObs.value = next
   }
 
-  return { byObs, fetchForObservations, record, getCurrent, getHistory, clearForObs }
+  return { byObs, fetchForObservations, record, getCurrent, getHistory, setTrace, clearForObs }
 })
