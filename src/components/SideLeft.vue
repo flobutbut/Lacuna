@@ -9,13 +9,14 @@ import { isWindowOpen } from '@/lib/signalWindow'
 import AppSwitch from '@/components/AppSwitch.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import RadarMiniature from '@/components/RadarMiniature.vue'
+import NeutrinoMonitor from '@/components/NeutrinoMonitor.vue'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const signauxStore = useSignauxStore()
 const radarStore = useRadarStore()
 const shipStore = useShipStore()
 const observatoireStore = useObservatoireStore()
-const { radarEnabled, radarNoiseEnabled } = storeToRefs(radarStore)
+const { radarEnabled, radarNoiseEnabled, neutrinoMonitorEnabled } = storeToRefs(radarStore)
 /** Filtre de bruit actif = bruit de fond retiré du spectrogramme */
 const noiseFiltered = computed(() => radarNoiseEnabled.value === false)
 
@@ -109,6 +110,23 @@ onUnmounted(() => {
       </div>
       <!-- Radar coupé : tuile réduite à son en-tête -->
       <RadarMiniature v-if="radarEnabled" />
+    </div>
+
+    <div class="side-widget">
+      <div
+        class="side-widget__header side-widget__header--radar"
+        :class="{ 'side-widget__header--collapsed': !neutrinoMonitorEnabled }"
+      >
+        <div class="side-widget__radar-title">
+          <div class="sw-title sw-title--inline">Neutrinos</div>
+          <AppSwitch
+            v-model="neutrinoMonitorEnabled"
+            aria-label="Moniteur du détecteur de neutrinos"
+            :title="neutrinoMonitorEnabled ? 'Masquer le moniteur' : 'Afficher le moniteur'"
+          />
+        </div>
+      </div>
+      <NeutrinoMonitor v-if="neutrinoMonitorEnabled" />
     </div>
   </div>
 </template>

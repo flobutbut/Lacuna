@@ -26,6 +26,8 @@ export const useRadarStore = defineStore('radar', () => {
   const radarFreqHigh = ref(125)
   /** Acquisition spectrogramme (buffer radar) — interrupteurs de l'Observatoire, état affiché dans le header */
   const radarEnabled = ref(true)
+  /** Moniteur du détecteur de neutrinos (tuile sous le Radar) */
+  const neutrinoMonitorEnabled = ref(true)
 
   function setRadarFrequencyBand(band) {
     if (band) radarFrequencyBand.value = band
@@ -100,5 +102,6 @@ export const useRadarStore = defineStore('radar', () => {
     radarFreqHigh,
     setRadarFreqHigh,
     radarEnabled,
+    neutrinoMonitorEnabled,
   }
 })
