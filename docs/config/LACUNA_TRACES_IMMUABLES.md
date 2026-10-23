@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Traces immuables
-*Version 0.8 — Octobre 2026*
+*Version 0.9 — Octobre 2026*
 
 > Ce document contient les **fiches des traces immuables** qui n'appartiennent pas à un scénario — voisinage solaire, hors voisinage — et le **Journal de Yael** (origine `PRÉCURSEUR`). Les traces appartenant à un scénario ont leurs fiches de nœuds dans `LACUNA_SCENARIOS.md`. La mécanique (définition, chaîne de production, types d'outputs, qualification) vit dans `LACUNA_TRACES.md`. Les faits astronomiques de référence vivent dans `LACUNA_ANOMALIES_REELLES.md`.
 >
@@ -33,6 +33,7 @@
 | 0.6 | Octobre 2026 | SN-001 : T0 ramené à création + 3 minutes |
 | 0.7 | Octobre 2026 | SN-001, après test joueur : silence ramené à 6 min ; halo orienté vers Orion à la sortie du choc ; explosion répartie par bande (éclair UV, visible avec aigrettes et refroidissement, IR tardif, source radio sur le Radar) ; nébuleuse du rémanent (valeur de jeu) |
 | 0.8 | Octobre 2026 | SN-001 : montée des neutrinos de pré-supernova implémentée (création + 3 min, 5 min) ; la bouffée passe à création + 8 min (migration `00065`) |
+| 0.9 | Octobre 2026 | LPT-001 implémenté : objet réel GPM J1839−10 (position MeerKAT ajoutée), phase commune à tous les joueurs, première impulsion captée après création + 20 min, impulsions tirées une à une (durée, intensité, polarisation), Radar, halo, Laboratoire (migration `00066`, `src/lib/lpt.js`) ; signature : réapparition reportée |
 
 ---
 
@@ -523,10 +524,12 @@ T0 (la bouffée) = création de la partie + 8 minutes (`ships.supernova_t0`, mig
 
 ---
 
-### LPT-001 — Le signal de 22 minutes (proposition)
-**Système :** GPM J1839−10, ~5,7 kpc (~18 600 al)
+### LPT-001 — Le signal de 22 minutes (proposition retenue)
+**Système :** GPM J1839−10, ~5,7 kpc (~18 600 al) — hors des systèmes du jeu
+**Position :** AD 18h39m02,0s, Déc −10°31′49″ (J2000 ; AD 279,758°, Déc −10,530°), dans l'Écu, sur le plan galactique — position MeerKAT de l'article de découverte
 **Type :** SIGNAL — radio, périodique
 **Difficulté :** 1 (capté depuis Sol) — 2 (analysé)
+**Statut :** implémenté le 23 octobre 2026 (migration `00066`, `src/lib/lpt.js`)
 
 **Ancrage réel**
 Découvert en 2022 par le Murchison Widefield Array lors d'un relevé du plan galactique, GPM J1839−10 émet une impulsion radio toutes les 1 318,1957 s (~22 min). Les impulsions durent de 30 à 300 s et leur intensité varie d'un facteur ~100. Les archives montrent qu'il émet depuis au moins 1988 (VLA). Polarisation linéaire variable (10 à 100 %), faible polarisation circulaire. Mesure de dispersion 273,5 pc cm⁻³, d'où une distance de 5,7 ± 2,9 kpc (Hurley-Walker et al., *Nature*, 2023). Sa période est trop longue pour un pulsar classique et elle ne dérive presque pas ; les auteurs le jugent « extrêmement déroutant ». Hypothèses discutées : magnétar à période ultra-longue, naine blanche magnétique.
@@ -556,10 +559,35 @@ SIGNATURE — une période de ~1 318 s à reconnaître si elle réapparaît aill
 - Naine blanche magnétique, isolée ou en binaire
 - Classe d'objets encore inconnue
 
-**Questions ouvertes**
-- Utiliser l'objet réel ou un objet inspiré de la classe (GLEAM-X J162759.5−523504.3, ~18 min, ~1,3 kpc, actif quelques mois en 2018) ?
-- Le Radar ne garde que 12 minutes d'historique : une période de 22 minutes n'y montre qu'une impulsion à la fois. L'analyse de la périodicité passe donc par le Laboratoire, sur une capture longue.
-- La signature doit-elle réapparaître plus tard (un autre système, une autre génération) pour que l'output ait un sens ?
+**Décisions**
+- L'objet est **GPM J1839−10 réel** (et non un objet inspiré de la classe).
+- C'est un objet du ciel : sa phase est **commune à tous les joueurs**, calée sur l'époque partagée des signaux (`game_settings.scenario_signal_epoch`). L'impulsion n° k commence à époque + k × période.
+- Le Radar ne garde que 12 minutes d'historique : une période de 22 minutes n'y montre qu'une impulsion à la fois. La périodicité se mesure au Laboratoire.
+- La réapparition de la signature ailleurs (autre système, autre génération) est **reportée**.
+
+**Déroulé implémenté — temps réel joueur**
+1. Avant création de la partie + 20 min : rien. La séquence de SN-001 (bouffée à + 8 min, sortie du choc à + 14 min) passe d'abord.
+2. **Première impulsion** : la première qui commence après création + 20 min (donc entre + 20 et ~+ 42 min selon la phase). Elle est captée automatiquement, une fois par partie : un signal radio apparaît dans la liste, avec sa direction, structure « pulsé, intensité variable », fréquence « Large bande ». Le halo s'allume vers l'Écu. Rien ne présente ce signal comme important.
+3. **Radar** : quand le faisceau vise l'Écu, chaque impulsion apparaît comme une hausse large bande du bruit (bandes P, L et X ; rien en γ), qui monte puis redescend sur sa durée, plus forte selon son intensité.
+4. **Impulsions suivantes** : elles s'ajoutent au signal, toutes recalculées depuis la première (même si le joueur était absent), jusqu'à **50 impulsions** *(valeur provisoire)*. Le halo ne se rallume pour une impulsion que si le Radar vise l'Écu.
+5. **Laboratoire** : le signal reste dans la liste ; chaque envoi au Laboratoire emporte les impulsions reçues jusque-là. L'analyseur de structure temporelle montre le train d'impulsions : avec une seule, aucune période ; à partir de deux, la période mesurée, à ± période / nombre d'impulsions *(valeur provisoire)*, et la durée et l'intensité de chaque impulsion. L'analyseur de polarisation montre un degré linéaire différent d'une impulsion à l'autre.
+6. **Aucune conclusion** : la structure « pulsé, intensité variable » n'ouvre aucune conclusion d'analyse.
+
+**Valeurs**
+
+| Paramètre | Valeur | Origine |
+|---|---|---|
+| Période | 1 318,1957 s, sans dérive | ancrage réel |
+| Durée d'une impulsion | 30 à 300 s, tirée pour chaque impulsion (uniforme) | ancrage réel ; loi de tirage *provisoire* |
+| Intensité relative | 1 à 100, tirée pour chaque impulsion (log-uniforme) | ancrage réel ; loi de tirage *provisoire* |
+| Polarisation linéaire | 10 à 100 %, tirée pour chaque impulsion | ancrage réel |
+| Polarisation circulaire | 0 à 5 %, signe tiré | « faible » dans l'ancrage ; seuil de 5 % *provisoire* |
+| Mesure de dispersion | 273,5 pc cm⁻³ | ancrage réel |
+| Distance affichée | ~18 600 al | ancrage réel |
+| Première capture | première impulsion après création + 20 min | valeur de jeu |
+| Impulsions retenues | 50 au plus | *provisoire* |
+
+Les tirages dépendent du seul numéro de l'impulsion : tous les joueurs reçoivent les mêmes impulsions.
 
 ### Sources consultées (23 octobre 2026)
 
@@ -575,4 +603,4 @@ SIGNATURE — une période de ~1 318 s à reconnaître si elle réapparaît aill
 
 ---
 
-*LACUNA — Traces immuables v0.8 — Octobre 2026 — Confidentiel*
+*LACUNA — Traces immuables v0.9 — Octobre 2026 — Confidentiel*

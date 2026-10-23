@@ -547,6 +547,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00063 | ships.supernova_t0 (création + 10 min) et supernova_captured_at ; événement SN-001 (signal_events) ; RPC capture_supernova_neutrinos |
 | 00064 | supernova_t0 : création + 3 min (au lieu de 10) ; parties en attente alignées |
 | 00065 | supernova_t0 = création + 8 min ; supernova_pre_captured_at ; capture_supernova_neutrinos capte la montée de pré-supernova puis la bouffée |
+| 00066 | ships.lpt_captured_at ; RPC capture_lpt_signal : première impulsion de GPM J1839−10 après création + 20 min, phase calée sur scenario_signal_epoch (LPT-001) |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
@@ -855,6 +856,7 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 | 2026-10-23 | Migrations 00052–00061 appliquées en production ; 00061 : réglages d'administration |
 | 2026-10-23 | 00062 appliquée : support de signal NEUTRINO |
 | 2026-10-23 | 00063 appliquée : supernova de Bételgeuse (T0 par partie, bouffée de neutrinos) |
+| 2026-10-23 | 00064–00065 appliquées : montée de pré-supernova ; 00066 écrite : signal de 22 minutes (LPT-001) |
 | 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |

@@ -168,6 +168,8 @@ Les instruments du Laboratoire **analysent** les données déjà capturées. Ils
 
 **Usage** — Analyse tout signal capté. Répond : y a-t-il une structure dans le temps ? Périodique ? Modulée ?
 
+**Train d'impulsions (LPT-001)** — Pour un signal à impulsions longues et espacées, l'analyseur montre les impulsions reçues jusqu'à l'envoi au Laboratoire, sur un axe des temps : chacune avec sa durée et son intensité. Avec une seule impulsion, aucune période ; à partir de deux, la période mesurée, à ± période / nombre d'impulsions (*provisoire*). L'analyseur de polarisation donne le degré linéaire et circulaire de chaque impulsion.
+
 ---
 
 #### 4.3 Analyseur de polarisation
@@ -602,6 +604,7 @@ Toutes les visualisations doivent être adaptées au design system LACUNA (`toke
 | 0.5 | Octobre 2026 | Détecteur et analyseur de neutrinos implémentés (support `NEUTRINO`, `LabReportNeutrinos.vue`). Une bouffée n'a pas de direction sur le ciel : elle apparaît dans « Signaux sans direction » et donne un halo uniforme ; sa direction se lit au Laboratoire |
 | 0.6 | Octobre 2026 | §3.4 : moniteur en direct du détecteur de neutrinos (tuile sous le Radar, échelle logarithmique) |
 | 0.7 | Octobre 2026 | §3.4 : échelle du moniteur ajustée à la fenêtre, tendance lissée |
+| 0.8 | Octobre 2026 | §4.2 : train d'impulsions d'un transitoire radio à longue période (LPT-001) ; polarisation par impulsion |
 
 ---
 

@@ -93,7 +93,7 @@ Quand le vaisseau capte un signal, deux effets cohabitent simultanément :
 
 - **Orientation** — le halo est plus intense sur le bord qui fait face à la direction du signal, par rapport à la direction de vue actuelle de l'Observatoire. Son intensité globale augmente quand le joueur tourne la vue vers le signal (gain calculé comme pour le faisceau du Radar). Il aide à s'orienter sans pointer précisément.
 - **Sans direction** — un émetteur du système où se trouve le vaisseau, ou un signal à direction mal définie (bouffée de neutrinos), donne un halo uniforme sur tous les bords.
-- **Déclencheurs** — le *début* d'un signal seulement : nouvelle capture, ouverture d'une fenêtre d'émission, impulsion d'un signal lent (période de l'ordre de la minute ou plus, comme LPT-001), et l'arrivée de la lumière d'une supernova (sortie du choc de SN-001, orientée vers l'étoile). Un train d'impulsions rapide (pulsar) ne le rallume pas en continu — sinon le halo devient un tic d'interface et perd son sens.
+- **Déclencheurs** — le *début* d'un signal seulement : nouvelle capture, ouverture d'une fenêtre d'émission, impulsion d'un signal lent (période de l'ordre de la minute ou plus, comme LPT-001 : à sa capture, puis à chaque impulsion seulement si le Radar vise sa direction), et l'arrivée de la lumière d'une supernova (sortie du choc de SN-001, orientée vers l'étoile). Un train d'impulsions rapide (pulsar) ne le rallume pas en continu — sinon le halo devient un tic d'interface et perd son sens.
 - **Durée** — montée en fondu, puis extinction progressive en quelques secondes.
 - **Rôle face au Radar** — le Radar ne garde que 12 minutes d'historique. Pour un signal dont la période dépasse cette durée, le halo qui revient à chaque impulsion est ce qui permet au joueur de remarquer la récurrence.
 - **Accessibilité** — la couleur n'est jamais le seul indice : le signal apparaît aussi dans la zone signaux et sur le ciel. Avec `prefers-reduced-motion`, le halo s'affiche sans animation et s'efface sans fondu.
@@ -908,6 +908,7 @@ Ce qui est spécifique à l'interface :
 | 2026-10-23 | §2 : le halo s'allume aussi, orienté vers l'étoile, à la sortie du choc d'une supernova |
 | 2026-10-23 | §2 : tuile Neutrinos, moniteur en direct du détecteur |
 | 2026-10-23 | §2 : tuile Neutrinos — échelle ajustée à la fenêtre, tendance lissée |
+| 2026-10-23 | §2 : halo de LPT-001 — à la capture, puis à chaque impulsion seulement si le Radar vise l'Écu |
 
 ---
 
