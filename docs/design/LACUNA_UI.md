@@ -1,4 +1,4 @@
-*Dernière modification : 2026-10-22*
+*Dernière modification : 2026-10-23*
 
 # LACUNA — Interface
 
@@ -89,11 +89,18 @@ Le ciel est la carte stellaire interactive. Il est toujours présent — sous le
 
 Quand le vaisseau capte un signal, deux effets cohabitent simultanément :
 
-**Pulse de bord** — un gradient diffus s'étend depuis le bord de l'interface correspondant à la direction approximative du signal, vers l'intérieur de l'écran. Lent, organique, opacity faible. Visible depuis **tous les menus** — même si le joueur est dans la Collection ou le Journal, l'overlay laisse passer cet effet sur les bords. Il ne crée pas d'urgence. Il signale une présence.
+**Halo de signal** *(précise l'ancien « pulse de bord » — octobre 2026, non implémenté)* — un halo violet (`--color-signal`) borde **toute l'application**, y compris le Laboratoire, la Collection ou le Journal : l'overlay laisse passer l'effet sur les bords. Il signale une présence, sans urgence et sans hiérarchie : il ne distingue jamais un signal « important » d'un signal ordinaire.
 
-**Pulse sur le ciel** — un gradient radial diffus apparaît directement sur la carte stellaire, centré sur la direction estimée du signal. Visible uniquement depuis le ciel (Observatoire). Plus précis que le pulse de bord — il indique approximativement d'où vient le signal dans l'espace.
+- **Orientation** — le halo est plus intense sur le bord qui fait face à la direction du signal, par rapport à la direction de vue actuelle de l'Observatoire. Son intensité globale augmente quand le joueur tourne la vue vers le signal (gain calculé comme pour le faisceau du Radar). Il aide à s'orienter sans pointer précisément.
+- **Sans direction** — un émetteur du système où se trouve le vaisseau, ou un signal à direction mal définie (bouffée de neutrinos), donne un halo uniforme sur tous les bords.
+- **Déclencheurs** — le *début* d'un signal seulement : nouvelle capture, ouverture d'une fenêtre d'émission, impulsion d'un signal lent (période de l'ordre de la minute ou plus, comme LPT-001). Un train d'impulsions rapide (pulsar) ne le rallume pas en continu — sinon le halo devient un tic d'interface et perd son sens.
+- **Durée** — montée en fondu, puis extinction progressive en quelques secondes.
+- **Rôle face au Radar** — le Radar ne garde que 12 minutes d'historique. Pour un signal dont la période dépasse cette durée, le halo qui revient à chaque impulsion est ce qui permet au joueur de remarquer la récurrence.
+- **Accessibilité** — la couleur n'est jamais le seul indice : le signal apparaît aussi dans la zone signaux et sur le ciel. Avec `prefers-reduced-motion`, le halo s'affiche sans animation et s'efface sans fondu.
 
-Les deux effets s'estompent progressivement en quelques secondes. Ils ne se répètent pas — le signal est ensuite représenté dans la zone signaux captés du panel gauche.
+**Pulse sur le ciel** — un gradient radial diffus apparaît directement sur la carte stellaire, centré sur la direction estimée du signal. Visible uniquement depuis le ciel (Observatoire). Plus précis que le halo — il indique approximativement d'où vient le signal dans l'espace.
+
+Le pulse sur le ciel s'estompe en quelques secondes et ne se répète pas. Le signal est ensuite représenté dans la zone signaux captés du panel gauche.
 
 ### Actions joueur
 
@@ -894,6 +901,7 @@ Ce qui est spécifique à l'interface :
 | Date | Modifications |
 |------|---------------|
 | 2026-10-22 | Écran 03 de l'onboarding : population initiale 15 000 (alignée sur `LACUNA_GDD.md` v0.5 et `LACUNA_LORE.md` v0.4). Disponibilité des modules pendant le transit : `LACUNA_TRANSIT.md` §5 fait référence |
+| 2026-10-23 | §2 : le « pulse de bord » devient le halo de signal — violet, sur toute l'application, orienté selon la direction de vue, déclenché au début d'un signal (y compris chaque impulsion d'un signal lent), uniforme pour un signal sans direction ; règles d'accessibilité. Non implémenté |
 
 ---
 

@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Traces immuables
-*Version 0.3 — Octobre 2026*
+*Version 0.4 — Octobre 2026*
 
 > Ce document contient les **fiches des traces immuables** qui n'appartiennent pas à un scénario — voisinage solaire, hors voisinage — et le **Journal de Yael** (origine `PRÉCURSEUR`). Les traces appartenant à un scénario ont leurs fiches de nœuds dans `LACUNA_SCENARIOS.md`. La mécanique (définition, chaîne de production, types d'outputs, qualification) vit dans `LACUNA_TRACES.md`. Les faits astronomiques de référence vivent dans `LACUNA_ANOMALIES_REELLES.md`.
 >
@@ -28,6 +28,7 @@
 | 0.1 | Octobre 2026 | Document initial — fiches restaurées depuis `LACUNA_TRACES.md` v0.9 (§1.8, §1.9, §2 à §4), que la réécriture v1.0 annonçait déplacées vers `LACUNA_SCENARIOS.md` sans qu'elles y aient été reportées. Mises à jour factuelles : Barnard (quatre planètes confirmées en 2025), Epsilon Eridani b (confirmée en 2019), Proxima b (masse minimale 1,07 M⊕), Tau Ceti (candidates de 2017), Ross 128 (bande C), nucléobases (Bennu 2025, Ryugu 2026), Étoile de Tabby (~1 470 al), PSR B1919+21 (période 1,337 s), HD 40307 ; la résonance 1:2:4 de Gliese 667C est déclarée valeur de jeu. Le Journal de Yael relève de l'origine `PRÉCURSEUR` |
 | 0.2 | Octobre 2026 | §4 : structure des entrées de Yael en base (origine `PRÉCURSEUR`, `precursor_generation`, `linked_trace_id`, `scenario_arc` pour le scénario effleuré) ; une entrée se découvre à l'arrivée dans son système. Aucune entrée écrite |
 | 0.3 | Octobre 2026 | §5 ajouté : deux propositions de phénomènes visibles dès Sol pour donner de la matière au départ — une supernova lointaine (SN-001, ancrage SN 1987A) et un transitoire radio à longue période (LPT-001, ancrage GPM J1839−10). Non intégrées au jeu ; faits vérifiés le 23 octobre 2026 |
+| 0.4 | Octobre 2026 | SN-001 : décisions prises (Bételgeuse, événement déclenché au départ de chaque partie), déroulé détaillé (neutrinos de pré-supernova, bouffée, sortie du choc, maximum), état du ciel après l'événement, question de l'horloge face à la compression du temps ; données neutrinos vérifiées |
 
 ---
 
@@ -433,26 +434,38 @@ La supernova n'est pas une trace au sens de `LACUNA_TRACES.md` §1 : elle ne s'�
 
 ---
 
-### SN-001 — La supernova (proposition)
+### SN-001 — La supernova (proposition retenue)
 **Système :** Bételgeuse (α Orionis), ~550 al — *valeur de jeu*
 **Type :** ÉVÉNEMENT — neutrinos, puis lumière
 **Difficulté :** 1 — passif, aucune manœuvre
+**Statut :** proposition retenue le 23 octobre 2026 — non implémentée
+
+**Décisions**
+- L'étoile est **Bételgeuse**.
+- L'événement est **propre à chaque partie** : il se déclenche au départ du vaisseau.
+- Cohérence avec la galaxie partagée : tous les vaisseaux partent à la même date du jeu (2187). L'explosion est donc un même événement fixe, que chaque joueur vit au début de sa partie. Après les premières heures, l'état du ciel est commun : Bételgeuse est une supernova, puis un rémanent, pour tout le monde.
 
 **Ancrage réel**
-Le 23 février 1987, trois détecteurs souterrains (Kamiokande II, IMB, Baksan) enregistrent en quelques secondes environ deux douzaines de neutrinos. Environ trois heures plus tard, la supernova SN 1987A devient visible dans le Grand Nuage de Magellan, à ~168 000 al : c'est la seule supernova dont on ait détecté les neutrinos. Les neutrinos s'échappent du cœur effondré avant que l'onde de choc n'atteigne la surface de l'étoile ; la lumière suit.
-Bételgeuse est une supergéante rouge à ~550 al (168 pc, Joyce et al. 2020). Elle brûle encore de l'hélium en son cœur : les modèles ne prévoient pas son explosion avant environ 100 000 ans.
+Le 23 février 1987, trois détecteurs souterrains (Kamiokande II, IMB, Baksan) enregistrent environ deux douzaines de neutrinos. À Kamiokande II, douze événements s'étalent sur 12,4 s, d'énergies comprises entre ~6 et ~35 MeV (moyenne ~15 MeV). Environ trois heures plus tard, la supernova SN 1987A devient visible dans le Grand Nuage de Magellan, à ~168 000 al : c'est la seule supernova dont on ait détecté les neutrinos. Les neutrinos s'échappent du cœur effondré dès l'effondrement ; la lumière attend que l'onde de choc atteigne la surface de l'étoile (« sortie du choc »).
+Bételgeuse est une supergéante rouge à ~550 al (168 pc, Joyce et al. 2020), d'un rayon d'environ 750 rayons solaires. Elle brûle encore de l'hélium en son cœur : les modèles ne prévoient pas son explosion avant environ 100 000 ans.
+Ordres de grandeur pour une supernova galactique :
+- à 10 kpc, Super-Kamiokande (50 000 t d'eau) attend ~2 000 à ~5 000 événements et localise la source à ~3–6° près ;
+- à la distance de Bételgeuse, ~2 500 fois plus proche en flux, l'extrapolation donne de l'ordre de plusieurs millions d'événements (*extrapolation non vérifiée par une source*) ;
+- pour Bételgeuse, des neutrinos de pré-supernova (combustion du silicium) seraient détectables avant l'effondrement : jusqu'à ~9 h avant selon une étude pour Super-Kamiokande avec gadolinium, jusqu'à ~1 jour selon une étude pour KamLAND (dépend de la masse de l'étoile et de la hiérarchie des masses des neutrinos).
 
-*Valeur de jeu :* dans LACUNA, Bételgeuse a explosé il y a ~550 ans ; sa lumière atteint Sol au moment du départ. Le choix de l'étoile reste ouvert (voir questions).
+*Valeur de jeu :* dans LACUNA, Bételgeuse a explosé il y a ~550 ans ; sa lumière et ses neutrinos atteignent Sol au moment du départ.
 
-**Ce que le joueur voit**
-1. Peu après le départ, les capteurs enregistrent une bouffée de particules de quelques secondes — sans contrepartie visible dans le ciel.
-2. Quelques heures plus tard, une étoile d'Orion s'embrase et devient l'objet le plus brillant du ciel après Sol. Son éclat décline ensuite lentement.
+**Déroulé proposé**
+1. *(Optionnel — approfondissement)* Quelques heures avant : le détecteur de neutrinos enregistre un taux d'événements de basse énergie qui monte lentement, au-dessus du bruit de fond. Direction mal définie.
+2. **La bouffée** : des milliers à des millions d'événements en une dizaine de secondes, énergies de quelques MeV à quelques dizaines de MeV. Direction reconstruite à quelques degrés près — vers Orion. Rien de visible dans le ciel.
+3. **La sortie du choc**, quelques heures plus tard : Bételgeuse s'éclaire brutalement, puis l'éclat monte sur plusieurs jours.
+4. **Le maximum**, puis un déclin lent : l'étoile devient l'objet le plus brillant du ciel après Sol. *Les valeurs d'éclat et de durée disponibles viennent de la vulgarisation (maximum ~10 jours après la sortie du choc, éclat comparable à une demi-Lune) : à confirmer par une source avant d'être retenues.*
 
-Le joueur fait lui-même le lien entre les deux : rien ne le lui dit.
+Le joueur fait lui-même le lien entre la bouffée et l'étoile : rien ne le lui dit.
 
 **Ce que les données disent**
-- Bouffée de neutrinos : quelques secondes, direction approximative
-- Délai neutrinos → lumière : quelques heures, comme pour SN 1987A
+- Bouffée de neutrinos : une dizaine de secondes, énergies de l'ordre de 10 MeV, direction à quelques degrés près
+- Délai neutrinos → lumière : quelques heures
 - Spectre : celui d'une supernova à effondrement de cœur
 - Distance : ~550 al — la lumière a voyagé ~550 ans
 
@@ -463,12 +476,15 @@ Le joueur fait lui-même le lien entre les deux : rien ne le lui dit.
 - L'observation est toujours du passé (`LACUNA_GDD.md` §2).
 - L'échelle du voyage : d'après la table de référence (`LACUNA_PHYSICS.md` §2), y aller prendrait ~19 h joueur et ~11 400 ans simulés (~457 générations). À l'arrivée, il ne resterait qu'un rémanent en expansion. Ce n'est pas un appel à y aller.
 
+**État du ciel après l'événement**
+- Bételgeuse reste dans `stellar_systems` ; son état change (supernova, puis rémanent) — à modéliser par un attribut daté plutôt qu'en supprimant l'étoile.
+- Le Ciel affiche la supernova pendant son déclin, puis un rémanent faible.
+
 **Questions ouvertes**
-- Faire exploser une vraie étoile (Bételgeuse, visible de tous et connue) ou une étoile anonyme plus lointaine, moins invraisemblable ?
-- Événement propre à chaque partie (déclenché au départ) ou partagé par tous les joueurs à une date fixe ?
-- Le support « neutrinos » est décrit dans la mécanique des signaux mais absent du code (radio, gamma/X, gravitationnel aujourd'hui).
-- Éclat apparent au maximum et durée du déclin (temps réel ou simulé) : à fixer avec une source.
-- Le ciel garde-t-il le rémanent ? Les étoiles proches de Bételgeuse en sont-elles affectées dans le jeu ?
+- **L'horloge.** Avec la compression du temps, une heure de voyage vaut ~88 ans simulés (Proxima) et un stationnement ~2 740 ans par heure (`LACUNA_PHYSICS.md` §2). En temps simulé, neutrinos, sortie du choc et maximum seraient quasi simultanés dès le premier voyage. *Recommandation :* dérouler l'événement en **temps réel joueur**, comme les fenêtres des signaux (`LACUNA_SCENARIOS.md` §5.7), avec des durées réelles réduites mais l'ordre des phases conservé.
+- Éclat apparent au maximum et durée du déclin : à fixer avec une source scientifique.
+- Les neutrinos de pré-supernova (étape 1) : à garder ou non.
+- Le support « neutrinos » : capteur et instrument spécifiés dans `LACUNA_LABORATOIRE_INSTRUMENTS.md` §3.4 et §4.14 ; non implémentés.
 
 ---
 
@@ -517,7 +533,11 @@ SIGNATURE — une période de ~1 318 s à reconnaître si elle réapparaît aill
 - Revue des transitoires à longue période — [arXiv:2601.10393](https://arxiv.org/pdf/2601.10393) ; ILT J1101+5521 et GLEAM-X J0704−37 — [arXiv:2408.15757](https://arxiv.org/pdf/2408.15757), [A&A 2025](https://www.aanda.org/articles/aa/full_html/2025/03/aa53684-25/aa53684-25.html)
 - SN 1987A, neutrinos — [Astrophysics Spectator](https://astrophysicsspectator.org/topics/supernovae/CoreCollapseNeutrinos1987a.html), [arXiv:astro-ph/0107260](https://arxiv.org/pdf/astro-ph/0107260)
 - Bételgeuse, Joyce et al. 2020 (ApJ 902, 63) — [ANU](https://science.anu.edu.au/news-events/news/supergiant-star-betelgeuse-smaller-closer-first-thought)
+- Événements de SN 1987A à Kamiokande II — [Burrows & Lattimer 1987](https://adsabs.harvard.edu/pdf/1987ApJ...318L..63B), [arXiv:astro-ph/0403436](https://arxiv.org/pdf/astro-ph/0403436)
+- Super-Kamiokande, supernova à 10 kpc (événements, pointage) — [arXiv:1601.04778](https://arxiv.org/pdf/1601.04778), [arXiv:2403.06760](https://arxiv.org/abs/2403.06760v1)
+- Neutrinos de pré-supernova — [arXiv:1606.04915](https://arxiv.org/pdf/1606.04915), [arXiv:2004.02045](https://arxiv.org/pdf/2004.02045)
+- Déroulé visible d'une supernova de Bételgeuse (vulgarisation) — [Big Think](https://bigthink.com/starts-with-a-bang/when-betelgeuse-supernova/)
 
 ---
 
-*LACUNA — Traces immuables v0.3 — Octobre 2026 — Confidentiel*
+*LACUNA — Traces immuables v0.4 — Octobre 2026 — Confidentiel*

@@ -1,7 +1,7 @@
-*Dernière modification : 2026-03-14 15:11*
+*Dernière modification : 2026-10-23*
 
 # LACUNA — Instruments du Laboratoire
-*Version 0.3 — Mars 2026*
+*Version 0.4 — Octobre 2026*
 
 > Référence croisée des outils d'analyse du Laboratoire avec les types d'objets, les familles d'anomalies et leur ancrage scientifique.  
 > Documents sources : `LACUNA_TRACES.md` §1, `LACUNA_UI.md` §3.
@@ -21,6 +21,7 @@
 | **Analyseur volumétrique** | Cartes densité 3D | ✅ Complète | `LabReportVolumetrique.vue`, volumetricData.js, D3, heatmap + coupe |
 | **Scanner morphologique** | Modèle surface / heatmap | ✅ Complète | `LabReportMorpho.vue`, morphoData.js, D3, silhouette + carte thermique |
 | **Magnétomètre** | Champ magnétique | ✅ Complète | `LabReportMagneto.vue`, magnetoData.js, D3, carte champ + profil |
+| **Analyseur de neutrinos** | Chronologie des événements + spectre en énergie + cône de direction | ⏳ Non implémenté | Spécifié en octobre 2026 (§4.14) ; nécessite le capteur §3.4 et le support `NEUTRINO` |
 | **Spectromètre de contact** | Spectre éléments | ⏳ Texte | — |
 | **Analyseur d'échantillon** | Molécules / datation | ⏳ Texte | — |
 
@@ -117,6 +118,20 @@ Les capteurs enregistrent les signaux qui atteignent le vaisseau. Ils produisent
 
 **Ancrage scientifique** — LIGO/Virgo, vélocimétrie radiale, astrométrie Gaia.
 
+### 3.4 Détecteur de neutrinos (capteur)
+
+*Spécifié en octobre 2026 — non implémenté.*
+
+| Attribut | Valeur |
+|----------|--------|
+| **Rôle** | Capture les neutrinos : bouffées de supernova, flux de pré-supernova |
+| **Données capturées** | Horodatage de chaque événement, énergie déposée, direction approximative, taux de bruit de fond |
+| **Support** | `NEUTRINO` (nouveau, à ajouter à `signal_support`) |
+
+**Ancrage scientifique** — Super-Kamiokande (50 000 t d'eau ultrapure, détection par lumière Tcherenkov), KamLAND, IceCube. Le 23 février 1987, Kamiokande II, IMB et Baksan ont enregistré environ deux douzaines de neutrinos de SN 1987A, quelques heures avant la lumière : la seule détection de neutrinos de supernova à ce jour. À 10 kpc, Super-Kamiokande attend quelques milliers d'événements et localise la source à quelques degrés près.
+
+**Dans le jeu** — Un détecteur de cette échelle est plausible à bord : le vaisseau ARCA pèse ~4 millions de tonnes. Le capteur ne voit rien dans le ciel : il compte des événements. Une bouffée n'a pas de contrepartie visible au moment où elle arrive.
+
 ---
 
 ## 4. Instruments du laboratoire
@@ -192,6 +207,22 @@ Les instruments du Laboratoire **analysent** les données déjà capturées. Ils
 **Ancrage scientifique** — À partir des perturbations mesurées, on infère masse et position. Neptune prédite par Leverrier. Un corps dont la masse est incompatible avec le volume observable (trop dense) ou une perturbation sans source identifiée = anomalie.
 
 **Usage** — Analyse une perturbation gravitationnelle ou des données orbitales. Répond : quelle est la source ? La masse est-elle cohérente ?
+
+---
+
+#### 4.14 Analyseur de neutrinos
+
+*Spécifié en octobre 2026 — non implémenté. Numéroté 4.14 pour ne pas décaler les références existantes.*
+
+| Attribut | Valeur |
+|----------|--------|
+| **Type d'observation** | Signal reçu (support neutrinos) |
+| **Source des données** | Données du détecteur de neutrinos |
+| **Données produites** | Chronologie des événements (taux en fonction du temps), spectre en énergie (MeV), cône de direction reconstruit, nombre d'événements au-dessus du bruit de fond |
+
+**Ancrage scientifique** — Pour SN 1987A, Kamiokande II a compté douze événements sur 12,4 s, d'énergies entre ~6 et ~35 MeV. La forme de la bouffée (montée rapide, décroissance sur une dizaine de secondes) et l'énergie moyenne (~10–15 MeV) sont la signature d'un effondrement de cœur. Une montée lente d'événements de basse énergie, des heures avant, est la signature attendue des neutrinos de pré-supernova.
+
+**Usage** — Analyse une bouffée ou un flux de neutrinos. Répond : combien, quand, à quelle énergie, d'où approximativement ? Ne dit pas ce qui l'a produite : le joueur relie la direction à une étoile, ou attend de voir.
 
 ---
 
@@ -324,6 +355,7 @@ Chaque instrument renvoie un format de sortie spécifique. L'interface doit rend
 | **Analyseur de polarisation** | Diagramme de Stokes / ellipse de polarisation | Représentation 2D (angle, ellipticité) ou paramètres I/Q/U/V | Linéaire, circulaire, elliptique ; degré de polarisation ; cohérence avec source astrophysique |
 | **Analyseur spectre énergétique** | Spectre énergétique | Énergie (keV/MeV) × comptage ; courbe ou histogramme | Pics, coupure, forme caractéristique (GRB vs pulsar vs inconnu) |
 | **Analyseur gravimétrique** | Modèle de sources + résidus | Carte ou schéma des masses déduites ; courbe des perturbations résiduelles | Position de corps invisibles, masse incompatible, perturbation sans source identifiée |
+| **Analyseur de neutrinos** | Chronologie + spectre en énergie + cône de direction | Histogramme des événements dans le temps ; histogramme en énergie (MeV) ; cône sur une projection du ciel | Bouffée brève vs montée lente ; énergie typique ; direction approximative à comparer au ciel |
 
 ### Instruments pour observations actives
 
@@ -374,6 +406,7 @@ Cette matrice indique si un instrument **peut produire des données pertinentes*
 | Analyseur de polarisation | ✓* | — | — | — | — | — |
 | Analyseur spectre énergétique | ✓** | — | — | — | — | — |
 | Analyseur gravimétrique | ✓*** | △ | ✓ | ✓ | — | △ |
+| Analyseur de neutrinos | ✓***** | — | — | — | — | — |
 | Spectromètre stellaire | — | ✓ | △ | — | — | — |
 | Analyseur orbital | — | △ | ✓ | ✓ | — | ✓**** |
 | Spectromètre atmosphérique | — | — | ✓ | — | ✓ | — |
@@ -383,11 +416,11 @@ Cette matrice indique si un instrument **peut produire des données pertinentes*
 | Spectromètre de contact | — | — | — | — | — | ✓ |
 | Analyseur d'échantillon | — | — | — | — | — | ✓ |
 
-*\* Signal EM radio uniquement · \*\* Signal gamma/X uniquement · \*\*\* Signal gravitationnel ou données orbitales · \*\*\*\* Trajectoire avant capture*
+*\* Signal EM radio uniquement · \*\* Signal gamma/X uniquement · \*\*\* Signal gravitationnel ou données orbitales · \*\*\*\* Trajectoire avant capture · \*\*\*\*\* Signal neutrinos uniquement*
 
 ### Règles de compatibilité
 
-1. **Signal reçu** — Les instruments d'analyse travaillent sur les données captées par les capteurs. Chaque support (EM radio, gamma/X, gravitationnel) a ses instruments dédiés. L'Analyseur de structure temporelle s'applique à tous.
+1. **Signal reçu** — Les instruments d'analyse travaillent sur les données captées par les capteurs. Chaque support (EM radio, gamma/X, gravitationnel, neutrinos) a ses instruments dédiés. L'Analyseur de structure temporelle s'applique à tous.
 
 2. **Étoile** — Spectromètre stellaire en priorité. Analyseur gravimétrique pour planètes non vues. Analyseur orbital pour le système.
 
@@ -456,6 +489,7 @@ Objet contenant une archive encodée (texte, séquences, enregistrements). Déco
 | Échantillons | Hayabusa2 (Ryugu), OSIRIS-REx (Bennu) — nucléobases, acides aminés |
 | Étoile de Tabby | KIC 8462852 — baisses de luminosité apériodiques ~22 % |
 | Gravitation | LIGO/Virgo, vélocimétrie radiale, astrométrie (Gaia) |
+| Neutrinos | SN 1987A (Kamiokande II, IMB, Baksan, 1987), Super-Kamiokande, KamLAND — bouffées de supernova, neutrinos de pré-supernova |
 
 ---
 
@@ -472,6 +506,7 @@ Pour chaque instrument, ce qu'il consomme en entrée et si la base de données (
 | **Analyseur polarisation** | Signal EM capté | observation | ✅ `support` (EM_RADIO) — polarisation déduite du seed |
 | **Analyseur spectre énergétique** | Support gamma/X, structure (sursaut…), durée | observation | ✅ `support`, `structure`, `duration_sec` |
 | **Analyseur gravimétrique** | Pour SIGNAL : durée, structure. Pour corps : masses, orbites | observation + system_objects | ✅ Signal : `duration_sec`, `structure`. Corps : `mass_earth`, `orbital_*` (system_objects) |
+| **Analyseur de neutrinos** | Support neutrinos, nombre d'événements, durée, énergie moyenne, direction et son incertitude | observation (SIGNAL) + `attributes` | ⏳ Support `NEUTRINO` à ajouter ; nombre, énergie et direction dans `observations.attributes` |
 
 ### Instruments pour observations actives
 
@@ -546,7 +581,7 @@ Toutes les visualisations doivent être adaptées au design system LACUNA (`toke
 ### Autres notes
 
 - **Capteurs** : Les capteurs ne figurent pas dans la grille du Laboratoire. Ils sont à bord ; leurs données alimentent les observations "Signal reçu".
-- **Support du signal** : Une observation Signal reçu doit stocker son support (EM_RADIO, GAMMA_X, GRAVITATIONNEL) pour filtrer les instruments disponibles (voir matrice §7).
+- **Support du signal** : Une observation Signal reçu doit stocker son support (EM_RADIO, GAMMA_X, GRAVITATIONNEL, NEUTRINO à venir) pour filtrer les instruments disponibles (voir matrice §7). Les neutrinos n'apparaissent pas sur le Radar, qui reste un récepteur électromagnétique.
 - **Scanner morphologique** : Une implémentation peut distinguer "Scanner morphologique" (orbite) et "Scanner morphologique précis" (contact).
 - **Observation lointaine** : Si l'interface utilise 4 niveaux, le Spectromètre stellaire doit être mappé au niveau permettant d'observer une étoile — pas "Passif".
 - **Compatibilité** : Griser les instruments inadaptés au type d'observation ET au support (pour les signaux).
@@ -554,4 +589,13 @@ Toutes les visualisations doivent être adaptées au design system LACUNA (`toke
 
 ---
 
-*LACUNA — Instruments du Laboratoire v0.3 — Mars 2026 — Réf. LACUNA_TRACES, LACUNA_UI*
+## Changelog
+
+| Version | Date | Modifications |
+|---------|------|---------------|
+| 0.3 | Mars 2026 | Capteurs vs instruments, 13 instruments, formats de sortie |
+| 0.4 | Octobre 2026 | Ajout du détecteur de neutrinos (capteur, §3.4) et de l'analyseur de neutrinos (§4.14) — spécifiés pour la supernova SN-001 (`LACUNA_TRACES_IMMUABLES.md` §5), non implémentés |
+
+---
+
+*LACUNA — Instruments du Laboratoire v0.4 — Octobre 2026 — Réf. LACUNA_TRACES, LACUNA_UI*
