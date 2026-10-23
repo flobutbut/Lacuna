@@ -1,7 +1,8 @@
 <script setup>
 /**
  * Moniteur du détecteur de neutrinos — taux d'événements par seconde sur les 10 dernières minutes,
- * en échelle logarithmique (le bruit de fond et une bouffée de supernova diffèrent de six ordres de grandeur).
+ * en échelle logarithmique ajustée à la fenêtre (comme le Radar) : la montée de pré-supernova (quelques év./s)
+ * remplit la tuile avant la bouffée, qui monte ensuite l'échelle jusqu'à ~10⁶.
  * Vue en direct du capteur, comme la miniature Radar ; l'analyse se fait au Laboratoire.
  */
 import { ref, onMounted, onUnmounted } from 'vue'
@@ -12,13 +13,13 @@ import { neutrinoCountsWindow } from '@/lib/neutrinoRate'
 
 const WINDOW_S = 600
 const HEIGHT_CSS = 80
-/** Haut de l'échelle : log10 de 3 millions d'événements par seconde */
-const LOG_MAX = 6.5
-const GRID = [
-  { log: 0, label: '1' },
-  { log: 3, label: '10³' },
-  { log: 6, label: '10⁶' },
-]
+/** Haut minimal de l'échelle (log10) : le bruit de fond seul ne remplit pas la tuile */
+const LOG_MIN_TOP = 0.5
+const SUPERSCRIPTS = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷']
+
+function decadeLabel(n) {
+  return n === 0 ? '1' : n === 1 ? '10' : `10${SUPERSCRIPTS[n] ?? n}`
+}
 
 const shipStore = useShipStore()
 const wrapRef = ref(null)
@@ -47,34 +48,64 @@ function draw() {
   const nowSec = Math.floor(Date.now() / 1000)
   const counts = neutrinoCountsWindow(shipStore.supernovaT0, nowSec - 1, WINDOW_S)
   currentRate.value = counts[counts.length - 1]
-  const yOf = (count) => h - Math.min(1, Math.log10(count + 1) / LOG_MAX) * (h - 2)
+  // Une colonne par pixel : taux moyen des secondes couvertes (lisse le bruit de Poisson), la plus récente à droite
+  const secPerPx = WINDOW_S / w
+  const rates = new Array(w)
+  let maxRate = 0
+  for (let x = 0; x < w; x++) {
+    const from = Math.floor(x * secPerPx)
+    const to = Math.min(counts.length, Math.max(from + 1, Math.floor((x + 1) * secPerPx)))
+    let sum = 0
+    for (let i = from; i < to; i++) sum += counts[i]
+    rates[x] = sum / (to - from)
+    if (rates[x] > maxRate) maxRate = rates[x]
+  }
 
-  // Repères d'échelle
+  // Échelle logarithmique ajustée au maximum de la fenêtre
+  const logTop = Math.max(LOG_MIN_TOP, Math.log10(maxRate + 1) * 1.15)
+  const yOf = (rate) => h - Math.min(1, Math.log10(rate + 1) / logTop) * (h - 2)
+
+  // Repères : une décade sur deux au-delà de 10³ pour ne pas surcharger
   ctx.strokeStyle = getCssVar('--border-default')
   ctx.fillStyle = getCssVar('--color-muted')
   ctx.font = canvasFont('--text-2xs')
   ctx.lineWidth = 1
-  for (const g of GRID) {
-    const y = Math.round(h - (g.log / LOG_MAX) * (h - 2)) + 0.5
+  const step = logTop > 4 ? 2 : 1
+  for (let n = 0; Math.log10(10 ** n + 1) <= logTop; n += step) {
+    const y = Math.round(yOf(10 ** n)) + 0.5
     ctx.beginPath()
     ctx.moveTo(0, y)
     ctx.lineTo(w, y)
     ctx.stroke()
-    ctx.fillText(g.label, 2, y - 2)
+    ctx.fillText(decadeLabel(n), 2, y - 2)
   }
 
-  // Comptages : une colonne par pixel (maximum des secondes couvertes), la plus récente à droite
   ctx.fillStyle = getCssVar('--color-cyan')
-  const secPerPx = WINDOW_S / w
+  ctx.globalAlpha = 0.55
   for (let x = 0; x < w; x++) {
-    const from = Math.floor(x * secPerPx)
-    const to = Math.max(from + 1, Math.floor((x + 1) * secPerPx))
-    let max = 0
-    for (let i = from; i < to && i < counts.length; i++) if (counts[i] > max) max = counts[i]
-    if (max === 0) continue
-    const y = yOf(max)
+    if (rates[x] <= 0) continue
+    const y = yOf(rates[x])
     ctx.fillRect(x, y, 1, h - y)
   }
+  ctx.globalAlpha = 1
+
+  // Tendance : moyenne glissante sur ~30 s, pour que la montée se lise malgré le bruit de Poisson
+  const half = Math.max(1, Math.round(15 / secPerPx))
+  ctx.strokeStyle = getCssVar('--color-white')
+  ctx.lineWidth = 1.5
+  ctx.beginPath()
+  for (let x = 0; x < w; x++) {
+    let sum = 0
+    let n = 0
+    for (let i = Math.max(0, x - half); i <= Math.min(w - 1, x + half); i++) {
+      sum += rates[i]
+      n++
+    }
+    const y = yOf(sum / n)
+    if (x === 0) ctx.moveTo(x, y)
+    else ctx.lineTo(x, y)
+  }
+  ctx.stroke()
 }
 
 onMounted(() => {
