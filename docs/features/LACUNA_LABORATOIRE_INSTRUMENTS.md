@@ -132,7 +132,7 @@ Les capteurs enregistrent les signaux qui atteignent le vaisseau. Ils produisent
 
 **Dans le jeu** — Un détecteur de cette échelle est plausible à bord : le vaisseau ARCA pèse ~4 millions de tonnes. Le capteur ne voit rien dans le ciel : il compte des événements. Une bouffée n'a pas de contrepartie visible au moment où elle arrive.
 
-**Moniteur en direct** — Une tuile « Neutrinos », sous le Radar, montre le taux d'événements par seconde sur les 10 dernières minutes, en échelle logarithmique (bruit de fond ~0,05 év./s, bouffée jusqu'à ~10⁶ év./s). Comptages déterministes, recalculés depuis T0 : un rechargement montre le même historique. Ancrage : moniteur de bouffées de supernova en temps réel de Super-Kamiokande.
+**Moniteur en direct** — Une tuile « Neutrinos », sous le Radar, montre le taux d'événements par seconde sur les 10 dernières minutes, en échelle logarithmique ajustée au pic de la fenêtre (bruit de fond ~0,05 év./s, montée de pré-supernova de quelques év./s, bouffée jusqu'à ~10⁶ év./s), avec une courbe de tendance lissée. Comptages déterministes, recalculés depuis T0 : un rechargement montre le même historique. Ancrage : moniteur de bouffées de supernova en temps réel de Super-Kamiokande.
 
 ---
 
@@ -601,6 +601,7 @@ Toutes les visualisations doivent être adaptées au design system LACUNA (`toke
 | 0.4 | Octobre 2026 | Ajout du détecteur de neutrinos (capteur, §3.4) et de l'analyseur de neutrinos (§4.14) — spécifiés pour la supernova SN-001 (`LACUNA_TRACES_IMMUABLES.md` §5), non implémentés |
 | 0.5 | Octobre 2026 | Détecteur et analyseur de neutrinos implémentés (support `NEUTRINO`, `LabReportNeutrinos.vue`). Une bouffée n'a pas de direction sur le ciel : elle apparaît dans « Signaux sans direction » et donne un halo uniforme ; sa direction se lit au Laboratoire |
 | 0.6 | Octobre 2026 | §3.4 : moniteur en direct du détecteur de neutrinos (tuile sous le Radar, échelle logarithmique) |
+| 0.7 | Octobre 2026 | §3.4 : échelle du moniteur ajustée à la fenêtre, tendance lissée |
 
 ---
 

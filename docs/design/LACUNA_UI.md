@@ -98,7 +98,7 @@ Quand le vaisseau capte un signal, deux effets cohabitent simultanément :
 - **Rôle face au Radar** — le Radar ne garde que 12 minutes d'historique. Pour un signal dont la période dépasse cette durée, le halo qui revient à chaque impulsion est ce qui permet au joueur de remarquer la récurrence.
 - **Accessibilité** — la couleur n'est jamais le seul indice : le signal apparaît aussi dans la zone signaux et sur le ciel. Avec `prefers-reduced-motion`, le halo s'affiche sans animation et s'efface sans fondu.
 
-**Tuile Neutrinos** *(octobre 2026, implémentée : `NeutrinoMonitor.vue`)* — sous le Radar, dans le panneau gauche, avec son interrupteur. Courbe du taux d'événements par seconde sur les 10 dernières minutes, en échelle logarithmique, et taux courant. Aucune direction : seulement « combien, et quand ».
+**Tuile Neutrinos** *(octobre 2026, implémentée : `NeutrinoMonitor.vue`)* — sous le Radar, dans le panneau gauche, avec son interrupteur. Courbe du taux d'événements par seconde sur les 10 dernières minutes et taux courant. Échelle logarithmique ajustée au pic de la fenêtre (une montée de quelques év./s remplit la tuile, la bouffée l'élargit), graduations par décade, taux moyenné par pixel et courbe de tendance lissée sur ~30 s. Aucune direction : seulement « combien, et quand ».
 
 **Pulse sur le ciel** — un gradient radial diffus apparaît directement sur la carte stellaire, centré sur la direction estimée du signal. Visible uniquement depuis le ciel (Observatoire). Plus précis que le halo — il indique approximativement d'où vient le signal dans l'espace.
 
@@ -907,6 +907,7 @@ Ce qui est spécifique à l'interface :
 | 2026-10-23 | §2 : halo de signal implémenté (`SignalHalo.vue`) ; les impulsions du Radar sont calées sur l'horloge murale pour tomber en même temps que le halo |
 | 2026-10-23 | §2 : le halo s'allume aussi, orienté vers l'étoile, à la sortie du choc d'une supernova |
 | 2026-10-23 | §2 : tuile Neutrinos, moniteur en direct du détecteur |
+| 2026-10-23 | §2 : tuile Neutrinos — échelle ajustée à la fenêtre, tendance lissée |
 
 ---
 
