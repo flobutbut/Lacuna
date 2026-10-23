@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { SYSTEMS_MENU_ITEMS } from '@/constants/menus'
+import { DEPARTURE_YEAR } from '@/constants/calendar'
 import NavMenuItem from '@/components/NavMenuItem.vue'
 import AppModal from '@/components/AppModal.vue'
 import Divider from '@/components/Divider.vue'
@@ -113,7 +114,7 @@ const ship = computed(() => ({
   fullName: 'A R C A — AUTONOMOUS RELATIVISTIC COLONY ARK',
   planDesc: 'VUE LATÉRALE — ÉCHELLE 1:8000 — LONGUEUR ~20 KM',
   class: shipStore.classe,
-  builtYear: shipStore.builtYear ?? 2187,
+  builtYear: shipStore.builtYear ?? DEPARTURE_YEAR,
   ageRelative: 47,   // TODO: calculé depuis voyages (stationnement étoiles massives)
   ageReal: 53,       // TODO: temps simulé joueur
   ageGap: 6,         // TODO: ageReal - ageRelative

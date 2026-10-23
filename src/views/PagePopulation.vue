@@ -8,6 +8,8 @@ import NavMenuItem from '@/components/NavMenuItem.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import { formatEffectifTrend, formatNumber } from '@/lib/formatUtils'
 import { INITIAL_POPULATION } from '@/constants/population'
+import { DEPARTURE_YEAR } from '@/constants/calendar'
+import { ANNEES_PAR_GENERATION } from '@/lib/transit'
 
 const shipStore = useShipStore()
 const activeTab = ref('current')
@@ -43,8 +45,8 @@ const currentGen = computed(() => {
 const generations = ref([
   {
     number: 1,
-    startYear: 2187,
-    endYear: 2212,
+    startYear: DEPARTURE_YEAR,
+    endYear: DEPARTURE_YEAR + ANNEES_PAR_GENERATION,
     systems: ['Sol'],
     events: [`Départ. ${formatNumber(INITIAL_POPULATION)} âmes embarquées.`, 'Signal WOW-1977-A analysé.', 'Première trace interprétée.'],
   },

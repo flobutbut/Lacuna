@@ -19,9 +19,9 @@ import { START_PULSARS } from '@/lib/startSources'
 const LIFETIME_MS = 2 * 60 * 60 * 1000 // 2h temps joueur par défaut
 
 const FALLBACK_LIST = [
-  { frequency: '1420 MHz', azimuth: 217, elevation: 12, distanceEst: '~340 al', receivedAt: '2187-01-02', durationSec: 72, polarization: 'circulaire', structure: 'non uniforme', support: 'EM_RADIO' },
-  { frequency: '408 MHz', azimuth: 89, elevation: -5, distanceEst: null, receivedAt: '2187-01-01', durationSec: 120, polarization: 'linéaire', structure: 'pulsé', support: 'EM_RADIO' },
-  { frequency: '1420.4058 MHz', azimuth: 271, elevation: 18, distanceEst: null, receivedAt: '2187-01-04', durationSec: 72, polarization: 'linéaire', structure: 'pulsé régulier', anomalous: true, support: 'EM_RADIO' },
+  { frequency: '1420 MHz', azimuth: 217, elevation: 12, distanceEst: '~340 al', receivedAt: '2041-01-02', durationSec: 72, polarization: 'circulaire', structure: 'non uniforme', support: 'EM_RADIO' },
+  { frequency: '408 MHz', azimuth: 89, elevation: -5, distanceEst: null, receivedAt: '2041-01-01', durationSec: 120, polarization: 'linéaire', structure: 'pulsé', support: 'EM_RADIO' },
+  { frequency: '1420.4058 MHz', azimuth: 271, elevation: 18, distanceEst: null, receivedAt: '2041-01-04', durationSec: 72, polarization: 'linéaire', structure: 'pulsé régulier', anomalous: true, support: 'EM_RADIO' },
 ]
 
 function dbToSignal(row) {
