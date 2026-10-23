@@ -42,21 +42,14 @@ async function submit() {
   >
     <!-- Même message que l'adresse ait un compte ou non -->
     <p v-if="sentTo" class="auth-alert auth-alert--success" role="status">
-      Si un compte existe pour <strong>{{ sentTo }}</strong>, un lien de réinitialisation vient d’y être envoyé.
+      Si un compte existe pour <strong>{{ sentTo }}</strong
+      >, un lien de réinitialisation vient d’y être envoyé.
     </p>
     <form v-else class="auth-form" novalidate @submit.prevent="submit">
       <p v-if="formError" class="auth-alert auth-alert--error" role="alert">
         {{ formError }}
       </p>
-      <AppTextField
-        v-model="email"
-        label="Email"
-        type="email"
-        autocomplete="email"
-        :error="emailError"
-        required
-        autofocus
-      />
+      <AppTextField v-model="email" label="Email" type="email" autocomplete="email" :error="emailError" required autofocus />
       <CaptchaWidget v-if="captchaRequired" ref="captchaWidget" v-model="captchaToken" />
       <button type="submit" class="btn btn-primary auth-form__submit" :disabled="submitting || (captchaRequired && !captchaToken)">
         {{ submitting ? 'Envoi…' : 'Envoyer le lien' }}

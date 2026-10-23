@@ -128,6 +128,13 @@ const router = createRouter({
       meta: { title: 'Bienvenue à bord', onboarding: true, bareLayout: true },
     },
     {
+      // Lien de confirmation d'inscription : le jeton n'est validé qu'au clic du joueur
+      path: '/confirmer',
+      name: 'confirmer',
+      component: () => import('@/views/auth/PageConfirmer.vue'),
+      meta: { title: 'Activer votre compte', public: true, bareLayout: true },
+    },
+    {
       // Ouverte depuis le lien de réinitialisation : la session temporaire est déjà active
       path: '/nouveau-mot-de-passe',
       name: 'nouveau-mot-de-passe',

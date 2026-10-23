@@ -7,6 +7,7 @@ import { safeRedirect } from '@/router/authGuard'
 import AuthPanel from '@/components/auth/AuthPanel.vue'
 import AppTextField from '@/components/AppTextField.vue'
 import CaptchaWidget from '@/components/auth/CaptchaWidget.vue'
+import ResendConfirmation from '@/components/auth/ResendConfirmation.vue'
 import { captchaEnabled } from '@/lib/turnstile'
 
 const route = useRoute()
@@ -17,6 +18,8 @@ const email = ref('')
 const password = ref('')
 const errors = ref({ email: '', password: '' })
 const formError = ref('')
+/** Adresse non confirmée : propose le renvoi de l'email */
+const unconfirmedEmail = ref('')
 const accountDeleted = route.query.compte === 'supprime'
 const submitting = ref(false)
 const captchaToken = ref('')
@@ -25,6 +28,7 @@ const captchaRequired = captchaEnabled()
 
 async function submit() {
   formError.value = ''
+  unconfirmedEmail.value = ''
   errors.value = {
     email: validateEmail(email.value) ?? '',
     password: password.value ? '' : 'Indiquez votre mot de passe.',
@@ -36,6 +40,7 @@ async function submit() {
     router.replace(safeRedirect(route.query.redirect) ?? { name: 'observatoire' })
   } catch (err) {
     formError.value = authErrorMessage(err)
+    if (err?.code === 'email_not_confirmed') unconfirmedEmail.value = email.value.trim()
     captchaWidget.value?.reset()
   } finally {
     submitting.value = false
@@ -58,15 +63,8 @@ onMounted(() => {
       <p v-if="formError" class="auth-alert auth-alert--error" role="alert">
         {{ formError }}
       </p>
-      <AppTextField
-        v-model="email"
-        label="Email"
-        type="email"
-        autocomplete="email"
-        :error="errors.email"
-        required
-        autofocus
-      />
+      <ResendConfirmation v-if="unconfirmedEmail" :email="unconfirmedEmail" />
+      <AppTextField v-model="email" label="Email" type="email" autocomplete="email" :error="errors.email" required autofocus />
       <AppTextField
         v-model="password"
         label="Mot de passe"
@@ -75,9 +73,7 @@ onMounted(() => {
         :error="errors.password"
         required
       />
-      <RouterLink class="auth-form__aside" :to="{ name: 'mot-de-passe-oublie' }">
-        Mot de passe oublié ?
-      </RouterLink>
+      <RouterLink class="auth-form__aside" :to="{ name: 'mot-de-passe-oublie' }"> Mot de passe oublié ? </RouterLink>
       <CaptchaWidget v-if="captchaRequired" ref="captchaWidget" v-model="captchaToken" />
       <button type="submit" class="btn btn-primary auth-form__submit" :disabled="submitting || (captchaRequired && !captchaToken)">
         {{ submitting ? 'Connexion…' : 'Se connecter' }}
