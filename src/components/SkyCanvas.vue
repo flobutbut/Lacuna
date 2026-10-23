@@ -14,7 +14,7 @@ import { getSystemXyz } from '@/lib/stellarCoordinates'
 import { drawCurvedGrid, drawMilkyWay, drawNebulas, drawStars, drawSignals, drawSpectralBorder, drawConstellationLines } from '@/lib/skyRenderers'
 import { useSkyStars } from '@/composables/useSkyStars'
 import { supernovaBands, SUPERNOVA_STAR_ID } from '@/lib/supernova'
-import { CATALOGUE_SYSTEM_IDS, isFirstChoicePending } from '@/lib/onboarding'
+import { CATALOGUE_SYSTEM_IDS, RADAR_SOURCE, isFirstChoicePending } from '@/lib/onboarding'
 import { useStarSelection } from '@/composables/useStarSelection'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
@@ -227,13 +227,13 @@ function draw(canvas, starsRef) {
       return best && { id: best.id, fx: best.x / w, fy: best.y / h }
     }
     observatoireStore.setTourAnchor('anomaly', nearest([...anomalyIds].map((id) => ({ id, pos: projectedPositions.get(id) }))))
-    observatoireStore.setTourAnchor('signal', nearest(activeSignals.map((sig) => ({
-      id: sig.id,
-      pos: projectStarInFov(sig.ra ?? sig.azimuth ?? 0, sig.dec ?? sig.elevation ?? 0, vd.ra, vd.dec, w, h),
-    }))))
+    observatoireStore.setTourAnchor('radarSource', nearest([{
+      id: RADAR_SOURCE.id,
+      pos: projectStarInFov(RADAR_SOURCE.azimuth, RADAR_SOURCE.elevation, vd.ra, vd.dec, w, h),
+    }]))
   } else {
     observatoireStore.setTourAnchor('anomaly', null)
-    observatoireStore.setTourAnchor('signal', null)
+    observatoireStore.setTourAnchor('radarSource', null)
   }
   drawStars(ctx, starList, vd.ra, vd.dec, w, h, selected, searchedStarId.value, projectedPositions, anomalyIds)
   drawSignals(ctx, activeSignals, vd.ra, vd.dec, w, h)

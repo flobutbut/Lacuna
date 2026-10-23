@@ -42,10 +42,10 @@ export const useObservatoireStore = defineStore('observatoire', () => {
   const introActive = ref(false)
   /**
    * Visite de l'écran 5 de l'onboarding : objets du ciel montrés par le cartouche, les plus proches du centre de la vue
-   * — destination du catalogue (anomaly) et signal capté (signal) — en position relative dans le ciel
+   * — destination du catalogue (anomaly), source visible au Radar (radarSource) — en position relative dans le ciel
    * (fx, fy entre 0 et 1) ; null si aucun n'est dans le champ
    */
-  const tourAnchors = ref({ anomaly: null, signal: null })
+  const tourAnchors = ref({ anomaly: null, radarSource: null })
 
   function setTourAnchor(kind, anchor) {
     const prev = tourAnchors.value[kind]

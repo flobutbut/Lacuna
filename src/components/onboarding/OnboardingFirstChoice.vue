@@ -9,10 +9,12 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useObservatoireStore } from '@/stores/observatoire'
 import { useShipStore } from '@/stores/ship'
+import { useRadarStore } from '@/stores/radar'
 import { FIRST_CHOICE_TOUR } from '@/lib/onboarding'
 
 const observatoireStore = useObservatoireStore()
 const shipStore = useShipStore()
+const radarStore = useRadarStore()
 const { tourAnchors } = storeToRefs(observatoireStore)
 
 /** Rayon du cercle autour d'un objet du ciel, marge du cadre, écart entre la cible et le cartouche (px) */
@@ -37,6 +39,18 @@ watch(storageKey, () => {
 const index = ref(0)
 const step = computed(() => FIRST_CHOICE_TOUR[index.value])
 const isLast = computed(() => index.value === FIRST_CHOICE_TOUR.length - 1)
+
+// Étape avec « focus » : la vue se tourne vers la source et le Radar se règle pour l'entendre
+watch(
+  step,
+  (s) => {
+    if (!s?.focus || done.value) return
+    observatoireStore.setTargetViewDirectionValue({ ra: s.focus.ra, dec: s.focus.dec })
+    if (s.focus.band) radarStore.setRadarFrequencyBand(s.focus.band)
+    radarStore.radarEnabled = true
+  },
+  { immediate: true }
+)
 
 function next() {
   if (!isLast.value) index.value++
