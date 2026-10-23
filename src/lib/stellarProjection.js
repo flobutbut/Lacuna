@@ -24,15 +24,12 @@ export function raDecToVector(ra, dec) {
   return { x: cd * Math.cos(r), y: cd * Math.sin(r), z: Math.sin(d) }
 }
 
-/** Projette étoile (ra,dec) dans FOV 120° — vue (raView, decView), projection stéréographique */
-export function projectStarInFov(ra, dec, raView, decView, w, h) {
-  const S = raDecToVector(ra, dec)
+/**
+ * Repère de la vue (raView, decView) : axe de visée V, droite de l'écran R, haut de l'écran U (vecteurs unitaires).
+ * Une direction S apparaît à droite si S·R > 0, en haut si S·U > 0.
+ */
+export function viewBasis(raView, decView) {
   const V = raDecToVector(raView, decView)
-  const dot = S.x * V.x + S.y * V.y + S.z * V.z
-  const angleRad = Math.acos(Math.max(-1, Math.min(1, dot)))
-  const angleDeg = angleRad / RAD
-  if (angleDeg > FOV_HALF) return null
-
   const worldUp = { x: 0, y: 0, z: 1 }
   let Rx = V.y * worldUp.z - V.z * worldUp.y
   let Ry = V.z * worldUp.x - V.x * worldUp.z
@@ -54,9 +51,20 @@ export function projectStarInFov(ra, dec, raView, decView, w, h) {
   Ux /= uLen
   Uy /= uLen
   Uz /= uLen
+  return { V, R: { x: Rx, y: Ry, z: Rz }, U: { x: Ux, y: Uy, z: Uz } }
+}
 
-  const sx = S.x * Rx + S.y * Ry + S.z * Rz
-  const sy = S.x * Ux + S.y * Uy + S.z * Uz
+/** Projette étoile (ra,dec) dans FOV 120° — vue (raView, decView), projection stéréographique */
+export function projectStarInFov(ra, dec, raView, decView, w, h) {
+  const S = raDecToVector(ra, dec)
+  const { V, R, U } = viewBasis(raView, decView)
+  const dot = S.x * V.x + S.y * V.y + S.z * V.z
+  const angleRad = Math.acos(Math.max(-1, Math.min(1, dot)))
+  const angleDeg = angleRad / RAD
+  if (angleDeg > FOV_HALF) return null
+
+  const sx = S.x * R.x + S.y * R.y + S.z * R.z
+  const sy = S.x * U.x + S.y * U.y + S.z * U.z
   const sinA = Math.sin(angleRad) || 0.001
   const scale = (Math.max(w, h) / 2) / (2 * Math.tan((FOV_HALF * RAD) / 2))
   const r = 2 * Math.tan(angleRad / 2) * scale

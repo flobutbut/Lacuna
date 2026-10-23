@@ -89,7 +89,7 @@ Le ciel est la carte stellaire interactive. Il est toujours présent — sous le
 
 Quand le vaisseau capte un signal, deux effets cohabitent simultanément :
 
-**Halo de signal** *(précise l'ancien « pulse de bord » — octobre 2026, non implémenté)* — un halo violet (`--color-signal`) borde **toute l'application**, y compris le Laboratoire, la Collection ou le Journal : l'overlay laisse passer l'effet sur les bords. Il signale une présence, sans urgence et sans hiérarchie : il ne distingue jamais un signal « important » d'un signal ordinaire.
+**Halo de signal** *(précise l'ancien « pulse de bord » — octobre 2026 ; implémenté : `SignalHalo.vue`, `lib/signalHalo.js`)* — un halo violet (`--color-signal`) borde **toute l'application**, y compris le Laboratoire, la Collection ou le Journal : l'overlay laisse passer l'effet sur les bords. Il signale une présence, sans urgence et sans hiérarchie : il ne distingue jamais un signal « important » d'un signal ordinaire.
 
 - **Orientation** — le halo est plus intense sur le bord qui fait face à la direction du signal, par rapport à la direction de vue actuelle de l'Observatoire. Son intensité globale augmente quand le joueur tourne la vue vers le signal (gain calculé comme pour le faisceau du Radar). Il aide à s'orienter sans pointer précisément.
 - **Sans direction** — un émetteur du système où se trouve le vaisseau, ou un signal à direction mal définie (bouffée de neutrinos), donne un halo uniforme sur tous les bords.
@@ -902,6 +902,7 @@ Ce qui est spécifique à l'interface :
 |------|---------------|
 | 2026-10-22 | Écran 03 de l'onboarding : population initiale 15 000 (alignée sur `LACUNA_GDD.md` v0.5 et `LACUNA_LORE.md` v0.4). Disponibilité des modules pendant le transit : `LACUNA_TRANSIT.md` §5 fait référence |
 | 2026-10-23 | §2 : le « pulse de bord » devient le halo de signal — violet, sur toute l'application, orienté selon la direction de vue, déclenché au début d'un signal (y compris chaque impulsion d'un signal lent), uniforme pour un signal sans direction ; règles d'accessibilité. Non implémenté |
+| 2026-10-23 | §2 : halo de signal implémenté (`SignalHalo.vue`) ; les impulsions du Radar sont calées sur l'horloge murale pour tomber en même temps que le halo |
 
 ---
 

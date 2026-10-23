@@ -133,6 +133,7 @@
   --z-reticule:            20;
   --z-tooltip:             30;
   --z-panel:               40;
+  --z-halo:                45;  /* Halo de signal : au-dessus des panels, sous les notifications */
   --z-notification:        50;
   --z-modal:               60;
 

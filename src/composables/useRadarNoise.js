@@ -84,6 +84,17 @@ export function useRadarNoise(band, galacticLatitude, activeSignals) {
     arState = 0
   })
 
+  /**
+   * Indice absolu (horloge murale) du premier échantillon du bloc : les impulsions tombent aux mêmes instants
+   * que le halo de signal, quelle que soit l'heure d'allumage du radar. Recalé après une interruption.
+   */
+  let sampleBase = null
+  function absoluteStartSample(totalOffset, sampleCount) {
+    const expected = Math.round((Date.now() / 1000) * SAMPLE_RATE) - (totalOffset + sampleCount)
+    if (sampleBase === null || Math.abs(expected - sampleBase) > SAMPLE_RATE) sampleBase = expected
+    return sampleBase + totalOffset
+  }
+
   /** Sources en train d'émettre : un signal à fenêtres est muet hors de sa fenêtre */
   function emittingSignals() {
     const now = Date.now()
@@ -92,7 +103,9 @@ export function useRadarNoise(band, galacticLatitude, activeSignals) {
 
   function getNoiseSample(sampleCount, seed, totalOffset) {
     if (radarNoiseEnabled.value === false) {
-      return addPulsarPulses(new Float32Array(sampleCount), emittingSignals(), { startSample: totalOffset })
+      return addPulsarPulses(new Float32Array(sampleCount), emittingSignals(), {
+        startSample: absoluteStartSample(totalOffset, sampleCount),
+      })
     }
 
     const level = noiseLevel.value
@@ -121,7 +134,7 @@ export function useRadarNoise(band, galacticLatitude, activeSignals) {
       chunk[i] = Math.max(-1, Math.min(1, v * gain))
     }
 
-    return addPulsarPulses(chunk, emittingSignals(), { startSample: totalOffset })
+    return addPulsarPulses(chunk, emittingSignals(), { startSample: absoluteStartSample(totalOffset, sampleCount) })
   }
 
   return { noiseLevel, getNoiseSample }
