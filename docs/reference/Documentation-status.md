@@ -1,4 +1,4 @@
-*Dernière modification : 2026-10-22*
+*Dernière modification : 2026-10-23*
 
 # LACUNA — État du projet
 
@@ -68,16 +68,18 @@
 - [x] Observatoire : vue Radar — spectrogramme temps réel + courbe d'intensité, pause/scroll, sélection zone (col×bin), bouton RETOUR AU LIVE, reprise via visibilitychange
 
 ### Fonctionnalités
-- [ ] Onboarding narratif (5 écrans — `LACUNA_LORE.md` §3)
+- [x] Onboarding — écrans 1 à 4 avant le nommage, écran 5 en visite de sept étapes sur le ciel, traces embarquées (`LACUNA_LORE.md` §3–5, migration 00071) ; notice de bord à écrire
 - [x] Ciel / Observatoire — clic étoile → TravelWidget (distance, durée, carburant, anomalie, [OUVRIR OBSERVATOIRE] [FIXER CAP]), double-clic → panel Observatoire (corps, probas, Analyser, Ajouter au lab)
 - [x] Signaux captés — store signaux (durée de vie temps joueur), bloc panel gauche (cards, tooltip, clic → modale, [×] ignorer), modale signal ([ANALYSER AU LABO →] → Laboratoire), marqueurs directionnels sur le ciel (hover + clic)
-- [ ] Sélection système, fixation cap
-- [ ] Voyage (logique temps réel)
-- [ ] Journal de bord
+- [x] Sélection système, fixation cap — TravelWidget, vue de confirmation du départ
+- [x] Voyage — transit décidé par le serveur (start_transit / complete_transit, 00050), quatre phases, historique ship_travels ; pas encore : détection en transit, déviation, carburant consommé
+- [x] Journal de bord — entrées écrites par le serveur (fondatrice, départ, arrivée, ciel de départ, premier passage de génération), entrées du joueur, filtre par type (00068, 00069)
+- [x] Calendrier du vaisseau et générations — date de bord depuis 2187, génération = 1 + années ÷ 25 (00068, 00069)
+- [x] Ciel de départ — supernova de Bételgeuse (SN-001), signal de 22 minutes (LPT-001), détecteur et analyseur de neutrinos, sources de départ au Radar (00062–00067)
 - [x] Page Artefacts — grille, détail trace, interprétations, suppression (conformité LACUNA_UI)
 - [x] Page Laboratoire — 3 colonnes (file d'observations | observation sélectionnée | instruments), clic instrument, rapports + fiabilité, [GARDER UNE TRACE], sorties visuelles : spectrogramme, structure temporelle, polarisation, spectre énergétique, gravimétrique, spectre stellaire, analyseur orbital, spectromètre atmosphérique (profil moléculaire)
 - [x] Carte — 3 colonnes (planètes | carte | détails), store mapNodes, ajout depuis Observatoire/Labo, suppression, tooltip, visited ciel
-- [ ] Équation de Drake (affichage temps réel)
+- [x] Équation de Drake — affichage Header + Page Drake (valeurs de référence, 00053) ; pas encore : recalcul selon les découvertes collectives
 - [x] Page Population — 3 onglets (Générations, Génération actuelle, Registre des Raisons)
 - [x] Page Systèmes — plan ARCA SVG, menu 1:1 avec 9 groupes (plasma-shield, bumper-shield, population-quarters, fission-reactors, thermal-radiators, fuel-tanks, propulsion, comms, navigation), highlight sur le plan, overlays par groupe
 - [ ] Galaxie procédurale
@@ -102,8 +104,9 @@
 ## Prochaines étapes prioritaires
 
 1. **Avant une mise en ligne** — liste priorisée dans `docs/architecture/PLAN_COMPTES_JOUEURS.md` §9 (emails, RGPD, anti-triche, migrations, sauvegardes, hébergement)
-2. **Onboarding** — Les 5 écrans de `LACUNA_LORE.md` §3 (au-delà de Bienvenue à bord)
-3. **Observatoire complet** — Détail système, scan, fixer cap
+2. **Voyage** — détection en transit, déviation, carburant consommé (`LACUNA_TRANSIT.md` §6–7)
+3. **Scénarios 03 à 08** et traces hors scénario ; entrées de Yael (textes à écrire)
+4. **Fil de notifications** (`LACUNA_NOTIFICATIONS.md`)
 
 ---
 
@@ -172,3 +175,4 @@
 | 2026-10-21 | Audit global (docs/audits/AUDIT_GLOBAL_2026-10-21.md) et lots 1–3 : bugs, code mort, ESLint / Prettier / Vitest, tokens couleur, stores par domaine (observatoire, radar, transit, notifications), scène Three.js partagée, CSS par page. |
 | 2026-10-21 | Comptes joueurs (migrations 00046–00048) : inscription / connexion par email, écran Bienvenue à bord (pseudo et vaisseau privés), données rattachées au vaisseau, RLS par joueur, suppression du prototype, identité modifiable, Vue 3D réservée aux admins. |
 | 2026-10-22 | Mise en cohérence de la documentation de conception avec le projet Claude « Lacuna » : GDD v0.5, Lore v0.4, Arcs v0.3, Hypothèses v0.2, Scénarios v0.5, Transit v0.4, Physique v0.2, Traces v1.3, nouveau `config/LACUNA_TRACES_IMMUABLES.md`, Traces v0.9 archivée (`archive/`), Notifications v0.3 ; onboarding : 5 écrans |
+| 2026-10-23 | Scénarisation jouable : Fil des 75 en base, émetteurs à fenêtres, halo de signal, ciel de départ (SN-001, LPT-001, neutrinos, sources de départ au Radar), journal de bord, calendrier du vaisseau, générations, onboarding (migrations 00052–00071) ; fonctionnalités et prochaines étapes mises à jour. |

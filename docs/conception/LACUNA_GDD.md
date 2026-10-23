@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Game Design Document
-*Version 0.12 — Octobre 2026*
+*Version 0.13 — Octobre 2026*
 
 ---
 
@@ -35,6 +35,7 @@
 | 0.10 | Octobre 2026 | §9 : statut des migrations corrigé — `00052` à `00065` appliquées en production |
 | 0.11 | Octobre 2026 | §2 : calendrier du vaisseau (départ le 1er janvier 2187, temps physique des voyages, temps réel en orbite) ; §3 et §9 : journal de bord implémenté (migration `00068`) |
 | 0.12 | Octobre 2026 | §4 : règle des générations (1 + années simulées ÷ 25, mise à jour à l'arrivée) ; une seule entrée au journal, au premier passage — contradiction entre « une entrée par passage », POP-001 et `LACUNA_ARCS.md` §1.7 tranchée ; §9 mis à jour |
+| 0.13 | Octobre 2026 | §9 : onboarding implémenté (migration `00071`) |
 
 ---
 
@@ -319,13 +320,13 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 | **Population** | Table `populations` (total, generation, will, social_cohesion…). Page à 3 onglets (Générations, Génération actuelle, Registre des Raisons). |
 | **Drake** | Table `drake_equation`, affichage Header + Page Drake. |
 | **Journal de bord** | Table `logbook_entries` (migration `00068`) : entrée fondatrice, départ et arrivée, événements du ciel de départ (SN-001, LPT-001) écrits par le serveur ; entrées du joueur ; filtre par type. Date du vaisseau (§2, Calendrier). Pas encore : notifications archivées, documents trouvés. |
+| **Onboarding** | Écrans 1 à 4 avant le nommage « Bienvenue à bord », écran 5 en visite de sept étapes sur le ciel, traces embarquées (WOW, Oumuamua, Bennu) et message du premier départ (migration `00071`) — `LACUNA_LORE.md` §3–5. Pas encore : la notice de bord (texte à écrire). |
 | **Générations** | Compteur recalculé à l'arrivée de chaque voyage (1 + années simulées ÷ 25) ; entrée `GENERATIONNEL` au premier passage (migration `00069`). |
 
 ### Non implémenté (design cible uniquement)
 
 | Domaine | Décrit dans |
 |---------|-------------|
-| **Onboarding narratif** | `LACUNA_LORE.md` §3 — 5 écrans. Seul l'écran de nommage « Bienvenue à bord » existe. |
 | **Détection en transit, déviation, carburant consommé** | `LACUNA_TRANSIT.md` §6–7, `LACUNA_PHYSICS.md` §5. |
 | **Générations — suite** | §4 — effectif qui évolue, coloration des interprétations, entrées au-delà du premier passage. |
 | **Dilatation gravitationnelle** | `LACUNA_PHYSICS.md` §3. Non calculée ni affichée. |

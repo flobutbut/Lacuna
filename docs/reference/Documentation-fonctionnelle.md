@@ -1,8 +1,8 @@
-*Dernière modification : 2026-10-22*
+*Dernière modification : 2026-10-23*
 
 # LACUNA — Documentation fonctionnelle
 
-*Synthèse des règles métier — Référence : GDD v0.5 — LACUNA_GDD.md, LACUNA_TRANSIT.md, LACUNA_TRACES.md*
+*Synthèse des règles métier — Référence : GDD v0.13 — LACUNA_GDD.md, LACUNA_TRANSIT.md, LACUNA_TRACES.md*
 
 ---
 
@@ -103,7 +103,7 @@ Les informations légales viennent de `src/content/legal.js` ; une valeur absent
 | Carte | Systèmes visités, routes parcourues |
 | Laboratoire | Analyse données brutes |
 | Artefacts | Grille traces collectées |
-| Journal | Fil chronologique, écriture |
+| Journal | Deux colonnes : nouvelle entrée du joueur | filtre par type et fil chronologique (entrées écrites par le serveur et par le joueur, datées au calendrier du vaisseau) |
 | Drake | Termes, historique N |
 | Population | État civilisation |
 | Systèmes | État technique vaisseau |
@@ -134,10 +134,10 @@ Référence technique : `Documentation-technique.md` § Vue Radar.
 - À l'arrivée : `complete_transit`, ligne `ship_travels`, scan automatique, traces selon difficulté + contexte
 
 ### Générations
-- Une génération = 25 ans simulés
-- Passage après distance parcourue + temps simulé
-- Entrée GENERATIONNEL dans le journal
-- Héritage conservé, propriétés population modifiées
+- Génération = 1 + années du calendrier du vaisseau ÷ 25, recalculée à l'arrivée de chaque voyage (`LACUNA_GDD.md` §4)
+- Calendrier : départ le 1er janvier 2187, plus la durée physique des voyages et le temps réel en orbite (`LACUNA_GDD.md` §2)
+- Entrée GENERATIONNEL au journal au premier passage seulement (POP-001)
+- Effectif fixe (15 000) tant qu'aucune règle démographique n'existe
 
 ### Laisser une trace
 - Type `PLAYER_TRACE`, permanente
@@ -147,4 +147,4 @@ Référence technique : `Documentation-technique.md` § Vue Radar.
 
 ## Référence complète
 
-Voir `docs/conception/LACUNA_GDD.md` pour les spécifications détaillées (séquence secrète, Drake, état d'implémentation §9), `LACUNA_LORE.md` §3 pour l'onboarding (5 écrans), `LACUNA_PROCEDURAL_DATA_MODEL.md` pour les structures JSON.
+Voir `docs/conception/LACUNA_GDD.md` pour les spécifications détaillées (séquence secrète, Drake, état d'implémentation §9), `LACUNA_LORE.md` §3 pour l'onboarding (écrans 1 à 4, puis visite du premier choix sur le ciel), `LACUNA_PROCEDURAL_DATA_MODEL.md` pour les structures JSON.
