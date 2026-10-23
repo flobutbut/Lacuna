@@ -14,6 +14,7 @@ import { getSystemXyz } from '@/lib/stellarCoordinates'
 import { drawCurvedGrid, drawMilkyWay, drawNebulas, drawStars, drawSignals, drawSpectralBorder, drawConstellationLines } from '@/lib/skyRenderers'
 import { useSkyStars } from '@/composables/useSkyStars'
 import { supernovaBands, SUPERNOVA_STAR_ID } from '@/lib/supernova'
+import { CATALOGUE_SYSTEM_IDS, isFirstChoicePending } from '@/lib/onboarding'
 import { useStarSelection } from '@/composables/useStarSelection'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
@@ -211,7 +212,9 @@ function draw(canvas, starsRef) {
     supernovaStar.supernova = sn ? { level: sn[band] ?? sn.visible, color: sn.color, nebula: sn.nebula, band } : null
   }
 
-  drawStars(ctx, starList, vd.ra, vd.dec, w, h, selected, searchedStarId.value, projectedPositions)
+  // Écran 5 de l'onboarding : seules les destinations du catalogue embarqué sont distinguées
+  const anomalyIds = isFirstChoicePending(shipStore.ship) ? CATALOGUE_SYSTEM_IDS : null
+  drawStars(ctx, starList, vd.ra, vd.dec, w, h, selected, searchedStarId.value, projectedPositions, anomalyIds)
   drawSignals(ctx, activeSignals, vd.ra, vd.dec, w, h)
   drawSpectralBorder(ctx, band, w, h)
 

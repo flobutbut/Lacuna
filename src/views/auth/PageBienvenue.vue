@@ -23,6 +23,8 @@ import {
 } from '@/lib/playerProfile'
 import AuthPanel from '@/components/auth/AuthPanel.vue'
 import AppTextField from '@/components/AppTextField.vue'
+import OnboardingStory from '@/components/onboarding/OnboardingStory.vue'
+import { useObservatoireStore } from '@/stores/observatoire'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -34,6 +36,10 @@ const shipName = ref('')
 const errors = ref({ pseudo: '', shipName: '' })
 const formError = ref('')
 const submitting = ref(false)
+
+// Onboarding, écrans 1 à 4 (LACUNA_LORE.md §3) : avant le nommage. « Passer » pour une nouvelle partie seulement
+const storyDone = ref(false)
+const storySkippable = !!authStore.profile?.pseudo
 
 async function submit() {
   formError.value = ''
@@ -48,6 +54,8 @@ async function submit() {
     // Les stores du vaisseau ont pu être chargés avant la création de la partie (vides) : on les recharge
     await Promise.all([useShipStore().fetch(), useSignauxStore().fetch(), useObservationsStore().fetch(), useMapNodesStore().fetch()])
     notificationsStore.showNotification(`Bienvenue à bord du ${shipName.value.trim()}.`, 4000, 'success')
+    // Première arrivée sur le ciel : l'interface apparaît en fondu (LACUNA_UI.md §9)
+    useObservatoireStore().startIntro()
     router.replace({ name: 'observatoire' })
   } catch (err) {
     if (isGameAlreadyStarted(err)) {
@@ -62,7 +70,9 @@ async function submit() {
 </script>
 
 <template>
+  <OnboardingStory v-if="!storyDone" :skippable="storySkippable" @done="storyDone = true" />
   <AuthPanel
+    v-else
     title="Bienvenue à bord"
     subtitle="Votre vaisseau générationnel attend son commandant. Ces deux noms restent privés : les autres joueurs ne les verront jamais."
   >

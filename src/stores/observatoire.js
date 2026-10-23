@@ -38,6 +38,16 @@ export const useObservatoireStore = defineStore('observatoire', () => {
   const observatoireViewMode = ref('sky')
   /** Tuiles latérales (SideLeft, SideRight) en vue ciel profond — raccourci [@] pour masquer */
   const observatoireTilesVisible = ref(true)
+  /** Première arrivée sur le ciel après l'onboarding : l'interface apparaît en fondu (LACUNA_UI.md §9) */
+  const introActive = ref(false)
+  const INTRO_MS = 4500
+
+  function startIntro() {
+    introActive.value = true
+    setTimeout(() => {
+      introActive.value = false
+    }, INTRO_MS)
+  }
 
   function setObservatoireViewMode(mode) {
     if (['sky', 'radar', 'system'].includes(mode)) {
@@ -154,6 +164,8 @@ export const useObservatoireStore = defineStore('observatoire', () => {
   }
 
   return {
+    introActive,
+    startIntro,
     selectedStar,
     selectedBody,
     setSelectedBody,

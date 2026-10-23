@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useShipStore } from '@/stores/ship'
 import { useSignauxStore } from '@/stores/signaux'
+import { useObservatoireStore } from '@/stores/observatoire'
 import { Analytics } from '@vercel/analytics/vue'
 import AppHeader from '@/components/AppHeader.vue'
 import InstrumentsBar from '@/components/InstrumentsBar.vue'
@@ -16,6 +17,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 const shipStore = useShipStore()
 const signauxStore = useSignauxStore()
+const observatoireStore = useObservatoireStore()
 /** Mise en page sans header ni barre d'instruments (Vue 3D conception, pages d'authentification) */
 const isBareLayout = computed(() => route.meta.bareLayout === true)
 
@@ -45,6 +47,7 @@ watch(
     :class="{
       'route-observatoire': route.name === 'observatoire',
       'route-bare': isBareLayout,
+      'lacuna-app--intro': observatoireStore.introActive,
     }"
   >
     <AppHeader v-if="!isBareLayout" />
@@ -97,5 +100,35 @@ watch(
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+</style>
+
+<style>
+/* Première arrivée sur le ciel après l'onboarding : header, panneaux, puis barre d'instruments (LACUNA_UI.md §9) */
+@keyframes lacuna-intro-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lacuna-app--intro .header {
+  animation: lacuna-intro-in 1.2s ease both;
+}
+
+.lacuna-app--intro .side-left,
+.lacuna-app--intro .side-right {
+  animation: lacuna-intro-in 1.2s ease 1.2s both;
+}
+
+.lacuna-app--intro .instruments {
+  animation: lacuna-intro-in 1.2s ease 2.4s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lacuna-app--intro .header,
+  .lacuna-app--intro .side-left,
+  .lacuna-app--intro .side-right,
+  .lacuna-app--intro .instruments {
+    animation: none;
+  }
 }
 </style>

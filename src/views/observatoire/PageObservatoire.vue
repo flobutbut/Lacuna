@@ -27,6 +27,8 @@ import ObservatoirePanel from '@/components/observatoire/ObservatoirePanel.vue'
 import SignalModal from '@/components/SignalModal.vue'
 import SignalTooltip from '@/components/SignalTooltip.vue'
 import ConstellationTooltip from '@/components/ConstellationTooltip.vue'
+import OnboardingFirstChoice from '@/components/onboarding/OnboardingFirstChoice.vue'
+import { isFirstChoicePending } from '@/lib/onboarding'
 
 const route = useRoute()
 const radarStore = useRadarStore()
@@ -117,6 +119,7 @@ onUnmounted(() => {
         <div class="cc-v" />
       </div>
       <ObservatoireAzimuth v-if="isSkyMode" />
+      <OnboardingFirstChoice v-if="isSkyMode && isFirstChoicePending(shipStore.ship)" />
       <TravelWidget v-if="isSkyMode" />
       <DepartureConfirmation v-if="isSkyMode" />
       <ObservatoirePanel v-if="observatoireStore.selectedStar && observatoireStore.observatoireOpen" />

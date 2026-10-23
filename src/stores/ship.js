@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
+import { useNotificationsStore } from '@/stores/notifications'
+import { isFirstChoicePending } from '@/lib/onboarding'
 
 export const useShipStore = defineStore('ship', () => {
   const ship = ref(null)
@@ -129,12 +131,21 @@ export const useShipStore = defineStore('ship', () => {
       }
     }
 
+    const firstDeparture = isFirstChoicePending(ship.value)
     const { data, error } = await supabase.rpc('start_transit', { p_destination: destinationId })
     if (error) {
       console.warn('[ship] startTransit:', error.message)
       return null
     }
     ship.value = data
+    // Flux de démarrage (LACUNA_LORE.md §4) : le serveur écrit aussi ce message au journal
+    if (firstDeparture) {
+      useNotificationsStore().showNotification(
+        '3 traces sont embarquées à bord. Elles ont motivé ce voyage. Vous avez le temps de les lire.',
+        8000,
+        'info'
+      )
+    }
     nowTick.value = Date.now()
     ensureTransitInterval()
     return ship.value

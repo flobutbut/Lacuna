@@ -184,7 +184,11 @@ function drawSupernova(ctx, pos, baseR, sn) {
   ctx.fill()
 }
 
-export function drawStars(ctx, starList, raView, decView, w, h, selectedStar, searchedStarId, projectedPositions) {
+/**
+ * @param {Set<string>|null} [anomalyIds] - Si fourni, seules ces étoiles sont distinguées comme anomalies
+ *   (écran 5 de l'onboarding : les destinations du catalogue embarqué)
+ */
+export function drawStars(ctx, starList, raView, decView, w, h, selectedStar, searchedStarId, projectedPositions, anomalyIds = null) {
   starList.forEach((s) => {
     const pos = projectedPositions
       ? projectedPositions.get(s.id)
@@ -215,7 +219,7 @@ export function drawStars(ctx, starList, raView, decView, w, h, selectedStar, se
     const fillStyleMain = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`
     const fillStyleHalo = s.r > 1.2 ? `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha * 0.08})` : null
 
-    if (s.isAnomaly) {
+    if (anomalyIds ? anomalyIds.has(s.id) : s.isAnomaly) {
       s.anomalyPhase += 0.03
       const pulse = 0.4 + 0.4 * Math.sin(s.anomalyPhase)
       ctx.beginPath()
