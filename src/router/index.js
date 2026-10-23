@@ -97,6 +97,12 @@ const router = createRouter({
       meta: { title: 'Vue 3D étoiles (conception)', bareLayout: true, requiresAdmin: true },
     },
     {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('@/views/PageAdmin.vue'),
+      meta: { title: 'Administration', requiresAdmin: true },
+    },
+    {
       path: '/connexion',
       name: 'connexion',
       component: () => import('@/views/auth/PageConnexion.vue'),
