@@ -70,7 +70,11 @@ onMounted(async () => {
   if (radarEnabled.value) radarSpectrogram.start()
   await ensureStoresLoaded(signauxStore, shipStore)
   await callComputePulsarSignals()
+  await signauxStore.captureSystemEmitters()
 })
+
+// Arrivée dans un système : capture de ses émetteurs
+watch(() => shipStore.currentSystemId, () => signauxStore.captureSystemEmitters())
 
 watch(radarEnabled, (val) => {
   if (val) radarSpectrogram.start()

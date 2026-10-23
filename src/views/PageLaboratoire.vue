@@ -503,6 +503,7 @@ onUnmounted(() => {
                 :duration-sec="r.durationSec ?? 72"
                 :anomalous="r.anomalous ?? false"
                 :structure="selectedObs?.type === 'SIGNAL' ? (selectedObs?.structure ?? 'non uniforme') : 'non uniforme'"
+                :pulse-period-sec="selectedObs?.attributes?.pulse_period_s ?? 0"
                 class="lab-report__output"
               />
               <LabReportPolarisation
@@ -510,6 +511,7 @@ onUnmounted(() => {
                 :obs-id="selectedObs?.id ?? ''"
                 :fiability="r.fiability"
                 :anomalous="r.anomalous ?? false"
+                :polarization="selectedObs?.attributes?.polarization ?? ''"
                 class="lab-report__output"
               />
               <LabReportSpectreEnergetique

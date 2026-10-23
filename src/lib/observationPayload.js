@@ -54,7 +54,7 @@ export function buildObservationPayload(body, context, niveaux) {
 
 /**
  * Payload observation pour obsStore.addObservation à partir d'un signal (niveau = PASSIF).
- * @param {object} s - Signal (support, structure, distanceEst, receivedAt, durationSec, anomalous)
+ * @param {object} s - Signal (support, structure, distanceEst, receivedAt, durationSec, anomalous, polarization, pulsePeriodS)
  * @param {{ PASSIF: string }} niveaux - obsStore.NIVEAUX
  * @returns {object|null}
  */
@@ -74,5 +74,10 @@ export function signalToObsPayload(s, niveaux) {
     niveau: niveaux.PASSIF,
     durationSec: s.durationSec ?? 72,
     anomalous: s.anomalous ?? false,
+    // Mesures du signal que les instruments du Laboratoire reprennent telles quelles
+    attributes: {
+      ...(s.polarization ? { polarization: s.polarization } : {}),
+      ...(s.pulsePeriodS ? { pulse_period_s: s.pulsePeriodS } : {}),
+    },
   }
 }

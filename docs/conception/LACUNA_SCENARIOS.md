@@ -1,7 +1,7 @@
-*Dernière modification : 2026-10-22*
+*Dernière modification : 2026-10-23*
 
 # LACUNA — Scénarios
-*Version 0.5 — Octobre 2026*
+*Version 0.6 — Octobre 2026*
 
 > Ce document décrit les **arcs narratifs jouables** : des séquences de traces qui, ensemble, racontent quelque chose et mènent quelque part. Complémentaire de `LACUNA_TRACES.md` (mécanique des traces) et de `LACUNA_TRACES_IMMUABLES.md` (fiches des traces immuables hors scénario) — les scénarios documentent comment les traces se relient et ce qu'elles impliquent collectivement.
 
@@ -33,6 +33,7 @@
 | 0.3 | Mars 2026 | Ajout Scénario 01 — Yael (onboarding). Renumérotation Scénarios 01→02 … 07→08. |
 | 0.4 | Mars 2026 | Développement des fiches Scénarios 03 à 08 — grammaires, systèmes d'ancrage, questions terminales, notes de conception. Direction retenue pour le Scénario 08 (La méthode lisible). |
 | 0.5 | Octobre 2026 | Mise en cohérence — fusion des deux entrées 0.4 du changelog ; sous-sections renumérotées selon leur section (3.x, 4.x, 5.x) ; Le Fil des 75 aligné sur sa numérotation : `scn-02-fil-des-75`, désignations `…-SCN02-…`. Scénario 03 : la dilatation exige un objet compact (Sgr A*), pas une étoile de type A ou F où l'effet est négligeable ; durées recalculées ; la lumière de Sol depuis la position d'observation n'a que l'âge de la distance ; chronologie Andromède / Soleil réconciliée (proposition à valider). Scénario 02 : fenêtre de 40 min rendue explicite à Proxima b, rotation de Ross 128 b déclarée valeur de jeu, 82 Eridani à 19,7 al. Scénario 04 : zone et types spectraux corrigés. Scénario 05 : traces au format joueur rattachées à l'origine `IMMUABLE`. Scénario 07 : chiralité des météorites et de Bennu précisée. Scénario 08 : statut, PSR B1919+21 référencé PSR-001. §12 : exception pour les scénarios séquentiels |
+| 0.6 | Octobre 2026 | §5.7 ajouté : valeurs d'implémentation provisoires des signaux du Fil des 75 (cycle de Proxima b, décalage d'aube, intensité, durée de capture, forme de la salve, sens de la polarisation). Un signal hors fenêtre est présent mais inactif |
 
 ---
 
@@ -524,6 +525,25 @@ La question de niveau supérieur : si le réseau s'étend au-delà du voisinage 
 
 ---
 
+
+### 5.7 Valeurs d'implémentation provisoires
+
+*Choisies à l'implémentation des signaux (migration `00057`) faute de valeur dans les fiches ci-dessus ; à confirmer ou remplacer. La colonne `provisional` de `system_signal_sources` les recense.*
+
+| Élément | Valeur retenue | Pourquoi |
+|---------|---------------|----------|
+| Horloge des fenêtres | Temps réel joueur ; phase = (maintenant − époque − décalage) mod cycle | Cohérent avec le type Timing (`LACUNA_TRACES.md` §3.7) : le joueur doit être présent au bon moment |
+| Époque des cycles | 2026-10-01 00:00 UTC (`game_settings.scenario_signal_epoch`) | Commune à tous les joueurs : la galaxie est partagée |
+| Décalage « aube locale » | 0 | Aucun repère dans la doc |
+| Cycle des fenêtres de Proxima b | 61 h, comme Ross 128 b | La planète est verrouillée : aucun cycle jour-nuit documenté |
+| Signal hors fenêtre | Présent mais inactif : listé, non analysable, muet sur le Radar | Décision de conception |
+| Intensité (flux relatif) | 0,13 (~20 dB au-dessus du bruit de la bande L) | Aucune intensité documentée |
+| Durée de capture au Laboratoire | 300 s (~4 périodes de 73 s) | Aucune durée documentée |
+| Forme de la salve de 73 s | Impulsion identique à celle d'un pulsar | Aucun profil documenté |
+| Polarisation « circulaire gauche » | Stokes V < 0 | Convention de jeu |
+| Signal de Ross 128 b | 1420 MHz en fenêtre, sans périodicité ni polarisation propres | Rien de documenté : il n'est pas tracé sur le Radar (pas de motif à injecter) |
+
+---
 
 ## 6. Scénario 03 — Le Témoin
 

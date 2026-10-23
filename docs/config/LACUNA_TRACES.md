@@ -1,7 +1,7 @@
-*Dernière modification : 2026-10-22*
+*Dernière modification : 2026-10-23*
 
 # LACUNA — Les Traces
-*Version 1.3 — Octobre 2026*
+*Version 1.4 — Octobre 2026*
 
 > Ce document définit ce qu'est une trace dans LACUNA, comment elle est produite, et quels types de résultats elle peut donner. Il ne catalogue pas les traces immuables — leurs fiches vivent dans `LACUNA_TRACES_IMMUABLES.md` (traces hors scénario, Journal de Yael) et dans `LACUNA_SCENARIOS.md` (nœuds des scénarios). Il ne documente pas les instruments — ceux-ci vivent dans `LACUNA_LABORATOIRE_INSTRUMENTS.md`.
 >
@@ -30,6 +30,7 @@
 | 1.1 | Mars 2026 | Ajout §7 — qualification des traces : coût physique (1→4), coût intellectuel (A→D), multi-output. |
 | 1.2 | Mars 2026 | Refonte §3 — 9 types de traces (ajout Timing, Comparaison, Référence externe). Questions ouvertes posées pour les 3 nouveaux types. |
 | 1.3 | Octobre 2026 | Mise en cohérence — les fiches retirées en v1.0 n'avaient pas été reportées dans `LACUNA_SCENARIOS.md` comme annoncé : elles sont restaurées dans le nouveau `LACUNA_TRACES_IMMUABLES.md`, et les renvois sont corrigés. Désignations du Fil des 75 alignées sur le Scénario 02 (`…-SCN02-…`). Exemple Timing : Ross 128 b n'est pas verrouillée gravitationnellement dans le jeu (une planète verrouillée n'a pas de cycle d'aube). Exemple Signature : `ROSS128-YAEL-002` (2 fragments maximum dans la zone d'onboarding) et chiralité reportée sur les acides aminés (une nucléobase n'est pas chirale). Exemple Désignation : fondé sur le nœud `GLIESE667-SCN02-001` |
+| 1.4 | Octobre 2026 | §3.7 Timing : un signal hors fenêtre est présent mais inactif (implémentation provisoire, `LACUNA_SCENARIOS.md` §5.7) |
 
 ---
 
@@ -254,6 +255,8 @@ Output   : Signal ROSS128-b — fenêtre : aube locale, durée 40 min, cycle 61h
 Confiance: CONVICTION
 Fondé sur: ROSS128-SCN02-001 — corrélation signal / position orbitale
 ```
+
+*Décision d'implémentation : un signal hors fenêtre reste présent mais inactif ; le jeu n'annonce pas la prochaine fenêtre, le joueur la déduit de la périodicité (cycle rattrapable au suivant).*
 
 *Question ouverte : comment le jeu notifie-t-il le joueur d'une fenêtre temporelle imminente ? Est-ce que le timing peut être manqué définitivement ou toujours rattrapable au cycle suivant ? Un timing raté doit-il avoir des conséquences narratives ?*
 

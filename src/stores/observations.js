@@ -13,7 +13,7 @@ const OBS_STATES = { PENDING: 'En attente', RUNNING: 'Analyse en cours', DONE: '
 const NIVEAUX = { PASSIF: 'Passif', SYSTEME: 'Système', ORBITE: 'Orbite proche', CONTACT: 'Contact' }
 
 const OBSERVATIONS_SELECT_COLUMNS =
-  'id, type, system_id, system_display, name, state, niveau, coords, distance, support, structure, duration_sec, date, anomalous'
+  'id, type, system_id, system_display, name, state, niveau, coords, distance, support, structure, duration_sec, date, anomalous, attributes'
 
 function dbToObs(row) {
   return {
@@ -31,6 +31,7 @@ function dbToObs(row) {
     structure: row.structure ?? null,
     durationSec: row.duration_sec,
     anomalous: row.anomalous ?? false,
+    attributes: row.attributes ?? {},
   }
 }
 
@@ -51,6 +52,7 @@ function obsToDb(obs, shipId) {
     duration_sec: obs.type === 'SIGNAL' ? (obs.durationSec ?? 72) : null,
     date: obs.date ?? null,
     anomalous: obs.type === 'SIGNAL' ? (obs.anomalous ?? false) : null,
+    attributes: obs.attributes ?? {},
   }
 }
 

@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Game Design Document
-*Version 0.6 — Octobre 2026*
+*Version 0.7 — Octobre 2026*
 
 ---
 
@@ -29,6 +29,7 @@
 | 0.4 | Mars 2026 | Restructuration — physique extraite vers `LACUNA_PHYSICS.md`, schémas JSON extraits vers `LACUNA_PROCEDURAL_DATA_MODEL.md` §9, UI renvoyée vers `LACUNA_UI.md`, onboarding renvoyé vers `LACUNA_LORE.md` |
 | 0.5 | Octobre 2026 | Mise en cohérence — population de référence 15 000 (alignée sur les principes du projet et `LACUNA_ARCS.md` §1.10) ; quatrième origine de trace `PRÉCURSEUR` (Yael) ; zone profonde 18 h – 6 jours ; références croisées complétées ; §9 État d'implémentation mis à jour (transit serveur, comptes joueurs) et versé dans les deux copies du document |
 | 0.6 | Octobre 2026 | §9 : écarts population de départ (15 000) et durée de génération (25 ans) corrigés dans le code ; écarts restants : répartition des phases, Équation de Drake (valeurs de référence en base, migration `00053` à appliquer) |
+| 0.7 | Octobre 2026 | §9 : émetteurs de système (signaux à fenêtres du Fil des 75, Radar et Laboratoire) ; migrations `00054`–`00058` écrites, non appliquées |
 
 ---
 
@@ -293,7 +294,7 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 | **Transit** | Décidé par le serveur : RPC `start_transit` / `complete_transit` (migration `00050`), durée joueur par la table de référence (`LACUNA_PHYSICS.md` §2), mode test `transit_time_scale`. Quatre phases calculées côté client, `[FIXER CAP]` verrouillé hors `COASTING`, vue de confirmation du départ, dérive stellaire, reprise après rechargement. Historique `ship_travels`. Détail : `LACUNA_TRANSIT.md` §10. |
 | **Carte** | `map_nodes` ; onglets System / Map ; arêtes de la Map dérivées de `ship_travels` (visité = au moins une arête, observé = aucune). |
 | **Observatoire** | Ciel (stellar_systems, coordonnées x/y/z), vue Système (planètes, zone habitable), vue Radar (spectrogramme temps réel, bruit de fond physique, pulsars, sélecteur de bande — `LACUNA_RECEPTION_MODULE.md`). |
-| **Signaux** | Table `signals`, sources `system_objects` (PULSAR, etc.) ou `signal_events`. Durée de vie en temps joueur, [ANALYSER AU LABO]. |
+| **Signaux** | Table `signals`, sources `system_objects` (PULSAR, etc.) ou `signal_events`. Durée de vie en temps joueur, [ANALYSER AU LABO]. Émetteurs du système courant (`EMITTER`, migration `00057`) : présents tant que le vaisseau y est, actifs seulement pendant leur fenêtre d'émission (temps réel), tracés sur le Radar. |
 | **Laboratoire** | File d'observations, instruments (spectral, structure temporelle, polarisation, spectre énergétique, gravimétrique, stellaire, orbital, atmosphère, morpho, volumétrique, magnétomètre), rapports + [GARDER UNE TRACE]. |
 | **Artefacts / Traces** | Traces Supabase, interprétations anonymes. |
 | **Population** | Table `populations` (total, generation, will, social_cohesion…). Page à 3 onglets (Générations, Génération actuelle, Registre des Raisons). |

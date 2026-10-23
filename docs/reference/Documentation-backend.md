@@ -308,7 +308,7 @@ Signaux captés par les capteurs du vaisseau. Pointe vers la source (objet ou é
 | Colonne | Type | Description |
 |---------|------|-------------|
 | id | UUID PK | |
-| source_type | TEXT | OBJECT \| EVENT \| PULSAR \| UNKNOWN |
+| source_type | TEXT | OBJECT \| EVENT \| PULSAR \| EMITTER \| UNKNOWN (EMITTER : émetteur du système du vaisseau, 00057) |
 | source_object_id | UUID FK | → system_objects (pulsar, magnétar...) |
 | source_event_id | UUID FK | → signal_events (supernova, GRB...) |
 | source_system_id | TEXT FK | → stellar_systems (pulsars, 00036) |
@@ -533,6 +533,13 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00049 | Suppression des pulsars en double |
 | 00050 | Transit côté serveur : table game_settings, RPC start_transit et complete_transit, UPDATE de ships limité à name, ship_travels en lecture seule |
 | 00051 | RPC delete_account : suppression du compte par le joueur (RGPD) |
+| 00052 | Population de départ 15 000 (défaut et lignes existantes) |
+| 00053 | Équation de Drake : fl = 0,30, N = 72 |
+| 00054 | trace_origin : valeur PRÉCURSEUR |
+| 00055 | traces : scenario_arc, linked_trace_id, precursor_generation (non lisibles par les joueurs) |
+| 00056 | observations : attributes (polarisation, période mesurées) |
+| 00057 | signals : source_type EMITTER ; table system_signal_sources (illisible côté client) ; RPC capture_system_signals ; game_settings.scenario_signal_epoch |
+| 00058 | system_objects : tidally_locked, rotation_period_h ; données Proxima b et Ross 128 b |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
@@ -554,6 +561,10 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 ### RPC `delete_account()` (migration 00051)
 
 `SECURITY DEFINER`, réservée à `authenticated`. Supprime les interprétations du joueur (sinon conservées sans auteur, `ON DELETE SET NULL`), efface son vaisseau de `traces.discovered_by`, puis supprime `auth.users` : profil, vaisseau et toutes ses données suivent en cascade. Appelée depuis Paramètres → Compte.
+
+### RPC `capture_system_signals()` (migration 00057)
+
+`SECURITY DEFINER`, réservée à `authenticated`. Sans paramètre : lit le système courant du vaisseau du joueur et y copie, dans `signals` (`source_type = 'EMITTER'`), les émetteurs de `system_signal_sources`. Idempotente (verrou sur le vaisseau, clé `attributes.source_ref`), sans effet en transit. Renvoie `{ inserted }`. Les fenêtres d'émission sont copiées avec l'époque de `game_settings.scenario_signal_epoch`.
 
 ### RPC `compute_pulsar_signals(p_ship_id, p_band)` (migrations 00041 → 00047)
 
@@ -828,6 +839,7 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 | Date | Modifications |
 |------|---------------|
 | 2026-10-22 | Suppression du compte : RPC delete_account (00051) |
+| 2026-10-23 | Migrations 00052–00058 écrites, non appliquées : population 15 000, Drake, origine PRÉCURSEUR, colonnes de scénario sur traces, émetteurs de système (EMITTER, capture_system_signals), données astronomiques du Fil des 75 |
 | 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |

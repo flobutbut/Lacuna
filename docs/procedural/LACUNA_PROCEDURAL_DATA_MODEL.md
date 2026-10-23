@@ -522,6 +522,9 @@ Valeur entre 0 et 1. Elle influence la capacité à interpréter des traces comp
 | `IMMUABLE` | Créée par les développeurs, ancrée dans la vraie science, ne change pas |
 | `GENERÉE` | Créée procéduralement à la génération du système |
 | `JOUEUR` | Déposée par un autre joueur lors de son passage |
+| `PRÉCURSEUR` | Entrée de Yael, prédéfinie, au format d'une trace joueur (migration `00054`) |
+
+Colonnes de `traces` réservées au serveur (jamais lisibles par les joueurs, migration `00055`) : `scenario_arc`, `linked_trace_id`, `precursor_generation`.
 
 ---
 
@@ -659,6 +662,7 @@ Objet global, partagé par tous les joueurs. `fl`, `fi` et `L` sont les seuls te
 |------|---------------|
 | Mars 2026 | Version 0.1 — document initial |
 | 2026-10-22 | §9.2 et exemple de journal : population de départ 15 000 (alignée sur `LACUNA_GDD.md` v0.5). Code aligné le 2026-10-23 (constante `INITIAL_POPULATION`, migration `00052`) |
+| 2026-10-23 | §9.3 : origine `PRÉCURSEUR` et colonnes de scénario sur `traces` (migrations `00054`, `00055`) |
 
 ---
 

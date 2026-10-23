@@ -8,6 +8,7 @@ import AppModal from '@/components/AppModal.vue'
 import Divider from '@/components/Divider.vue'
 import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
 import { signalToObsPayload } from '@/lib/observationPayload'
+import { isWindowOpen } from '@/lib/signalWindow'
 
 const router = useRouter()
 const notificationsStore = useNotificationsStore()
@@ -28,10 +29,11 @@ async function analyser() {
     router.push({ path: '/laboratoire', query: { select: existing.id } })
     return
   }
+  if (!isActive(s)) return
   const payload = signalToObsPayload(s, obsStore.NIVEAUX)
   if (!payload) return
   const obsId = await obsStore.addObservation(payload)
-  signauxStore.removeSignal(s.id)
+  if (!s.persistent) signauxStore.removeSignal(s.id)
   notificationsStore.setLabHasNew(true)
   observatoireStore.closeSignalModal()
   router.push({ path: '/laboratoire', query: { select: obsId } })
@@ -39,12 +41,17 @@ async function analyser() {
 
 async function ajouterAuLabo() {
   const s = observatoireStore.selectedSignal
-  if (!s || obsStore.findObservationForSignal(s)) return
+  if (!s || !isActive(s) || obsStore.findObservationForSignal(s)) return
   const payload = signalToObsPayload(s, obsStore.NIVEAUX)
   if (!payload) return
   await obsStore.addObservation(payload)
-  signauxStore.removeSignal(s.id)
+  if (!s.persistent) signauxStore.removeSignal(s.id)
   notificationsStore.setLabHasNew(true)
+}
+
+/** Un signal à fenêtres n'est analysable que pendant sa fenêtre d'émission */
+function isActive(signal) {
+  return isWindowOpen(signal?.window)
 }
 
 function isAdded() {
@@ -85,7 +92,13 @@ function isAdded() {
             {{ observatoireStore.selectedSignal?.structure ?? 'non uniforme' }}
           </span>
         </div>
-        <div class="sw-row">
+        <div v-if="observatoireStore.selectedSignal?.window" class="sw-row">
+          <span class="sw-key">État</span>
+          <span class="sw-val" :class="isActive(observatoireStore.selectedSignal) ? 'ok' : 'warn'">
+            {{ isActive(observatoireStore.selectedSignal) ? 'Actif' : 'Inactif' }}
+          </span>
+        </div>
+        <div v-if="!observatoireStore.selectedSignal?.persistent" class="sw-row">
           <span class="sw-key">Direction</span>
           <span class="sw-val">azimut {{ observatoireStore.selectedSignal?.azimuth }}°</span>
         </div>
@@ -100,13 +113,13 @@ function isAdded() {
       </div>
     </div>
     <template #footer>
-      <button type="button" class="btn btn-primary" @click="analyser">
+      <button type="button" class="btn btn-primary" :disabled="!isActive(observatoireStore.selectedSignal)" @click="analyser">
         Analyser
       </button>
       <button
         type="button"
         class="btn btn-primary"
-        :disabled="isAdded()"
+        :disabled="isAdded() || !isActive(observatoireStore.selectedSignal)"
         @click="ajouterAuLabo"
       >
         {{ isAdded() ? 'Ajouté' : 'Ajouter au laboratoire' }}
