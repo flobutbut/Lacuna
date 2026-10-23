@@ -60,24 +60,11 @@ onMounted(() => journalStore.fetch())
 
 <template>
   <div class="page-full">
-    <div class="page-content">
-      <h1 class="page-title">Journal de Bord</h1>
+    <div class="page-content journal-layout">
+      <h1 class="page-title journal-layout__title">Journal de Bord</h1>
 
-      <div class="journal-filters" role="group" aria-label="Filtrer par type">
-        <button
-          v-for="f in FILTERS"
-          :key="f.id"
-          type="button"
-          class="journal-filter-btn"
-          :class="{ active: filter === f.id }"
-          :aria-pressed="filter === f.id"
-          @click="filter = f.id"
-        >
-          {{ f.label }}
-        </button>
-      </div>
-
-      <form class="journal-editor journal-editor--top" @submit.prevent="save">
+      <!-- Colonne 1 : nouvelle entrée -->
+      <form class="journal-editor journal-editor--side" @submit.prevent="save">
         <AppTextField v-model="title" label="Titre" autocomplete="off" :hint="`${JOURNAL_TITLE_MAX} caractères au plus.`" />
         <label class="journal-editor__label" for="journal-text">Entrée</label>
         <textarea
@@ -85,7 +72,7 @@ onMounted(() => journalStore.fetch())
           v-model="text"
           class="journal-editor__textarea"
           :maxlength="JOURNAL_TEXT_MAX"
-          rows="4"
+          rows="6"
         />
         <p v-if="saveError" class="journal-editor__error" role="alert">{{ saveError }}</p>
         <button type="submit" class="btn btn-primary" :disabled="!canSave">
@@ -93,18 +80,35 @@ onMounted(() => journalStore.fetch())
         </button>
       </form>
 
-      <p v-if="journalStore.loaded && !visibleEntries.length" class="journal-empty">Aucune entrée.</p>
-      <article
-        v-for="entry in visibleEntries"
-        :key="entry.id"
-        class="journal-entry"
-        :class="{ 'journal-entry--generational': entry.type === 'GENERATIONNEL' }"
-      >
-        <div class="journal-entry__date">{{ entryHeader(entry) }}</div>
-        <div class="journal-entry__gen">Génération {{ entry.generation }}</div>
-        <h2 class="journal-entry__title">{{ entry.title }}</h2>
-        <div class="journal-entry__text">{{ entry.text }}</div>
-      </article>
+      <!-- Colonne 2 : filtre et fil -->
+      <section class="journal-feed" aria-label="Entrées du journal">
+        <div class="journal-filters" role="group" aria-label="Filtrer par type">
+          <button
+            v-for="f in FILTERS"
+            :key="f.id"
+            type="button"
+            class="journal-filter-btn"
+            :class="{ active: filter === f.id }"
+            :aria-pressed="filter === f.id"
+            @click="filter = f.id"
+          >
+            {{ f.label }}
+          </button>
+        </div>
+
+        <p v-if="journalStore.loaded && !visibleEntries.length" class="journal-empty">Aucune entrée.</p>
+        <article
+          v-for="entry in visibleEntries"
+          :key="entry.id"
+          class="journal-entry"
+          :class="{ 'journal-entry--generational': entry.type === 'GENERATIONNEL' }"
+        >
+          <div class="journal-entry__date">{{ entryHeader(entry) }}</div>
+          <div class="journal-entry__gen">Génération {{ entry.generation }}</div>
+          <h2 class="journal-entry__title">{{ entry.title }}</h2>
+          <div class="journal-entry__text">{{ entry.text }}</div>
+        </article>
+      </section>
     </div>
   </div>
 </template>

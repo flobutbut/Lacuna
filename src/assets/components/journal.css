@@ -134,7 +134,23 @@
     border-color: var(--color-cyan-dim);
     background: var(--color-cyan-tint);
 }
-/* ── Journal : titre, texte sur plusieurs lignes, éditeur en tête du fil ── */
+/* ── Journal : deux colonnes — nouvelle entrée | filtre et fil ── */
+.journal-layout {
+    max-width: calc(var(--panel-width) + var(--panel-width-lg) * 1.5 + var(--page-gutter));
+    display: grid;
+    grid-template-columns: var(--panel-width) minmax(0, 1fr);
+    column-gap: var(--page-gutter);
+    align-items: start;
+}
+
+.journal-layout__title {
+    grid-column: 1 / -1;
+}
+
+.journal-feed {
+    min-width: 0;
+}
+
 .journal-entry__title {
     font-size: var(--text-md);
     font-weight: normal;
@@ -146,13 +162,12 @@
     white-space: pre-line;
 }
 
-.journal-editor--top {
+.journal-editor--side {
     margin-top: 0;
     padding-top: 0;
     border-top: none;
-    margin-bottom: var(--space-6);
-    padding-bottom: var(--space-6);
-    border-bottom: var(--border-width) solid var(--border-default);
+    position: sticky;
+    top: var(--page-gutter);
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
@@ -175,7 +190,21 @@
     color: var(--color-muted);
 }
 
-.journal-editor--top .app-text-field,
-.journal-editor--top .journal-editor__textarea {
+.journal-editor--side .app-text-field,
+.journal-editor--side .journal-editor__textarea {
     align-self: stretch;
+}
+
+/* Écran étroit : une colonne, le formulaire au-dessus du fil */
+@media (max-width: 900px) {
+    .journal-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .journal-editor--side {
+        position: static;
+        margin-bottom: var(--space-6);
+        padding-bottom: var(--space-6);
+        border-bottom: var(--border-width) solid var(--border-default);
+    }
 }

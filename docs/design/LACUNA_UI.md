@@ -620,6 +620,7 @@ Le Journal contient quatre types d'entrées, distingués visuellement :
 Les fragments de Yael apparaissent comme `DOCUMENT TROUVÉ` avec l'indication du système de découverte et la génération de voyage au moment de la trouvaille. Ils ne sont pas des traces — ils ne figurent pas dans la Collection. Ils sont lus, pas analysés.
 
 **Implémentation** *(octobre 2026 — `PageJournal.vue`, store `journal`, migration `00068`)*
+- Deux colonnes : à gauche, le formulaire de nouvelle entrée (fixe au défilement) ; à droite, le filtre et le fil. Une seule colonne sous 900 px, formulaire au-dessus.
 - Fil chronologique, du plus récent au plus ancien. Chaque entrée : famille, date du vaisseau (`LACUNA_GDD.md` §2, Calendrier), contexte (« En orbite — Sol »), génération, titre, texte. Filtre par type (Tous, Manuel, Auto, Générationnel).
 - Le serveur écrit seul les entrées `AUTO` et `GENERATIONNEL`, une seule fois chacune :
 
@@ -937,6 +938,7 @@ Ce qui est spécifique à l'interface :
 | 2026-10-23 | §2 : tuile Neutrinos — échelle ajustée à la fenêtre, tendance lissée |
 | 2026-10-23 | §2 : halo de LPT-001 — à la capture, puis à chaque impulsion seulement si le Radar vise l'Écu |
 | 2026-10-23 | Module Journal de bord implémenté : entrées écrites par le serveur (fondatrice, départ, arrivée, ciel de départ), entrées du joueur, filtre par type |
+| 2026-10-23 | Module Journal de bord : deux colonnes (nouvelle entrée | filtre et fil) |
 | 2026-10-23 | §2 : Radar — sources du ciel de départ (PSR B1919+21, Synchrotron 408 MHz, SN-2341-K452) ; les autres signaux de départ restent muets |
 
 ---
