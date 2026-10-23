@@ -35,9 +35,7 @@ defineProps({
   justify-content: center;
   min-height: 100%;
   padding: var(--space-10) var(--space-8);
-  background:
-    radial-gradient(ellipse at 50% 35%, var(--color-cyan-subtle) 0%, transparent 60%),
-    var(--color-bg);
+  background: radial-gradient(ellipse at 50% 35%, var(--color-cyan-subtle) 0%, transparent 60%), var(--color-bg);
 }
 
 .auth-panel {

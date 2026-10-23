@@ -80,3 +80,44 @@
     color: var(--color-cyan);
     font-weight: var(--weight-regular);
 }
+
+/* ── Texte d'explication (pages de lien email) ── */
+.auth-text {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: var(--leading-normal);
+    color: var(--color-muted);
+}
+
+/* ── Renvoi de l'email de confirmation ── */
+.auth-resend {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.auth-resend__btn {
+    align-self: flex-start;
+}
+
+.auth-resend__msg {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: var(--leading-normal);
+    color: var(--color-green);
+}
+
+.auth-resend__msg strong {
+    color: var(--color-cyan);
+    font-weight: var(--weight-regular);
+}
+
+.auth-resend__msg--error {
+    color: var(--color-red);
+}
+
+.auth-alert a {
+    color: var(--color-cyan);
+}

@@ -46,12 +46,7 @@ async function submit() {
   try {
     await authStore.startNewGame(pseudo.value, shipName.value)
     // Les stores du vaisseau ont pu être chargés avant la création de la partie (vides) : on les recharge
-    await Promise.all([
-      useShipStore().fetch(),
-      useSignauxStore().fetch(),
-      useObservationsStore().fetch(),
-      useMapNodesStore().fetch(),
-    ])
+    await Promise.all([useShipStore().fetch(), useSignauxStore().fetch(), useObservationsStore().fetch(), useMapNodesStore().fetch()])
     notificationsStore.showNotification(`Bienvenue à bord du ${shipName.value.trim()}.`, 4000, 'success')
     router.replace({ name: 'observatoire' })
   } catch (err) {

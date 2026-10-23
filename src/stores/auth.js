@@ -6,6 +6,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useSupabaseStore } from '@/stores/supabase'
+import { isExistingAccount } from '@/lib/authLinks'
 
 export const useAuthStore = defineStore('auth', () => {
   const session = ref(null)
@@ -49,20 +50,48 @@ export const useAuthStore = defineStore('auth', () => {
     return initPromise
   }
 
+  /** Page d'arrivée du lien de confirmation (le jeton n'y est validé qu'au clic du joueur) */
+  function confirmUrl() {
+    return `${window.location.origin}/confirmer`
+  }
+
   /**
    * Crée un compte. Avec la confirmation d'email activée, aucune session n'est ouverte :
    * le joueur doit cliquer sur le lien reçu avant de se connecter.
+   * Adresse déjà inscrite et confirmée : Supabase répond sans erreur ni email (existingAccount).
    * captchaToken : jeton Turnstile, exigé par Supabase quand le CAPTCHA est activé (ici et ci-dessous).
-   * @returns {Promise<{ needsConfirmation: boolean }>}
+   * @returns {Promise<{ needsConfirmation: boolean, existingAccount: boolean }>}
    */
   async function signUp(email, password, captchaToken) {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { emailRedirectTo: `${window.location.origin}/connexion`, captchaToken: captchaToken || undefined },
+      options: { emailRedirectTo: confirmUrl(), captchaToken: captchaToken || undefined },
     })
     if (error) throw error
-    return { needsConfirmation: !data.session }
+    return { needsConfirmation: !data.session, existingAccount: isExistingAccount(data.user) }
+  }
+
+  /** Renvoie l'email de confirmation d'inscription (sans effet pour une adresse inconnue ou déjà confirmée) */
+  async function resendConfirmation(email, captchaToken) {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email.trim(),
+      options: { emailRedirectTo: confirmUrl(), captchaToken: captchaToken || undefined },
+    })
+    if (error) throw error
+  }
+
+  /**
+   * Valide le jeton d'un lien d'email (confirmation ou réinitialisation) et ouvre la session.
+   * @param {string} tokenHash
+   * @param {string} type - 'signup' | 'email' | 'recovery'
+   */
+  async function verifyEmailLink(tokenHash, type) {
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
+    if (error) throw error
+    if (data?.session) session.value = data.session
+    if (type === 'recovery') passwordRecovery.value = true
   }
 
   async function signIn(email, password, captchaToken) {
@@ -191,6 +220,8 @@ export const useAuthStore = defineStore('auth', () => {
     startNewGame,
     updatePseudo,
     signUp,
+    resendConfirmation,
+    verifyEmailLink,
     signIn,
     signOut,
     requestPasswordReset,
