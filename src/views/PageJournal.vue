@@ -1,11 +1,13 @@
 <script setup>
 import '@/assets/components/journal.css'
+import { formatNumber } from '@/lib/formatUtils'
+import { INITIAL_POPULATION } from '@/constants/population'
 
 const entries = [
   {
     date: 'JOUR 1 — AN 2187.042',
     gen: 'GÉNÉRATION I — FONDATEURS',
-    text: "Départ confirmé. 10 247 âmes embarquées. Les réservoirs sont pleins. Le bouclier plasma est actif. On a regardé la Terre disparaître dans l'observatoire pendant 4 heures. Personne n'a dit grand chose.",
+    text: `Départ confirmé. ${formatNumber(INITIAL_POPULATION)} âmes embarquées. Les réservoirs sont pleins. Le bouclier plasma est actif. On a regardé la Terre disparaître dans l'observatoire pendant 4 heures. Personne n'a dit grand chose.`,
     anomaly: false,
   },
   {

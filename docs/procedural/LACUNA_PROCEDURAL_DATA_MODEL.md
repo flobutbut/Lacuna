@@ -658,7 +658,7 @@ Objet global, partagé par tous les joueurs. `fl`, `fi` et `L` sont les seuls te
 | Date | Modifications |
 |------|---------------|
 | Mars 2026 | Version 0.1 — document initial |
-| 2026-10-22 | §9.2 et exemple de journal : population de départ 15 000 (alignée sur `LACUNA_GDD.md` v0.5). Le code utilise encore 10 247 — écart listé dans `LACUNA_GDD.md` §9 |
+| 2026-10-22 | §9.2 et exemple de journal : population de départ 15 000 (alignée sur `LACUNA_GDD.md` v0.5). Code aligné le 2026-10-23 (constante `INITIAL_POPULATION`, migration `00052`) |
 
 ---
 

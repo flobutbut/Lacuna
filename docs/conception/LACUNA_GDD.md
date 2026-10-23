@@ -1,7 +1,7 @@
-*Dernière modification : 2026-10-22*
+*Dernière modification : 2026-10-23*
 
 # LACUNA — Game Design Document
-*Version 0.5 — Octobre 2026*
+*Version 0.6 — Octobre 2026*
 
 ---
 
@@ -28,6 +28,7 @@
 | 0.3 | Mars 2026 | Calibration temporelle — compression non-linéaire, paramètres physiques ARCA définitifs, table de référence complète, analyse gameplay |
 | 0.4 | Mars 2026 | Restructuration — physique extraite vers `LACUNA_PHYSICS.md`, schémas JSON extraits vers `LACUNA_PROCEDURAL_DATA_MODEL.md` §9, UI renvoyée vers `LACUNA_UI.md`, onboarding renvoyé vers `LACUNA_LORE.md` |
 | 0.5 | Octobre 2026 | Mise en cohérence — population de référence 15 000 (alignée sur les principes du projet et `LACUNA_ARCS.md` §1.10) ; quatrième origine de trace `PRÉCURSEUR` (Yael) ; zone profonde 18 h – 6 jours ; références croisées complétées ; §9 État d'implémentation mis à jour (transit serveur, comptes joueurs) et versé dans les deux copies du document |
+| 0.6 | Octobre 2026 | §9 : écarts population de départ (15 000) et durée de génération (25 ans) corrigés dans le code ; écarts restants : répartition des phases, Équation de Drake (valeurs de référence en base, migration `00053` à appliquer) |
 
 ---
 
@@ -312,10 +313,11 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 
 ### Écarts code / design à corriger dans le code
 
+*Corrigés dans le code (octobre 2026) : population de départ 15 000 (constante `INITIAL_POPULATION`, migration `00052` à appliquer pour le défaut SQL) et génération de 25 ans (`ANNEES_PAR_GENERATION`).*
+
 | Écart | Design | Code actuel |
 |-------|--------|-------------|
-| Population de départ | 15 000 (§3) | 10 247 : défaut SQL `populations.total` (migration `00001`), `SideRight.vue`, `PagePopulation.vue`, `PageSystemes.vue`, `PageJournal.vue` |
-| Durée d'une génération | 25 ans (`LACUNA_TRANSIT.md`, `LACUNA_ARCS.md`, `LACUNA_PHYSICS.md`) | 80 ans (`ANNEES_PAR_GENERATION`, `src/lib/transit.js`) |
+| Équation de Drake | `fl` = 0,30 et N = 72 (§7) | `fl` = 0,31 et `n` = 12,4 en base : migration `00053` écrite, non appliquée |
 | Répartition des phases en temps joueur | À calibrer (`LACUNA_TRANSIT.md` §3, §11) | 40 / 20 / 10 / 30 % (`ship.js`) |
 
 ### Mapping objet Vaisseau (GDD §3) ↔ schéma actuel

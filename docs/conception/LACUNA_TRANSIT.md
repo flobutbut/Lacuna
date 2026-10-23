@@ -1,7 +1,7 @@
-*Dernière modification : 2026-10-22*
+*Dernière modification : 2026-10-23*
 
 # LACUNA — Le Transit
-*Version 0.4 — Octobre 2026*
+*Version 0.5 — Octobre 2026*
 
 > Spécification complète du transit : définition, physique, états d'interface, vue de confirmation du départ, détection, déviation, animation de dérive stellaire, modèle de données. Ce document consolide et centralise tout ce qui concerne le voyage interstellaire de l'ARCA entre deux systèmes.
 >
@@ -35,6 +35,7 @@
 | 0.2 | Mars 2026 | Ajout §4 — Vue de confirmation du départ : séparation sémantique cap / moteurs, structure de la vue, phrases contextuelles, règle d'affichage du coût générationnel |
 | 0.3 | Mars 2026 | §10 Modèle de données — alignement sur schéma SQL réel (colonnes `ships`), architecture retenue pour les phases (timestamps JSONB + computed client), champs non encore implémentés documentés. §11 questions ouvertes : vue de confirmation résolue |
 | 0.4 | Octobre 2026 | Mise en cohérence avec `LACUNA_PHYSICS.md` v0.2 et le code. §2 : table de référence seule source des durées joueur, Étoile de Tabby à ~1 470 al, zone profonde 18 h – 6 jours. §3 : correction physique (la croisière est atteinte en ~0,39 an, y compris sur les voyages courts) ; la répartition des phases en temps joueur devient une convention explicite. §4 : seuils générationnels rendus continus (le seuil 1–2 / 3–10 laissait un trou), exemples Proxima et Gliese 667C corrigés. §5 : retournement réduit au Journal, comme le texte l'indiquait. §6 : Zeta Puppis de type O4. §10 : implémentation actuelle (transit décidé par le serveur, `ship_travels`, mode test). §11 : questions résolues et nouvelles |
+| 0.5 | Octobre 2026 | Écart de durée de génération résolu dans le code (25 ans) ; `computeTransit` renvoie un nombre entier de générations (§11) |
 
 ---
 
@@ -470,7 +471,7 @@ Tant que `travel_phase_timestamps` n'existe pas, elle est dérivée du ratio de 
 - ~~La formule `t_joueur = K × t_physique ^ 0.762` est documentée mais non implémentée~~ — Résolu en v0.4 : la table de référence est la seule règle (`LACUNA_PHYSICS.md` §2).
 
 **Écart code / design**
-- Le code compte une génération pour **80 ans** (`ANNEES_PAR_GENERATION` dans `src/lib/transit.js`) ; tous les documents de design utilisent **25 ans**. Proxima affiche donc « 1,1 génération » au lieu de 3. À aligner dans le code.
+- ~~Le code compte une génération pour 80 ans~~ — Résolu en v0.5 : `ANNEES_PAR_GENERATION` vaut 25 dans `src/lib/transit.js` ; le widget de voyage affiche l'entier inférieur, comme la vue de confirmation (Proxima : 3).
 
 **Animation — dérive stellaire**
 - Seuil perceptible minimal : en dessous de quelle distance la dérive est-elle trop lente pour être remarquée ? À calibrer.
@@ -490,4 +491,4 @@ Tant que `travel_phase_timestamps` n'existe pas, elle est dérivée du ratio de 
 
 ---
 
-*LACUNA — Le Transit v0.4 — Octobre 2026 — Confidentiel*
+*LACUNA — Le Transit v0.5 — Octobre 2026 — Confidentiel*

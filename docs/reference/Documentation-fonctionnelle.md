@@ -37,7 +37,7 @@ LACUNA est une simulation d'exploration galactique **persistante, asynchrone et 
 - Position : système courant (`current_system_id`), pas de coordonnées x/y/z en base
 
 ### Population
-- Effectif (15 000 au départ selon le design — le code utilise encore 10 247, écart listé dans `LACUNA_GDD.md` §9), génération, âge moyen
+- Effectif (15 000 au départ), génération, âge moyen
 - **Volonté** (0–1) : influence interprétations et tolérance aux voyages
 - Barres : cohésion, alimentation, soins
 - Événements rares : épidémie, schisme, renaissance...
@@ -133,7 +133,7 @@ Référence technique : `Documentation-technique.md` § Vue Radar.
 - À l'arrivée : `complete_transit`, ligne `ship_travels`, scan automatique, traces selon difficulté + contexte
 
 ### Générations
-- Une génération = 25 ans simulés (design ; le code affiche encore sur une base de 80 ans)
+- Une génération = 25 ans simulés
 - Passage après distance parcourue + temps simulé
 - Entrée GENERATIONNEL dans le journal
 - Héritage conservé, propriétés population modifiées

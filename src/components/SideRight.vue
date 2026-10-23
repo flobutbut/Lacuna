@@ -3,7 +3,8 @@ import { computed, onMounted } from 'vue'
 import { useObservatoireStore } from '@/stores/observatoire'
 import { useShipStore } from '@/stores/ship'
 import ProgressBar from '@/components/ProgressBar.vue'
-import { valClass } from '@/lib/formatUtils'
+import { valClass, formatNumber } from '@/lib/formatUtils'
+import { INITIAL_POPULATION } from '@/constants/population'
 import { ensureStoresLoaded } from '@/composables/useStoreReady'
 
 const observatoireStore = useObservatoireStore()
@@ -13,6 +14,7 @@ const propulsion = computed(() => (shipStore.systems?.propulsion ?? 0.88) * 100)
 const he3 = computed(() => (shipStore.fuel?.he3 ?? 0.742) * 100)
 const hull = computed(() => (shipStore.systems?.hull ?? 0.971) * 100)
 const plasmaShield = computed(() => (shipStore.systems?.plasma_shield ?? 1) * 100)
+const effectif = computed(() => formatNumber(shipStore.population?.total ?? INITIAL_POPULATION))
 
 onMounted(() => ensureStoresLoaded(shipStore))
 </script>
@@ -47,7 +49,7 @@ onMounted(() => ensureStoresLoaded(shipStore))
       <div class="sw-title">Population</div>
       <div class="sw-row">
         <div class="sw-key">Effectif</div>
-        <div class="sw-val">10 247</div>
+        <div class="sw-val">{{ effectif }}</div>
       </div>
       <div class="sw-row">
         <div class="sw-key">Natalité</div>

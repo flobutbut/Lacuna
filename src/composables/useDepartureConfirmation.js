@@ -3,9 +3,7 @@
  * Réf. Design-system.md (sw-row, sw-key, sw-val), LACUNA_TRANSIT / spécification vue confirmation.
  */
 import { computed, watch, onMounted } from 'vue'
-import { formatDuration } from '@/lib/transit'
-
-const YEARS_PER_GENERATION = 25
+import { formatDuration, ANNEES_PAR_GENERATION } from '@/lib/transit'
 
 /**
  * @param {import('vue').ComputedRef<object|null>} pendingRef - ui.pendingDeparture (computed)
@@ -25,7 +23,7 @@ export function useDepartureConfirmation(pendingRef, shipStore) {
     return t != null ? Number(t) : 0
   })
 
-  const generationsCount = computed(() => Math.floor(simulatedYears.value / YEARS_PER_GENERATION))
+  const generationsCount = computed(() => Math.floor(simulatedYears.value / ANNEES_PAR_GENERATION))
 
   const durationPlayerLabel = computed(() => {
     const sec = pendingRef.value?.transitMeta?.tJoueurSec
