@@ -56,7 +56,7 @@ export function buildObservationPayload(body, context, niveaux) {
 
 /**
  * Payload observation pour obsStore.addObservation à partir d'un signal (niveau = PASSIF).
- * @param {object} s - Signal (support, structure, distanceEst, receivedAt, durationSec, anomalous, polarization, pulsePeriodS)
+ * @param {object} s - Signal (support, structure, distanceEst, receivedAt, durationSec, anomalous, polarization, pulsePeriodS, neutrino)
  * @param {{ PASSIF: string }} niveaux - obsStore.NIVEAUX
  * @param {string} [systemName] - Nom du système de l'émetteur (signal d'un émetteur du système courant)
  * @returns {object|null}
@@ -81,6 +81,8 @@ export function signalToObsPayload(s, niveaux, systemName) {
     attributes: {
       ...(s.polarization ? { polarization: s.polarization } : {}),
       ...(s.pulsePeriodS ? { pulse_period_s: s.pulsePeriodS } : {}),
+      // Bouffée de neutrinos : nombre d'événements, durée, énergie moyenne, direction et son incertitude
+      ...(s.neutrino ?? {}),
     },
   }
 }

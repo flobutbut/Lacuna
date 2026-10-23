@@ -31,7 +31,8 @@ function dbToSignal(row) {
   const distanceEst = att.distanceEst ?? (att.distance_al != null ? `~${att.distance_al} al` : null)
   return {
     id: row.id,
-    frequency: formatFrequency(row.frequency_hz) || att.frequency || '1420 MHz',
+    // Un détecteur de neutrinos compte des événements : pas de fréquence
+    frequency: row.support === 'NEUTRINO' ? 'Neutrinos' : (formatFrequency(row.frequency_hz) || att.frequency || '1420 MHz'),
     sourceName: att.sourceName ?? null,
     azimuth: att.azimuth ?? 0,
     elevation: att.elevation ?? 0,
@@ -46,6 +47,7 @@ function dbToSignal(row) {
     lifetimeMs: persistent ? Infinity : LIFETIME_MS,
     persistent,
     window: parseSignalWindow(att.window),
+    neutrino: att.neutrino ?? null,
     sourceType: row.source_type ?? 'UNKNOWN',
     band: att.band ?? null,
     fluxRelative: att.flux_relative ?? null,
@@ -89,7 +91,7 @@ function createSignal(payload) {
   const receivedAt = payload.receivedAt ?? `2341-${new Date().toISOString().slice(5, 10)}`
   return {
     id,
-    frequency: payload.frequency ?? '1420 MHz',
+    frequency: payload.support === 'NEUTRINO' ? 'Neutrinos' : (payload.frequency ?? '1420 MHz'),
     sourceName: payload.sourceName ?? null,
     azimuth: payload.azimuth ?? 0,
     elevation: payload.elevation ?? 0,
@@ -100,6 +102,7 @@ function createSignal(payload) {
     structure: payload.structure ?? 'non uniforme',
     anomalous: payload.anomalous ?? false,
     support: payload.support ?? 'EM_RADIO',
+    neutrino: payload.neutrino ?? null,
     createdAt,
     lifetimeMs: payload.lifetimeMs ?? LIFETIME_MS,
   }

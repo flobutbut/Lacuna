@@ -19,11 +19,18 @@ const { radarEnabled, radarNoiseEnabled } = storeToRefs(radarStore)
 /** Filtre de bruit actif = bruit de fond retiré du spectrogramme */
 const noiseFiltered = computed(() => radarNoiseEnabled.value === false)
 
-/** Émetteurs du système où se trouve le vaisseau : présents en permanence, actifs seulement pendant leur fenêtre */
+/**
+ * Signaux sans direction sur le ciel : émetteurs du système où se trouve le vaisseau (présents en permanence,
+ * actifs seulement pendant leur fenêtre) et bouffées de neutrinos encore récentes
+ */
 const now = ref(Date.now())
 const systemEmitters = computed(() =>
   signauxStore.list
-    .filter((s) => s.sourceType === 'EMITTER' && s.sourceSystemId === shipStore.currentSystemId)
+    .filter(
+      (s) =>
+        (s.sourceType === 'EMITTER' && s.sourceSystemId === shipStore.currentSystemId) ||
+        (s.support === 'NEUTRINO' && now.value - s.createdAt < s.lifetimeMs)
+    )
     .map((s) => ({ signal: s, active: isWindowOpen(s.window, now.value) }))
 )
 
@@ -60,7 +67,7 @@ onUnmounted(() => {
     </div>
 
     <div v-if="systemEmitters.length" class="side-widget">
-      <div class="sw-title">Signaux du système</div>
+      <div class="sw-title">Signaux sans direction</div>
       <button
         v-for="e in systemEmitters"
         :key="e.signal.id"

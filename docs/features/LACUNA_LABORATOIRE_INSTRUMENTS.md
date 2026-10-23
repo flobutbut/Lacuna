@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Instruments du Laboratoire
-*Version 0.4 — Octobre 2026*
+*Version 0.5 — Octobre 2026*
 
 > Référence croisée des outils d'analyse du Laboratoire avec les types d'objets, les familles d'anomalies et leur ancrage scientifique.  
 > Documents sources : `LACUNA_TRACES.md` §1, `LACUNA_UI.md` §3.
@@ -21,7 +21,7 @@
 | **Analyseur volumétrique** | Cartes densité 3D | ✅ Complète | `LabReportVolumetrique.vue`, volumetricData.js, D3, heatmap + coupe |
 | **Scanner morphologique** | Modèle surface / heatmap | ✅ Complète | `LabReportMorpho.vue`, morphoData.js, D3, silhouette + carte thermique |
 | **Magnétomètre** | Champ magnétique | ✅ Complète | `LabReportMagneto.vue`, magnetoData.js, D3, carte champ + profil |
-| **Analyseur de neutrinos** | Chronologie des événements + spectre en énergie + cône de direction | ⏳ Non implémenté | Spécifié en octobre 2026 (§4.14) ; nécessite le capteur §3.4 et le support `NEUTRINO` |
+| **Analyseur de neutrinos** | Chronologie des événements + spectre en énergie + cône de direction | ✅ Complète | `LabReportNeutrinos.vue`, neutrinoData.js, D3 ; mesures lues dans `observations.attributes` |
 | **Spectromètre de contact** | Spectre éléments | ⏳ Texte | — |
 | **Analyseur d'échantillon** | Molécules / datation | ⏳ Texte | — |
 
@@ -120,7 +120,7 @@ Les capteurs enregistrent les signaux qui atteignent le vaisseau. Ils produisent
 
 ### 3.4 Détecteur de neutrinos (capteur)
 
-*Spécifié en octobre 2026 — non implémenté.*
+*Spécifié et implémenté en octobre 2026 : support `NEUTRINO` (migration `00062`), mesures d'une bouffée dans `signals.attributes.neutrino`. Aucune source ne produit encore de bouffée (la supernova SN-001 est à venir).*
 
 | Attribut | Valeur |
 |----------|--------|
@@ -212,7 +212,7 @@ Les instruments du Laboratoire **analysent** les données déjà capturées. Ils
 
 #### 4.14 Analyseur de neutrinos
 
-*Spécifié en octobre 2026 — non implémenté. Numéroté 4.14 pour ne pas décaler les références existantes.*
+*Implémenté en octobre 2026. Numéroté 4.14 pour ne pas décaler les références existantes.*
 
 | Attribut | Valeur |
 |----------|--------|
@@ -506,7 +506,7 @@ Pour chaque instrument, ce qu'il consomme en entrée et si la base de données (
 | **Analyseur polarisation** | Signal EM capté | observation | ✅ `support` (EM_RADIO) — polarisation déduite du seed |
 | **Analyseur spectre énergétique** | Support gamma/X, structure (sursaut…), durée | observation | ✅ `support`, `structure`, `duration_sec` |
 | **Analyseur gravimétrique** | Pour SIGNAL : durée, structure. Pour corps : masses, orbites | observation + system_objects | ✅ Signal : `duration_sec`, `structure`. Corps : `mass_earth`, `orbital_*` (system_objects) |
-| **Analyseur de neutrinos** | Support neutrinos, nombre d'événements, durée, énergie moyenne, direction et son incertitude | observation (SIGNAL) + `attributes` | ⏳ Support `NEUTRINO` à ajouter ; nombre, énergie et direction dans `observations.attributes` |
+| **Analyseur de neutrinos** | Support neutrinos, nombre d'événements, durée, énergie moyenne, direction et son incertitude | observation (SIGNAL) + `attributes` | ✅ `support` = NEUTRINO ; `attributes.event_count`, `duration_s`, `mean_energy_mev`, `direction`, `uncertainty_deg` (valeurs par défaut calées sur SN 1987A) |
 
 ### Instruments pour observations actives
 
@@ -581,7 +581,7 @@ Toutes les visualisations doivent être adaptées au design system LACUNA (`toke
 ### Autres notes
 
 - **Capteurs** : Les capteurs ne figurent pas dans la grille du Laboratoire. Ils sont à bord ; leurs données alimentent les observations "Signal reçu".
-- **Support du signal** : Une observation Signal reçu doit stocker son support (EM_RADIO, GAMMA_X, GRAVITATIONNEL, NEUTRINO à venir) pour filtrer les instruments disponibles (voir matrice §7). Les neutrinos n'apparaissent pas sur le Radar, qui reste un récepteur électromagnétique.
+- **Support du signal** : Une observation Signal reçu doit stocker son support (EM_RADIO, GAMMA_X, GRAVITATIONNEL, NEUTRINO) pour filtrer les instruments disponibles (voir matrice §7). Les neutrinos n'apparaissent pas sur le Radar, qui reste un récepteur électromagnétique.
 - **Scanner morphologique** : Une implémentation peut distinguer "Scanner morphologique" (orbite) et "Scanner morphologique précis" (contact).
 - **Observation lointaine** : Si l'interface utilise 4 niveaux, le Spectromètre stellaire doit être mappé au niveau permettant d'observer une étoile — pas "Passif".
 - **Compatibilité** : Griser les instruments inadaptés au type d'observation ET au support (pour les signaux).
@@ -595,7 +595,8 @@ Toutes les visualisations doivent être adaptées au design system LACUNA (`toke
 |---------|------|---------------|
 | 0.3 | Mars 2026 | Capteurs vs instruments, 13 instruments, formats de sortie |
 | 0.4 | Octobre 2026 | Ajout du détecteur de neutrinos (capteur, §3.4) et de l'analyseur de neutrinos (§4.14) — spécifiés pour la supernova SN-001 (`LACUNA_TRACES_IMMUABLES.md` §5), non implémentés |
+| 0.5 | Octobre 2026 | Détecteur et analyseur de neutrinos implémentés (support `NEUTRINO`, `LabReportNeutrinos.vue`). Une bouffée n'a pas de direction sur le ciel : elle apparaît dans « Signaux sans direction » et donne un halo uniforme ; sa direction se lit au Laboratoire |
 
 ---
 
-*LACUNA — Instruments du Laboratoire v0.4 — Octobre 2026 — Réf. LACUNA_TRACES, LACUNA_UI*
+*LACUNA — Instruments du Laboratoire v0.5 — Octobre 2026 — Réf. LACUNA_TRACES, LACUNA_UI*

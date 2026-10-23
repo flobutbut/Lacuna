@@ -31,9 +31,9 @@ const phase = ref('fade')
 let fadeTimer = null
 let tickTimer = null
 
-/** Direction du signal sur le ciel ; null pour un émetteur du système courant (sans direction) */
+/** Direction du signal sur le ciel ; null pour un émetteur du système courant ou une bouffée de neutrinos */
 function directionOf(signal) {
-  if (signal.sourceType === 'EMITTER') return null
+  if (signal.sourceType === 'EMITTER' || signal.support === 'NEUTRINO') return null
   return { ra: Number(signal.azimuth) || 0, dec: Number(signal.elevation) || 0 }
 }
 

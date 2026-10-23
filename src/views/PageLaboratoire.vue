@@ -27,6 +27,7 @@ import LabReportAtmosphere from '@/components/lab/LabReportAtmosphere.vue'
 import LabReportVolumetrique from '@/components/lab/LabReportVolumetrique.vue'
 import LabReportMorpho from '@/components/lab/LabReportMorpho.vue'
 import LabReportMagneto from '@/components/lab/LabReportMagneto.vue'
+import LabReportNeutrinos from '@/components/lab/LabReportNeutrinos.vue'
 import InstrumentButton from '@/components/InstrumentButton.vue'
 import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
 import ObservationCard from '@/components/ObservationCard.vue'
@@ -52,9 +53,10 @@ const NIVEAUX = { PASSIF: 'Passif', SYSTEME: 'Système', ORBITE: 'Orbite proche'
  */
 const INSTRUMENTS = [
   { id: 'analyseur-spectral', name: 'Analyseur spectral', signalSupports: ['EM_RADIO'], delay: 'Court' },
-  { id: 'analyseur-structure-temporelle', name: 'Analyseur de structure temporelle', signalSupports: ['EM_RADIO', 'GAMMA_X', 'GRAVITATIONNEL'], delay: 'Court' },
+  { id: 'analyseur-structure-temporelle', name: 'Analyseur de structure temporelle', signalSupports: ['EM_RADIO', 'GAMMA_X', 'GRAVITATIONNEL', 'NEUTRINO'], delay: 'Court' },
   { id: 'analyseur-polarisation', name: 'Analyseur de polarisation', signalSupports: ['EM_RADIO'], delay: 'Moyen' },
   { id: 'analyseur-spectre-energetique', name: 'Analyseur de spectre énergétique', signalSupports: ['GAMMA_X'], delay: 'Moyen' },
+  { id: 'analyseur-neutrinos', name: 'Analyseur de neutrinos', signalSupports: ['NEUTRINO'], delay: 'Moyen' },
   { id: 'analyseur-gravimetrique', name: 'Analyseur gravimétrique', signalSupports: ['GRAVITATIONNEL'], niveau: 'SYSTEME', objectTypes: ['ETOILE', 'PLANETE', 'MINEUR', 'OBJET'], delay: 'Long' },
   { id: 'spectro-stellaire', name: 'Spectromètre stellaire', niveau: 'SYSTEME', objectTypes: ['ETOILE', 'PLANETE'], delay: 'Moyen' },
   { id: 'analyseur-orbital', name: 'Analyseur orbital', niveau: 'SYSTEME', objectTypes: ['ETOILE', 'PLANETE', 'MINEUR', 'OBJET'], delay: 'Long' },
@@ -260,7 +262,9 @@ function startSimulation() {
                               ? `Modèle de surface + carte thermique. Forme, symétries, gradient. Fiabilité ${fiability}%.`
                               : r.instr.id === 'magnetometre'
                                 ? `Carte du champ + profil. Intensité, orientation, anomalies. Fiabilité ${fiability}%.`
-                                : `${r.instr.name} — Données produites. Fiabilité ${fiability}%.`,
+                                : r.instr.id === 'analyseur-neutrinos'
+                                  ? `Chronologie des événements + spectre en énergie + cône de direction. Fiabilité ${fiability}%.`
+                                  : `${r.instr.name} — Données produites. Fiabilité ${fiability}%.`,
         }
         newReports.push(reportPayload)
         reports.value = { ...reports.value, [r.obs.id]: newReports }
@@ -587,6 +591,13 @@ onUnmounted(() => {
                 :system-id="selectedObs?.system_id ?? ''"
                 :fiability="r.fiability"
                 :anomalous="r.anomalous ?? false"
+                class="lab-report__output"
+              />
+              <LabReportNeutrinos
+                v-else-if="r.instrumentId === 'analyseur-neutrinos'"
+                :obs-id="selectedObs?.id ?? ''"
+                :fiability="r.fiability"
+                :attributes="selectedObs?.attributes ?? {}"
                 class="lab-report__output"
               />
               <LabReportMagneto

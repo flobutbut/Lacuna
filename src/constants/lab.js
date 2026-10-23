@@ -14,6 +14,7 @@ export const GRAPH_NAMES = {
   'analyseur-vol': 'cartes de densité',
   'scanner-morpho': 'modèle surface + thermique',
   'magnetometre': 'carte champ + profil',
+  'analyseur-neutrinos': '',
 }
 
 /**

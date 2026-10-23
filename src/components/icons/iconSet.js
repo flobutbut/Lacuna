@@ -86,6 +86,7 @@ export const ICONS = {
   atmosphere: '<circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="9.5" stroke-dasharray="2 2.5"/>',
   volume: '<path d="M12 2.5l8.5 4.75v9.5L12 21.5l-8.5-4.75v-9.5z"/><path d="M3.5 7.25L12 12l8.5-4.75M12 12v9.5"/>',
   'grid-scan': '<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"/><path d="M7 12h10M12 7v10"/>',
+  neutrino: '<circle cx="12" cy="12" r="2"/><path d="M4 4l5.5 5.5M20 4l-5.5 5.5M4 20l5.5-5.5M20 20l-5.5-5.5"/>',
   magnet: '<path d="M5.5 3v9a6.5 6.5 0 0 0 13 0V3"/><path d="M9.5 3v9a2.5 2.5 0 0 0 5 0V3"/><path d="M5.5 7h4M14.5 7h4"/>',
   probe: '<path d="M8.5 2.5h7M12 2.5v10"/><path d="M8.5 12.5h7L12 17.5z"/><path d="M2.5 20.5h19"/>',
   'test-tube': '<path d="M8 3h8M9.5 3v14.5a2.5 2.5 0 0 0 5 0V3"/><path d="M9.5 11.5h5"/>',

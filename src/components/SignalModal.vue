@@ -10,6 +10,7 @@ import Divider from '@/components/Divider.vue'
 import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
 import { signalToObsPayload } from '@/lib/observationPayload'
 import { isWindowOpen } from '@/lib/signalWindow'
+import { formatNumber } from '@/lib/formatUtils'
 
 const router = useRouter()
 const notificationsStore = useNotificationsStore()
@@ -57,6 +58,16 @@ async function ajouterAuLabo() {
   notificationsStore.setLabHasNew(true)
 }
 
+/** Bouffée de neutrinos : des événements comptés, sans fréquence ni polarisation */
+function isNeutrino(signal) {
+  return signal?.support === 'NEUTRINO'
+}
+
+/** Direction affichée : ni pour un émetteur du système courant, ni pour des neutrinos (direction reconstruite au Laboratoire) */
+function hasDirection(signal) {
+  return !!signal && !signal.persistent && !isNeutrino(signal)
+}
+
 /** Un signal à fenêtres n'est analysable que pendant sa fenêtre d'émission */
 function isActive(signal) {
   return isWindowOpen(signal?.window)
@@ -89,7 +100,11 @@ function isAdded() {
       <Divider variant="dashed" />
       <div class="signal-modal__section">
         <div class="signal-modal__section-title sw-key">Propriétés du signal</div>
-        <div class="sw-row">
+        <div v-if="isNeutrino(observatoireStore.selectedSignal)" class="sw-row">
+          <span class="sw-key">Événements</span>
+          <span class="sw-val">{{ formatNumber(observatoireStore.selectedSignal?.neutrino?.event_count) }}</span>
+        </div>
+        <div v-else class="sw-row">
           <span class="sw-key">Fréquence</span>
           <span class="sw-val">{{ observatoireStore.selectedSignal?.frequency }}</span>
         </div>
@@ -106,7 +121,7 @@ function isAdded() {
             {{ isActive(observatoireStore.selectedSignal) ? 'Actif' : 'Inactif' }}
           </span>
         </div>
-        <div v-if="!observatoireStore.selectedSignal?.persistent" class="sw-row">
+        <div v-if="hasDirection(observatoireStore.selectedSignal)" class="sw-row">
           <span class="sw-key">Direction</span>
           <span class="sw-val">azimut {{ observatoireStore.selectedSignal?.azimuth }}°</span>
         </div>
@@ -114,7 +129,7 @@ function isAdded() {
           <span class="sw-key">Durée</span>
           <span class="sw-val">{{ observatoireStore.selectedSignal?.durationSec }} secondes</span>
         </div>
-        <div class="sw-row">
+        <div v-if="!isNeutrino(observatoireStore.selectedSignal)" class="sw-row">
           <span class="sw-key">Polarisation</span>
           <span class="sw-val">{{ observatoireStore.selectedSignal?.polarization }}</span>
         </div>

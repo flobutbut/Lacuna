@@ -24,6 +24,7 @@ const ICONS = {
   'magnetometre': 'magnet',
   'spectro-contact': 'probe',
   'analyseur-echantillon': 'test-tube',
+  'analyseur-neutrinos': 'neutrino',
 }
 
 const icon = computed(() => ICONS[props.instrumentId] ?? 'dot-outline')
