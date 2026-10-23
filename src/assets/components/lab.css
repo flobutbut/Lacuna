@@ -133,10 +133,10 @@
 }
 
 .lab-report {
-  padding: var(--space-4);
+  padding: var(--space-8) var(--space-9);
   border: var(--border-width) solid var(--border-default);
   background: var(--color-surface);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-9);
 }
 
 .lab-report__header {
@@ -144,9 +144,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
-  padding-bottom: var(--space-3);
+  padding-bottom: var(--space-6);
   border-bottom: var(--border-width) solid var(--border-default);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-8);
 }
 
 .lab-report__header-left {
@@ -186,12 +186,12 @@
 .lab-report__graph-label {
   font-size: var(--text-sm);
   color: var(--color-muted);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-5);
 }
 
 /* ── Écarts — attendu / mesuré (LACUNA_VERDICT.md §4.4) ── */
 .lab-report__deviations {
-  padding-top: var(--space-4);
+  padding-top: var(--space-8);
   border-top: var(--border-width) solid var(--border-default);
 }
 
@@ -200,7 +200,7 @@
   color: var(--color-muted);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-5);
 }
 
 .lab-deviations {
@@ -288,7 +288,7 @@
 }
 
 .lab-report__output {
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-8);
 }
 
 /* Structure temporelle — forme d'onde + autocorrélation */
@@ -302,7 +302,7 @@
 }
 
 .lab-structure-temporelle__chart {
-  padding: var(--space-3) 0;
+  padding: var(--space-6) 0;
   border-bottom: var(--border-width) solid var(--border-default);
 }
 
@@ -314,7 +314,7 @@
   display: block;
   font-size: var(--text-sm);
   color: var(--color-muted);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-5);
 }
 
 .lab-structure-temporelle__svg {
@@ -417,7 +417,7 @@
   display: block;
   font-size: var(--text-sm);
   color: var(--color-muted);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-5);
 }
 
 .lab-gravimetrique__svg {
