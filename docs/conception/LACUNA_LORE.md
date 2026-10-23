@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Lore
-*Version 0.8 — Octobre 2026*
+*Version 0.10 — Octobre 2026*
 
 ---
 
@@ -18,6 +18,7 @@
 | 0.7 | Octobre 2026 | §4 : la bouffée de la supernova arrive trois minutes après la création de la partie |
 | 0.8 | Octobre 2026 | §4 : montée des neutrinos de pré-supernova avant la bouffée |
 | 0.9 | Octobre 2026 | §4 : le signal de 22 minutes (LPT-001) est implémenté |
+| 0.10 | Octobre 2026 | §3 : onboarding implémenté — écrans 1 à 4 avant le nommage, écran 5 sur le ciel, « Passer » pour les parties suivantes ; §4 : traces embarquées et message du premier départ ; §5 : les 12 anomalies du catalogue définies (fiches de `LACUNA_TRACES_IMMUABLES.md`) ; numéro de version de l'en-tête rattrapé |
 
 ---
 
@@ -219,6 +220,11 @@ Choisissez celle que vous voulez comprendre.
 
 *Le joueur survole les étoiles. Pour chaque anomalie : données brutes, distance, durée de voyage estimée. Aucune instruction supplémentaire. Il clique. Il fixe le cap. Le voyage commence.*
 
+**Implémentation (octobre 2026)**
+- Les écrans 1 à 4 précèdent l'écran de nommage « Bienvenue à bord » (pseudo et nom du vaisseau), qui crée la partie. L'horloge du ciel de départ (SN-001, LPT-001) part de là.
+- L'écran 5 est un court texte posé sur le ciel de l'Observatoire. Les neuf anomalies-destinations (§5) y sont distinguées des autres étoiles ; il disparaît au premier départ.
+- Première partie du compte : séquence complète, non sautée (`LACUNA_UI.md` §9). Parties suivantes (après une réinitialisation) : un discret « Passer » sur les écrans 1 à 4.
+
 ---
 
 ## 4. Flux de démarrage
@@ -230,6 +236,8 @@ Si la première destination est à 1h joueur, les premières minutes après le d
 ### La solution — les traces embarquées
 
 Le joueur n'a pas besoin d'arriver quelque part pour commencer à travailler. Trois traces sont déjà dans sa collection au moment du départ — les anomalies qui ont motivé le voyage et figuraient dans les écrans d'onboarding.
+
+*Implémentation (migration `00070`) : WOW-1977-A, OUMUAMUA-2017 et BENNU-NB-2023 sont inscrites dans `ship_traces` à la création du vaisseau. Le message « 3 traces sont embarquées à bord… » s'affiche au premier départ (toast) et s'écrit au journal (entrée `AUTO`, famille TRACES) — le fil de notifications n'existe pas encore.*
 
 Elles sont là, non interprétées, en attente.
 
@@ -279,7 +287,24 @@ Le voyage *et* le travail commencent en même temps. Le joueur n'attend pas — 
 
 ### Les 12 anomalies du catalogue
 
-Les 12 anomalies visibles à l'écran 5 restent à définir précisément. Contraintes :
+Les 12 anomalies du catalogue embarqué *(octobre 2026, retenu)* sont les traces immuables qui ont une fiche (`LACUNA_TRACES_IMMUABLES.md` §2–3) :
+
+| # | Anomalie | Système | Trace | Visible à l'écran 5 |
+|---|---|---|---|---|
+| 1 | Signal WOW! | — (Sagittaire) | WOW-1977-A | Non — embarquée |
+| 2 | Oumuamua | — (objet interstellaire) | OUMUAMUA-2017 | Non — embarquée |
+| 3 | Nucléobases de Bennu | Sol | BENNU-NB-2023 | Non — embarquée |
+| 4 | Le Silence de Proxima b | Proxima Centauri | PROXIMA-001 | Oui |
+| 5 | La Planète de van de Kamp | Étoile de Barnard | BARNARD-001 | Oui |
+| 6 | Le Signal de 2017 | Ross 128 | ROSS128-001 | Oui |
+| 7 | Le Disque d'Epsilon Eridani | Epsilon Eridani | EPSILON-001 | Oui |
+| 8 | Le Bombardement | Tau Ceti | TAU-CETI-001 | Oui |
+| 9 | Le Système Triple | Gliese 667C | GLIESE667-001 | Oui |
+| 10 | HD 40307 | HD 40307 | HD40307-001 *(prévue)* | Oui |
+| 11 | Étoile de Tabby | KIC 8462852 | TABBY-001 *(prévue)* | Oui |
+| 12 | PSR B1919+21 | PSR B1919+21 | PSR-001 *(prévue)* | Oui |
+
+Les trois premières n'ont pas de système où se rendre : elles sont embarquées et ne sont pas marquées dans le ciel. Les neuf autres sont des destinations. Contraintes d'origine, toujours valables :
 
 - Toutes ancrées dans des phénomènes scientifiques réels et non résolus
 - Distribution géographique variée — certaines dans le voisinage solaire (1h–4h joueur), d'autres plus loin

@@ -888,7 +888,8 @@ Le bouton "Fixer cap" est la seule action irréversible directement accessible d
 | Règle | Détail |
 |-------|--------|
 | Durée maximale | 3 minutes — le joueur avance à son rythme, clic ou touche |
-| Premier lancement | Séquence complète — non sautée |
+| Premier lancement | Séquence complète — non sautée (première partie du compte) |
+| Nouvelle partie (après réinitialisation) | Écrans 01 à 04 avec un discret « Passer » |
 | Lancements suivants | Arrivée directe sur le ciel — vaisseau là où il a été laissé |
 | Transition finale | Fade-in progressif : header → panels latéraux → barre instruments |
 
@@ -903,6 +904,8 @@ Le bouton "Fixer cap" est la seule action irréversible directement accessible d
 | 05 | Le premier choix | Le ciel s'ouvre — 12 anomalies visibles — aucune instruction |
 
 L'écran 05 est la transition vers le jeu. Il n'y a pas de bouton "commencer". Le joueur est déjà dedans.
+
+**Implémentation** *(octobre 2026 — `OnboardingStory.vue`, `OnboardingFirstChoice.vue`)* — écrans 01 à 04 en plein écran avant le nommage « Bienvenue à bord » (texte de `LACUNA_LORE.md` §3, clic ou touche pour avancer) ; écran 05 : texte posé sur le ciel, les neuf anomalies-destinations (`LACUNA_LORE.md` §5) légèrement distinguées, retiré au premier départ ; transition finale en fondu (header, panneaux, barre d'instruments) à la première arrivée sur le ciel.
 
 ---
 
@@ -939,6 +942,7 @@ Ce qui est spécifique à l'interface :
 | 2026-10-23 | §2 : halo de LPT-001 — à la capture, puis à chaque impulsion seulement si le Radar vise l'Écu |
 | 2026-10-23 | Module Journal de bord implémenté : entrées écrites par le serveur (fondatrice, départ, arrivée, ciel de départ), entrées du joueur, filtre par type |
 | 2026-10-23 | Module Journal de bord : deux colonnes (nouvelle entrée | filtre et fil) |
+| 2026-10-23 | §9 : onboarding implémenté ; « Passer » sur les écrans 01 à 04 pour une nouvelle partie seulement |
 | 2026-10-23 | §2 : Radar — sources du ciel de départ (PSR B1919+21, Synchrotron 408 MHz, SN-2341-K452) ; les autres signaux de départ restent muets |
 
 ---
