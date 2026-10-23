@@ -97,6 +97,13 @@ describe('journal de modération', () => {
     expect(detail).toBe('Pseudo : Bob → Joueur 42 · Vaisseau : Artemis → Vaisseau propre')
   })
 
+  it('décrit une réinitialisation avec le vaisseau effacé', () => {
+    expect(describeAction({ action: 'reset_game', details: { ship: 'DEEP IMPACT' } })).toEqual({
+      label: 'Partie réinitialisée',
+      detail: 'Vaisseau : DEEP IMPACT',
+    })
+  })
+
   it('garde l’action brute si elle est inconnue', () => {
     expect(describeAction({ action: 'autre' })).toEqual({ label: 'autre', detail: '' })
   })

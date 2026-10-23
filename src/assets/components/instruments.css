@@ -10,7 +10,10 @@
     z-index: var(--z-ui);
     display: flex;
     align-items: stretch;
-    justify-content: center;
+    /* safe : centré tant que les onglets tiennent ; sinon calés à gauche et défilement horizontal */
+    justify-content: safe center;
+    overflow-x: auto;
+    scrollbar-width: thin;
     padding: 0 var(--space-10);
     border-top: var(--border-width) solid var(--border-default);
     background: linear-gradient(0deg, color-mix(in srgb, var(--color-bg) 95%, transparent) 0%, transparent 100%);
