@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Lore
-*Version 0.14 — Octobre 2026*
+*Version 0.15 — Octobre 2026*
 
 ---
 
@@ -23,6 +23,7 @@
 | 0.12 | Octobre 2026 | §3 : l'écran 5 devient une visite en sept étapes (anomalies, signaux, Radar, Neutrinos, Laboratoire, Journal, catalogue) — textes des étapes 1 et 2 d'après la demande du concepteur |
 | 0.13 | Octobre 2026 | §3 : étape 2 de la visite centrée sur PSR B1919+21, audible au Radar (bande L) ; texte de l'étape 3 complété |
 | 0.14 | Octobre 2026 | §5 : notice de bord rédigée (affichée en tête du journal) ; départ et calendrier : le 1er janvier 2041 (§2) fait référence, 2187 abandonné (`LACUNA_GDD.md` §2) |
+| 0.15 | Octobre 2026 | §3 : étapes 5 et 6 de la visite réécrites pour annoncer la boucle d'analyse (écarts, verdict, voyage pour lever le doute, journal, artefact — `LACUNA_VERDICT.md` lot 7) ; à relire par le concepteur |
 
 ---
 
@@ -235,8 +236,8 @@ Choisissez celle que vous voulez comprendre.
 | 2 | PSR B1919+21 — la vue se tourne vers lui, le Radar passe en bande L | Le vaisseau capte des signaux venus de l'espace. La plupart ont une origine connue : pulsars, sursauts gamma… / Il arrive que certains restent inexpliqués. |
 | 3 | Tuile Radar | Le Radar écoute le ciel dans la direction où vous regardez. / Les traits verticaux réguliers viennent du signal que vous visez. Chaque bande de fréquence fait entendre des sources différentes. |
 | 4 | Tuile Neutrinos | Le détecteur compte les neutrinos qui traversent le vaisseau. / Il ne dit pas d'où ils viennent. |
-| 5 | Laboratoire | Le Laboratoire analyse les signaux que vous lui confiez. / Ses rapports donnent des mesures, jamais de réponse. |
-| 6 | Journal | Le journal garde la mémoire du voyage : ce qui s'est passé, et ce que vous en pensez. |
+| 5 | Laboratoire | Le Laboratoire compare vos mesures à ce que prévoient les modèles et relève les écarts. Certains ne se mesurent qu'en s'approchant. / Il ne conclut jamais : le verdict vous appartient. |
+| 6 | Journal | Le journal garde la mémoire du voyage : ce qui s'est passé, et ce que vous en avez conclu. / Ce que vous déposez en artefact, d'autres vaisseaux le liront. |
 | 7 | Destination du catalogue | 12 anomalies figurent dans le catalogue embarqué. / Choisissez celle que vous voulez comprendre. *(texte d'origine de l'écran 5)* |
 - Première partie du compte : séquence complète, non sautée (`LACUNA_UI.md` §9). Parties suivantes (après une réinitialisation) : un discret « Passer » sur les écrans 1 à 4.
 

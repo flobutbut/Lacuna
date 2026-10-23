@@ -68,12 +68,18 @@ export const FIRST_CHOICE_TOUR = [
   {
     id: 'laboratoire',
     target: { selector: '.instruments a[href="/laboratoire"]' },
-    text: ['Le Laboratoire analyse les signaux que vous lui confiez.', 'Ses rapports donnent des mesures, jamais de réponse.'],
+    text: [
+      'Le Laboratoire compare vos mesures à ce que prévoient les modèles et relève les écarts. Certains ne se mesurent qu’en s’approchant.',
+      'Il ne conclut jamais : le verdict vous appartient.',
+    ],
   },
   {
     id: 'journal',
     target: { selector: '.instruments a[href="/journal"]' },
-    text: ['Le journal garde la mémoire du voyage : ce qui s’est passé, et ce que vous en pensez.'],
+    text: [
+      'Le journal garde la mémoire du voyage : ce qui s’est passé, et ce que vous en avez conclu.',
+      'Ce que vous déposez en artefact, d’autres vaisseaux le liront.',
+    ],
   },
   {
     id: 'catalogue',

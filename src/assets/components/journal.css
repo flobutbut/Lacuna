@@ -258,3 +258,20 @@
     line-height: var(--leading-relaxed);
     color: var(--color-white);
 }
+
+/* Fil conducteur : étape suivante d'une entrée de verdict (LACUNA_VERDICT.md §8) */
+.journal-entry__next {
+    display: inline-block;
+    margin-top: var(--space-5);
+    font-size: var(--text-sm);
+    color: var(--color-amber);
+    text-decoration: none;
+}
+
+.journal-entry__next:hover {
+    color: var(--color-white);
+}
+
+.journal-entry__next--done {
+    color: var(--color-muted);
+}

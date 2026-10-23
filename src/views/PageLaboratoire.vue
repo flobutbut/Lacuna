@@ -424,6 +424,11 @@ onMounted(async () => {
   if (selectId && typeof selectId === 'string') {
     const obs = obsStore.list.find((o) => o.id === selectId)
     if (obs) selectedObs.value = obs
+    // Depuis le journal (« Créer un artefact » sur une entrée de verdict) : ouvre directement la modale
+    if (obs && route.query.artefact === '1') {
+      if (canCreateArtifact.value) showArtifactModal.value = true
+      router.replace({ query: { select: selectId } })
+    }
   }
 })
 

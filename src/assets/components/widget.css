@@ -114,3 +114,16 @@
     text-align: center;
     padding: var(--space-3) 0;
 }
+
+/* Fil conducteur : étape suivante (LACUNA_VERDICT.md §8) */
+.side-widget__next {
+    display: block;
+    margin-top: var(--space-4);
+    font-size: var(--text-sm);
+    color: var(--color-amber);
+    text-decoration: none;
+}
+
+.side-widget__next:hover {
+    color: var(--color-white);
+}

@@ -5,6 +5,7 @@ import { useSignauxStore } from '@/stores/signaux'
 import { useRadarStore } from '@/stores/radar'
 import { useShipStore } from '@/stores/ship'
 import { useObservatoireStore } from '@/stores/observatoire'
+import { useObservationsStore } from '@/stores/observations'
 import { isWindowOpen } from '@/lib/signalWindow'
 import AppSwitch from '@/components/AppSwitch.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
@@ -16,6 +17,11 @@ const signauxStore = useSignauxStore()
 const radarStore = useRadarStore()
 const shipStore = useShipStore()
 const observatoireStore = useObservatoireStore()
+const obsStore = useObservationsStore()
+
+/** Fil conducteur (LACUNA_VERDICT.md §8) : observations confiées au Laboratoire et pas encore analysées */
+// L'état vaut la clé SQL (PENDING) pour une observation chargée de la base, son libellé (« En attente ») sinon
+const pendingAnalyses = computed(() => obsStore.list.filter((o) => o.state === 'PENDING' || o.state === 'En attente').length)
 const { radarEnabled, radarNoiseEnabled, neutrinoMonitorEnabled } = storeToRefs(radarStore)
 /** Filtre de bruit actif = bruit de fond retiré du spectrogramme */
 const noiseFiltered = computed(() => radarNoiseEnabled.value === false)
@@ -37,7 +43,7 @@ const systemEmitters = computed(() =>
 
 let expiryInterval = null
 onMounted(async () => {
-  await ensureStoresLoaded(signauxStore)
+  await ensureStoresLoaded(signauxStore, obsStore)
   signauxStore.removeExpired()
   expiryInterval = setInterval(() => {
     signauxStore.removeExpired()
@@ -65,6 +71,9 @@ onUnmounted(() => {
         <div class="sw-key">Scan en cours</div>
         <div class="sw-val ok">ACTIF</div>
       </div>
+      <RouterLink v-if="pendingAnalyses > 0" to="/laboratoire" class="side-widget__next">
+        {{ pendingAnalyses }} observation{{ pendingAnalyses > 1 ? 's' : '' }} en attente d’analyse → Laboratoire
+      </RouterLink>
     </div>
 
     <div v-if="systemEmitters.length" class="side-widget">

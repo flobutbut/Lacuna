@@ -5,11 +5,38 @@
  */
 import '@/assets/components/journal.css'
 import { ref, computed, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useJournalStore, JOURNAL_TITLE_MAX, JOURNAL_TEXT_MAX } from '@/stores/journal'
+import { useObservationsStore } from '@/stores/observations'
+import { useVerdictsStore } from '@/stores/verdicts'
+import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import AppTextField from '@/components/AppTextField.vue'
 import { NOTICE_TITLE, NOTICE_HEADER, NOTICE_SECTIONS } from '@/constants/notice'
 
 const journalStore = useJournalStore()
+const obsStore = useObservationsStore()
+const verdictsStore = useVerdictsStore()
+
+/** Verdicts par entrée de journal (lab_verdicts.logbook_entry_id) */
+const verdictByEntry = computed(() => {
+  const out = {}
+  for (const list of Object.values(verdictsStore.byObs)) {
+    for (const v of list) if (v.logbookEntryId) out[v.logbookEntryId] = v
+  }
+  return out
+})
+
+/**
+ * Fil conducteur (LACUNA_VERDICT.md §8) : une entrée de verdict propose « Créer un artefact »
+ * tant que ce verdict est le verdict courant et qu'aucun artefact n'en a été déposé.
+ */
+function artifactStep(entry) {
+  const v = verdictByEntry.value[entry.id]
+  if (!v) return null
+  if (v.traceId) return { done: true }
+  if (verdictsStore.getCurrent(v.observationId)?.id !== v.id) return null
+  return { to: { path: '/laboratoire', query: { select: v.observationId, artefact: '1' } } }
+}
 
 const FILTERS = [
   { id: 'ALL', label: 'Tous' },
@@ -56,7 +83,11 @@ async function save() {
   }
 }
 
-onMounted(() => journalStore.fetch())
+onMounted(async () => {
+  await journalStore.fetch()
+  await ensureStoresLoaded(obsStore)
+  await verdictsStore.fetchForObservations(obsStore.list.map((o) => o.id))
+})
 </script>
 
 <template>
@@ -119,6 +150,10 @@ onMounted(() => journalStore.fetch())
           <div class="journal-entry__gen">Génération {{ entry.generation }}</div>
           <h2 class="journal-entry__title">{{ entry.title }}</h2>
           <div class="journal-entry__text">{{ entry.text }}</div>
+          <template v-if="artifactStep(entry)">
+            <p v-if="artifactStep(entry).done" class="journal-entry__next journal-entry__next--done">Artefact déposé.</p>
+            <RouterLink v-else :to="artifactStep(entry).to" class="journal-entry__next">Créer un artefact →</RouterLink>
+          </template>
         </article>
       </section>
     </div>
