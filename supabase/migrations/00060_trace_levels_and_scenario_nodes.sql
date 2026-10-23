@@ -177,6 +177,8 @@ GRANT EXECUTE ON FUNCTION public.unlock_trace_levels() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_trace_levels(uuid) TO authenticated;
 
 -- 6. Le Fil des 75 — LACUNA_SCENARIOS.md §5.3 ────────────────────────────────────
+-- Gliese 667C : identifiant 'gl-gl-667c' en production (porte GJ 667Cc, désignation « Cc »),
+-- 'GLIESE667' dans le seed local. Le doublon NASA 'gj-667-c' n'est pas utilisé.
 -- traces.description : première lecture de la trace (la seule visible dès sa découverte).
 -- Type de la trace = type principal ; chaque lecture porte son propre type.
 INSERT INTO public.traces (designation, type, origin, system_id, difficulty, real_reference, description, scenario_arc)
@@ -187,10 +189,10 @@ VALUES
   ('ROSS128-SCN02-001', 'SIGNAL_RADIO', 'IMMUABLE', 'ROSS128', '1', false,
    $t$Signal à 1420 MHz — zone tempérée de Ross 128 b — synchronisé à l'aube locale. Fenêtre d'émission : 40 minutes par cycle jour-nuit de 61 heures. Durée de fenêtre identique à celle des émissions du terminateur de Proxima b.$t$,
    'scn-02-fil-des-75'),
-  ('GLIESE667-SCN02-001', 'PHYSICAL_ARTIFACT', 'IMMUABLE', 'GLIESE667', '2', false,
+  ('GLIESE667-SCN02-001', 'PHYSICAL_ARTIFACT', 'IMMUABLE', (SELECT id FROM public.stellar_systems WHERE id IN ('gl-gl-667c', 'GLIESE667') ORDER BY id = 'gl-gl-667c' DESC LIMIT 1), '2', false,
    $t$Perturbation gravitationnelle sur l'orbite de 667Cc — anomalie détectable depuis l'orbite.$t$,
    'scn-02-fil-des-75'),
-  ('GLIESE667-SCN02-002', 'PHYSICAL_ARTIFACT', 'IMMUABLE', 'GLIESE667', '3', false,
+  ('GLIESE667-SCN02-002', 'PHYSICAL_ARTIFACT', 'IMMUABLE', (SELECT id FROM public.stellar_systems WHERE id IN ('gl-gl-667c', 'GLIESE667') ORDER BY id = 'gl-gl-667c' DESC LIMIT 1), '3', false,
    $t$Concentration anormale de métaux réfractaires détectée au sol — craton équatorial, zone tectoniquement stable. Module déployé. Fouille à 60 cm de profondeur sous basalte daté > 3,5 Ga : plaque du même matériau que 667Cc-O1. 128 lignes de gravures. Espacement 4,7 mm. Une interruption à la ligne 75. Ratio 1/75 — identique à l'objet orbital.$t$,
    'scn-02-fil-des-75')
 ON CONFLICT (designation) DO NOTHING;
