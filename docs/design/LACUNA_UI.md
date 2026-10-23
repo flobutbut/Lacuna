@@ -573,10 +573,10 @@ La disponibilité des instruments dépend du niveau d'observation actuel du vais
 
 #### Formalisation — "Garder une trace"
 
-Le bouton `[Garder une trace]` devient actif dès qu'au moins un rapport d'analyse existe pour l'observation. Le joueur n'est pas obligé d'attendre tous les instruments.
+Le bouton « Créer un artefact » devient actif dès qu'au moins un rapport d'analyse existe pour l'observation. Le joueur n'est pas obligé d'attendre tous les instruments.
 
 ```
-[GARDER UNE TRACE]
+Créer un artefact
   ↓
 Nom de la trace     : [désignation automatique modifiable — ex. HD44594-021]
 Système             : [prérempli]

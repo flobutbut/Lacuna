@@ -77,7 +77,7 @@
 - [x] Calendrier du vaisseau et générations — date de bord depuis 2041, génération = 1 + années ÷ 25 (00068, 00069)
 - [x] Ciel de départ — supernova de Bételgeuse (SN-001), signal de 22 minutes (LPT-001), détecteur et analyseur de neutrinos, sources de départ au Radar (00062–00067)
 - [x] Page Artefacts — grille, détail trace, interprétations, suppression (conformité LACUNA_UI)
-- [x] Page Laboratoire — 3 colonnes (file d'observations | observation sélectionnée | instruments), clic instrument, rapports + fiabilité, [GARDER UNE TRACE], sorties visuelles : spectrogramme, structure temporelle, polarisation, spectre énergétique, gravimétrique, spectre stellaire, analyseur orbital, spectromètre atmosphérique (profil moléculaire)
+- [x] Page Laboratoire — 2 colonnes (file d'observations | observation sélectionnée avec barre d'instruments), clic instrument, rapports + fiabilité, « Créer un artefact », sorties visuelles : spectrogramme, structure temporelle, polarisation, spectre énergétique, gravimétrique, spectre stellaire, analyseur orbital, spectromètre atmosphérique (profil moléculaire)
 - [x] Carte — 3 colonnes (planètes | carte | détails), store mapNodes, ajout depuis Observatoire/Labo, suppression, tooltip, visited ciel
 - [x] Équation de Drake — affichage Header + Page Drake (valeurs de référence, 00053) ; pas encore : recalcul selon les découvertes collectives
 - [x] Page Population — 3 onglets (Générations, Génération actuelle, Registre des Raisons)
@@ -118,7 +118,7 @@
 | Mars 2026 | Migration maquette → Vue (SkyCanvas, Header, Panels, Instruments, design system) |
 | Mars 2026 | Navigation par routes — panels convertis en pages pleines (plus d'overlay) |
 | Mars 2026 | Page Artefacts (grille + détail, interprétations Supabase, suppression) · Page Population (3 onglets, layout 2 colonnes) · Page Systèmes (plan ARCA, overlay fermable) · Doc LACUNA_UI · Migration interpretations DELETE |
-| Mars 2026 | Page Laboratoire — 3 colonnes (observations / sélectionnée / instruments), clic sur instrument, 4 états par instrument, rapports + fiabilité, [GARDER UNE TRACE] |
+| Mars 2026 | Page Laboratoire — 3 colonnes (observations / sélectionnée / instruments), clic sur instrument, 4 états par instrument, rapports + fiabilité, « Créer un artefact » |
 | Mars 2026 | Observatoire — TravelWidget (clic étoile), panel détail (double-clic), corps + probas anomalie, Analyser → Laboratoire, Ajouter au laboratoire. Store observations partagé. |
 | Mars 2026 | Signaux — store signaux (listWithRemaining, add/remove, durée 2h temps joueur), SideLeft bloc Signaux captés (cards, tooltip, modale), SignalModal + [ANALYSER AU LABO →], marqueurs azimut sur SkyCanvas, SignalTooltip. |
 | Mars 2026 | Barre instruments — bordures alignées, tab actif avec border-top. Page Systèmes — menu par groupe SVG, highlight plan, overlays par système. |

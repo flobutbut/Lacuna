@@ -321,6 +321,17 @@ const selectedReports = computed(() => {
   return reports.value[obs.id] || []
 })
 
+/** Instruments de l'observation sélectionnée, les indisponibles en fin de barre */
+const selectedInstruments = computed(() => {
+  const obs = selectedObs.value
+  if (!obs) return []
+  const list = getInstrumentsForObservation(obs)
+  return [
+    ...list.filter(i => instrumentState(i, obs) !== 'disabled'),
+    ...list.filter(i => instrumentState(i, obs) === 'disabled'),
+  ]
+})
+
 const runningForSelected = computed(() => {
   const obs = selectedObs.value
   if (!obs) return {}
@@ -479,8 +490,23 @@ onUnmounted(() => {
                 :disabled="!canFormalize()"
                 @click="formalize"
               >
-                [GARDER UNE TRACE]
+                Créer un artefact
               </button>
+            </div>
+          </div>
+
+          <div class="lab-selected__section">
+            <div class="lab-selected__section-title">Instruments</div>
+            <div class="lab-instruments-grid">
+              <InstrumentButton
+                v-for="instr in selectedInstruments"
+                :key="instr.id"
+                :instrument="instr"
+                :state="instrumentState(instr, selectedObs)"
+                :progress="runningForSelected[instr.id]?.progress ?? 0"
+                :disabled-reason="getDisabledReason(instr, selectedObs)"
+                @click="launchInstrument(instr, selectedObs)"
+              />
             </div>
           </div>
 
@@ -619,29 +645,10 @@ onUnmounted(() => {
               />
             </div>
             <div v-if="selectedReports.length === 0 && !Object.keys(runningForSelected).length" class="lab-report" style="opacity: 0.7">
-              Lancez un instrument depuis la colonne droite.
+              Lancez un instrument ci-dessus.
             </div>
           </div>
         </template>
-      </div>
-
-      <!-- Colonne droite : instruments -->
-      <div class="lab-instruments-col">
-        <div class="lab-instruments__title">Instruments</div>
-        <div v-if="!selectedObs" class="lab-no-selection">
-          Sélectionnez une observation pour lancer des analyses.
-        </div>
-        <div v-else class="lab-instruments-grid">
-          <InstrumentButton
-            v-for="instr in getInstrumentsForObservation(selectedObs)"
-            :key="instr.id"
-            :instrument="instr"
-            :state="instrumentState(instr, selectedObs)"
-            :progress="runningForSelected[instr.id]?.progress ?? 0"
-            :disabled-reason="getDisabledReason(instr, selectedObs)"
-            @click="launchInstrument(instr, selectedObs)"
-          />
-        </div>
       </div>
     </div>
   </div>

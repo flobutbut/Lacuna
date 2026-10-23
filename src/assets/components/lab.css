@@ -1,12 +1,12 @@
 /* ══════════════════════════════════════════════════════
    LACUNA — Laboratoire
-   3 colonnes : observations | sélectionnée | instruments
+   2 colonnes : observations | sélectionnée (instruments + rapports)
    ══════════════════════════════════════════════════════ */
 
-/* ── Layout 3 colonnes ── */
+/* ── Layout 2 colonnes ── */
 .lab-layout {
   display: grid;
-  grid-template-columns: minmax(280px, var(--page-col-width)) 1fr minmax(420px, 520px);
+  grid-template-columns: minmax(280px, var(--page-col-width)) 1fr;
   gap: 0;
   min-height: 100%;
 }
@@ -21,13 +21,6 @@
   padding: var(--page-gutter);
   overflow-y: auto;
   background: var(--color-shade-15);
-}
-
-.lab-instruments-col {
-  padding: var(--page-gutter);
-  border-left: var(--border-width) solid var(--border-default);
-  overflow-y: auto;
-  min-width: 420px;
 }
 
 /* ── Colonne gauche : file d'observations ── */
@@ -380,50 +373,30 @@
   stroke-opacity: 0.3;
 }
 
-/* ── Colonne droite : instruments ── */
-.lab-instruments__title {
-  font-size: var(--text-sm);
-  color: var(--color-muted);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-  margin-bottom: var(--space-4);
-}
-
+/* ── Barre d'instruments (sous l'en-tête de l'observation) ── */
 .lab-instruments-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--space-3);
 }
 
-/* Responsive : 3→2 colonnes instruments */
 @media (max-width: 1200px) {
-  .lab-instruments-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .lab-instruments-col {
-    min-width: 280px;
-  }
   .lab-layout {
-    grid-template-columns: minmax(220px, 260px) 1fr minmax(280px, 380px);
+    grid-template-columns: minmax(220px, 260px) 1fr;
   }
 }
 
-/* Responsive : 2→1 colonne instruments */
 @media (max-width: 900px) {
-  .lab-instruments-grid {
-    grid-template-columns: 1fr;
-  }
-  .lab-instruments-col {
-    min-width: 200px;
-  }
   .lab-layout {
-    grid-template-columns: minmax(180px, 220px) 1fr minmax(200px, 280px);
+    grid-template-columns: minmax(180px, 220px) 1fr;
   }
 }
 
-/* ── InstrumentButton — Grille 3×N, boutons carrés (réutilisable) ── */
+/* ── InstrumentButton — tuile compacte (réutilisable) ── */
 .instrument-btn {
-  aspect-ratio: 1;
+  --card-pad-y: var(--space-3);
+  --card-pad-x: var(--space-3);
+  min-height: 84px;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -509,22 +482,15 @@
 }
 
 .instrument-btn__name {
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   letter-spacing: var(--tracking-tight);
   text-align: center;
   word-break: break-word;
 }
 
 .instrument-btn__reason {
-  font-size: var(--text-base);
+  font-size: var(--text-xs);
   color: var(--color-muted);
   line-height: var(--leading-tight);
-  text-align: center;
-}
-
-.lab-no-selection {
-  padding: var(--space-6);
-  color: var(--color-muted);
-  font-size: var(--text-base);
   text-align: center;
 }

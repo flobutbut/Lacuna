@@ -3,7 +3,7 @@ import LabInstrumentIcon from '@/components/icons/LabInstrumentIcon.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
 
 /**
- * InstrumentButton — Bouton d'instrument (grille 3×N, carré).
+ * InstrumentButton — Bouton d'instrument (tuile compacte d'une barre d'instruments).
  * Utilisé par le Laboratoire, réutilisable ailleurs.
  * États : available, disabled, running, done.
  */
@@ -47,7 +47,7 @@ function handleClick() {
     </div>
     <div class="instrument-btn__content">
       <div class="instrument-btn__icon-wrap">
-        <LabInstrumentIcon :instrument-id="instrument.id" :size="36" />
+        <LabInstrumentIcon :instrument-id="instrument.id" :size="24" />
         <span v-if="state === 'done'" class="instrument-btn__check"><AppIcon name="check" /></span>
       </div>
       <div class="instrument-btn__name">{{ instrument.name }}</div>

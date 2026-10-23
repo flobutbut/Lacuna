@@ -316,7 +316,7 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 | **Carte** | `map_nodes` ; onglets System / Map ; arêtes de la Map dérivées de `ship_travels` (visité = au moins une arête, observé = aucune). |
 | **Observatoire** | Ciel (stellar_systems, coordonnées x/y/z), vue Système (planètes, zone habitable), vue Radar (spectrogramme temps réel, bruit de fond physique, pulsars, sélecteur de bande — `LACUNA_RECEPTION_MODULE.md`). |
 | **Signaux** | Table `signals`, sources `system_objects` (PULSAR, etc.) ou `signal_events`. Durée de vie en temps joueur, [ANALYSER AU LABO]. Émetteurs du système courant (`EMITTER`, migration `00057`) : présents tant que le vaisseau y est, actifs seulement pendant leur fenêtre d'émission (temps réel), tracés sur le Radar. |
-| **Laboratoire** | File d'observations, instruments (spectral, structure temporelle, polarisation, spectre énergétique, gravimétrique, stellaire, orbital, atmosphère, morpho, volumétrique, magnétomètre), rapports + [GARDER UNE TRACE]. |
+| **Laboratoire** | File d'observations, instruments (spectral, structure temporelle, polarisation, spectre énergétique, gravimétrique, stellaire, orbital, atmosphère, morpho, volumétrique, magnétomètre), rapports + Créer un artefact. |
 | **Artefacts / Traces** | Traces Supabase, interprétations anonymes. |
 | **Population** | Table `populations` (total, generation, will, social_cohesion…). Page à 3 onglets (Générations, Génération actuelle, Registre des Raisons). |
 | **Drake** | Table `drake_equation`, affichage Header + Page Drake. |
