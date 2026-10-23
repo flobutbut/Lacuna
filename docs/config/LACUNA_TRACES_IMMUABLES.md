@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Traces immuables
-*Version 0.7 — Octobre 2026*
+*Version 0.8 — Octobre 2026*
 
 > Ce document contient les **fiches des traces immuables** qui n'appartiennent pas à un scénario — voisinage solaire, hors voisinage — et le **Journal de Yael** (origine `PRÉCURSEUR`). Les traces appartenant à un scénario ont leurs fiches de nœuds dans `LACUNA_SCENARIOS.md`. La mécanique (définition, chaîne de production, types d'outputs, qualification) vit dans `LACUNA_TRACES.md`. Les faits astronomiques de référence vivent dans `LACUNA_ANOMALIES_REELLES.md`.
 >
@@ -32,6 +32,7 @@
 | 0.5 | Octobre 2026 | SN-001 implémentée : déroulé en temps réel joueur (durées ci-dessous), T0 par partie, bouffée captée une fois, état du ciel calculé à partir de T0 (migration `00063`) |
 | 0.6 | Octobre 2026 | SN-001 : T0 ramené à création + 3 minutes |
 | 0.7 | Octobre 2026 | SN-001, après test joueur : silence ramené à 6 min ; halo orienté vers Orion à la sortie du choc ; explosion répartie par bande (éclair UV, visible avec aigrettes et refroidissement, IR tardif, source radio sur le Radar) ; nébuleuse du rémanent (valeur de jeu) |
+| 0.8 | Octobre 2026 | SN-001 : montée des neutrinos de pré-supernova implémentée (création + 3 min, 5 min) ; la bouffée passe à création + 8 min (migration `00065`) |
 
 ---
 
@@ -468,10 +469,11 @@ Le joueur fait lui-même le lien entre la bouffée et l'étoile : rien ne le lui
 
 **Déroulé implémenté — temps réel joueur**
 
-T0 = création de la partie + 3 minutes (`ships.supernova_t0`, migration `00064` ; 10 minutes à l'origine, jugé trop long pour un joueur qui arrive). L'ordre réel des phases est conservé, les durées sont raccourcies pour tenir dans une première session :
+T0 (la bouffée) = création de la partie + 8 minutes (`ships.supernova_t0`, migration `00065`). La montée des neutrinos de pré-supernova commence 3 minutes après la création et dure 5 minutes. L'ordre réel des phases est conservé, les durées sont raccourcies pour tenir dans une première session :
 
 | Phase | Début | Durée réelle | Réalité astrophysique | Rendu |
 |---|---|---|---|---|
+| Montée de pré-supernova | T0 − 5 min | 5 min | jusqu'à ~9 h (Super-Kamiokande avec gadolinium) | Signal « Neutrinos » sans direction : taux de basse énergie qui monte ; halo uniforme à la capture |
 | Bouffée de neutrinos | T0 | 10 s | ~10 s | Signal « Neutrinos » sans direction, halo uniforme ; le ciel ne change pas |
 | Silence | T0 → T0 + 6 min | 6 min | ~3 h pour SN 1987A | Le temps d'analyser la bouffée (direction : Orion) et de regarder Bételgeuse |
 | Sortie du choc | T0 + 6 min | 2 min | quelques minutes | Éclair bref, surtout en UV ; le halo s'allume, orienté vers Orion |
@@ -490,7 +492,7 @@ T0 = création de la partie + 3 minutes (`ships.supernova_t0`, migration `00064`
 
 *Valeur de jeu :* la nébuleuse du rémanent est agrandie pour être visible. À ~550 al, un rémanent qui s'étend à ~10 000 km/s ne grandit que de quelques secondes d'arc par an.
 
-- La pré-supernova (étape 1) n'est pas implémentée.
+- *Valeurs provisoires de la montée :* 200 événements, 5 minutes, énergie moyenne 3 MeV, direction non reconstruite. L'analyseur de neutrinos montre un taux qui croît au lieu de décroître.
 - La bouffée reste disponible 24 h ; elle n'est captée qu'une fois par partie (`ships.supernova_captured_at`), même si le joueur la supprime en l'analysant.
 - L'éclat est exprimé sur l'échelle du rendu du ciel, pas en magnitude (aucune source fiable retenue).
 - *Valeurs provisoires de la bouffée :* 5 000 000 événements (extrapolation non vérifiée), 15 MeV de moyenne et ~10 s (SN 1987A), direction à ±3°.
@@ -516,7 +518,7 @@ T0 = création de la partie + 3 minutes (`ships.supernova_t0`, migration `00064`
 **Questions ouvertes**
 - ~~L'horloge~~ — Tranché : temps réel joueur, durées raccourcies, ordre conservé (voir le déroulé implémenté). En temps simulé, compressé (~88 ans par heure de voyage), les phases seraient quasi simultanées.
 - Éclat apparent au maximum : exprimé sur l'échelle du rendu, à recaler si une source fiable est retenue.
-- Les neutrinos de pré-supernova (étape 1) : non implémentés, à ajouter éventuellement.
+- ~~Les neutrinos de pré-supernova~~ — implémentés (montée de 5 minutes avant la bouffée).
 - Le support « neutrinos » : implémenté (`LACUNA_LABORATOIRE_INSTRUMENTS.md` §3.4 et §4.14).
 
 ---
@@ -573,4 +575,4 @@ SIGNATURE — une période de ~1 318 s à reconnaître si elle réapparaît aill
 
 ---
 
-*LACUNA — Traces immuables v0.7 — Octobre 2026 — Confidentiel*
+*LACUNA — Traces immuables v0.8 — Octobre 2026 — Confidentiel*

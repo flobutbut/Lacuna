@@ -222,6 +222,8 @@ Les instruments du Laboratoire **analysent** les données déjà capturées. Ils
 
 **Ancrage scientifique** — Pour SN 1987A, Kamiokande II a compté douze événements sur 12,4 s, d'énergies entre ~6 et ~35 MeV. La forme de la bouffée (montée rapide, décroissance sur une dizaine de secondes) et l'énergie moyenne (~10–15 MeV) sont la signature d'un effondrement de cœur. Une montée lente d'événements de basse énergie, des heures avant, est la signature attendue des neutrinos de pré-supernova.
 
+*Profils :* bouffée (montée immédiate, décroissance) ou montée lente de pré-supernova (`attributes.profile = 'rising'`).
+
 **Usage** — Analyse une bouffée ou un flux de neutrinos. Répond : combien, quand, à quelle énergie, d'où approximativement ? Ne dit pas ce qui l'a produite : le joueur relie la direction à une étoile, ou attend de voir.
 
 ---

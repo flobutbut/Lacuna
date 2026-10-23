@@ -1,7 +1,7 @@
 /**
  * Supernova de Bételgeuse (SN-001, LACUNA_TRACES_IMMUABLES.md §5) — déroulé en temps réel joueur.
- * T0 est propre à chaque partie (ships.supernova_t0). Ordre réel des phases, durées raccourcies :
- * bouffée de neutrinos (10 s), silence (6 min), sortie du choc (2 min), montée (jusqu'à T0 + 2 h),
+ * T0 (la bouffée) est propre à chaque partie (ships.supernova_t0). Ordre réel des phases, durées raccourcies :
+ * montée des neutrinos de pré-supernova (5 min avant T0), bouffée de neutrinos (10 s), silence (6 min), sortie du choc (2 min), montée (jusqu'à T0 + 2 h),
  * déclin (jusqu'à T0 + 7 jours), rémanent.
  *
  * Chaque bande raconte une partie de l'explosion (ancrages : SN 1987A, physique des supernovas
@@ -21,6 +21,9 @@ export const SUPERNOVA_DIRECTION = { ra: 88.793, dec: 7.407 }
 const MIN = 60 * 1000
 const HOUR = 60 * MIN
 const DAY = 24 * HOUR
+
+/** Montée des neutrinos de pré-supernova (combustion du silicium) : commence 5 minutes avant la bouffée */
+export const PRE_SUPERNOVA_LEAD_MS = 5 * 60 * 1000
 
 export const SUPERNOVA_PHASES = {
   BURST_END: 10 * 1000,
@@ -50,14 +53,15 @@ function mix(a, b, f) {
  * level = éclat visible relatif qui remplace le rendu de l'étoile ; null tant que la lumière n'est pas arrivée.
  * @param {string|number|null} t0 - Date de la bouffée (ISO ou ms), null = pas d'événement pour cette partie
  * @param {number} [nowMs]
- * @returns {{ phase: 'none'|'before'|'burst'|'silence'|'breakout'|'rise'|'decline'|'remnant', level: number|null, u: number }}
+ * @returns {{ phase: 'none'|'before'|'precursor'|'burst'|'silence'|'breakout'|'rise'|'decline'|'remnant', level: number|null, u: number }}
  */
 export function supernovaState(t0, nowMs = Date.now()) {
   const t0Ms = typeof t0 === 'number' ? t0 : Date.parse(t0)
   if (t0 == null || !Number.isFinite(t0Ms)) return { phase: 'none', level: null, u: 0 }
   const t = nowMs - t0Ms
   const P = SUPERNOVA_PHASES
-  if (t < 0) return { phase: 'before', level: null, u: 0 }
+  if (t < -PRE_SUPERNOVA_LEAD_MS) return { phase: 'before', level: null, u: 0 }
+  if (t < 0) return { phase: 'precursor', level: null, u: 1 + t / PRE_SUPERNOVA_LEAD_MS }
   if (t < P.BURST_END) return { phase: 'burst', level: null, u: t / P.BURST_END }
   if (t < P.BREAKOUT_START) return { phase: 'silence', level: null, u: 0 }
   if (t < P.RISE_START) {

@@ -546,6 +546,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00062 | signal_support : valeur NEUTRINO (détecteur de neutrinos) |
 | 00063 | ships.supernova_t0 (création + 10 min) et supernova_captured_at ; événement SN-001 (signal_events) ; RPC capture_supernova_neutrinos |
 | 00064 | supernova_t0 : création + 3 min (au lieu de 10) ; parties en attente alignées |
+| 00065 | supernova_t0 = création + 8 min ; supernova_pre_captured_at ; capture_supernova_neutrinos capte la montée de pré-supernova puis la bouffée |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 

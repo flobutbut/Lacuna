@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Lore
-*Version 0.7 — Octobre 2026*
+*Version 0.8 — Octobre 2026*
 
 ---
 
@@ -16,6 +16,7 @@
 | 0.5 | Octobre 2026 | §4 : renvoi vers deux propositions de phénomènes visibles dès Sol (supernova, signal à longue période), `LACUNA_TRACES_IMMUABLES.md` §5 |
 | 0.6 | Octobre 2026 | §4 : la supernova de Bételgeuse est implémentée (T0 = création + 10 min) |
 | 0.7 | Octobre 2026 | §4 : la bouffée de la supernova arrive trois minutes après la création de la partie |
+| 0.8 | Octobre 2026 | §4 : montée des neutrinos de pré-supernova avant la bouffée |
 
 ---
 
@@ -258,7 +259,7 @@ Arrivée dans le premier système
 Scan automatique — première trace in situ
 ```
 
-*Trois minutes après la création de la partie, une bouffée de neutrinos arrive, puis Bételgeuse explose dans le ciel (implémenté, `LACUNA_TRACES_IMMUABLES.md` §5, SN-001). Un signal radio à longue période (LPT-001) reste à l'état de proposition.*
+*Trois minutes après la création de la partie, le détecteur enregistre une montée lente de neutrinos ; cinq minutes plus tard, une bouffée ; puis Bételgeuse explose dans le ciel (implémenté, `LACUNA_TRACES_IMMUABLES.md` §5, SN-001). Un signal radio à longue période (LPT-001) reste à l'état de proposition.*
 
 ### Ce que le joueur apprend sans qu'on le lui dise
 

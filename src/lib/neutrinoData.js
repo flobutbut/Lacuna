@@ -30,7 +30,8 @@ function gamma3(rng, mean) {
  * @param {Object} opts
  * @param {string} opts.obsId - ID observation (seed)
  * @param {number} [opts.fiability] - 0–100 : bruit de fond et incertitude de direction
- * @param {Object} [opts.attributes] - Mesures du signal : event_count, duration_s, mean_energy_mev, direction {ra, dec}, uncertainty_deg
+ * @param {Object} [opts.attributes] - Mesures du signal : event_count, duration_s, mean_energy_mev, direction {ra, dec}, uncertainty_deg,
+ *   profile ('burst' : montée immédiate puis décroissance ; 'rising' : taux qui monte lentement, pré-supernova)
  * @returns {{
  *   total: number, background: number, durationS: number, meanEnergyMeV: number,
  *   timeBins: Array<{ t0: number, t1: number, count: number }>,
@@ -46,15 +47,20 @@ export function generateNeutrinoData(opts = {}) {
   const meanEnergyMeV = Number(att.mean_energy_mev) || DEFAULT_MEAN_MEV
   const rng = seededRandom(seedFromObsId(opts.obsId ?? ''))
 
-  // Bouffée : montée immédiate puis décroissance exponentielle (constante ≈ quart de la durée)
+  // Bouffée : montée immédiate puis décroissance exponentielle (constante ≈ quart de la durée).
+  // Pré-supernova : taux qui croît exponentiellement jusqu'à la fin de la fenêtre.
+  const rising = att.profile === 'rising'
   const tau = durationS / 4
-  const windowS = durationS * 1.5
+  const windowS = rising ? durationS : durationS * 1.5
+  const sampleTime = rising
+    ? (r) => tau * Math.log(1 + r * (Math.exp(windowS / tau) - 1))
+    : (r) => -tau * Math.log(1 - r * (1 - Math.exp(-windowS / tau)))
   const sampled = Math.min(total, MAX_SAMPLED_EVENTS)
   const weight = total / sampled
   const timeCounts = new Array(TIME_BINS).fill(0)
   const energyCounts = new Array(ENERGY_BINS).fill(0)
   for (let i = 0; i < sampled; i++) {
-    const t = Math.min(windowS - 1e-9, -tau * Math.log(1 - rng() * (1 - Math.exp(-windowS / tau))))
+    const t = Math.min(windowS - 1e-9, sampleTime(rng()))
     timeCounts[Math.floor((t / windowS) * TIME_BINS)] += weight
     const e = gamma3(rng, meanEnergyMeV)
     if (e < E_MAX_MEV) energyCounts[Math.floor((e / E_MAX_MEV) * ENERGY_BINS)] += weight

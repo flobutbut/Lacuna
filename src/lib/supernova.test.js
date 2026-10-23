@@ -11,7 +11,9 @@ describe('supernovaState', () => {
   })
 
   it("laisse l'étoile intacte avant la lumière (6 minutes de silence)", () => {
-    expect(at(-1000).level).toBeNull()
+    expect(at(-6 * 60 * 1000).phase).toBe('before')
+    expect(at(-1000)).toMatchObject({ phase: 'precursor', level: null })
+    expect(at(-2.5 * 60 * 1000).u).toBeCloseTo(0.5)
     expect(at(5000).phase).toBe('burst')
     expect(at(P.BREAKOUT_START - 1)).toMatchObject({ phase: 'silence', level: null })
     expect(P.BREAKOUT_START).toBe(6 * 60 * 1000)

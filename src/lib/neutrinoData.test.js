@@ -30,6 +30,14 @@ describe('generateNeutrinoData', () => {
     expect(first).toBeGreaterThan(last * 3)
   })
 
+  it('montre un taux qui monte pour la pré-supernova', () => {
+    const d = generateNeutrinoData({ obsId: 'p', fiability: 100, attributes: { event_count: 2000, duration_s: 300, profile: 'rising' } })
+    const first = d.timeBins.slice(0, 5).reduce((s, b) => s + b.count, 0)
+    const last = d.timeBins.slice(-5).reduce((s, b) => s + b.count, 0)
+    expect(last).toBeGreaterThan(first * 3)
+    expect(d.timeBins[d.timeBins.length - 1].t1).toBeCloseTo(300)
+  })
+
   it('remet à l’échelle une bouffée de plusieurs millions d’événements', () => {
     const d = generateNeutrinoData({ obsId: 'z', fiability: 100, attributes: { event_count: 3_000_000 } })
     const sum = d.timeBins.reduce((s, b) => s + b.count, 0)
