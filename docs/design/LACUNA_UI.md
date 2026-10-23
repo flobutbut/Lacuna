@@ -905,7 +905,7 @@ Le bouton "Fixer cap" est la seule action irréversible directement accessible d
 
 L'écran 05 est la transition vers le jeu. Il n'y a pas de bouton "commencer". Le joueur est déjà dedans.
 
-**Implémentation** *(octobre 2026 — `OnboardingStory.vue`, `OnboardingFirstChoice.vue`)* — écrans 01 à 04 en plein écran avant le nommage « Bienvenue à bord » (texte de `LACUNA_LORE.md` §3, clic ou touche pour avancer) ; écran 05 : texte posé sur le ciel, les neuf anomalies-destinations (`LACUNA_LORE.md` §5) légèrement distinguées, retiré au premier départ ; transition finale en fondu (header, panneaux, barre d'instruments) à la première arrivée sur le ciel.
+**Implémentation** *(octobre 2026 — `OnboardingStory.vue`, `OnboardingFirstChoice.vue`)* — écrans 01 à 04 en plein écran avant le nommage « Bienvenue à bord » (texte de `LACUNA_LORE.md` §3 ; paragraphes révélés un à un, clic ou touche pour tout révéler puis avancer) ; écran 05 : cartouche relié par un trait à un cercle autour de la destination du catalogue la plus proche du centre de la vue, les neuf anomalies-destinations (`LACUNA_LORE.md` §5) légèrement distinguées, retiré au premier départ ; transition finale en fondu (header, panneaux, barre d'instruments) à la première arrivée sur le ciel.
 
 ---
 
@@ -943,6 +943,7 @@ Ce qui est spécifique à l'interface :
 | 2026-10-23 | Module Journal de bord implémenté : entrées écrites par le serveur (fondatrice, départ, arrivée, ciel de départ), entrées du joueur, filtre par type |
 | 2026-10-23 | Module Journal de bord : deux colonnes (nouvelle entrée | filtre et fil) |
 | 2026-10-23 | §9 : onboarding implémenté ; « Passer » sur les écrans 01 à 04 pour une nouvelle partie seulement |
+| 2026-10-23 | §9 : paragraphes révélés un à un ; écran 05 en cartouche (trait et cercle autour d'une destination) |
 | 2026-10-23 | §2 : Radar — sources du ciel de départ (PSR B1919+21, Synchrotron 408 MHz, SN-2341-K452) ; les autres signaux de départ restent muets |
 
 ---

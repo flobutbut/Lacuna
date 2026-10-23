@@ -1,10 +1,10 @@
 <script setup>
 /**
  * Onboarding — écrans 1 à 4 (LACUNA_LORE.md §3, texte exact ; LACUNA_UI.md §9).
- * Fond noir, texte centré, aucune instruction ni barre de progression. Le joueur avance à son rythme,
- * par un clic ou une touche. « Passer » seulement pour une nouvelle partie (pas la première du compte).
+ * Fond noir, texte centré, aucune instruction ni barre de progression. Les paragraphes apparaissent un à un ;
+ * un clic ou une touche révèle d'abord le reste de l'écran, puis passe au suivant : le joueur avance à son rythme. « Passer » seulement pour une nouvelle partie (pas la première du compte).
  */
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
 defineProps({
   /** Nouvelle partie après une réinitialisation : la séquence peut être passée */
@@ -74,10 +74,49 @@ ce qui s'y passe en ce moment.`,
   },
 ]
 
+/** Intervalle entre deux paragraphes (ms) ; plus long pour les données brutes de l'écran 2 */
+const BLOCK_DELAY_MS = 1800
+const DATA_BLOCK_DELAY_MS = 2600
+/** Délai minimal entre l'apparition du dernier paragraphe et le passage à l'écran suivant (ms) */
+const READ_GUARD_MS = 800
+const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+
 const index = ref(0)
 const screen = computed(() => SCREENS[index.value])
+const shown = ref(0)
+let revealTimer = null
+let completeAt = 0
+
+function revealAll() {
+  clearTimeout(revealTimer)
+  shown.value = screen.value.blocks.length
+  completeAt = Date.now()
+}
+
+function revealNext() {
+  shown.value++
+  if (shown.value >= screen.value.blocks.length) {
+    completeAt = Date.now()
+    return
+  }
+  revealTimer = setTimeout(revealNext, screen.value.data ? DATA_BLOCK_DELAY_MS : BLOCK_DELAY_MS)
+}
+
+watch(
+  index,
+  () => {
+    clearTimeout(revealTimer)
+    shown.value = 0
+    if (reducedMotion) revealAll()
+    // Laisse le fondu entre deux écrans se faire avant le premier paragraphe
+    else revealTimer = setTimeout(revealNext, 900)
+  },
+  { immediate: true }
+)
 
 function next() {
+  if (shown.value < screen.value.blocks.length) return revealAll()
+  if (Date.now() - completeAt < READ_GUARD_MS) return
   if (index.value < SCREENS.length - 1) index.value++
   else emit('done')
 }
@@ -91,7 +130,10 @@ function onKey(e) {
 }
 
 onMounted(() => window.addEventListener('keydown', onKey))
-onUnmounted(() => window.removeEventListener('keydown', onKey))
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKey)
+  clearTimeout(revealTimer)
+})
 
 </script>
 
@@ -99,7 +141,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   <div class="onboarding-story" @click="next">
     <Transition name="onboarding-fade" mode="out-in">
       <div :key="index" class="onboarding-story__screen" :class="{ 'onboarding-story__screen--data': screen.data }">
-        <p v-for="(block, i) in screen.blocks" :key="i" class="onboarding-story__block">{{ block }}</p>
+        <p
+          v-for="(block, i) in screen.blocks"
+          :key="i"
+          class="onboarding-story__block"
+          :class="{ 'onboarding-story__block--shown': i < shown }"
+          v-text="block"
+        />
       </div>
     </Transition>
     <button
@@ -146,6 +194,12 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   color: var(--color-white);
   white-space: pre-line;
   text-align: center;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+
+.onboarding-story__block--shown {
+  opacity: 1;
 }
 
 .onboarding-story__skip {
@@ -181,7 +235,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 @media (prefers-reduced-motion: reduce) {
   .onboarding-fade-enter-active,
-  .onboarding-fade-leave-active {
+  .onboarding-fade-leave-active,
+  .onboarding-story__block {
     transition: none;
   }
 }

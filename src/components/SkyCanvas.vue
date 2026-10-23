@@ -212,8 +212,22 @@ function draw(canvas, starsRef) {
     supernovaStar.supernova = sn ? { level: sn[band] ?? sn.visible, color: sn.color, nebula: sn.nebula, band } : null
   }
 
-  // Écran 5 de l'onboarding : seules les destinations du catalogue embarqué sont distinguées
+  // Écran 5 de l'onboarding : seules les destinations du catalogue embarqué sont distinguées,
+  // et le cartouche montre celle qui est la plus proche du centre de la vue
   const anomalyIds = isFirstChoicePending(shipStore.ship) ? CATALOGUE_SYSTEM_IDS : null
+  if (anomalyIds) {
+    let best = null
+    for (const id of anomalyIds) {
+      const pos = projectedPositions.get(id)
+      if (!pos) continue
+      const d = Math.hypot(pos.x - w / 2, pos.y - h / 2)
+      if (!best || d < best.d) best = { id, x: pos.x, y: pos.y, d }
+    }
+    // Position relative (0–1) : le canvas est étiré à la taille de son conteneur
+    observatoireStore.setFirstChoiceAnchor(best && { id: best.id, fx: best.x / w, fy: best.y / h })
+  } else {
+    observatoireStore.setFirstChoiceAnchor(null)
+  }
   drawStars(ctx, starList, vd.ra, vd.dec, w, h, selected, searchedStarId.value, projectedPositions, anomalyIds)
   drawSignals(ctx, activeSignals, vd.ra, vd.dec, w, h)
   drawSpectralBorder(ctx, band, w, h)

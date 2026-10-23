@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Lore
-*Version 0.10 — Octobre 2026*
+*Version 0.11 — Octobre 2026*
 
 ---
 
@@ -19,6 +19,7 @@
 | 0.8 | Octobre 2026 | §4 : montée des neutrinos de pré-supernova avant la bouffée |
 | 0.9 | Octobre 2026 | §4 : le signal de 22 minutes (LPT-001) est implémenté |
 | 0.10 | Octobre 2026 | §3 : onboarding implémenté — écrans 1 à 4 avant le nommage, écran 5 sur le ciel, « Passer » pour les parties suivantes ; §4 : traces embarquées et message du premier départ ; §5 : les 12 anomalies du catalogue définies (fiches de `LACUNA_TRACES_IMMUABLES.md`) ; numéro de version de l'en-tête rattrapé |
+| 0.11 | Octobre 2026 | §3 : paragraphes des écrans 1 à 4 révélés un à un ; écran 5 en cartouche pointant une destination du catalogue |
 
 ---
 
@@ -222,7 +223,8 @@ Choisissez celle que vous voulez comprendre.
 
 **Implémentation (octobre 2026)**
 - Les écrans 1 à 4 précèdent l'écran de nommage « Bienvenue à bord » (pseudo et nom du vaisseau), qui crée la partie. L'horloge du ciel de départ (SN-001, LPT-001) part de là.
-- L'écran 5 est un court texte posé sur le ciel de l'Observatoire. Les neuf anomalies-destinations (§5) y sont distinguées des autres étoiles ; il disparaît au premier départ.
+- Écrans 1 à 4 : les paragraphes apparaissent un à un ; un clic ou une touche révèle d'abord le reste de l'écran, puis passe au suivant.
+- L'écran 5 est un cartouche relié par un trait à un cercle autour de la destination du catalogue la plus proche du centre de la vue (texte seul en bas du ciel si aucune n'est dans le champ). Les neuf anomalies-destinations (§5) sont distinguées des autres étoiles ; le cartouche disparaît au premier départ.
 - Première partie du compte : séquence complète, non sautée (`LACUNA_UI.md` §9). Parties suivantes (après une réinitialisation) : un discret « Passer » sur les écrans 1 à 4.
 
 ---
