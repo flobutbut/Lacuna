@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
--- LACUNA — Départ le 1er janvier 2041 (LACUNA_GDD.md §2, LACUNA_LORE.md §2)
+-- LACUNA — Départ le 1er janvier 2041 (LACUNA_GDD.md §2, LACUNA_LORE.md §2) — migration 00073
 --
 --   Le calendrier du vaisseau partait de 2187, ce qui contredisait le lore : volontaires sélectionnés
 --   entre 2036 et 2040, premier vaisseau de classe ARCA opérationnel en 2041.
