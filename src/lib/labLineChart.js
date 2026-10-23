@@ -75,7 +75,7 @@ export function renderLineChart(svgEl, opts = {}) {
 
   const svg = d3.select(svgEl)
   svg.selectAll('*').remove()
-  svg.attr('width', width).attr('height', height).style('background', 'var(--color-bg)')
+  svg.attr('width', width).attr('height', height)
 
   svg
     .append('path')

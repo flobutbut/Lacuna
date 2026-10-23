@@ -42,7 +42,6 @@ function render() {
     .select(mapRef.value)
     .attr('width', width)
     .attr('height', mapSize + margin.top + margin.bottom)
-    .style('background', 'var(--color-bg)')
 
   const gMap = mapSvg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
 
@@ -123,7 +122,6 @@ function render() {
     .select(profileRef.value)
     .attr('width', width)
     .attr('height', profileHeight + margin.bottom)
-    .style('background', 'var(--color-bg)')
 
   const profileInnerWidth = width - margin.left - margin.right
   const xScale = d3.scaleLinear().domain([0, 1]).range([0, profileInnerWidth])

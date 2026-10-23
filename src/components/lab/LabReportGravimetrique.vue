@@ -44,7 +44,6 @@ function render() {
     .select(schemaRef.value)
     .attr('width', width)
     .attr('height', schemaSize + schemaMargin * 2)
-    .style('background', 'var(--color-bg)')
 
   const gSchema = schemaSvg.append('g').attr('transform', `translate(${schemaMargin},${schemaMargin})`)
 

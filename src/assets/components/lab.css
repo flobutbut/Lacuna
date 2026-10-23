@@ -521,14 +521,12 @@
   display: block;
   width: 100%;
   max-width: 100%;
-  background: var(--color-bg);
 }
 
 .lab-spectrogram__error {
   padding: var(--space-4);
   font-size: var(--text-sm);
   color: var(--color-amber);
-  background: var(--color-bg);
   border: var(--border-width) solid var(--border-default);
 }
 
@@ -617,14 +615,12 @@
   display: block;
   width: 100%;
   max-width: 100%;
-  background: var(--color-bg);
 }
 
 .lab-spectre-energetique__error {
   padding: var(--space-4);
   font-size: var(--text-sm);
   color: var(--color-amber);
-  background: var(--color-bg);
   border: var(--border-width) solid var(--border-default);
 }
 

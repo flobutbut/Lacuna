@@ -46,7 +46,6 @@ function render() {
     .select(shapeRef.value)
     .attr('width', width)
     .attr('height', shapeSize + margin.top + margin.bottom)
-    .style('background', 'var(--color-bg)')
 
   const gShape = shapeSvg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
 
@@ -72,7 +71,6 @@ function render() {
     .select(thermalRef.value)
     .attr('width', width)
     .attr('height', thermalSize + margin.top + margin.bottom)
-    .style('background', 'var(--color-bg)')
 
   const gThermal = thermalSvg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
 

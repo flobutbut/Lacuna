@@ -43,7 +43,6 @@ function render() {
     .select(heatmapRef.value)
     .attr('width', width)
     .attr('height', heatmapSize + margin.top + margin.bottom)
-    .style('background', 'var(--color-bg)')
 
   const gHeat = heatmapSvg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
 
@@ -114,7 +113,6 @@ function render() {
     .select(cutRef.value)
     .attr('width', width)
     .attr('height', cutHeight + margin.bottom)
-    .style('background', 'var(--color-bg)')
 
   const cutInnerWidth = width - margin.left - margin.right
   const xScaleCut = d3.scaleLinear().domain([0, 1]).range([0, cutInnerWidth])

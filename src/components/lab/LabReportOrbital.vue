@@ -64,7 +64,6 @@ function renderDiagram() {
   svg
     .attr('width', width)
     .attr('height', size + margin.top + margin.bottom)
-    .style('background', 'var(--color-bg)')
 
   const g = svg.append('g').attr('transform', `translate(${cx},${cy})`)
 

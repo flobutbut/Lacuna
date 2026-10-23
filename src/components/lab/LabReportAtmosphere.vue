@@ -65,7 +65,7 @@ function renderChart(data) {
 
   const svg = d3.select(svgRef.value)
   svg.selectAll('*').remove()
-  svg.attr('width', width).attr('height', innerHeight).style('background', 'var(--color-bg)')
+  svg.attr('width', width).attr('height', innerHeight)
 
   const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
 
