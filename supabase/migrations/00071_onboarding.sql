@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
--- LACUNA — Onboarding (LACUNA_LORE.md §3–5, LACUNA_UI.md §9)
+-- LACUNA — Onboarding (LACUNA_LORE.md §3–5, LACUNA_UI.md §9) — migration 00071
 --
 --   • Traces embarquées : WOW-1977-A, OUMUAMUA-2017 et BENNU-NB-2023 sont inscrites dans ship_traces
 --     à la création du vaisseau (et pour les parties en cours).

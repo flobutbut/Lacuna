@@ -237,7 +237,7 @@ Si la première destination est à 1h joueur, les premières minutes après le d
 
 Le joueur n'a pas besoin d'arriver quelque part pour commencer à travailler. Trois traces sont déjà dans sa collection au moment du départ — les anomalies qui ont motivé le voyage et figuraient dans les écrans d'onboarding.
 
-*Implémentation (migration `00070`) : WOW-1977-A, OUMUAMUA-2017 et BENNU-NB-2023 sont inscrites dans `ship_traces` à la création du vaisseau. Le message « 3 traces sont embarquées à bord… » s'affiche au premier départ (toast) et s'écrit au journal (entrée `AUTO`, famille TRACES) — le fil de notifications n'existe pas encore.*
+*Implémentation (migration `00071`) : WOW-1977-A, OUMUAMUA-2017 et BENNU-NB-2023 sont inscrites dans `ship_traces` à la création du vaisseau. Le message « 3 traces sont embarquées à bord… » s'affiche au premier départ (toast) et s'écrit au journal (entrée `AUTO`, famille TRACES) — le fil de notifications n'existe pas encore.*
 
 Elles sont là, non interprétées, en attente.
 
