@@ -3,8 +3,43 @@
    Liste des comptes | fiche du compte ; interprétations ; journal
    ══════════════════════════════════════════════════════ */
 
+/* Page pleine hauteur : seules la liste et la fiche défilent, pas la page.
+   Onglet Joueurs : la fiche du compte est une colonne qui occupe toute la hauteur, titre compris. */
+.admin-page {
+    height: 100%;
+    overflow: hidden;
+}
+
+.admin-page--split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--panel-width-lg);
+    grid-template-rows: minmax(0, 1fr);
+}
+
+.admin-placeholder {
+    padding: var(--page-gutter);
+    border-left: var(--border-width) solid var(--border-default);
+}
+
 .admin-layout {
-    max-width: 1280px;
+    max-width: none;
+    height: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-layout > .admin-panel {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.admin-layout > .admin-panel--players {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .admin-layout .journal-filters {
@@ -17,18 +52,17 @@
 
 /* ── Joueurs : liste à gauche, fiche à droite ── */
 .admin-players {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--panel-width-lg);
-    column-gap: var(--page-gutter);
-    align-items: start;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .admin-players__list {
+    flex: 1;
     min-width: 0;
-}
-
-.admin-players__placeholder {
-    padding-top: var(--space-12);
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .admin-toolbar {
@@ -152,14 +186,12 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-5);
-    padding: var(--space-8);
-    border: var(--border-width) solid var(--border-default);
-    background: var(--color-panel);
-    position: sticky;
-    top: var(--page-gutter);
-    /* Plus haute que l'écran : la fiche défile seule, sans quoi la suppression serait hors d'atteinte */
-    max-height: calc(100vh - var(--header-height) - var(--instruments-height) - 2 * var(--page-gutter));
+    min-height: 0;
+    height: 100%;
     overflow-y: auto;
+    box-sizing: border-box;
+    padding: var(--page-gutter);
+    border-left: var(--border-width) solid var(--border-default);
 }
 
 .admin-detail__head {
@@ -314,14 +346,31 @@
 
 /* Écran étroit : la fiche passe sous la liste */
 @media (max-width: 1100px) {
-    .admin-players {
-        grid-template-columns: 1fr;
-        row-gap: var(--page-gutter);
+    .admin-page,
+    .admin-layout,
+    .admin-layout > .admin-panel--players {
+        height: auto;
+        overflow: visible;
     }
 
-    .admin-detail {
-        position: static;
-        max-height: none;
-        overflow-y: visible;
+    .admin-page--split {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+    }
+
+    .admin-players,
+    .admin-layout > .admin-panel--players {
+        display: block;
+    }
+
+    .admin-players__list {
+        overflow: visible;
+    }
+
+    .admin-detail,
+    .admin-placeholder {
+        height: auto;
+        border-left: none;
+        border-top: var(--border-width) solid var(--border-default);
     }
 }

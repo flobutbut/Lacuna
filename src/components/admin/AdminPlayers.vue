@@ -1,22 +1,18 @@
 <script setup>
 /**
- * AdminPlayers — liste des comptes (recherche, filtre par statut) et fiche du compte sélectionné.
+ * AdminPlayers — liste des comptes (recherche, filtre par statut). La sélection ouvre la fiche, colonne de PageAdmin.
  */
 import { ref, computed } from 'vue'
 import { useAdminStore } from '@/stores/admin'
 import { PLAYER_FILTERS, filterPlayers, playerStatus, playerStatusLabel, formatAdminDate } from '@/lib/adminPlayers'
 import AppTextField from '@/components/AppTextField.vue'
-import AdminPlayerDetail from '@/components/admin/AdminPlayerDetail.vue'
 
 const adminStore = useAdminStore()
 
 const query = ref('')
 const filter = ref('all')
-const selectedId = ref(null)
 
 const visible = computed(() => filterPlayers(adminStore.players, { query: query.value, filter: filter.value }))
-/** Relu dans la liste à chaque rechargement : la fiche reflète toujours l'état du serveur */
-const selected = computed(() => adminStore.players.find((p) => p.user_id === selectedId.value) ?? null)
 const total = computed(() => adminStore.players.length)
 </script>
 
@@ -53,13 +49,18 @@ const total = computed(() => adminStore.players.length)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="p in visible" :key="p.user_id" :class="{ 'is-selected': p.user_id === selectedId }" @click="selectedId = p.user_id">
+          <tr
+            v-for="p in visible"
+            :key="p.user_id"
+            :class="{ 'is-selected': p.user_id === adminStore.selectedPlayerId }"
+            @click="adminStore.selectedPlayerId = p.user_id"
+          >
             <td>
               <button
                 type="button"
                 class="admin-table__select"
-                :aria-pressed="p.user_id === selectedId"
-                @click.stop="selectedId = p.user_id"
+                :aria-pressed="p.user_id === adminStore.selectedPlayerId"
+                @click.stop="adminStore.selectedPlayerId = p.user_id"
               >
                 <span class="admin-table__name">{{ p.pseudo || 'Sans pseudo' }}</span>
                 <span class="admin-table__sub">{{ p.email }}</span>
@@ -74,8 +75,5 @@ const total = computed(() => adminStore.players.length)
         </tbody>
       </table>
     </div>
-
-    <AdminPlayerDetail v-if="selected" :player="selected" @deleted="selectedId = null" />
-    <p v-else class="admin-empty admin-players__placeholder">Sélectionnez un compte pour le modérer.</p>
   </div>
 </template>
