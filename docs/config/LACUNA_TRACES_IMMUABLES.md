@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Traces immuables
-*Version 0.5 — Octobre 2026*
+*Version 0.6 — Octobre 2026*
 
 > Ce document contient les **fiches des traces immuables** qui n'appartiennent pas à un scénario — voisinage solaire, hors voisinage — et le **Journal de Yael** (origine `PRÉCURSEUR`). Les traces appartenant à un scénario ont leurs fiches de nœuds dans `LACUNA_SCENARIOS.md`. La mécanique (définition, chaîne de production, types d'outputs, qualification) vit dans `LACUNA_TRACES.md`. Les faits astronomiques de référence vivent dans `LACUNA_ANOMALIES_REELLES.md`.
 >
@@ -30,6 +30,7 @@
 | 0.3 | Octobre 2026 | §5 ajouté : deux propositions de phénomènes visibles dès Sol pour donner de la matière au départ — une supernova lointaine (SN-001, ancrage SN 1987A) et un transitoire radio à longue période (LPT-001, ancrage GPM J1839−10). Non intégrées au jeu ; faits vérifiés le 23 octobre 2026 |
 | 0.4 | Octobre 2026 | SN-001 : décisions prises (Bételgeuse, événement déclenché au départ de chaque partie), déroulé détaillé (neutrinos de pré-supernova, bouffée, sortie du choc, maximum), état du ciel après l'événement, question de l'horloge face à la compression du temps ; données neutrinos vérifiées |
 | 0.5 | Octobre 2026 | SN-001 implémentée : déroulé en temps réel joueur (durées ci-dessous), T0 par partie, bouffée captée une fois, état du ciel calculé à partir de T0 (migration `00063`) |
+| 0.6 | Octobre 2026 | SN-001 : T0 ramené à création + 3 minutes |
 
 ---
 
@@ -466,7 +467,7 @@ Le joueur fait lui-même le lien entre la bouffée et l'étoile : rien ne le lui
 
 **Déroulé implémenté — temps réel joueur**
 
-T0 = création de la partie + 10 minutes (`ships.supernova_t0`). L'ordre réel des phases est conservé, les durées sont raccourcies pour tenir dans une première session :
+T0 = création de la partie + 3 minutes (`ships.supernova_t0`, migration `00064` ; 10 minutes à l'origine, jugé trop long pour un joueur qui arrive). L'ordre réel des phases est conservé, les durées sont raccourcies pour tenir dans une première session :
 
 | Phase | Début | Durée réelle | Réalité astrophysique | Rendu |
 |---|---|---|---|---|
@@ -560,4 +561,4 @@ SIGNATURE — une période de ~1 318 s à reconnaître si elle réapparaît aill
 
 ---
 
-*LACUNA — Traces immuables v0.5 — Octobre 2026 — Confidentiel*
+*LACUNA — Traces immuables v0.6 — Octobre 2026 — Confidentiel*

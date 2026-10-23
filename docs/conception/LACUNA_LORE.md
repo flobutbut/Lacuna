@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Lore
-*Version 0.6 — Octobre 2026*
+*Version 0.7 — Octobre 2026*
 
 ---
 
@@ -15,6 +15,7 @@
 | 0.4 | Octobre 2026 | Mise en cohérence — population de départ 15 000 (remplace 10 247, alignée sur les principes du projet et `LACUNA_ARCS.md` §1.10). Correction factuelle des nucléobases : les échantillons de Bennu ne sont revenus qu'en septembre 2023 ; les cinq nucléobases y ont été identifiées en janvier 2025 (Glavin et al., *Nature Astronomy*), après l'uracile sur Ryugu (2023) ; elles sont compatibles avec une origine abiotique — la mention « incompatible avec les modèles abiotiques » était fausse. « Les 5 nucléobases de l'ARN » corrigé (l'ARN en compte quatre ; cinq pour l'ADN et l'ARN réunis). Flux de démarrage : la détection latérale n'est mentionnée que pour une première destination lointaine (`LACUNA_TRANSIT.md` §6) |
 | 0.5 | Octobre 2026 | §4 : renvoi vers deux propositions de phénomènes visibles dès Sol (supernova, signal à longue période), `LACUNA_TRACES_IMMUABLES.md` §5 |
 | 0.6 | Octobre 2026 | §4 : la supernova de Bételgeuse est implémentée (T0 = création + 10 min) |
+| 0.7 | Octobre 2026 | §4 : la bouffée de la supernova arrive trois minutes après la création de la partie |
 
 ---
 
@@ -257,7 +258,7 @@ Arrivée dans le premier système
 Scan automatique — première trace in situ
 ```
 
-*Dix minutes après la création de la partie, une bouffée de neutrinos arrive, puis Bételgeuse explose dans le ciel (implémenté, `LACUNA_TRACES_IMMUABLES.md` §5, SN-001). Un signal radio à longue période (LPT-001) reste à l'état de proposition.*
+*Trois minutes après la création de la partie, une bouffée de neutrinos arrive, puis Bételgeuse explose dans le ciel (implémenté, `LACUNA_TRACES_IMMUABLES.md` §5, SN-001). Un signal radio à longue période (LPT-001) reste à l'état de proposition.*
 
 ### Ce que le joueur apprend sans qu'on le lui dise
 

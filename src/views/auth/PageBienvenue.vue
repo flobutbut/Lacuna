@@ -7,6 +7,10 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useShipStore } from '@/stores/ship'
+import { useSignauxStore } from '@/stores/signaux'
+import { useObservationsStore } from '@/stores/observations'
+import { useMapNodesStore } from '@/stores/mapNodes'
 import {
   PSEUDO_MAX,
   PSEUDO_MIN,
@@ -41,6 +45,13 @@ async function submit() {
   submitting.value = true
   try {
     await authStore.startNewGame(pseudo.value, shipName.value)
+    // Les stores du vaisseau ont pu être chargés avant la création de la partie (vides) : on les recharge
+    await Promise.all([
+      useShipStore().fetch(),
+      useSignauxStore().fetch(),
+      useObservationsStore().fetch(),
+      useMapNodesStore().fetch(),
+    ])
     notificationsStore.showNotification(`Bienvenue à bord du ${shipName.value.trim()}.`, 4000, 'success')
     router.replace({ name: 'observatoire' })
   } catch (err) {

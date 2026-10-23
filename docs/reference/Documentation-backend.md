@@ -545,6 +545,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00061 | profiles.fast_transit ; start_transit n'accélère que pour un admin qui l'a activé ; RPC set_fast_transit et reset_my_game (admins) |
 | 00062 | signal_support : valeur NEUTRINO (détecteur de neutrinos) |
 | 00063 | ships.supernova_t0 (création + 10 min) et supernova_captured_at ; événement SN-001 (signal_events) ; RPC capture_supernova_neutrinos |
+| 00064 | supernova_t0 : création + 3 min (au lieu de 10) ; parties en attente alignées |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
