@@ -260,6 +260,155 @@
   margin: 0 var(--space-2);
 }
 
+/* ── Verdict du joueur (LACUNA_VERDICT.md §5) ── */
+.lab-verdict {
+  padding: var(--space-8) var(--space-9);
+  border: var(--border-width) solid var(--border-default);
+  background: var(--color-surface);
+  margin-bottom: var(--space-9);
+}
+
+.lab-verdict--highlight {
+  border-color: var(--color-amber-dim);
+}
+
+.lab-verdict__title {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-8);
+}
+
+.lab-verdict__family {
+  color: var(--color-amber);
+  text-transform: none;
+  letter-spacing: var(--tracking-none);
+}
+
+.lab-verdict__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.lab-verdict__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.lab-verdict__field legend {
+  padding: 0;
+  margin-bottom: var(--space-4);
+}
+
+.lab-verdict__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.lab-verdict__optional,
+.lab-verdict__count {
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+}
+
+.lab-verdict__count {
+  align-self: flex-end;
+}
+
+.lab-verdict__note {
+  width: 100%;
+  min-height: 56px;
+  resize: vertical;
+  background: var(--color-shade-30);
+  border: var(--border-width) solid var(--border-default);
+  color: var(--color-white);
+  padding: var(--space-5);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+}
+
+.lab-verdict__note:focus-visible {
+  outline: 1px solid var(--color-cyan-dim);
+  outline-offset: 1px;
+}
+
+.lab-verdict__error {
+  color: var(--color-red);
+}
+
+.lab-verdict__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-4);
+}
+
+.lab-verdict__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-4) var(--space-6);
+}
+
+.lab-verdict__reading {
+  color: var(--color-white);
+  font-size: var(--text-lg);
+}
+
+.lab-verdict__meta {
+  color: var(--color-muted);
+}
+
+.lab-verdict__revise {
+  margin-left: auto;
+}
+
+.lab-verdict__quote {
+  margin: var(--space-5) 0 0;
+  color: var(--color-white);
+}
+
+.lab-verdict__history {
+  margin-top: var(--space-8);
+  padding-top: var(--space-8);
+  border-top: var(--border-width) solid var(--border-default);
+}
+
+.lab-verdict__history-title {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-5);
+}
+
+.lab-verdict__history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.lab-verdict__history-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+}
+
+.lab-verdict__history-note {
+  flex-basis: 100%;
+  color: var(--color-muted);
+}
+
 /* Spectrogramme — sortie Analyseur spectral */
 .lab-spectrogram {
   margin-top: var(--space-4);

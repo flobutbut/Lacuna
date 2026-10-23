@@ -338,6 +338,23 @@ Rapports d'analyse persistés (instruments Laboratoire).
 | results | TEXT | Résultats bruts ou JSON |
 | created_at | TIMESTAMPTZ | |
 
+#### `lab_verdicts`
+Verdicts du joueur sur ses observations (`LACUNA_VERDICT.md` §5, migration 00075). Jamais modifiés : une révision ajoute une ligne ; la plus récente par observation est le verdict courant.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | UUID PK | |
+| observation_id | UUID FK | → observations (ON DELETE CASCADE) |
+| ship_id | UUID FK | → ships (ON DELETE CASCADE) |
+| reading | verdict_reading | Lecture du joueur |
+| confidence | confidence_level | Confiance |
+| note | TEXT | Facultative, 1 à 280 caractères |
+| family | TEXT | Famille de l'écart principal ; NULL si aucun écart mesuré |
+| generation | INT | Génération du vaisseau au moment du verdict (serveur) |
+| ship_date | TEXT | Date du calendrier du vaisseau (serveur, `ship_galactic_date`) |
+| logbook_entry_id | UUID FK | → logbook_entries (SET NULL) ; entrée écrite avec le verdict (lot 3), NULL pour l'instant |
+| created_at | TIMESTAMPTZ | |
+
 #### `profiles`
 Profil privé du joueur (00046). Jamais exposé aux autres joueurs.
 
@@ -468,6 +485,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | trace_origin | IMMUABLE, GENERÉE, JOUEUR |
 | trace_difficulty | 1, 2, 3, 4 |
 | confidence_level | OBSERVATION, HYPOTHÈSE, CONVICTION, CERTITUDE |
+| verdict_reading | NATUREL_CONNU, NATUREL_INEXPLIQUE, ARTIFICIEL_POSSIBLE, INDETERMINE (00075) |
 | log_entry_type | MANUEL, AUTO, GENERATIONNEL |
 | ship_travel_state | IDLE, IN_TRANSIT, ARRIVED, DAMAGED |
 | observation_type | SIGNAL, PLANETE, ATMOSPHERE, ETOILE, MINEUR, OBJET |
@@ -557,6 +575,7 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 | 00072 | Modération : RPC `admin_reset_player` (admins) — efface vaisseau, données et profil d'un joueur, compte et mot de passe conservés : il refait l'onboarding ; action `reset_game` au journal admin_actions — appliquée le 23/10/2026 après sauvegarde (`backups/avant_00072_20261023_224236.dump`) |
 | 00073 | Calendrier du vaisseau : départ le 1er janvier 2041 (et non 2187) ; built_year = 2041 ; dates du journal et des signaux recalculées |
 | 00074 | Laboratoire : colonne `lab_reports.deviations` (écarts attendu / mesuré, `LACUNA_VERDICT.md` §4) — appliquée le 23/10/2026 (table vide en production, aucun rapport antérieur) |
+| 00075 | Laboratoire : table `lab_verdicts`, enum `verdict_reading`, RPC `record_verdict` (`LACUNA_VERDICT.md` §5) — appliquée le 23/10/2026 ; RPC testée en rôle joueur dans une transaction annulée (8 cas : sans rapport, famille d'une ombre, note trop longue, verdict valide, lecture RLS, écriture directe refusée, observation inconnue, sans connexion) |
 
 **Application** : `supabase db reset` (local), `supabase db push` (projet lié), ou SQL Editor / MCP Supabase.
 
@@ -578,6 +597,10 @@ Le joueur reçoit un signal quand il est en portée et que ses capteurs sont act
 ### RPC `delete_account()` (migration 00051)
 
 `SECURITY DEFINER`, réservée à `authenticated`. Supprime les interprétations du joueur (sinon conservées sans auteur, `ON DELETE SET NULL`), efface son vaisseau de `traces.discovered_by`, puis supprime `auth.users` : profil, vaisseau et toutes ses données suivent en cascade. Appelée depuis Paramètres → Compte.
+
+### RPC `record_verdict(p_observation_id, p_reading, p_confidence, p_note, p_family)` (migration 00075)
+
+`SECURITY DEFINER`, réservée à `authenticated`. Seule voie d'écriture de `lab_verdicts`. Vérifie que l'observation appartient au vaisseau du joueur et a au moins un rapport, que la note fait au plus 280 caractères, et que `p_family` (facultative) est la famille d'un écart **mesuré** (pas une ombre) dans `lab_reports.deviations` de l'observation. Fixe `generation` et `ship_date`. Renvoie la ligne insérée. N'écrit ni au journal ni dans Drake (lots 3 et 5).
 
 ### RPC `unlock_trace_levels()` et `get_trace_levels(p_trace_id)` (migration 00060)
 
@@ -675,6 +698,7 @@ En cas de conflit entre sources, l'ID retenu suit cet ordre :
 | ship_systems, populations | son vaisseau | aucune |
 | signals, observations | son vaisseau | son vaisseau |
 | lab_reports | via ses observations | via ses observations |
+| lab_verdicts | son vaisseau | aucune (→ `record_verdict`) |
 | ship_travels | son vaisseau | aucune (→ `complete_transit`) |
 | map_nodes, map_edges, ship_traces, logbook_entries | son vaisseau | son vaisseau |
 | game_settings | aucune | aucune (dashboard) |
@@ -712,6 +736,8 @@ Sans compte (`anon`) : aucune donnée de jeu, données du monde en lecture. `TRU
 | nebulas | nebulas | SELECT (formes étendues, IR-only). SkyCanvas projection ellipse/polygone. |
 | systemObjects | system_objects | SELECT par system_id (corps Observatoire) |
 | observations | observations | SELECT, INSERT, UPDATE (state), DELETE. Filtre ship_id (vaisseau du joueur) |
+| labReports | lab_reports | SELECT par observation, INSERT (écarts dans `deviations`) |
+| verdicts | lab_verdicts, RPC record_verdict | SELECT par observation (plus récent d'abord) ; écriture par la RPC. Hors ligne : en mémoire |
 | traces | traces, interpretations | SELECT traces immuables, interpretations (sans ship_id). INSERT interpretation (ship_id, génération). DELETE de ses interprétations. Traces joueur en mémoire (playerTraces) — à brancher sur ship_traces |
 | signaux | signals, RPC compute_pulsar_signals | SELECT / INSERT / DELETE filtrés par ship_id ; calcul des pulsars par bande |
 | ship | ships, ship_systems, populations, ship_travels | SELECT du vaisseau du joueur (attend la session). UPDATE ships (transit, renameShip). INSERT ship_travels à chaque arrivée |
@@ -880,6 +906,8 @@ cd stellar_import && python3 diagnose_names.py          # Diagnostique noms
 | 2026-10-23 | 00073 appliquée : départ en 2041 (vaisseaux, journal et signaux en production alignés) |
 | 2026-10-23 | 00074 écrite : écarts des rapports du Laboratoire (`lab_reports.deviations`) |
 | 2026-10-23 | 00074 appliquée : colonne `lab_reports.deviations` en production |
+| 2026-10-23 | 00075 écrite : verdicts du Laboratoire (`lab_verdicts`, RPC `record_verdict`) |
+| 2026-10-23 | 00075 appliquée : `lab_verdicts`, `verdict_reading`, RPC `record_verdict` en production ; tests sans donnée laissée |
 | 2026-10-22 | Transit côté serveur : game_settings, RPC start_transit / complete_transit, droits par colonne sur ships, ship_travels en lecture seule (00050) |
 | 2026-10-21 | Comptes joueurs : Auth, table profiles, RPC start_new_game et compute_pulsar_signals(vaisseau, bande), RLS par joueur (§7), seed sans prototype, migrations 00034–00048 |
 | 2026-03-16 | Audit documentation : scripts resolve_conflicts, verify_hd_*, hyg_planets_import, query_hd_system_objects, source_existing_data ; migrations 00032, 00033 ; colonne disk_mass_earth (system_objects) |

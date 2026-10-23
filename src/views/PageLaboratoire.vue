@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useObservationsStore } from '@/stores/observations'
 import { useLabReportsStore } from '@/stores/labReports'
+import { useVerdictsStore } from '@/stores/verdicts'
 import { useTracesStore } from '@/stores/traces'
 import { useStellarSystemsStore } from '@/stores/stellarSystems'
 import { useShipStore } from '@/stores/ship'
@@ -17,6 +18,7 @@ import { ensureStoresLoaded } from '@/composables/useStoreReady'
 import { seededRandom } from '@/lib/random'
 import { seedFromObsId } from '@/lib/spectrogramData'
 import { DEVIATION_FAMILIES, getReportDeviations, countDeviationSightings } from '@/lib/deviations'
+import { getMainDeviationFamily, getReadingLabel } from '@/lib/verdicts'
 import LabReportSpectrogram from '@/components/lab/LabReportSpectrogram.vue'
 import LabReportStructureTemporelle from '@/components/lab/LabReportStructureTemporelle.vue'
 import LabReportPolarisation from '@/components/lab/LabReportPolarisation.vue'
@@ -31,12 +33,14 @@ import LabReportMorpho from '@/components/lab/LabReportMorpho.vue'
 import LabReportMagneto from '@/components/lab/LabReportMagneto.vue'
 import LabReportNeutrinos from '@/components/lab/LabReportNeutrinos.vue'
 import InstrumentButton from '@/components/InstrumentButton.vue'
+import LabVerdictPanel from '@/components/lab/LabVerdictPanel.vue'
 import SignalTypeIcon from '@/components/icons/SignalTypeIcon.vue'
 import ObservationCard from '@/components/ObservationCard.vue'
 
 const route = useRoute()
 const obsStore = useObservationsStore()
 const labReportsStore = useLabReportsStore()
+const verdictsStore = useVerdictsStore()
 const tracesStore = useTracesStore()
 const stellarStore = useStellarSystemsStore()
 const shipStore = useShipStore()
@@ -97,6 +101,7 @@ function selectObservation(obs) {
 function removeObservation(obs) {
   obsStore.removeObservation(obs.id)
   labReportsStore.clearForObs(obs.id)
+  verdictsStore.clearForObs(obs.id)
   if (selectedObs.value?.id === obs.id) selectedObs.value = null
   const next = { ...reports.value }
   delete next[obs.id]
@@ -122,6 +127,8 @@ function canDeepen(obs) {
 function getObservationStateText(obs) {
   if (!obs) return ''
   if (hasRunningForObs(obs)) return 'Analyse en cours…'
+  const verdict = verdictsStore.getCurrent(obs.id)
+  if (verdict) return `Verdict : ${getReadingLabel(verdict.reading).toLowerCase()}`
   const count = reports.value[obs.id]?.length ?? 0
   if (count > 0) return `${count} analyse${count > 1 ? 's' : ''} réalisée${count > 1 ? 's' : ''}`
   return 'En attente'
@@ -315,6 +322,11 @@ const deviationSightings = computed(() =>
   countDeviationSightings(selectedReports.value.map(getDeviationsForReport))
 )
 
+/** Famille de l'écart principal de l'observation sélectionnée (verdict) */
+const mainDeviationFamily = computed(() =>
+  getMainDeviationFamily(selectedReports.value.map(getDeviationsForReport))
+)
+
 const runningForSelected = computed(() => {
   const obs = selectedObs.value
   if (!obs) return {}
@@ -350,7 +362,7 @@ async function addSelectedSystemToCarte() {
 onMounted(async () => {
   await ensureStoresLoaded(obsStore, stellarStore, mapStore)
   const obsIds = observations.value.map((o) => o.id)
-  await labReportsStore.fetchForObservations(obsIds)
+  await Promise.all([labReportsStore.fetchForObservations(obsIds), verdictsStore.fetchForObservations(obsIds)])
   reports.value = { ...labReportsStore.cache }
   notificationsStore.clearLabHasNew()
   const selectId = route.query.select
@@ -657,6 +669,11 @@ onUnmounted(() => {
             <div v-if="selectedReports.length === 0 && !Object.keys(runningForSelected).length" class="lab-report" style="opacity: 0.7">
               Lancez un instrument ci-dessus.
             </div>
+            <LabVerdictPanel
+              v-if="selectedReports.length > 0"
+              :observation-id="selectedObs.id"
+              :family="mainDeviationFamily"
+            />
           </div>
         </template>
       </div>

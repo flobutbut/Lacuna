@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Écarts et verdict
-*Version 0.2 — Octobre 2026*
+*Version 0.3 — Octobre 2026*
 
 > Spécification de la boucle d'analyse : ce que le Laboratoire fait apparaître (les écarts entre attendu et mesuré), la décision que le joueur prend (le verdict), et ce que cette décision déclenche (voyage, journal, traces, équation de Drake). Ce document comble l'étape « ANALYSER → DÉCIDER » du flux principal (`LACUNA_GDD.md` §4), aujourd'hui absente de l'interface.
 >
@@ -33,6 +33,7 @@
 |---------|------|---------------|
 | 0.1 | Octobre 2026 | Document initial — écarts attendu/mesuré, verdict, liens voyage/journal/traces, Drake de bord et Drake collectif |
 | 0.2 | Octobre 2026 | Lot 1 implémenté (§10) ; §4.2 : instruments par famille alignés sur le code ; §9.1 : `deviations` nullable (rapports antérieurs recalculés), corroboration calculée à l'affichage |
+| 0.3 | Octobre 2026 | Lot 2 implémenté (§10) ; §5.6 : la case « Consigner au journal » arrive avec le lot 3 ; §9.4 : `record_verdict` sans écriture au journal ni Drake pour l'instant, famille vérifiée contre les écarts mesurés |
 
 ---
 
@@ -403,6 +404,8 @@ Les lots 1 et 2 forment le minimum qui rend la boucle compréhensible.
 ### État (23 octobre 2026)
 
 **Lot 1 — implémenté.** `src/lib/deviations.js` (familles, gabarits, graine par objet, écart parasite, ombres, corroboration), tests `src/lib/deviations.test.js`. Section Écarts à la fin de chaque rapport, badge « Signal atypique » retiré, modèle de référence affiché (« modèle de référence : pulsar »). Écarts scénarisés : lus dans `observations.attributes.deviations` (`{ id, family, label, expected, measured, instruments?, min_niveau? }`) ; aucune fiche ne les déclare encore. Migration 00074 appliquée en production le 23 octobre 2026.
+
+**Lot 2 — implémenté.** Panneau `LabVerdictPanel` sous les rapports dès le premier rapport, encadré d'ambre quand un écart est mesuré et qu'il n'y a pas encore de verdict ; lecture, confiance (« hypothèse » par défaut), note de 280 caractères au plus. Après le verdict : une ligne (lecture, confiance, génération, date du vaisseau) et « Réviser » (formulaire prérempli) ; les verdicts précédents s'affichent dessous. La carte de la file affiche « Verdict : naturel inexpliqué ». Famille de l'écart principal : celle que mesurent le plus de rapports (`getMainDeviationFamily`, `src/lib/verdicts.js`). Store `src/stores/verdicts.js` (en mémoire hors ligne). Migration 00075 (`lab_verdicts`, `verdict_reading`, RPC `record_verdict`) appliquée en production le 23 octobre 2026. Pas encore : la case « Consigner au journal » (lot 3).
 
 ---
 
