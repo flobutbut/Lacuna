@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Game Design Document
-*Version 0.8 — Octobre 2026*
+*Version 0.9 — Octobre 2026*
 
 ---
 
@@ -31,6 +31,7 @@
 | 0.6 | Octobre 2026 | §9 : écarts population de départ (15 000) et durée de génération (25 ans) corrigés dans le code ; écarts restants : répartition des phases, Équation de Drake (valeurs de référence en base, migration `00053` à appliquer) |
 | 0.7 | Octobre 2026 | §9 : émetteurs de système (signaux à fenêtres du Fil des 75, Radar et Laboratoire) ; migrations `00054`–`00058` écrites, non appliquées |
 | 0.8 | Octobre 2026 | §9 : traces de scénario en base (Fil des 75, gradient de lecture, découverte côté serveur) ; Yael : structure sans entrée ; migrations `00059`, `00060` |
+| 0.9 | Octobre 2026 | §9 : paramètres d'administration — accélération des voyages réservée aux admins, réinitialisation de la partie (migration `00061`) |
 
 ---
 
@@ -290,9 +291,9 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 
 | Domaine | Réalité projet |
 |---------|----------------|
-| **Comptes joueurs** | Email + mot de passe, email confirmé obligatoire. Écran « Bienvenue à bord » : pseudo (nom de commandant) et nom du vaisseau, privés et non uniques ; la partie démarre à Sol. Suppression de compte. Site public (landing, pages légales, crédits). |
+| **Comptes joueurs** | Email + mot de passe, email confirmé obligatoire. Écran « Bienvenue à bord » : pseudo (nom de commandant) et nom du vaisseau, privés et non uniques ; la partie démarre à Sol. Suppression de compte. Paramètres d'administration (admins) : accélération des voyages, réinitialisation de la partie. Site public (landing, pages légales, crédits). |
 | **Vaisseau** | Tables `ships` + `ship_systems`. `current_system_id` (position = système courant), `travel_state`, `voyage`, `generation`, `travel_destination`, `travel_departure_at`, `travel_arrival_at`. Systèmes : propulsion, hull, plasma_shield, observatory, reservoir, alimentation, atmosphere, medical. Carburant He³/deutérium en tonnes. Pas de `position {x,y,z}` — dérivée du système courant. |
-| **Transit** | Décidé par le serveur : RPC `start_transit` / `complete_transit` (migration `00050`), durée joueur par la table de référence (`LACUNA_PHYSICS.md` §2), mode test `transit_time_scale`. Quatre phases calculées côté client, `[FIXER CAP]` verrouillé hors `COASTING`, vue de confirmation du départ, dérive stellaire, reprise après rechargement. Historique `ship_travels`. Détail : `LACUNA_TRANSIT.md` §10. |
+| **Transit** | Décidé par le serveur : RPC `start_transit` / `complete_transit` (migration `00050`), durée joueur par la table de référence (`LACUNA_PHYSICS.md` §2), mode test `transit_time_scale` réservé aux admins (interrupteur dans les paramètres, migration `00061`). Quatre phases calculées côté client, `[FIXER CAP]` verrouillé hors `COASTING`, vue de confirmation du départ, dérive stellaire, reprise après rechargement. Historique `ship_travels`. Détail : `LACUNA_TRANSIT.md` §10. |
 | **Carte** | `map_nodes` ; onglets System / Map ; arêtes de la Map dérivées de `ship_travels` (visité = au moins une arête, observé = aucune). |
 | **Observatoire** | Ciel (stellar_systems, coordonnées x/y/z), vue Système (planètes, zone habitable), vue Radar (spectrogramme temps réel, bruit de fond physique, pulsars, sélecteur de bande — `LACUNA_RECEPTION_MODULE.md`). |
 | **Signaux** | Table `signals`, sources `system_objects` (PULSAR, etc.) ou `signal_events`. Durée de vie en temps joueur, [ANALYSER AU LABO]. Émetteurs du système courant (`EMITTER`, migration `00057`) : présents tant que le vaisseau y est, actifs seulement pendant leur fenêtre d'émission (temps réel), tracés sur le Radar. |

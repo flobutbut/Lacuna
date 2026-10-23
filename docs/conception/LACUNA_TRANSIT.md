@@ -1,7 +1,7 @@
 *Dernière modification : 2026-10-23*
 
 # LACUNA — Le Transit
-*Version 0.5 — Octobre 2026*
+*Version 0.6 — Octobre 2026*
 
 > Spécification complète du transit : définition, physique, états d'interface, vue de confirmation du départ, détection, déviation, animation de dérive stellaire, modèle de données. Ce document consolide et centralise tout ce qui concerne le voyage interstellaire de l'ARCA entre deux systèmes.
 >
@@ -36,6 +36,7 @@
 | 0.3 | Mars 2026 | §10 Modèle de données — alignement sur schéma SQL réel (colonnes `ships`), architecture retenue pour les phases (timestamps JSONB + computed client), champs non encore implémentés documentés. §11 questions ouvertes : vue de confirmation résolue |
 | 0.4 | Octobre 2026 | Mise en cohérence avec `LACUNA_PHYSICS.md` v0.2 et le code. §2 : table de référence seule source des durées joueur, Étoile de Tabby à ~1 470 al, zone profonde 18 h – 6 jours. §3 : correction physique (la croisière est atteinte en ~0,39 an, y compris sur les voyages courts) ; la répartition des phases en temps joueur devient une convention explicite. §4 : seuils générationnels rendus continus (le seuil 1–2 / 3–10 laissait un trou), exemples Proxima et Gliese 667C corrigés. §5 : retournement réduit au Journal, comme le texte l'indiquait. §6 : Zeta Puppis de type O4. §10 : implémentation actuelle (transit décidé par le serveur, `ship_travels`, mode test). §11 : questions résolues et nouvelles |
 | 0.5 | Octobre 2026 | Écart de durée de génération résolu dans le code (25 ans) ; `computeTransit` renvoie un nombre entier de générations (§11) |
+| 0.6 | Octobre 2026 | §10 : mode test réservé aux admins (interrupteur dans les paramètres, migration `00061`) ; §4 : seuils de la phrase générationnelle corrigés dans le code (1–3, 4–9) |
 
 ---
 
@@ -408,7 +409,7 @@ Le transit est stocké en colonnes dédiées, pas dans un JSONB `travelState`. `
 
 - **Transit décidé par le serveur** (migration `00050_transit_rpc.sql`) : `start_transit(destination)` calcule la distance et la durée joueur, fixe l'heure d'arrivée ; `complete_transit()` valide l'arrivée quand l'horloge du serveur l'atteint. Le client n'écrit plus lui-même l'état du transit.
 - **Historique des voyages** : table `ship_travels`, une ligne par arrivée (`origin_system_id`, `destination_system_id`, `departure_at`, `arrival_at`, `distance_al`, `voyage_number`), écrite par le serveur. Elle alimente les arêtes de la Carte (`LACUNA_CARTE_MAP.md`).
-- **Mode test** : réglage `transit_time_scale` dans `game_settings` (valeur actuelle : 5 s pour 1 h joueur). Remis à 1 pour le jeu réel.
+- **Mode test** : réglage `transit_time_scale` dans `game_settings` (5 s pour 1 h joueur). Depuis la migration `00061`, il ne s'applique qu'aux comptes admin qui l'ont activé (Paramètres → Administration → « Accélération des voyages ») ; les joueurs voyagent à la durée de la table de référence.
 - **Phases** : calculées côté client par ratio de la progression (§3) ; `[FIXER CAP]` verrouillé hors `COASTING`.
 - **Interface** : cartouche « IN TRANSIT » au-dessus du réticule (clic → recentrage animé), header « origine → cible — XX % », cible du cap en ambre, dérive stellaire.
 - **Reprise après rechargement** : le transit reprend depuis les horodatages en base.
@@ -491,4 +492,4 @@ Tant que `travel_phase_timestamps` n'existe pas, elle est dérivée du ratio de 
 
 ---
 
-*LACUNA — Le Transit v0.5 — Octobre 2026 — Confidentiel*
+*LACUNA — Le Transit v0.6 — Octobre 2026 — Confidentiel*
