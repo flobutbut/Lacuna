@@ -18,7 +18,9 @@
 ## À faire
 
 - [ ] **SideLeft** : barre de progression ou infos transit dans le panel gauche (optionnel)
-- [ ] **Documentation** : mettre à jour `LACUNA_TRANSIT.md` (section « Implémentation actuelle / mode test »)
+- [x] **Documentation** : `LACUNA_TRANSIT.md` v0.4 §10 « Implémentation actuelle » (2026-10-22)
+- [ ] **Génération** : aligner `ANNEES_PAR_GENERATION` (80 ans) sur le design (25 ans)
+- [ ] **Phases** : calibrer la répartition en temps joueur (actuellement 40/20/10/30 %), voir `LACUNA_TRANSIT.md` §3 et §11
 - [ ] **Historique des voyages** : écran ou section qui lit `ship_travels` et affiche la chaîne des trajets (retracer la route depuis le premier départ)
 
 ## Pourquoi la base ne se mettait pas à jour

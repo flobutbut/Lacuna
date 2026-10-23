@@ -1,7 +1,7 @@
-*Dernière modification : 2026-03-16*
+*Dernière modification : 2026-10-22*
 
 # LACUNA — Game Design Document
-*Version 0.4 — Mars 2026*
+*Version 0.5 — Octobre 2026*
 
 ---
 
@@ -27,6 +27,7 @@
 | 0.2 | Mars 2026 | Physique du voyage — profil d'accélération réaliste, observation décalée dans le temps, détection en transit, mécanique de déroute |
 | 0.3 | Mars 2026 | Calibration temporelle — compression non-linéaire, paramètres physiques ARCA définitifs, table de référence complète, analyse gameplay |
 | 0.4 | Mars 2026 | Restructuration — physique extraite vers `LACUNA_PHYSICS.md`, schémas JSON extraits vers `LACUNA_PROCEDURAL_DATA_MODEL.md` §9, UI renvoyée vers `LACUNA_UI.md`, onboarding renvoyé vers `LACUNA_LORE.md` |
+| 0.5 | Octobre 2026 | Mise en cohérence — population de référence 15 000 (alignée sur les principes du projet et `LACUNA_ARCS.md` §1.10) ; quatrième origine de trace `PRÉCURSEUR` (Yael) ; zone profonde 18 h – 6 jours ; références croisées complétées ; §9 État d'implémentation mis à jour (transit serveur, comptes joueurs) et versé dans les deux copies du document |
 
 ---
 
@@ -72,14 +73,14 @@ La galaxie n'est jamais montrée dans sa totalité au joueur. Elle se révèle p
 
 ### Temps et voyages — résumé
 
-La durée d'un voyage découle de la physique newtonienne, compressée par une fonction puissance calibrée sur deux contraintes fixes : Proxima Centauri = 1h joueur, bord opposé = 90 jours joueur.
+La durée physique d'un voyage découle de la physique newtonienne (croisière à 4,8 % c). La durée joueur en est tirée par une table de référence non linéaire, calibrée sur deux contraintes fixes : Proxima Centauri = 1h joueur, bord opposé = 90 jours joueur.
 
 | Zone | Distance | Durée joueur |
 |------|----------|-------------|
 | Voisinage | < 25 al | 1h – 4h |
 | Zone intermédiaire | 25 – 500 al | 4h – 18h |
-| Zone profonde | 500 – 10 000 al | 18h – 10 jours |
-| Destinations mythiques | > 10 000 al | 10 – 90 jours |
+| Zone profonde | 500 – 10 000 al | 18h – 6 jours |
+| Destinations mythiques | > 10 000 al | 6 – 90 jours |
 
 La dilatation gravitationnelle s'applique lors des stationnements près d'objets compacts — orbiter près de Sgr A* fait passer ~1 086 ans galactiques par an vaisseau.
 
@@ -103,15 +104,15 @@ Objet central, persistant, appartenant au joueur. Porte l'état de transit, les 
 
 ### La Population
 
-10 247 personnes. Ce n'est pas un chiffre à optimiser — c'est une **texture narrative**. La variable clé est la **Volonté** (`will`, 0–1) : elle influence la capacité à interpréter des traces complexes et la tolérance aux voyages longs. Des événements rares et imprévisibles la font évoluer (schisme, épidémie, renaissance culturelle).
+15 000 personnes au départ. Ce n'est pas un chiffre à optimiser — c'est une **texture narrative**. La variable clé est la **Volonté** (`will`, 0–1) : elle influence la capacité à interpréter des traces complexes et la tolérance aux voyages longs. Des événements rares et imprévisibles la font évoluer (schisme, épidémie, renaissance culturelle).
 
 > Dynamiques de long terme : **`LACUNA_ARCS.md`** — arc générationnel, dérive culturelle, arc colonies.
 
 ### Les Traces
 
-Objet fondamental. Tout ce que le joueur trouve, collecte, interprète et dépose. Trois origines : `IMMUABLE` (créée par les développeurs, ancrée dans la vraie science), `GENERÉE` (procédurale à la première visite), `JOUEUR` (déposée par un autre joueur).
+Objet fondamental. Tout ce que le joueur trouve, collecte, interprète et dépose. Quatre origines : `IMMUABLE` (créée par les développeurs, ancrée dans la vraie science), `GÉNÉRÉE` (procédurale à la première visite), `JOUEUR` (déposée par un autre joueur), `PRÉCURSEUR` (Yael — vaisseau humain parti avant le joueur, traces prédéfinies au format d'une trace joueur).
 
-> Grammaire complète, catalogue, règles de conception : **`LACUNA_TRACES.md`**.
+> Mécanique des traces et règles de conception : **`LACUNA_TRACES.md`**. Fiches des traces immuables : **`LACUNA_TRACES_IMMUABLES.md`** et **`LACUNA_SCENARIOS.md`**.
 
 ### Les Interprétations
 
@@ -266,42 +267,56 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 | Schémas JSON, modèle de données, génération procédurale | `LACUNA_PROCEDURAL_DATA_MODEL.md` |
 | Interface utilisateur, modules, Observatoire | `LACUNA_UI.md` |
 | Lore, onboarding, séquence de départ | `LACUNA_LORE.md` |
-| Traces — grammaire, catalogue, règles de conception | `LACUNA_TRACES.md` |
-| Arcs narratifs jouables, scénarios | `LACUNA_SCENARIOS.md` |
+| Transit — phases, confirmation du départ, détection, déviation | `LACUNA_TRANSIT.md` |
+| Traces — mécanique, types d'outputs, règles de conception | `LACUNA_TRACES.md` |
+| Traces immuables — fiches système, Journal de Yael | `LACUNA_TRACES_IMMUABLES.md` |
+| Anomalies astronomiques réelles — faits de référence | `LACUNA_ANOMALIES_REELLES.md` |
+| Scénarios jouables | `LACUNA_SCENARIOS.md` |
+| Hypothèses de fond (origine des traces) | `LACUNA_HYPOTHESES.md` |
 | Arc générationnel, arc colonies, dérive culturelle | `LACUNA_ARCS.md` |
+| Notifications | `LACUNA_NOTIFICATIONS.md` |
 | Backoffice, architecture admin | `LACUNA_BACKOFFICE_SPEC.md` |
 
 ---
 
 ## 9. État d'implémentation (référence projet actuel)
 
-*La réalité du projet prime sur ce document. Cette section décrit ce qui est implémenté à ce jour et les écarts avec le design cible.*
+*Cette section décrit ce qui est implémenté au 22 octobre 2026 et les écarts avec le design cible. Elle décrit la réalité du code ; le design des sections 1 à 8 reste la cible. Détail technique : `docs/reference/Documentation-fonctionnelle.md` et `Documentation-technique.md` (dépôt de développement).*
 
 ### Implémenté
 
 | Domaine | Réalité projet |
 |---------|----------------|
-| **Vaisseau** | Table `ships` + `ship_systems`. `current_system_id` (position = système courant), `travel_state`, `voyage`, `generation`, `travel_destination`, `travel_departure_at`, `travel_arrival_at`. Systèmes : propulsion, hull, plasma_shield, observatory, reservoir, alimentation, atmosphere, medical. Carburant He³/deutérium en tonnes (he3_current/max, deuterium_current/max). Pas de `position {x,y,z}` — dérivé du système courant. |
-| **Calcul transit** | `src/lib/transit.js` — durées physiques et joueur par interpolation (table réf. Proxima 1h, bord 90j). Affichage générations = t_physique / **80 ans** (constante projet). Carburant % estimé. Pas de simulation en temps réel du voyage. |
-| **Carte** | `map_nodes`, `map_edges` (Supabase). Nœuds : system_id, name, visited_at, generation, traces_found. Arêtes : from_system, to_system, travel_time, generation. Ajout depuis Observatoire / Laboratoire. |
-| **Observatoire** | Ciel (stellar_systems, coordonnées x/y/z), TravelWidget (distance, durée, carburant, [FIXER CAP]), vue Système (planètes, zone habitable). Pas de fixation de cap ni voyage simulé. |
-| **Signaux** | Table `signals`, sources `system_objects` (PULSAR, etc.) ou `signal_events`. Store signaux, durée de vie temps joueur, modale, [ANALYSER AU LABO]. |
-| **Laboratoire** | File d'observations (observations Supabase), instruments (spectral, structure temporelle, polarisation, spectre énergétique, gravimétrique, stellaire, orbital, atmosphère, morpho, volumétrique, magnétomètre), rapports + [GARDER UNE TRACE]. |
-| **Artefacts / Traces** | Traces Supabase, interprétations (anonymes), suppression. |
-| **Population** | Table `populations` (total, generation, will, social_cohesion, etc.). Page 3 onglets (Générations, Génération actuelle, Registre des Raisons). Données lues en base. |
+| **Comptes joueurs** | Email + mot de passe, email confirmé obligatoire. Écran « Bienvenue à bord » : pseudo (nom de commandant) et nom du vaisseau, privés et non uniques ; la partie démarre à Sol. Suppression de compte. Site public (landing, pages légales, crédits). |
+| **Vaisseau** | Tables `ships` + `ship_systems`. `current_system_id` (position = système courant), `travel_state`, `voyage`, `generation`, `travel_destination`, `travel_departure_at`, `travel_arrival_at`. Systèmes : propulsion, hull, plasma_shield, observatory, reservoir, alimentation, atmosphere, medical. Carburant He³/deutérium en tonnes. Pas de `position {x,y,z}` — dérivée du système courant. |
+| **Transit** | Décidé par le serveur : RPC `start_transit` / `complete_transit` (migration `00050`), durée joueur par la table de référence (`LACUNA_PHYSICS.md` §2), mode test `transit_time_scale`. Quatre phases calculées côté client, `[FIXER CAP]` verrouillé hors `COASTING`, vue de confirmation du départ, dérive stellaire, reprise après rechargement. Historique `ship_travels`. Détail : `LACUNA_TRANSIT.md` §10. |
+| **Carte** | `map_nodes` ; onglets System / Map ; arêtes de la Map dérivées de `ship_travels` (visité = au moins une arête, observé = aucune). |
+| **Observatoire** | Ciel (stellar_systems, coordonnées x/y/z), vue Système (planètes, zone habitable), vue Radar (spectrogramme temps réel, bruit de fond physique, pulsars, sélecteur de bande — `LACUNA_RECEPTION_MODULE.md`). |
+| **Signaux** | Table `signals`, sources `system_objects` (PULSAR, etc.) ou `signal_events`. Durée de vie en temps joueur, [ANALYSER AU LABO]. |
+| **Laboratoire** | File d'observations, instruments (spectral, structure temporelle, polarisation, spectre énergétique, gravimétrique, stellaire, orbital, atmosphère, morpho, volumétrique, magnétomètre), rapports + [GARDER UNE TRACE]. |
+| **Artefacts / Traces** | Traces Supabase, interprétations anonymes. |
+| **Population** | Table `populations` (total, generation, will, social_cohesion…). Page à 3 onglets (Générations, Génération actuelle, Registre des Raisons). |
 | **Drake** | Table `drake_equation`, affichage Header + Page Drake. |
-| **Pages** | Observatoire, Carte, Artefacts, Laboratoire, Journal, Drake, Population, Systèmes (plan ARCA, 9 groupes). |
 
 ### Non implémenté (design cible uniquement)
 
-| Domaine | Décrit dans le GDD / docs liées |
-|---------|----------------------------------|
-| **Onboarding** | LACUNA_LORE §3 — 5 écrans. Aucun écran actuellement. |
-| **Voyage** | LACUNA_PHYSICS — Fixation cap, 4 phases, détection en transit, déroute. Seul `travel_state` existe en base ; pas de simulation ni countdown. |
-| **Générations dynamiques** | §4 — Passage de génération contextuel (distance + temps), entrée GENERATIONNEL journal. Le compteur `generation` est affiché mais pas recalculé par le jeu. |
-| **Journal de bord** | Entrées MANUEL/AUTO/GENERATIONNEL. Page Journal existe ; contenu et persistance à brancher. |
-| **Dilatation gravitationnelle** | LACUNA_PHYSICS — γ_rel, stationnement près objets compacts. Non calculé ni affiché. |
-| **Galaxie procédurale** | Génération lazy, seed global. Ciel alimenté par stellar_systems (HYG/NASA/seed), pas de procédural à la visite. |
+| Domaine | Décrit dans |
+|---------|-------------|
+| **Onboarding narratif** | `LACUNA_LORE.md` §3 — 5 écrans. Seul l'écran de nommage « Bienvenue à bord » existe. |
+| **Détection en transit, déviation, carburant consommé** | `LACUNA_TRANSIT.md` §6–7, `LACUNA_PHYSICS.md` §5. |
+| **Générations dynamiques** | §4 — passage de génération contextuel, entrée GENERATIONNEL au journal. Le compteur `generation` est affiché mais pas recalculé. |
+| **Journal de bord** | Entrées MANUEL/AUTO/GENERATIONNEL. Page existante ; contenu et persistance à brancher. |
+| **Dilatation gravitationnelle** | `LACUNA_PHYSICS.md` §3. Non calculée ni affichée. |
+| **Traces immuables et scénarios en base** | `LACUNA_TRACES_IMMUABLES.md`, `LACUNA_SCENARIOS.md`. |
+| **Galaxie procédurale à la visite** | Ciel alimenté par stellar_systems (HYG/NASA/seed). |
+
+### Écarts code / design à corriger dans le code
+
+| Écart | Design | Code actuel |
+|-------|--------|-------------|
+| Population de départ | 15 000 (§3) | 10 247 : défaut SQL `populations.total` (migration `00001`), `SideRight.vue`, `PagePopulation.vue`, `PageSystemes.vue`, `PageJournal.vue` |
+| Durée d'une génération | 25 ans (`LACUNA_TRANSIT.md`, `LACUNA_ARCS.md`, `LACUNA_PHYSICS.md`) | 80 ans (`ANNEES_PAR_GENERATION`, `src/lib/transit.js`) |
+| Répartition des phases en temps joueur | À calibrer (`LACUNA_TRANSIT.md` §3, §11) | 40 / 20 / 10 / 30 % (`ship.js`) |
 
 ### Mapping objet Vaisseau (GDD §3) ↔ schéma actuel
 
@@ -310,8 +325,8 @@ Recalculé automatiquement lors de chaque variation. Mis à jour pour tous les j
 | Position | `current_system_id` ; coordonnées dérivées de `stellar_systems.coordinates`. |
 | Systèmes « survie » | `ship_systems.reservoir`, `.alimentation`, `.atmosphere`, `.medical`. |
 | travelState, destination, dates | `ships.travel_state`, `.travel_destination`, `.travel_departure_at`, `.travel_arrival_at`. |
-| Génération (affichage transit) | Constante 80 ans par génération dans `transit.js` (ANNEES_PAR_GENERATION). |
+| Historique des voyages | `ship_travels` (une ligne par arrivée). |
 
 ---
 
-*LACUNA — GDD v0.4 — Mars 2026 — Confidentiel*
+*LACUNA — GDD v0.5 — Octobre 2026 — Confidentiel*

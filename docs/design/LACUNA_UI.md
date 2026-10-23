@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-14 15:11*
+*Dernière modification : 2026-10-22*
 
 # LACUNA — Interface
 
@@ -861,7 +861,7 @@ Le bouton "Fixer cap" est la seule action irréversible directement accessible d
 |-------|-------|--------|
 | 01 | Le catalogue | Données chiffrées — fond noir, texte centré |
 | 02 | Les trois questions | Texte narratif — 3 questions sans réponse |
-| 03 | Le pari | Décision collective — population initiale affichée (10 247) |
+| 03 | Le pari | Décision collective — population initiale affichée (15 000) |
 | 04 | Le départ | Texte court — ce qui a été laissé derrière |
 | 05 | Le premier choix | Le ciel s'ouvre — 12 anomalies visibles — aucune instruction |
 
@@ -889,4 +889,12 @@ Ce qui est spécifique à l'interface :
 
 ---
 
-*LACUNA — Interface v0.7 — Mars 2026 — Confidentiel — Antigravity*
+## Changelog (depuis v0.7)
+
+| Date | Modifications |
+|------|---------------|
+| 2026-10-22 | Écran 03 de l'onboarding : population initiale 15 000 (alignée sur `LACUNA_GDD.md` v0.5 et `LACUNA_LORE.md` v0.4). Disponibilité des modules pendant le transit : `LACUNA_TRANSIT.md` §5 fait référence |
+
+---
+
+*LACUNA — Interface v0.7 — Mars 2026 (mise à jour octobre 2026) — Confidentiel — Antigravity*

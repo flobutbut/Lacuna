@@ -1,7 +1,7 @@
-*Dernière modification : 2026-03-10 15:11*
+*Dernière modification : 2026-10-22*
 
 # LACUNA — Hypothèses de fond
-*Version 0.1 — Mars 2026*
+*Version 0.2 — Octobre 2026*
 
 > Ce document recense les **hypothèses sur l'origine des traces** — les grandes familles de "qui ou quoi a pu laisser ça". Ce ne sont pas des réponses. Ce sont des cadres d'interprétation que le joueur construit au fil de ses voyages, sans que le jeu en valide aucun.
 >
@@ -9,11 +9,20 @@
 
 ---
 
+## Changelog
+
+| Version | Date | Modifications |
+|---------|------|---------------|
+| 0.1 | Mars 2026 | Document initial — H-01 à H-09 |
+| 0.2 | Octobre 2026 | Mise en cohérence — « Arc 01 » renommé Scénario 02 — Le Fil des 75 (`LACUNA_SCENARIOS.md` §5) ; H-02 : origine `PRÉCURSEUR` (`LACUNA_TRACES.md` §5) et reconnaissance différée, alignée sur `LACUNA_SCENARIOS.md` §4 ; H-09 présent dans le tableau récapitulatif des deux copies |
+
+---
+
 ## État des hypothèses
 
 | Code | Nom | Description courte | Statut |
 |------|-----|--------------------|--------|
-| H-01 | Le Semeur | Civilisation ancienne ayant semé des marqueurs délibérés dans les systèmes habitables | Actif — sous-tend Arc 01 |
+| H-01 | Le Semeur | Civilisation ancienne ayant semé des marqueurs délibérés dans les systèmes habitables | Actif — sous-tend le Scénario 02 |
 | H-02 | Yael | Vaisseau humain précurseur — première trace rencontrée, dispositif d'onboarding | Ébauche |
 | H-03 | La Bactérie Colonisatrice | Propagation non-intentionnelle de vie à l'échelle galactique — pas d'auteur, pas d'intention | Ébauche |
 | H-04 | L'Explorateur Extraterrestre | Civilisation active en mouvement — traces de passage récent, jamais de contact | Ébauche |
@@ -70,7 +79,7 @@
 
 ## H-01 — Le Semeur
 
-*Statut : actif — sous-tend l'Arc 01 Le Fil des 75*
+*Statut : actif — sous-tend le Scénario 02 — Le Fil des 75*
 
 ### Principe
 
@@ -109,7 +118,7 @@ Cette hypothèse est la plus tangible — traces physiques, grammaire précise, 
 
 ### Arc associé
 
-→ Arc 01 — Le Fil des 75 (`LACUNA_SCENARIOS.md §3`)
+→ Scénario 02 — Le Fil des 75 (`LACUNA_SCENARIOS.md` §5)
 
 ---
 
@@ -123,13 +132,13 @@ Yael est humain. C'est un vaisseau générationnel parti avant le joueur, dans l
 
 Yael n'est pas une personne. C'est une désignation retrouvée dans une trace : un prénom, un acronyme de mission, ou le nom que les générations suivantes à bord ont donné à leur propre vaisseau. Le joueur ne le saura pas.
 
-La force de Yael : c'est la seule trace dont le joueur sait avec certitude qu'elle est humaine au moment où il la trouve. Ce qui en fait quelque chose de profondément différent de toute trace extraterrestre — et potentiellement plus troublant. On sait d'où il vient. On ne sait pas où il est allé.
+La force de Yael : c'est la seule trace dont le joueur peut déduire avec certitude qu'elle est humaine — pas immédiatement : dans le module Traces, elle ressemble d'abord à une trace joueur ordinaire ; c'est la voix et la datation qui la trahissent (`LACUNA_SCENARIOS.md` §4). Ce qui en fait quelque chose de profondément différent de toute trace extraterrestre — et potentiellement plus troublant. On sait d'où il vient. On ne sait pas où il est allé.
 
 ### Grammaire des traces associées
 
 | Élément | Valeur |
 |---------|--------|
-| Type | `TRACE_JOUEUR` (sous-type spécial : PRÉCURSEUR) |
+| Origine | `PRÉCURSEUR` — format d'une trace joueur, mais prédéfinie et immuable |
 | Signature | Texte en langage naturel légèrement archaïque, datation générationnelle ancienne |
 | Ancienneté | Quelques décennies à quelques siècles avant le départ du joueur |
 | Distribution | Systèmes proches de Sol, zone < 25 al — premiers voyages de l'onboarding |
@@ -149,7 +158,7 @@ La force de Yael : c'est la seule trace dont le joueur sait avec certitude qu'el
 
 ### Notes de conception
 
-Yael est un dispositif d'onboarding : il enseigne la mécanique des `TRACE_JOUEUR` avant de confronter le joueur à des traces extraterrestres ambiguës. Il calibre l'expérience émotionnelle — on n'est pas seul, mais ceux qui sont partis avant ne répondent plus.
+Yael est un dispositif d'onboarding : il enseigne la mécanique des traces joueurs avant de confronter le joueur à des traces extraterrestres ambiguës. Il calibre l'expérience émotionnelle — on n'est pas seul, mais ceux qui sont partis avant ne répondent plus.
 
 Ne pas sur-écrire Yael. Une ou deux traces maximum dans la zone d'onboarding. Pas de fil narratif complet sur ce qui lui est arrivé. L'absence de conclusion sur Yael est aussi importante que les traces elles-mêmes.
 
@@ -455,10 +464,10 @@ Un même système peut porter des traces compatibles avec plusieurs hypothèses 
 
 "Le Semeur", "Yael", "La Bactérie" sont des noms de design interne. Dans l'interface, il n'y a que des données et des interprétations déposées par des joueurs anonymes.
 
-### Relation avec les arcs
+### Relation avec les scénarios
 
-Les arcs (`LACUNA_SCENARIOS.md`) ne correspondent pas un-à-un aux hypothèses. Un arc traverse plusieurs hypothèses sans en valider aucune. L'Arc 01 est cohérent avec H-01, mais lisible aussi sous H-03 ou H-05 à partir des mêmes traces.
+Les scénarios (`LACUNA_SCENARIOS.md`) ne correspondent pas un-à-un aux hypothèses. Un scénario traverse plusieurs hypothèses sans en valider aucune. Le Scénario 02 est cohérent avec H-01, mais lisible aussi sous H-03 ou H-05 à partir des mêmes traces.
 
 ---
 
-*LACUNA — Hypothèses de fond v0.1 — Mars 2026 — Confidentiel*
+*LACUNA — Hypothèses de fond v0.2 — Octobre 2026 — Confidentiel*

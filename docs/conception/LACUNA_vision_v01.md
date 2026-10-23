@@ -1,8 +1,10 @@
-*Dernière modification : 2026-03-05 15:11*
+*Dernière modification : 2026-10-22 (note d'archive uniquement)*
 
 # LACUNA
 ## Document de Vision — v0.1
 *Mars 2026 — Confidentiel*
+
+> **Document historique, non normatif.** Il a été supplanté par `LACUNA_GDD.md` et les documents qui en dérivent. Certains ordres de grandeur ne sont plus valides — par exemple, à 25 ans par génération, dix voyages courts représentent des dizaines de générations, et un très long voyage des milliers (`LACUNA_TRANSIT.md` §9). En cas de contradiction, le GDD prime.
 
 ---
 

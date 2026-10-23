@@ -444,7 +444,7 @@ ORDER BY table_name, column_name;
 
 ```json
 {
-  "total": 10247,
+  "total": 15000,
   "generation": 1,
   "averageAge": 34.2,
   "birthRate": 0.012,
@@ -566,7 +566,7 @@ Les joueurs sont **anonymes**. Pas de pseudo, pas d'identité. L'interprétation
       "generation": 1,
       "date": "2187-01-01",
       "title": "Départ",
-      "text": "10 247 âmes embarquées. On a regardé la Terre disparaître pendant 4 heures.",
+      "text": "15 000 âmes embarquées. On a regardé la Terre disparaître pendant 4 heures.",
       "linkedTraces": [],
       "linkedSystems": []
     },
@@ -653,4 +653,13 @@ Objet global, partagé par tous les joueurs. `fl`, `fi` et `L` sont les seuls te
 
 ---
 
-*LACUNA — Modèle de données procédural v0.1 — Mars 2026 — Confidentiel*
+## Changelog
+
+| Date | Modifications |
+|------|---------------|
+| Mars 2026 | Version 0.1 — document initial |
+| 2026-10-22 | §9.2 et exemple de journal : population de départ 15 000 (alignée sur `LACUNA_GDD.md` v0.5). Le code utilise encore 10 247 — écart listé dans `LACUNA_GDD.md` §9 |
+
+---
+
+*LACUNA — Modèle de données procédural v0.1 — Mars 2026 (mise à jour octobre 2026) — Confidentiel*

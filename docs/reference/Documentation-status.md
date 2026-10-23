@@ -1,4 +1,4 @@
-*Dernière modification : 2026-03-15*
+*Dernière modification : 2026-10-22*
 
 # LACUNA — État du projet
 
@@ -68,7 +68,7 @@
 - [x] Observatoire : vue Radar — spectrogramme temps réel + courbe d'intensité, pause/scroll, sélection zone (col×bin), bouton RETOUR AU LIVE, reprise via visibilitychange
 
 ### Fonctionnalités
-- [ ] Onboarding (4 écrans GDD)
+- [ ] Onboarding narratif (5 écrans — `LACUNA_LORE.md` §3)
 - [x] Ciel / Observatoire — clic étoile → TravelWidget (distance, durée, carburant, anomalie, [OUVRIR OBSERVATOIRE] [FIXER CAP]), double-clic → panel Observatoire (corps, probas, Analyser, Ajouter au lab)
 - [x] Signaux captés — store signaux (durée de vie temps joueur), bloc panel gauche (cards, tooltip, clic → modale, [×] ignorer), modale signal ([ANALYSER AU LABO →] → Laboratoire), marqueurs directionnels sur le ciel (hover + clic)
 - [ ] Sélection système, fixation cap
@@ -102,7 +102,7 @@
 ## Prochaines étapes prioritaires
 
 1. **Avant une mise en ligne** — liste priorisée dans `docs/architecture/PLAN_COMPTES_JOUEURS.md` §9 (emails, RGPD, anti-triche, migrations, sauvegardes, hébergement)
-2. **Onboarding** — Premiers écrans selon GDD (au-delà de Bienvenue à bord)
+2. **Onboarding** — Les 5 écrans de `LACUNA_LORE.md` §3 (au-delà de Bienvenue à bord)
 3. **Observatoire complet** — Détail système, scan, fixer cap
 
 ---
@@ -171,3 +171,4 @@
 | 2026-03-16 | Audit documentation — stats réelles : 48 195 stellar_systems, 2 155 system_objects ; couverture champs (color_index 87,3 %, age 14,8 %, luminosity 90 %, constellation/coords/object_type 100 %, atmosphere_composition 1 %) ; resolve_conflicts. |
 | 2026-10-21 | Audit global (docs/audits/AUDIT_GLOBAL_2026-10-21.md) et lots 1–3 : bugs, code mort, ESLint / Prettier / Vitest, tokens couleur, stores par domaine (observatoire, radar, transit, notifications), scène Three.js partagée, CSS par page. |
 | 2026-10-21 | Comptes joueurs (migrations 00046–00048) : inscription / connexion par email, écran Bienvenue à bord (pseudo et vaisseau privés), données rattachées au vaisseau, RLS par joueur, suppression du prototype, identité modifiable, Vue 3D réservée aux admins. |
+| 2026-10-22 | Mise en cohérence de la documentation de conception avec le projet Claude « Lacuna » : GDD v0.5, Lore v0.4, Arcs v0.3, Hypothèses v0.2, Scénarios v0.5, Transit v0.4, Physique v0.2, Traces v1.3, nouveau `config/LACUNA_TRACES_IMMUABLES.md`, Traces v0.9 archivée (`archive/`), Notifications v0.3 ; onboarding : 5 écrans |

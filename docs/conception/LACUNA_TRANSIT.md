@@ -1,9 +1,9 @@
-*Dernière modification : 2026-03-18*
+*Dernière modification : 2026-10-22*
 
 # LACUNA — Le Transit
-*Version 0.1 — Mars 2026*
+*Version 0.4 — Octobre 2026*
 
-> Spécification complète du transit : définition, physique, états d'interface, détection, déviation, animation de dérive stellaire, modèle de données. Ce document consolide et centralise tout ce qui concerne le voyage interstellaire de l'ARCA entre deux systèmes.
+> Spécification complète du transit : définition, physique, états d'interface, vue de confirmation du départ, détection, déviation, animation de dérive stellaire, modèle de données. Ce document consolide et centralise tout ce qui concerne le voyage interstellaire de l'ARCA entre deux systèmes.
 >
 > Documents liés : `LACUNA_PHYSICS.md` (physique du voyage, profil d'accélération, carburant) · `LACUNA_UI.md` (interface générale, modules) · `LACUNA_NOTIFICATIONS.md` (famille Voyage) · `LACUNA_PROCEDURAL_DATA_MODEL.md` (schéma `travelState`)
 
@@ -16,13 +16,14 @@
 1. [Définition](#1-définition)
 2. [Physique du transit](#2-physique-du-transit)
 3. [Les quatre phases](#3-les-quatre-phases)
-4. [Interface pendant le transit](#4-interface-pendant-le-transit)
-5. [Détection en transit](#5-détection-en-transit)
-6. [Déviation de trajectoire](#6-déviation-de-trajectoire)
-7. [Animation — dérive stellaire](#7-animation--dérive-stellaire)
-8. [Population pendant le transit](#8-population-pendant-le-transit)
-9. [Modèle de données](#9-modèle-de-données)
-10. [Questions ouvertes](#10-questions-ouvertes)
+4. [Vue de confirmation du départ](#4-vue-de-confirmation-du-départ)
+5. [Interface pendant le transit](#5-interface-pendant-le-transit)
+6. [Détection en transit](#6-détection-en-transit)
+7. [Déviation de trajectoire](#7-déviation-de-trajectoire)
+8. [Animation — dérive stellaire](#8-animation--dérive-stellaire)
+9. [Population pendant le transit](#9-population-pendant-le-transit)
+10. [Modèle de données et implémentation actuelle](#10-modèle-de-données-et-implémentation-actuelle)
+11. [Questions ouvertes](#11-questions-ouvertes)
 
 ---
 
@@ -31,6 +32,9 @@
 | Version | Date | Modifications |
 |---------|------|---------------|
 | 0.1 | Mars 2026 | Document initial — consolidation depuis `LACUNA_UI.md`, `LACUNA_PHYSICS.md`, `LACUNA_NOTIFICATIONS.md`, `LACUNA_PROCEDURAL_DATA_MODEL.md`, `LACUNA_ARCS.md` |
+| 0.2 | Mars 2026 | Ajout §4 — Vue de confirmation du départ : séparation sémantique cap / moteurs, structure de la vue, phrases contextuelles, règle d'affichage du coût générationnel |
+| 0.3 | Mars 2026 | §10 Modèle de données — alignement sur schéma SQL réel (colonnes `ships`), architecture retenue pour les phases (timestamps JSONB + computed client), champs non encore implémentés documentés. §11 questions ouvertes : vue de confirmation résolue |
+| 0.4 | Octobre 2026 | Mise en cohérence avec `LACUNA_PHYSICS.md` v0.2 et le code. §2 : table de référence seule source des durées joueur, Étoile de Tabby à ~1 470 al, zone profonde 18 h – 6 jours. §3 : correction physique (la croisière est atteinte en ~0,39 an, y compris sur les voyages courts) ; la répartition des phases en temps joueur devient une convention explicite. §4 : seuils générationnels rendus continus (le seuil 1–2 / 3–10 laissait un trou), exemples Proxima et Gliese 667C corrigés. §5 : retournement réduit au Journal, comme le texte l'indiquait. §6 : Zeta Puppis de type O4. §10 : implémentation actuelle (transit décidé par le serveur, `ship_travels`, mode test). §11 : questions résolues et nouvelles |
 
 ---
 
@@ -53,6 +57,8 @@ acceleration_max    = 0,12g = 1,177 m/s²
 
 Ces valeurs correspondent à l'ARCA en état nominal. Un vaisseau dégradé ne peut pas les atteindre — voir `LACUNA_PHYSICS.md` §5–6.
 
+À 0,12 g, la vitesse de croisière est atteinte en ~0,39 an, sur ~0,009 al. Tous les voyages, même les plus courts, sont donc parcourus physiquement à ~4,8 % c.
+
 ### Durées de référence
 
 | Destination | Distance | Durée physique | Durée joueur |
@@ -60,19 +66,16 @@ Ces valeurs correspondent à l'ARCA en état nominal. Un vaisseau dégradé ne p
 | Proxima Centauri | 4,24 al | 88 ans | **1h** |
 | Tau Ceti | 11,9 al | 248 ans | **2h24** |
 | Gliese 667C | 22 al | 458 ans | **3h54** |
-| Étoile de Tabby | 1 280 al | 26 600 ans | **1,7 jours** |
+| Point d'étalonnage — zone profonde | 1 280 al | 26 600 ans | **1,7 jours** |
 | Centre galactique | 26 000 al | 541 000 ans | **14 jours** |
 | Bord opposé | 100 000 al | 2 083 333 ans | **90 jours** |
+| *Étoile de Tabby (interpolée)* | *~1 470 al* | *~30 600 ans* | ***~1,8 jours*** |
 
 ### Compression temporelle
 
-La durée joueur est obtenue par fonction puissance sur la durée physique :
+La durée joueur est obtenue par **interpolation linéaire par morceaux** entre les points de la table de référence — c'est la règle implémentée côté client (`src/lib/transit.js`) et côté serveur (`transit_player_seconds`). Elle est calibrée sur deux contraintes fixes : Proxima = 1h joueur / bord opposé = 90 jours joueur.
 
-```
-t_joueur = K × t_physique ^ 0.762
-```
-
-Calibration : Proxima = 1h joueur / bord opposé = 90 jours joueur. Les destinations proches ont une vitesse moyenne très basse — le vaisseau passe presque tout son temps à accélérer et décélérer. Les longues destinations atteignent pleinement les 4,8% c.
+La vitesse physique est la même pour toutes les destinations ; c'est le taux de compression qui varie (88 ans simulés par heure pour Proxima, ~960 ans par heure pour le bord opposé). Aller loin coûte proportionnellement moins de temps joueur : c'est une convention de jeu assumée, pas un effet physique. Détail et historique (loi puissance abandonnée) : `LACUNA_PHYSICS.md` §2.
 
 ### Zones de jeu
 
@@ -80,28 +83,32 @@ Calibration : Proxima = 1h joueur / bord opposé = 90 jours joueur. Les destinat
 |------|----------|-------------|--------|
 | Voisinage | < 25 al | 1h – 4h | Explorable en une session |
 | Zone intermédiaire | 25 – 500 al | 4h – 18h | Une nuit de voyage |
-| Zone profonde | 500 – 10 000 al | 18h – 10 jours | Expédition |
-| Destinations mythiques | > 10 000 al | 10 – 90 jours | Odyssée |
+| Zone profonde | 500 – 10 000 al | 18h – 6 jours | Expédition |
+| Destinations mythiques | > 10 000 al | 6 – 90 jours | Odyssée |
 
 ### Dilatation par la vitesse
 
-Ignorée. À 4,8% c, γ_v ≈ 1,001 — soit ~9h de décalage par an de transit, sans gain narratif suffisant. La dilatation gravitationnelle, elle, s'applique en orbite proche d'objets massifs (voir `LACUNA_PHYSICS.md` §3).
+Ignorée. À 4,8% c, γ_v ≈ 1,0012 — soit ~10h de décalage par an de transit, sans gain narratif suffisant. La dilatation gravitationnelle, elle, s'applique en orbite proche d'objets massifs (voir `LACUNA_PHYSICS.md` §3).
 
 ---
 
 ## 3. Les quatre phases
 
+### Répartition en temps joueur — convention
+
+Physiquement, l'accélération et la décélération durent chacune ~0,39 an : sur un voyage vers Proxima (88 ans, 1h joueur), cela représenterait une quinzaine de secondes. Pour que chaque phase soit perceptible et jouable, la durée des phases **en temps joueur** est une convention d'interface, indépendante de leur durée physique.
+
+Implémentation actuelle (`src/stores/ship.js`, provisoire) : accélération 0–40 % de la durée joueur, inertie 40–60 %, retournement 60–70 %, décélération 70–100 %. Calibration à revoir (§11).
+
 ### Phase 1 — Accélération (`ACCELERATING`)
 
 Moteur MTF allumé à poussée constante depuis l'arrêt jusqu'à la vitesse de croisière. Consomme du carburant He³. Interface réduite — le voyage est lancé, rien ne peut l'arrêter.
 
-Sur les voyages courts (< ~100 al), le vaisseau n'atteint pas sa vitesse de croisière nominale — il accélère jusqu'au point médian puis décélère directement. Il n'y a pas de phase d'inertie.
-
 ### Phase 2 — Inertie (`COASTING`)
 
-Moteur éteint. Vitesse constante. Aucun carburant consommé. C'est la phase la plus longue sur les grands voyages et la plus riche en jeu : l'observatoire tourne en continu, les anomalies latérales apparaissent progressivement dans le champ de détection, des notifications arrivent, une déviation est possible.
+Moteur éteint. Vitesse constante. Aucun carburant consommé. C'est physiquement la phase la plus longue de tout voyage, et la plus riche en jeu : l'observatoire tourne en continu, les anomalies latérales apparaissent progressivement dans le champ de détection, des notifications arrivent, une déviation est possible.
 
-Les voyages vers le voisinage (< 25 al) ont une phase d'inertie très courte ou inexistante — le vaisseau est presque immédiatement en décélération. La détection latérale est pratiquement impossible sur ces distances.
+Sur les voyages du voisinage (< 25 al), la fenêtre d'inertie ne dure que quelques minutes de temps joueur. La détection latérale y est pratiquement sans objet — non pour une raison physique, mais parce que le joueur n'a pas le temps d'une décision.
 
 ### Phase 3 — Retournement (`TURNING`)
 
@@ -113,21 +120,119 @@ Moteur rallumé, même poussée qu'en phase 1, appliquée en sens inverse. Conso
 
 ---
 
-## 4. Interface pendant le transit
+## 4. Vue de confirmation du départ
+
+### Principe
+
+Fixer un cap et lancer les moteurs sont deux actes distincts. L'un est une décision de navigation — choisir une direction. L'autre est un ordre aux machines — déclencher une séquence irréversible qui engagera plusieurs générations. La vue de confirmation matérialise cette séparation.
+
+Ce n'est pas un écran de vérification technique. Ce n'est pas une liste de jauges ni un avertissement. C'est un moment — sobre, presque vide — entre la décision et ses conséquences.
+
+### Structure
+
+```
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│   Cap fixé — [Nom du système] — [Distance] al       │
+│                                                     │
+│   [Durée estimée] — [Durée physique] — [N] gén.    │
+│                                                     │
+│   [Phrase contextuelle]                             │
+│                                                     │
+│                  [ ALLUMER LES MOTEURS ]            │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+Le ciel reste visible en arrière-plan. La destination est identifiée dans le ciel. Aucune autre action disponible — le joueur peut fermer la vue (`[ANNULER]`) pour revenir à l'Observatoire sans partir.
+
+### Coût générationnel — règle d'affichage
+
+Le coût générationnel est toujours affiché sous forme de donnée brute :
+
+```
+[Durée estimée] — [Durée physique] — [N] générations
+```
+
+Cette ligne est systématique, quel que soit le voyage. C'est de l'information. `N` = durée physique / 25 ans, arrondi à l'entier inférieur.
+
+Une phrase contextuelle s'y ajoute uniquement au-delà d'un seuil significatif. C'est du poids. Elle apparaît sur une ligne séparée, dans le même registre factuel que le reste — pas de mise en forme spéciale.
+
+**Seuils et phrases** — les seuils suivent la durée physique ; le seuil de 100 ans correspond à la limite d'une vie humaine, ce qui rend chaque phrase factuellement exacte.
+
+| Durée physique | Générations (25 ans) | Phrase |
+|---------------|-----------|--------|
+| < 25 ans | < 1 | *(silence)* |
+| 25 – 100 ans | 1 – 3 | `La génération actuelle ne verra pas l'arrivée.` |
+| 100 – 250 ans | 4 – 9 | `Personne vivant à bord aujourd'hui ne sera en vie à l'arrivée.` |
+| 250 – 25 000 ans | 10 – 999 | `[N] générations naîtront et mourront avant l'arrivée.` |
+| ≥ 25 000 ans | ≥ 1 000 | `L'arrivée est une abstraction pour les personnes qui partent aujourd'hui.` |
+
+Le silence sur les voyages très courts est une décision. Si la phrase apparaît à chaque départ, elle devient un tic d'interface et perd son poids. La première fois que le joueur lit "personne vivant à bord aujourd'hui ne sera en vie à l'arrivée", ce doit être une rupture — pas une habitude.
+
+*Note — à 4,8 % c, toute destination au-delà de ~1,2 al dépasse 25 ans : en pratique, seul un saut très court reste silencieux. Le seuil du silence est à reconsidérer si la phrase « La génération actuelle ne verra pas l'arrivée » apparaît trop souvent dans le voisinage (§11).*
+
+### Phrases supplémentaires — conditions contextuelles
+
+Ces phrases s'ajoutent à la phrase générationnelle si la condition est remplie. Une seule phrase supplémentaire à la fois, par ordre de priorité décroissante.
+
+| Condition | Phrase |
+|-----------|--------|
+| Premier transit depuis Sol | `Sol restera visible depuis la destination.` ¹ |
+| Destination jamais visitée | `Aucun vaisseau n'a encore atteint ce système.` |
+| Destination visitée — trace connue | `Une trace a été déposée dans ce système. Génération [N] — vaisseau inconnu.` |
+| Destination précédemment abandonnée | `Cap original. Ce système avait été abandonné lors du transit [date simulée].` |
+| Bouclier plasma dégradé (< 0.7) | `Bouclier plasma dégradé. Vitesse de croisière réduite à [X]% c.` |
+| Carburant insuffisant pour le retour | `Carburant disponible : aller simple.` |
+| Étoile de type O ou B | `Type [spectral]. Statut à l'arrivée : inconnu.` |
+
+¹ Factuellement vrai uniquement pour les destinations proches où Sol reste dans le champ de résolution visuelle. Désactivé automatiquement au-delà.
+
+### Exemple complet — Proxima Centauri, premier transit
+
+```
+Cap fixé — Proxima Centauri — 4,24 al
+
+1h estimée — 88 ans simulés — 3 générations
+
+La génération actuelle ne verra pas l'arrivée.
+Sol restera visible depuis la destination.
+
+                    [ ALLUMER LES MOTEURS ]
+```
+
+### Exemple — Gliese 667C, carburant limité
+
+```
+Cap fixé — Gliese 667C — 22 al
+
+3h54 estimées — 458 ans simulés — 18 générations
+
+18 générations naîtront et mourront avant l'arrivée.
+Carburant disponible : aller simple.
+
+                    [ ALLUMER LES MOTEURS ]
+```
+
+---
+
+## 5. Interface pendant le transit
 
 ### Tableau de disponibilité
 
 | Module | Accélération | Inertie | Retournement | Décélération |
 |---|---|---|---|---|
 | Journal de bord | ✓ | ✓ | ✓ | ✓ |
-| Collection traces | ✓ | ✓ | ✓ | ✓ |
-| Équation de Drake | ✓ | ✓ | ✓ | ✓ |
-| Population | ✓ | ✓ | ✓ | ✓ |
-| Systèmes vaisseau | ✓ | ✓ | ✓ | ✓ |
-| Carte | ✓ | ✓ | ✓ | ✓ |
+| Collection traces | ✓ | ✓ | — | ✓ |
+| Équation de Drake | ✓ | ✓ | — | ✓ |
+| Population | ✓ | ✓ | — | ✓ |
+| Systèmes vaisseau | ✓ | ✓ | — | ✓ |
+| Carte | ✓ | ✓ | — | ✓ |
 | Observatoire (passif) | — | ✓ | — | — |
 | Laboratoire | — | ✓ | — | — |
 | Navigation / Déviation | — | ✓ | — | — |
+
+Ce tableau fait référence ; `LACUNA_PHYSICS.md` §4 y renvoie.
 
 ### Accélération et décélération
 
@@ -145,13 +250,13 @@ Interface réduite au Journal uniquement. Moment narratif court.
 
 | Élément | Rendu |
 |---------|-------|
-| Destination | Ligne de trajectoire cyan, opacity 0.3 |
+| Destination | Ligne de trajectoire cyan, opacity 0.3 — cible du cap en ambre |
 | Progression | Panel gauche — barre + vitesse courante |
 | Phase courante | Affiché dans le header (`TRANSIT — J+N`) |
 
 ---
 
-## 5. Détection en transit
+## 6. Détection en transit
 
 ### Principe
 
@@ -189,7 +294,7 @@ Déviation possible — coût carburant estimé : 14%
 TRANSIT — J+12 — 06h03
 Alerte destination — Zeta Puppis — 1 100 al
 Réévaluation spectrale en cours.
-Type O5 — durée de vie estimée : 3 Ma.
+Type O4 — âge estimé : ~3 Ma.
 Statut actuel : INCONNU.
 ```
 
@@ -209,7 +314,7 @@ Un rapport produit depuis une observation lointaine a une fiabilité réduite. I
 
 ---
 
-## 6. Déviation de trajectoire
+## 7. Déviation de trajectoire
 
 ### Principe
 
@@ -232,9 +337,9 @@ La déviation est calculée depuis la position courante du vaisseau, sa vitesse 
 
 ---
 
-## 7. Animation — dérive stellaire
+## 8. Animation — dérive stellaire
 
-> *Spécification partielle — v0.1. Questions ouvertes documentées en §10.*
+> *Implémentée (position du vaisseau interpolée via `Date.now()`). Questions ouvertes documentées en §11.*
 
 ### Principe
 
@@ -244,7 +349,7 @@ L'animation est un rendu honnête — pas une illustration métaphorique du voya
 
 ### Calcul de position
 
-La position du vaisseau à chaque instant est dérivée du profil en quatre phases défini dans `LACUNA_PHYSICS.md`. La vitesse instantanée et la distance parcourue sont connues à chaque frame — la parallaxe stellaire s'en déduit directement.
+La position du vaisseau à chaque instant est dérivée de la progression du transit en temps joueur. La parallaxe stellaire s'en déduit directement.
 
 ### Vitesse de dérive et compression temporelle
 
@@ -259,11 +364,11 @@ L'animation est active pendant les phases d'accélération, d'inertie et de déc
 
 ### Lien avec les scénarios
 
-Un usage narratif est envisagé mais non encore défini : une étoile dont la parallaxe observée pendant le transit ne correspond pas à sa distance cataloguée pourrait constituer une trace déclenchée par le mouvement lui-même. À développer à l'élaboration des arcs.
+Un usage narratif est envisagé mais non encore défini : une étoile dont la parallaxe observée pendant le transit ne correspond pas à sa distance cataloguée pourrait constituer une trace déclenchée par le mouvement lui-même. À développer à l'élaboration des scénarios.
 
 ---
 
-## 8. Population pendant le transit
+## 9. Population pendant le transit
 
 ### Échelle générationnelle
 
@@ -278,54 +383,101 @@ Sur l'échelle des transits normaux (quelques milliers d'années), la population
 
 ### Effets culturels
 
-Un transit long sans capitaine produit un effet documenté : +400 ans de dérive culturelle, avec une crise à bord et une figure mythologique au retour.
+Un transit long sans capitaine produit un effet documenté : +400 ans de demi-vie culturelle, avec une crise à bord et une figure mythologique au retour (`LACUNA_ARCS.md` §1.10, levier 3).
 
 L'asymétrie fondamentale : pendant un transit long, des générations passent pendant que le joueur attend. Pendant un stationnement dilatant long, des générations passent pendant que le joueur est immobile. Dans le premier cas, le temps passe malgré lui. Dans le second, il a délibérément choisi la rupture.
 
 ---
 
-## 9. Modèle de données
+## 10. Modèle de données et implémentation actuelle
 
-Champ `travelState` du schéma vaisseau (`LACUNA_PROCEDURAL_DATA_MODEL.md`) :
+### Schéma SQL actuel — table `ships`
+
+Le transit est stocké en colonnes dédiées, pas dans un JSONB `travelState`. `travel_state` est un ENUM PostgreSQL.
+
+| Colonne | Type SQL | Description |
+|---------|----------|-------------|
+| `travel_state` | ENUM `ship_travel_state` | `IDLE` / `IN_TRANSIT` / `ARRIVED` / `DAMAGED` |
+| `travel_destination` | TEXT FK → `stellar_systems(id)` | Système cible |
+| `travel_departure_at` | TIMESTAMPTZ | Horodatage réel du départ |
+| `travel_arrival_at` | TIMESTAMPTZ | Horodatage réel estimé d'arrivée |
+| `voyage` | INT | Numéro de voyage — incrémenté à chaque arrivée |
+
+### Implémentation actuelle (octobre 2026)
+
+- **Transit décidé par le serveur** (migration `00050_transit_rpc.sql`) : `start_transit(destination)` calcule la distance et la durée joueur, fixe l'heure d'arrivée ; `complete_transit()` valide l'arrivée quand l'horloge du serveur l'atteint. Le client n'écrit plus lui-même l'état du transit.
+- **Historique des voyages** : table `ship_travels`, une ligne par arrivée (`origin_system_id`, `destination_system_id`, `departure_at`, `arrival_at`, `distance_al`, `voyage_number`), écrite par le serveur. Elle alimente les arêtes de la Carte (`LACUNA_CARTE_MAP.md`).
+- **Mode test** : réglage `transit_time_scale` dans `game_settings` (valeur actuelle : 5 s pour 1 h joueur). Remis à 1 pour le jeu réel.
+- **Phases** : calculées côté client par ratio de la progression (§3) ; `[FIXER CAP]` verrouillé hors `COASTING`.
+- **Interface** : cartouche « IN TRANSIT » au-dessus du réticule (clic → recentrage animé), header « origine → cible — XX % », cible du cap en ambre, dérive stellaire.
+- **Reprise après rechargement** : le transit reprend depuis les horodatages en base.
+
+### Colonne prévue — `travel_phase_timestamps`
+
+Pour figer les phases (et permettre la déviation), une colonne JSONB est prévue :
+
+```sql
+ALTER TABLE ships ADD COLUMN travel_phase_timestamps JSONB;
+```
+
+Structure de la valeur :
 
 ```json
-"travelState": {
-  "inTransit": false,
-  "destination": null,
-  "departureTime": null,
-  "arrivalTime": null,
-  "phase": null,
-  "distanceTotal": 0.0,
-  "fuelBudgeted": 0.0,
-  "detectedInTransit": [],
-  "diversionAvailable": false,
-  "originalDestination": null
+{
+  "acceleratingEnd": "2026-03-19T14:12:00Z",
+  "coastingEnd":     "2026-03-19T14:48:00Z",
+  "turningEnd":      "2026-03-19T14:50:00Z",
+  "deceleratingEnd": "2026-03-19T15:00:00Z"
 }
 ```
 
-| Champ | Type | Description |
-|-------|------|-------------|
-| `inTransit` | bool | Vrai pendant toute la durée du transit |
-| `destination` | string | ID du système cible |
-| `departureTime` | datetime | Horodatage réel du départ |
-| `arrivalTime` | datetime | Horodatage réel estimé d'arrivée |
-| `phase` | enum | `ACCELERATING` / `COASTING` / `TURNING` / `DECELERATING` |
-| `distanceTotal` | float | Distance totale en années-lumière |
-| `fuelBudgeted` | float | Carburant alloué au voyage |
-| `detectedInTransit` | array | Systèmes détectés en chemin (ID + distance + anomaly_level) |
-| `diversionAvailable` | bool | Vrai uniquement pendant `COASTING` |
-| `originalDestination` | string | ID du système initial si déviation en cours |
+Calculé une seule fois à la confirmation du départ. Ne change plus sauf en cas de déviation. **Non implémentée à ce jour.**
+
+### Logique de phase — architecture retenue
+
+La phase courante n'est **pas persistée** en base sous forme d'enum. Elle est **calculée côté client** :
+
+```
+phase courante = f(travel_phase_timestamps, Date.now())
+```
+
+Tant que `travel_phase_timestamps` n'existe pas, elle est dérivée du ratio de progression (`currentTransitPhase` dans `ship.js`). `travel_state` (ENUM) reste : `IDLE` / `IN_TRANSIT` / `ARRIVED` / `DAMAGED`.
+
+`diversionAvailable` est un computed Pinia dérivé de la phase courante — `true` uniquement pendant `COASTING`. Non persisté en base.
+
+### Champs documentés non encore implémentés
+
+| Champ | État | Note |
+|-------|------|------|
+| `distanceTotal` | Persisté dans `ship_travels.distance_al` à l'arrivée | Recalculé à la demande pendant le transit |
+| `fuelBudgeted` | Non implémenté | En attente de la mécanique carburant |
+| `detectedInTransit` | Non implémenté | En attente de la mécanique de déviation |
+| `originalDestination` | Non implémenté | En attente de la mécanique de déviation |
 
 ---
 
-## 10. Questions ouvertes
+## 11. Questions ouvertes
+
+**Vue de confirmation du départ**
+- ~~Le joueur peut-il fermer la vue et revenir à l'Observatoire sans partir ?~~ — Résolu : oui, bouton `[ANNULER]` implémenté, annule le cap.
+- Sol visible depuis la destination : calculer dynamiquement depuis la magnitude limite de l'Observatoire, ou seuil fixe en distance ?
+- Priorité d'affichage si plusieurs phrases contextuelles sont simultanément valides — la table en §4 définit un ordre, à confirmer à l'implémentation.
+- Seuil du silence : à 4,8 % c, presque tous les voyages dépassent 25 ans. Faut-il relever le seuil (par exemple sous 100 ans) pour préserver la rareté de la première phrase ?
+
+**Phases de transit**
+- Répartition des phases en temps joueur (§3) : la convention actuelle 40/20/10/30 donne une inertie courte. Calibration à décider — l'inertie est la phase de jeu (détection, déviation), elle devrait probablement dominer sur les longs voyages.
+- `TURNING_DURATION_MS` : durée fixe du retournement en temps réel joueur — valeur à calibrer (proposition initiale : 2 minutes réelles).
+- ~~La formule `t_joueur = K × t_physique ^ 0.762` est documentée mais non implémentée~~ — Résolu en v0.4 : la table de référence est la seule règle (`LACUNA_PHYSICS.md` §2).
+
+**Écart code / design**
+- Le code compte une génération pour **80 ans** (`ANNEES_PAR_GENERATION` dans `src/lib/transit.js`) ; tous les documents de design utilisent **25 ans**. Proxima affiche donc « 1,1 génération » au lieu de 3. À aligner dans le code.
 
 **Animation — dérive stellaire**
-- Seuil perceptible minimal : en dessous de quelle distance la dérive est-elle trop lente pour être remarquée ? À calibrer à l'implémentation.
+- Seuil perceptible minimal : en dessous de quelle distance la dérive est-elle trop lente pour être remarquée ? À calibrer.
 - La ligne de trajectoire cyan reste-t-elle affichée pendant la dérive, ou disparaît-elle pour laisser le ciel seul ?
 - Comportement en retournement : la dérive change-t-elle d'axe visuellement ? Fondu ? Instantané ?
 - Si le joueur dévie en phase d'inertie, la dérive change-t-elle de direction progressivement (courbe balistique) ou instantanément ?
-- Usage narratif dans les scénarios : étoile dont la parallaxe ne correspond pas à sa distance cataloguée — à définir à l'élaboration des arcs.
+- Usage narratif dans les scénarios : étoile dont la parallaxe ne correspond pas à sa distance cataloguée — à définir.
 
 **Détection et déviation**
 - Volume maximum de `detectedInTransit[]` : toutes les détections sont-elles conservées ou seulement les actionnables ?
@@ -338,4 +490,4 @@ Champ `travelState` du schéma vaisseau (`LACUNA_PROCEDURAL_DATA_MODEL.md`) :
 
 ---
 
-*LACUNA — Le Transit v0.1 — Mars 2026 — Confidentiel*
+*LACUNA — Le Transit v0.4 — Octobre 2026 — Confidentiel*
