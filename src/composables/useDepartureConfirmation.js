@@ -37,12 +37,12 @@ export function useDepartureConfirmation(pendingRef, shipStore) {
     return `${Math.round(y * 12)} mois simulés`
   })
 
-  /** Phrase générationnelle — règle d'affichage par tranche de générations */
+  /** Phrase générationnelle — tranches de LACUNA_TRANSIT.md §4 (1–3, 4–9, 10–999, ≥ 1000) */
   const generationPhrase = computed(() => {
     const n = generationsCount.value
     if (n < 1) return null
-    if (n <= 2) return "La génération actuelle ne verra pas l'arrivée."
-    if (n <= 10) return "Personne vivant à bord aujourd'hui ne sera en vie à l'arrivée."
+    if (n <= 3) return "La génération actuelle ne verra pas l'arrivée."
+    if (n <= 9) return "Personne vivant à bord aujourd'hui ne sera en vie à l'arrivée."
     if (n < 1000) return `${n} générations naîtront et mourront avant l'arrivée.`
     return "L'arrivée est une abstraction pour les personnes qui partent aujourd'hui."
   })
